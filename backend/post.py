@@ -46,4 +46,16 @@ def new_post():
 def view_post(post_id):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT text_post, username FROM posts WHERE ")
+    cur.execute("SELECT text_post, username FROM posts WHERE id = ?", (post_id,))
+    resultado_post = cur.fetchall()
+    conn.close()
+    if not resultado_post:
+        return jsonify({"status":"post não encontrado"}), 404
+    if resultado_post:
+        text_post = resultado_post[0]
+        username = resultado_post[1]
+        corpo_retorno = {
+            "text_post":text_post,
+            "username":username
+        }
+        return corpo_retorno
