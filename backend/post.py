@@ -17,11 +17,11 @@ def create_db():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
-        CREATE TABLE NOT EXISTS posts(
-                username TEXT 
-                text_post TEXT
-                star INTEGER
-                datetime TEXT
+        CREATE TABLE IF NOT EXISTS posts(
+                username TEXT,
+                text_post TEXT,
+                star INTEGER,
+                datetime TEXT,
                 id INTEGER PRIMARY KEY AUTOINCREMENT)""")
     conn.commit()
     conn.close()
@@ -35,14 +35,14 @@ def new_post():
     if username is None:
         return jsonify({"status":"username não informado"}), 401
     if text_post is None:
-        return jsonify({"status":"não é possivel criar um post sem conteúdo"})
+        return jsonify({"status":"não é possivel criar um post sem conteúdo"}),400
     conn = get_db()
     cur = conn.cursor()
     cur.execute("INSERT INTO posts(username, text_post, datetime) VALUES (?, ?, ?)", (username, text_post, datetime))
     conn.commit()
     conn.close()
     return jsonify({"status":"post criado com sucesso"}),200
-@app.route("/view<post_id>")
+@app.route("/view<int:post_id>")
 def view_post(post_id):
     conn = get_db()
     cur = conn.cursor()
@@ -52,6 +52,7 @@ def view_post(post_id):
     if not resultado_post:
         return jsonify({"status":"post não encontrado"}), 404
     if resultado_post:
+        text_post, username = resultado_post
         text_post = resultado_post[0]
         username = resultado_post[1]
         corpo_retorno = {
@@ -59,3 +60,26 @@ def view_post(post_id):
             "username":username
         }
         return corpo_retorno
+@app.route("/feed")
+def feed():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, username, text_post, datetime FROM posts ORDER BY id DESC")
+    posts = cur.fetchall()
+    conn.close()
+
+    lista_posts = []
+
+    for post in posts:
+        lista_posts.append({
+            "id": post[0],
+            "username": post[1],
+            "text_post": post[2],
+            "datetime": post[3]
+        })
+
+    return jsonify(lista_posts)
+
+if __name__ == "__main__":
+    create_db()
+    app.run(debug=True)
