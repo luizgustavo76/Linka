@@ -16,12 +16,12 @@ It allows anyone to host their own server and customize the platform, including 
 git clone https://github.com/luizgustavo76/Linka.git
 cd Linka
 ```
-###runing the backend server
+### runing the backend server
 ```bash
 cd backend
 python main.py
 ```
-###runing the frontend client
+### runing the frontend client
 ```bash
 cd frontend-client
 python main.py
