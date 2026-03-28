@@ -1,0 +1,20 @@
+{
+    "initial-page": {
+        "sign-up":"Cadastrar-se",
+        "sign-in":"Entrar",
+        "change server":"Alterar o servidor",
+        "login with github":"Login com o Github"
+    },
+    "login": {
+        "username":"Nome de usuário",
+        "password":"Senha",
+        "send":"Enviar"
+    },
+    "sign-up": {
+        "username":"Nome de usuário",
+        "email":"Email",
+        "password":"Senha",
+        "repeat the password":"Repetir a senha",
+        "finish":"Finalizar"
+    }
+}
