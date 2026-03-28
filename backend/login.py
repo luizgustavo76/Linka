@@ -11,6 +11,7 @@ class Login:
         self.db_dir = (self.base_dir + "/DB")
         #banco de dados de login
         self.login_dir = os.path.join(self.db_dir, "login.db")
+        self.fast_login = os.path.join(self.db_dir, "FastLogin.db")
         #senha em hash
         self.senha_hash = None
         
@@ -29,9 +30,22 @@ class Login:
             """)
             conn.commit()
             conn.close()
+            conn = self.get_db_fastlogin()
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS FastLogin(
+                    username TEXT UNIQUE,
+                    token TEXT
+                )
+                """)
+            conn.commit()
+            conn.close()
         criar_db_login()
     def get_db_login(self):
         conn = sqlite3.connect(self.login_dir)
+        return conn
+    def get_db_fastlogin(self):
+        conn = sqlite3.connect(self.fast_login)
         return conn    
     #transformar senha em texto para hash
     def gerar_hash(self, senha):
@@ -64,11 +78,14 @@ def register():
         conn.commit()
         conn.close()
         return jsonify({"status":"conta criada com sucesso!"}), 201
-#rota pagina principal
+
+#route of main page
 @app.route("/")
 def main():
     return render_template("index.html") 
-#rota de login
+#route of the fast login
+@app.route("/fast-login", methods=["POST"])
+#login route
 @app.route("/login", methods=["POST"])
 def login():
     dados = request.get_json()
