@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, redirect, send_from_directory, abort,
 import sqlite3
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
 app = Flask(__name__)
 class Login:
     def __init__(self):
@@ -85,6 +86,13 @@ def main():
     return render_template("index.html") 
 #route of the fast login
 @app.route("/fast-login", methods=["POST"])
+def FastLogin():
+    data = request.get_json()
+    username = data.get("username")
+    token = data.get("token")
+    def generate_token(length=32):
+        """Generate a secure random token"""
+        return secrets.token_hex(length)
 #login route
 @app.route("/login", methods=["POST"])
 def login():
@@ -112,4 +120,4 @@ def login():
             return jsonify({"status":"login efetuado com sucesso"}), 200
         else:
             return jsonify({"status": "senha errada, verifique se a senha está correta"}), 400
-app.run()
+app.run(debug=True)

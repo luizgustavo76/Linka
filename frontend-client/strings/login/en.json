@@ -8,13 +8,24 @@
     "login": {
         "username":"Username",
         "password":"Password",
-        "send":"send"
+        "send":"send",
+        "welcome back":"welcome back"
     },
     "sign-up": {
         "username":"Username",
         "email":"Email",
         "password":"Password",
         "repeat the password":"Repeat the password",
-        "finish":"finish"
+        "welcome":"welcome",
+        "finish":"finish",
+        "top text":"Create your account",
+        "top text password fail":"the password is not matching"
+    },
+    "errors": {
+        "400": "Something went wrong :( Please check your data, 400 bad request",
+        "401": "Something went wrong :( Please check your authentication data, 401 unauthorized",
+        "403": "Something went wrong :( Please send all credentials, 403 forbidden",
+        "404": "Something went wrong :( This does not exist, 404 not found",
+        "500": "Something went wrong :( Internal error, 500 server error"
     }
 }
