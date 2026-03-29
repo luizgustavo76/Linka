@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, jsonify
+from flask import Flask, Blueprint, request, jsonify
 import sqlite3
 import os
 #pasta atual
@@ -7,7 +7,7 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = (base_dir + "/DB")
 #arquivo de banco de dado de post
 post_dir = (db_dir + "/post.db")
-app = Flask(__name__)
+post_bp = Blueprint("post", __name__)
 #referencia ao banco de dados local
 def get_db():
     conn = sqlite3.connect(post_dir)
@@ -26,7 +26,7 @@ def create_db():
     conn.commit()
     conn.close()
 #rota pra criar novo post
-@app.route("/new", methods=["POST"])
+@post_bp.route("/new", methods=["POST"])
 def new_post():
     dados = request.get_json()
     username = dados.get("username")
@@ -42,7 +42,7 @@ def new_post():
     conn.commit()
     conn.close()
     return jsonify({"status":"post criado com sucesso"}),200
-@app.route("/view<int:post_id>")
+@post_bp.route("/view<int:post_id>")
 def view_post(post_id):
     conn = get_db()
     cur = conn.cursor()
@@ -60,7 +60,7 @@ def view_post(post_id):
             "username":username
         }
         return corpo_retorno
-@app.route("/feed")
+@post_bp.route("/feed")
 def feed():
     conn = get_db()
     cur = conn.cursor()
@@ -71,7 +71,7 @@ def feed():
     lista_posts = []
 
     for post in posts:
-        lista_posts.append({
+        lista_posts.post_bpend({
             "id": post[0],
             "username": post[1],
             "text_post": post[2],
@@ -82,4 +82,4 @@ def feed():
 
 if __name__ == "__main__":
     create_db()
-    app.run(debug=True)
+    post_bp.run(debug=True)
