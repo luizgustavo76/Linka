@@ -26,7 +26,8 @@ class Login:
                 CREATE TABLE IF NOT EXISTS login(
                         username TEXT UNIQUE,
                         senha TEXT,
-                        email TEXT UNIQUE
+                        email TEXT UNIQUE,
+                        oauth BOOLEAN
                     )
             """)
             conn.commit()
@@ -95,29 +96,40 @@ def FastLogin():
         return secrets.token_hex(length)
 #login route
 @app.route("/login", methods=["POST"])
-def login():
+def login(self):
     dados = request.get_json()
-    username = dados.get("username")
-    senha = dados.get("senha")
-    conn = login_system.get_db_login()
-    cur = conn.cursor()
-    cur.execute("SELECT username FROM login WHERE username = ?", (username,))
-    #resultado de usernames, se existir aquele username ele retorna o nome se não retorna None
-    resultado_username = cur.fetchone()
-    conn.close()
-    if not resultado_username:
-        return jsonify({"status":"usuário não existe, verifique o campo de usuário"}), 401
-    if resultado_username:
+    oauth = dados.get("oauth")
+    if not oauth:
+        username = dados.get("username")
+        senha = dados.get("senha")
         conn = login_system.get_db_login()
         cur = conn.cursor()
-        cur.execute("SELECT senha FROM login WHERE username =?", (username,))
-        resultado_senha = cur.fetchone()
-        hash_salvo = resultado_senha[0]
-        senha_descodificada = login_system.verificar_hash(senha, hash_salvo)
+        cur.execute("SELECT username FROM login WHERE username = ?", (username,))
+        #resultado de usernames, se existir aquele username ele retorna o nome se não retorna None
+        resultado_username = cur.fetchone()
         conn.close()
-        if senha_descodificada:
-            
-            return jsonify({"status":"login efetuado com sucesso"}), 200
-        else:
-            return jsonify({"status": "senha errada, verifique se a senha está correta"}), 400
+        if not resultado_username:
+            return jsonify({"status":"usuário não existe, verifique o campo de usuário"}), 401
+        if resultado_username:
+            conn = login_system.get_db_login()
+            cur = conn.cursor()
+            cur.execute("SELECT senha FROM login WHERE username =?", (username,))
+            resultado_senha = cur.fetchone()
+            hash_salvo = resultado_senha[0]
+            senha_descodificada = login_system.verificar_hash(senha, hash_salvo)
+            conn.close()
+            if senha_descodificada:
+                return jsonify({"status":"login is sucessful"}), 200
+            else:
+                return jsonify({"status": "wrong password, check the password entry"}), 401
+    if oauth:
+        username = dados.get("username")
+        avatar_id = dados.get("avatar_id")
+        conn = login_system.get_db_login()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM login WHERE username = ?",(username,))
+        result_user = cur.fetchone()
+        conn.close()
+        if not result_user:
+            conn = login_system.get_db_login
 app.run(debug=True)
