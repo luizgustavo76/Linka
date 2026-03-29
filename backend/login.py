@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify, redirect, send_from_directory, abort, render_template
+from flask import Flask, request, jsonify,Blueprint, redirect, send_from_directory, abort, render_template
 import sqlite3
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
-app = Flask(__name__)
+login_bp = Blueprint("login", __name__)
 class Login:
     def __init__(self):
         #pasta atual
@@ -125,11 +125,20 @@ def login(self):
     if oauth:
         username = dados.get("username")
         avatar_id = dados.get("avatar_id")
+        id = dados.get("id")
         conn = login_system.get_db_login()
         cur = conn.cursor()
         cur.execute("SELECT username FROM login WHERE username = ?",(username,))
         result_user = cur.fetchone()
         conn.close()
         if not result_user:
-            conn = login_system.get_db_login
+            conn = login_system.get_db_login()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO login (username, id) VALUES (?,?)",(username, id))
+            conn.commit()
+            conn.close()
+            return jsonify({"status":"account oauth is created"}),200
+        if result_user:
+            return jsonify({"status":"login is sucessful"}),200
+        
 app.run(debug=True)
