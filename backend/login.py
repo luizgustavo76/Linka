@@ -58,7 +58,7 @@ class Login:
         return check_password_hash(hash, senha)
 login_system = Login()
 #rota pra registrar usuarios
-@app.route("/register", methods=["POST"])
+@login_bp.route("/register", methods=["POST"])
 def register():
     dados = request.get_json()
     username = dados.get("username")
@@ -82,11 +82,11 @@ def register():
         return jsonify({"status":"conta criada com sucesso!"}), 201
 
 #route of main page
-@app.route("/")
+@login_bp.route("/")
 def main():
     return render_template("index.html") 
 #route of the fast login
-@app.route("/fast-login", methods=["POST"])
+@login_bp.route("/fast-login", methods=["POST"])
 def FastLogin():
     data = request.get_json()
     username = data.get("username")
@@ -95,7 +95,7 @@ def FastLogin():
         """Generate a secure random token"""
         return secrets.token_hex(length)
 #login route
-@app.route("/login", methods=["POST"])
+@login_bp.route("/login", methods=["POST"])
 def login(self):
     dados = request.get_json()
     oauth = dados.get("oauth")
@@ -141,4 +141,4 @@ def login(self):
         if result_user:
             return jsonify({"status":"login is sucessful"}),200
         
-app.run(debug=True)
+login_bp.run(debug=True)

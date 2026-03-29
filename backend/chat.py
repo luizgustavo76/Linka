@@ -14,7 +14,7 @@ def create_db():
     conn.commit()
     conn.close()
 create_db()
-@app.route("/send", methods=["POST"])
+@chat_bp.route("/send", methods=["POST"])
 def send():
     data = request.get_json()
     receiver = data.get("receiver")
@@ -31,7 +31,7 @@ def send():
     conn.close()
     return jsonify({"status": "message sent"}), 200
     
-@app.route("/view", methods=["POST"])
+@chat_bp.route("/view", methods=["POST"])
 def view():
     data = request.get_json()
     receiver = data.get("receiver")
@@ -44,4 +44,4 @@ def view():
     conn.close()
     return resultado
 if __name__ == "__main__":
-    app.run(debug=True)
+    chat_bp.run(debug=True)
