@@ -1,21 +1,12 @@
-try:
-    import login
-    import post
-    import chat
-    import threading
-    t1 = threading.Thread(target=chat.chat)
-    t2 = threading.Thread(target=post.posts)
-    t3 = threading.Thread(target=login.login)
+from flask import Flask
+from post import post_bp
+from chat import chat_bp
+from github_auth import github_bp
 
-    t1.start()
-    t2.start()
-    t3.start()
+app = Flask(__name__)
 
-    
+app.register_blueprint(post_bp)
+app.register_blueprint(chat_bp)
+app.register_blueprint(github_bp)
 
-    t1.join()
-    t2.join()
-    t3.join()
-    print('servidor iniciado com sucesso')
-except Exception as e:
-    print("servidor falhou ao iniciar tente reiniciar-lo")
+app.run(debug=True, port=5000)

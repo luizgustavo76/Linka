@@ -1,7 +1,7 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, Blueprint, jsonify
 import sqlite3
 import os
-app =  Flask(__name__)
+chat_bp = Blueprint("chat", __name__)
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = (base_dir + "/DB")
 def get_db():
