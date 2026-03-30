@@ -1,38 +1,61 @@
+import sys
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
-    QVBoxLayout, QHBoxLayout, QFrame,
-    QScrollArea, QLineEdit
+    QVBoxLayout, QLineEdit
 )
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
-from PyQt6.QtWidgets import QSizePolicy
-import sys
-import os
-app = QApplication(sys.argv)
-window = QWidget()
-layout = QVBoxLayout(window)
-def user_entry(texto):
-    entrada = QLineEdit()
-    entrada.setPlaceholderText(texto)
-    layout.addWidget(entrada)
-    return entrada
-def get_text(entrada):
-    texto = entrada.text()
-    return texto
-def label(text, window):
-    label_text = QLabel(text)
 
-    if window.layout() is None:
-        layout = QVBoxLayout()
-        window.setLayout(layout)
-    else:
-        layout = window.layout()
-def button(texto,  acao, janela):
-    if acao == "None":
-        botao = QPushButton(texto, janela)
-        layout.addWidget(botao)
+class Tela:
+    def __init__(self):
+        self.window = QWidget()
+        self.window.setWindowTitle("Minha Tela")
+
+        self.layout = QVBoxLayout()
+        self.window.setLayout(self.layout)
+
+    def user_entry(self, texto):
+        entrada = QLineEdit()
+        entrada.setPlaceholderText(texto)
+        self.layout.addWidget(entrada)
+        return entrada
+
+    def get_text(self, entrada):
+        texto = entrada.text()
+        return texto
+
+    def label(self, text):
+        label_text = QLabel(text)
+        self.layout.addWidget(label_text)
+        return label_text
+
+    def button(self, texto, acao=None):
+        botao = QPushButton(texto)
+
+        if acao is not None:
+            botao.clicked.connect(acao)
+
+        self.layout.addWidget(botao)
         return botao
-    else:
-        botao = QPushButton(texto, janela)
-        botao.clicked.connect(acao)
-        layout.addWidget(botao)
-        return botao
+
+    def show(self):
+        self.window.show()
+
+
+"""how to use
+define tela = Tela()
+and use the functions in the class
+"""
+app = QApplication(sys.argv)
+
+tela = Tela()
+
+entrada_nome = tela.user_entry("Digite seu nome")
+
+def clicar():
+    nome = tela.get_text(entrada_nome)
+    tela.label(f"Olá, {nome}!")
+
+tela.button("Confirmar", clicar)
+
+tela.show()
+
+sys.exit(app.exec())
