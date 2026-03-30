@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
 from PyQt6.QtWidgets import QSizePolicy
 import configparser
-
+import webbrowser
 url = "http://127.0.0.1:5000"
 def create_config(username, token, AlternativeServer):
     if not os.path.isfile("config-login.cfg"):
@@ -109,6 +109,20 @@ def sigin():
             
 
     button("Pronto", send, window)
+def oauth_github():
+    webbrowser.open("http://localhost:5000/auth/github/login")
+    def accept():
+        try:
+            r = requests.get("http://localhost:5000/github/get_user", timeout=5)
+            if r.status_code == 200:
+                data = r.json()
+                print("Dados recebidos do GitHub:", data)
+                
+        except:
+            pass
+    clean_layout(layout)
+    button("continue",accept,window)
+    
 def signup():
     clean_layout(layout)
     top_text = translator.translate("sign-up.top text")

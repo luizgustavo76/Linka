@@ -27,6 +27,7 @@ class Login:
                         username TEXT UNIQUE,
                         senha TEXT,
                         email TEXT UNIQUE,
+                        id TEXT UNIQUE,
                         oauth BOOLEAN
                     )
             """)
@@ -141,4 +142,3 @@ def login(self):
         if result_user:
             return jsonify({"status":"login is sucessful"}),200
         
-login_bp.run(debug=True)
