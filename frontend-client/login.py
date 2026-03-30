@@ -164,7 +164,6 @@ def main():
     window.show()
     button(sign_in_text, sigin, window)
     button(sign_up_text, signup, window)
-    button(login_with_github_text, "None", window)
     button(change_server_text, "None", window)
     sys.exit(app.exec())
 
