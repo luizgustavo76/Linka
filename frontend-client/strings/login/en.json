@@ -3,7 +3,7 @@
         "sign-up":"Sign-up",
         "sign-in":"Sign-in",
         "change server":"change server",
-        "login with github":"Login with Github"
+        "configurations":"configurations"
     },
     "login": {
         "username":"Username",
