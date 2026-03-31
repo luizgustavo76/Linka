@@ -27,8 +27,7 @@ class Login:
                         username TEXT UNIQUE,
                         senha TEXT,
                         email TEXT UNIQUE,
-                        id TEXT UNIQUE,
-                        oauth BOOLEAN
+                        id TEXT UNIQUE
                     )
             """)
             conn.commit()
@@ -88,16 +87,34 @@ def main():
     return render_template("index.html") 
 #route of the fast login
 @login_bp.route("/fast-login", methods=["POST"])
-def FastLogin():
+def FastLogin(self):
     data = request.get_json()
     username = data.get("username")
     token = data.get("token")
     def generate_token(length=32):
         """Generate a secure random token"""
         return secrets.token_hex(length)
+    if not token:
+        new_token = generate_token()
+        conn = self.get_db_login()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO FastLogin (username, token) VALUES (?, ?)", (username, new_token))
+        conn.commit()
+        conn.close()
+    if token:
+        conn = self.get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT token FROM FastLogin WHERE username = ?", (username,))
+        get_token = cur.fetchone()
+        conn.close()
+        if token == get_token:
+            return jsonify({"status":"fastlogin is sucessful"}),200
+        else:
+            return jsonify({"status":"the token is invalid"}),401
+        
 #login route
 @login_bp.route("/login", methods=["POST"])
-def login(self):
+def login():
     dados = request.get_json()
     oauth = dados.get("oauth")
     if not oauth:
