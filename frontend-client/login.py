@@ -12,13 +12,16 @@ from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
 from PyQt6.QtWidgets import QSizePolicy
 import configparser
 import webbrowser
-url = "http://127.0.0.1:5000"
+
 def create_config(username, token, AlternativeServer):
     if not os.path.isfile("config-login.cfg"):
         if AlternativeServer:
             config["SERVER"] = {
-            "json":AlternativeServer
+            "server":AlternativeServer
         }
+        else:
+            config["SERVER"] = {"server": "http://127.0.0.1:5000"}
+            
         config = configparser.ConfigParser()
         config["LANG"] = {
             "lang":"en"
@@ -37,7 +40,8 @@ if lang == "pt-br":
     translator = Translator.Translator("strings/login/pt-br.json")
 else:
     translator = Translator.Translator("strings/login/en.json")
-
+url = config["SERVER"]["url"]
+token = config["FAST-LOGIN"]["token"]
 username_text = translator.translate("login.username")
 password_text = translator.translate("login.password")
 sign_in_text = translator.translate("initial-page.sign-in")
@@ -99,6 +103,14 @@ def sigin():
                 json={"username":nome, "senha":senha},
                 timeout=5
             )
+            fast_login = requests.post(
+                url + "fast-login",
+                json = {
+                    "username":nome,
+                    "token":token
+                },
+                timeout=5
+            )
             if dados_login.status_code == 200:
                 label("login feito com sucesso", window)
             else:
@@ -109,19 +121,6 @@ def sigin():
             
 
     button("Pronto", send, window)
-def oauth_github():
-    webbrowser.open("http://localhost:5000/auth/github/login")
-    def accept():
-        try:
-            r = requests.get("http://localhost:5000/github/get_user", timeout=5)
-            if r.status_code == 200:
-                data = r.json()
-                print("Dados recebidos do GitHub:", data)
-                
-        except:
-            pass
-    clean_layout(layout)
-    button("continue",accept,window)
     
 def signup():
     clean_layout(layout)
