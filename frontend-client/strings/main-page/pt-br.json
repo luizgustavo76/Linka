@@ -7,7 +7,8 @@
         "friends":"amigos",
         "inbox":"caixa de entrada",
         "feed":"feed",
-        "my account":"minha conta"
+        "my account":"minha conta",
+        "configurations":"configurações"
     },
     "feed":{
         "new post":"novo post",
