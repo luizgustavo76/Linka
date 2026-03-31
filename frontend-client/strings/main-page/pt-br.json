@@ -1,0 +1,19 @@
+{
+    "initial-page": {
+        "welcome back":"Bem vindo de volta",
+        "Linka rights":"Linka 2026 todos os direitos reservados",
+        "chat":"mensagens",
+        "add friends":"adicionar amigos",
+        "friends":"amigos",
+        "inbox":"caixa de entrada",
+        "feed":"feed",
+        "my account":"minha conta"
+    },
+    "feed":{
+        "new post":"novo post",
+        "search": "pesquisar"
+    },
+    "global":{
+        "back":"voltar"
+    }
+}

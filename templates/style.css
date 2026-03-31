@@ -15,9 +15,9 @@ body {
     background: rgba(0, 0, 0, 0.5);
     padding: 30px;
     border-radius: 10px;
-     background: rgba(0, 0, 0, 0.4); /* importante */
+     background: rgba(0, 0, 0, 0.4); 
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px); /* compatibilidade */
+    -webkit-backdrop-filter: blur(10px);
     
     padding: 40px;
     border-radius: 12px;

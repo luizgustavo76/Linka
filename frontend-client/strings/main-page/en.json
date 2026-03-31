@@ -1,0 +1,19 @@
+{
+    "initial-page": {
+        "welcome back":"Welcome back",
+        "Linka rights":"Linka 2026 all rights ",
+        "chat":"chat",
+        "add friends":"add friends",
+        "friends":"friends",
+        "inbox":"inbox",
+        "feed":"feed",
+        "my account":"my account"
+    },
+    "feed":{
+        "new post":"new post",
+        "search": "search"
+    },
+    "global":{
+        "back":"back"
+    }
+}

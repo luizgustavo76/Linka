@@ -3,7 +3,6 @@ import os
 import time
 import requests
 import Translator 
-import QTools
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QLabel, QPushButton,
     QVBoxLayout, QHBoxLayout, QFrame,
@@ -45,7 +44,8 @@ sign_in_text = translator.translate("initial-page.sign-in")
 sign_up_text = translator.translate("initial-page.sign-up")
 email_text = translator.translate("sign_in.email")
 change_server_text = translator.translate("initial-page.change server")
-login_with_github_text = translator.translate("initial-page.login with github")         
+login_with_github_text = translator.translate("initial-page.login with github")
+configuration_text = translator.translate("initial-page.configurations")      
 app = QApplication(sys.argv)
 window = QWidget()
 layout = QVBoxLayout(window)
@@ -178,6 +178,7 @@ def main():
     window.show()
     button(sign_in_text, sigin, window)
     button(sign_up_text, signup, window)
+    button(configuration_text, "None", window)
     button(change_server_text, "None", window)
     sys.exit(app.exec())
 
