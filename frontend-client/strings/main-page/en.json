@@ -15,6 +15,14 @@
         "search": "search"
     },
     "global":{
-        "back":"back"
+        "username":"username",
+        "back":"back",
+        "send":"send"
+    },
+    "add friends":{
+        "message":"message"
+    },
+    "chat":{
+        "type here":"Type here"
     }
 }
