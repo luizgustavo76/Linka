@@ -16,5 +16,12 @@
     },
     "global":{
         "back":"voltar"
+    },
+    "add friends":{
+        "username":"Nome de usuário",
+        "message":"Recado"
+    },
+    "chat":{
+        "type here":"Escreva aqui"
     }
 }

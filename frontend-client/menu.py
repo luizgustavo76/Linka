@@ -23,6 +23,7 @@ if lang == "pt-br":
     translator = Translator.Translator("strings/main-page/pt-br.json")
 else:
     translator = Translator.Translator("strings/main-page/en.json")
+#translated texts
 welcome_text = translator.translate("initial-page.welcome back")
 chat_text = translator.translate("initial-page.chat")
 feed_text = translator.translate("initial-page.feed")
@@ -32,6 +33,11 @@ inbox_text = translator.translate("initial-page.inbox")
 my_account_text = translator.translate("initial-page.my account")
 linka_rights_text = translator.translate("initial-page.Linka rights")
 configurations_text = translator.translate("initial-page.configurations")
+type_here_text = translator.translate("chat.type here")
+username_text = translator.translate("global.username")
+back_text = translator.translate("global.back")
+message_text = translator.translate("add friends.message")
+send_text = translator.translate("global.send")
 def clean_layout(layout):
     while layout.count():
         item = layout.takeAt(0)
@@ -67,7 +73,7 @@ def label(text, window):
 def get_text(entrada):
     texto = entrada.text()
     return texto
-def icon_button(dir, icon, text):
+def icon_button(dir, icon, text, action):
     container = QWidget()
     linha = QHBoxLayout(container)
     linha.setContentsMargins(8, 4, 8, 4)
@@ -97,7 +103,10 @@ def icon_button(dir, icon, text):
     linha.addStretch()
 
     container.setFixedHeight(70)
-
+    if action == "None":
+        pass
+    else:
+        botao.clicked.connect(action)
     layout.addWidget(container)
 
     return botao
@@ -107,15 +116,25 @@ def user_entry(texto):
     entrada.setPlaceholderText(texto)
     layout.addWidget(entrada)
     return entrada
+def add_friends():
+    clean_layout(layout)
+    username_entry = user_entry(username_text)
+    get_user = get_text(username_entry)
+    message_entry = user_entry(message_text)
+    get_message = get_text(message_entry)
+    button(send_text, "None", window)
+    button(back_text, main, window)
 def main():
+    clean_layout(layout)
     label("welcome back", window)
-    icon_button("../assets", "chat.png", chat_text)
-    icon_button("../assets", "add-friends.png", add_friends_text)
-    icon_button("../assets", "configurations.png", configurations_text)
-    window.show()
-    sys.exit(app.exec())
+    icon_button("../assets", "chat.png", chat_text, "None")
+    icon_button("../assets", "add-friends.png", add_friends_text, add_friends)
+    icon_button("../assets", "configurations.png", configurations_text, "None")
+
 if __name__ == "__main__":
     try:
         main()
+        window.show()
+        sys.exit(app.exec())
     except Exception as e:
         print(f"Erro ao executar a aplicação: {e}")
