@@ -14,7 +14,7 @@ def create_db():
     conn.commit()
     conn.close()
 create_db()
-@chat_bp.route("/send", methods=["POST"])
+@chat_bp.route("/send-message", methods=["POST"])
 def send():
     data = request.get_json()
     receiver = data.get("receiver")

@@ -17,10 +17,23 @@ def create_db():
                 remittee TEXT
                 )
     """)
-    cur.execute("CREATE TABLE IF NOT EXISTS inbox (receiver TEXT, remittee TEXT)")
+    cur.execute("CREATE TABLE IF NOT EXISTS inbox (receiver TEXT, remittee TEXT, message TEXT)")
     conn.commit()
     conn.close()
 create_db()
+@friends_bp.route("/inbox", methods=["POST"])
+def inbox():
+    data = request.get_json()
+    username = data.get("username")
+    conn = get_db()
+    cur = conn.cursor
+    cur.execute("SELECT (receiver, remittee, message) FROM inbox WHERE receiver = ?",(username,))
+    select_inbox = cur.fetchall()
+    conn.close()
+    if select_inbox == None:
+        return jsonify({"status":"your inbox is empty"})
+    else:
+        return jsonify({"inbox":select_inbox}),200
 @friends_bp.route("/accept", methods=["POST"])
 def accept():
     data = request.get_json()
@@ -32,14 +45,15 @@ def accept():
     conn.commit()
     conn.close()
     return jsonify({"status":"friend add"}),200
-@friends_bp.route("/send")
+@friends_bp.route("/send-friend")
 def send():
     data = request.get_json()
     receiver = data.get("receiver")
     remittee = data.get("remittee")
+    message = data.get("message")
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO inbox (receiver, remittee) VALUES (?, ?)",(receiver, remittee))
+    cur.execute("INSERT INTO inbox (receiver, remittee, message) VALUES (?, ?, ?)",(receiver, remittee, message))
     conn.commit()
     conn.close()
     return({"status":"request is send"}),200
