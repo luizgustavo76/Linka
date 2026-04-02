@@ -104,8 +104,8 @@ def sigin():
     global token
     clean_layout(layout)
 
-    entrada_nome = user_entry("Nome de usuário")
-    entrada_senha = user_entry("Senha")
+    entrada_nome = user_entry(username_text)
+    entrada_senha = user_entry(password_text)
     button(back_text, main, window)
     def send():
         global token
@@ -145,7 +145,29 @@ def sigin():
             
 
     button("Pronto", send, window)
-    
+def send_fast_login():
+    nome =config["FAST-LOGIN"]["username"]
+    token_config = config["FAST-LOGIN"]["token"]
+    if token_config == None:
+        main()
+    else:
+        fast_login = requests.post(
+            url + "/fast-login",
+            json = {
+                "username":nome,
+                "token":token
+            },
+            timeout=5
+        )
+        if fast_login.status_code == 200:
+            resp_fast = fast_login.json()
+            new_token = resp_fast.get("token")
+            if new_token:
+                token = new_token
+                config["FAST-LOGIN"]["username"] = nome
+                config["FAST-LOGIN"]["token"] = new_token
+                with open("config-login.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
 def signup():
     global token
     clean_layout(layout)
