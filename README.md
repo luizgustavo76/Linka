@@ -26,3 +26,4 @@ python main.py
 cd frontend-client
 python main.py
 ```
+### this is Linka, your new social media
