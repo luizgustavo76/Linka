@@ -10,6 +10,9 @@ from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
 from PyQt6.QtWidgets import QSizePolicy
 import Translator
 import configparser
+import login
+import os
+import requests
 app = QApplication(sys.argv)
 window = QWidget()
 layout = QVBoxLayout(window)
@@ -17,8 +20,9 @@ window.setWindowTitle("Menu Linka")
 window.resize(400, 300)
 config = configparser.ConfigParser()
 config.read("config-login.cfg")
+username = config["FAST-LOGIN"]["username"]
+url = config["SERVER"]["url"]
 lang = config["LANG"]["lang"]
-
 if lang == "pt-br":
     translator = Translator.Translator("strings/main-page/pt-br.json")
 else:
@@ -119,17 +123,33 @@ def user_entry(texto):
 def add_friends():
     clean_layout(layout)
     username_entry = user_entry(username_text)
-    get_user = get_text(username_entry)
+    
     message_entry = user_entry(message_text)
-    get_message = get_text(message_entry)
-    button(send_text, "None", window)
+    def send():
+        get_user = get_text(username_entry)
+        get_message = get_text(message_entry)
+        data_inbox = requests.post(
+            url + "/send-friend",
+            json={
+                "receiver":get_user,
+                "remittee":username
+            },
+            timeout=5
+        )
+        if data_inbox.status_code == 200 or data_inbox.status_code == 201:
+            clean_layout(layout)
+            main()
+
+    button(send_text, send, window)
     button(back_text, main, window)
+    
 def main():
     clean_layout(layout)
     label("welcome back", window)
     icon_button("../assets", "chat.png", chat_text, "None")
     icon_button("../assets", "add-friends.png", add_friends_text, add_friends)
     icon_button("../assets", "configurations.png", configurations_text, "None")
+    icon_button("./assets","inbox.webp", inbox_text, "None")
 
 if __name__ == "__main__":
     try:
