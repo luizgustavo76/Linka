@@ -27,5 +27,8 @@
         "403": "Something went wrong :( Please send all credentials, 403 forbidden",
         "404": "Something went wrong :( This does not exist, 404 not found",
         "500": "Something went wrong :( Internal error, 500 server error"
+    },
+    "global":{
+        "back":"back"
     }
 }

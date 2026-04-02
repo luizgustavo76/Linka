@@ -27,5 +27,8 @@
         "403":"algo deu errado :( envie todas as credencias, 403 forbidden",
         "404":"algo deu errado :( isso não existe,404 not found",
         "500":"algo deu errado :( erro interno,500 server error"
+    },
+    "global":{
+        "back":"Voltar"
     }
 }

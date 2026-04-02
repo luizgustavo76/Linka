@@ -60,57 +60,73 @@ login_system = Login()
 #rota pra registrar usuarios
 @login_bp.route("/register", methods=["POST"])
 def register():
-    dados = request.get_json()
-    username = dados.get("username")
-    senha = dados.get("senha")
-    email = dados.get("email")
-    conn = login_system.get_db_login()
-    cur = conn.cursor()
-    cur.execute("SELECT username FROM login WHERE username = ?", (username,))
-    resultado = cur.fetchone()
-    conn.close()
-    if resultado:
-        return jsonify({"status":"username já existe"}),400
-    else:
-        senha_com_hash = login_system.gerar_hash(senha)
+    try:
+        dados = request.get_json()
+        username = dados.get("username")
+        senha = dados.get("senha")
+        email = dados.get("email")
         conn = login_system.get_db_login()
         cur = conn.cursor()
-        cur.execute("""
-            INSERT INTO login (username, senha, email) VALUES (?, ?, ?)""",(username, senha_com_hash, email))
-        conn.commit()
+        cur.execute("SELECT username FROM login WHERE username = ?", (username,))
+        resultado = cur.fetchone()
         conn.close()
-        return jsonify({"status":"conta criada com sucesso!"}), 201
-
+        if resultado:
+            return jsonify({"status":"username já existe"}),400
+        else:
+            senha_com_hash = login_system.gerar_hash(senha)
+            conn = login_system.get_db_login()
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO login (username, senha, email) VALUES (?, ?, ?)""",(username, senha_com_hash, email))
+            conn.commit()
+            conn.close()
+            return jsonify({"status":"conta criada com sucesso!"}), 201
+    except:
+        return jsonify({"status":"a error as ocurred"})
 #route of main page
 @login_bp.route("/")
 def main():
     return render_template("index.html") 
 #route of the fast login
 @login_bp.route("/fast-login", methods=["POST"])
-def FastLogin(self):
+def FastLogin():
     data = request.get_json()
     username = data.get("username")
     token = data.get("token")
+
     def generate_token(length=32):
-        """Generate a secure random token"""
         return secrets.token_hex(length)
+
     if not token:
         new_token = generate_token()
-        conn = self.get_db_login()
+        conn = login_system.get_db_fastlogin()
         cur = conn.cursor()
         cur.execute("INSERT INTO FastLogin (username, token) VALUES (?, ?)", (username, new_token))
         conn.commit()
         conn.close()
+        return jsonify({"status":"fastlogin created", "token": new_token}), 201
+
     if token:
-        conn = self.get_db()
+        conn = login_system.get_db_fastlogin()
         cur = conn.cursor()
         cur.execute("SELECT token FROM FastLogin WHERE username = ?", (username,))
         get_token = cur.fetchone()
-        conn.close()
-        if token == get_token:
-            return jsonify({"status":"fastlogin is sucessful"}),200
+
+        if not get_token:
+            conn.close()
+            return jsonify({"status":"user not found"}), 404
+
+        saved_token = get_token[0]
+
+        if token == saved_token:
+            new_token = generate_token()
+            cur.execute("UPDATE FastLogin SET token = ? WHERE username = ?", (new_token, username))
+            conn.commit()
+            conn.close()
+            return jsonify({"status":"fastlogin success", "token": new_token}), 200
         else:
-            return jsonify({"status":"the token is invalid"}),401
+            conn.close()
+            return jsonify({"status":"the token is invalid"}), 401
         
 #login route
 @login_bp.route("/login", methods=["POST"])

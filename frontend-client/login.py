@@ -10,28 +10,38 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
 from PyQt6.QtWidgets import QSizePolicy
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QGraphicsDropShadowEffect
+from PyQt6.QtCore import QPropertyAnimation, QRect
 import configparser
 import webbrowser
 
 def create_config(username, token, AlternativeServer):
-    if not os.path.isfile("config-login.cfg"):
-        if AlternativeServer:
-            config["SERVER"] = {
-            "server":AlternativeServer
-        }
-        else:
-            config["SERVER"] = {"server": "http://127.0.0.1:5000"}
-            
-        config = configparser.ConfigParser()
-        config["LANG"] = {
-            "lang":"en"
-        }
-        config["FAST-LOGIN"] = {
-            "username":username,
-            "token": token
-        }
-        with open("config-login.cfg", "w", encoding="utf-8") as cfg:
-            config.write(cfg)
+    CONFIG_FILE = "config-login.cfg"
+
+    config = configparser.ConfigParser()
+
+    if not os.path.exists(CONFIG_FILE):
+        config["SERVER"] = {"url": "http://127.0.0.1:5000"}
+        config["LANG"] = {"lang": "en"}
+        config["FAST-LOGIN"] = {"username": "", "token": ""}
+
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            config.write(f)
+
+    config.read(CONFIG_FILE, encoding="utf-8")
+
+    if "SERVER" not in config:
+        config["SERVER"] = {"url": "http://127.0.0.1:5000"}
+
+    if "LANG" not in config:
+        config["LANG"] = {"lang": "en"}
+
+    if "FAST-LOGIN" not in config:
+        config["FAST-LOGIN"] = {"username": "", "token": ""}
+
+create_config(None, None, None)
+
 config = configparser.ConfigParser()
 config.read("config-login.cfg")
 lang = config["LANG"]["lang"]
@@ -49,8 +59,10 @@ sign_up_text = translator.translate("initial-page.sign-up")
 email_text = translator.translate("sign_in.email")
 change_server_text = translator.translate("initial-page.change server")
 login_with_github_text = translator.translate("initial-page.login with github")
-configuration_text = translator.translate("initial-page.configurations")      
+configuration_text = translator.translate("initial-page.configurations")
+back_text = translator.translate("global.back")      
 app = QApplication(sys.argv)
+
 window = QWidget()
 layout = QVBoxLayout(window)
 def clean_layout(layout):
@@ -89,12 +101,14 @@ def get_text(entrada):
     texto = entrada.text()
     return texto
 def sigin():
+    global token
     clean_layout(layout)
 
     entrada_nome = user_entry("Nome de usuário")
     entrada_senha = user_entry("Senha")
-
+    button(back_text, main, window)
     def send():
+        global token
         nome = get_text(entrada_nome)
         senha = get_text(entrada_senha)
         try:
@@ -104,13 +118,23 @@ def sigin():
                 timeout=5
             )
             fast_login = requests.post(
-                url + "fast-login",
+                url + "/fast-login",
                 json = {
                     "username":nome,
                     "token":token
                 },
                 timeout=5
             )
+            if fast_login.status_code == 200:
+                resp_fast = fast_login.json()
+                new_token = resp_fast.get("token")
+                if new_token:
+                    token = new_token
+                    config["FAST-LOGIN"]["username"] = nome
+                    config["FAST-LOGIN"]["token"] = new_token
+                    with open("config-login.cfg", "w", encoding="utf-8") as f:
+                        config.write(f)
+
             if dados_login.status_code == 200:
                 label("login feito com sucesso", window)
             else:
@@ -123,6 +147,7 @@ def sigin():
     button("Pronto", send, window)
     
 def signup():
+    global token
     clean_layout(layout)
     top_text = translator.translate("sign-up.top text")
     label(top_text, window)
@@ -133,6 +158,7 @@ def signup():
     entry_email = user_entry("Email")
     finish_text = translator.translate("sign-up.finish")
     def finish_signup():
+        global token
         email = get_text(entry_email)
         user = get_text(entry_user)
         password = get_text(entry_password)
@@ -148,9 +174,25 @@ def signup():
                     },
                     timeout=5
                 )
-                if data.status_code == 200:
+                if data.status_code == 200 or data.status_code == 201:
+                    
                     welcome_text = translator.translate("sign-up.welcome")
                     label(welcome_text + " " + user, window)
+                    data_token = requests.post(
+                        url + "/fast-login",
+                        json={
+                            "username":user,
+                            "token":None
+                        },
+                        timeout=5
+                    )
+                    new_token = data_token.json().get("token")
+                    config["FAST-LOGIN"]["username"] = user
+                    config["FAST-LOGIN"]["token"] = new_token
+                    with open("config-login.cfg", "w", encoding="utf-8") as f:
+                        config.write(f)
+                    token = new_token
+
                 else:
                     clean_layout(layout)
                     error_text = translator.translate(f"errors.{data.status_code}")
@@ -163,6 +205,7 @@ def signup():
         else:
             top_text = translator.translate("sign-up.top text password fail")
     confirm = button(finish_text, finish_signup, window)
+    back_button = button(back_text, main, window)
 
 def user_entry(texto):
     entrada = QLineEdit()
@@ -179,10 +222,11 @@ def main():
     button(sign_up_text, signup, window)
     button(configuration_text, "None", window)
     button(change_server_text, "None", window)
-    sys.exit(app.exec())
+    
 
 if __name__ == "__main__":
     try:
         main()
+        sys.exit(app.exec())
     except Exception as e:
         print(f"Erro ao executar a aplicação: {e}")
