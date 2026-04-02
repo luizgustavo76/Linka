@@ -15,11 +15,13 @@
         "search": "pesquisar"
     },
     "global":{
-        "back":"voltar"
+        "username":"Nome de usuário",
+        "back":"voltar",
+        "send":"enviar"
     },
     "add friends":{
-        "username":"Nome de usuário",
-        "message":"Recado"
+        "message":"Recado",
+        "request send":"pedido de enviado aceito"
     },
     "chat":{
         "type here":"Escreva aqui"
