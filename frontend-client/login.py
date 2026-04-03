@@ -1,4 +1,5 @@
-def main_app():    
+def main_app():
+    #TERMINAR HOJE AINDA    
     import sys
     import os
     import time
@@ -39,7 +40,7 @@ def main_app():
             config["LANG"] = {"lang": "en"}
 
         if "FAST-LOGIN" not in config:
-            config["FAST-LOGIN"] = {"username": "", "token": ""}
+            config["FAST-LOGIN"] = {"username": "", "token": "", "password":""}
 
     create_config(None, None, None)
 
@@ -109,7 +110,6 @@ def main_app():
         entrada_senha = user_entry(password_text)
         button(back_text, main, window)
         def send():
-            global token
             nome = get_text(entrada_nome)
             senha = get_text(entrada_senha)
             try:
@@ -118,32 +118,18 @@ def main_app():
                     json={"username":nome, "senha":senha},
                     timeout=5
                 )
-                
-                fast_login = requests.post(
-                    url + "/fast-login",
-                    json = {
-                        "username":nome,
-                        "token":token
-                    },
-                    timeout=5
-                )
-                if fast_login.status_code == 200:
-                    resp_fast = fast_login.json()
-                    new_token = resp_fast.get("token")
-                    if new_token:
-                        token = new_token
-                        config["FAST-LOGIN"]["username"] = nome
-                        config["FAST-LOGIN"]["token"] = new_token
-                        with open("config-login.cfg", "w", encoding="utf-8") as f:
-                            config.write(f)
+                if dados_login.status_code in (200, 201):
+                    config["FAST-LOGIN"]["password"] = senha
+                    with open("config-login.cfg", "w", encoding="utf-8") as f:
+                        config.write(f)
 
                 if dados_login.status_code == 200:
                     label("login feito com sucesso", window)
                 else:
                     label(f"erro ao efetuar login {dados_login.status_code}")
-            except:
+            except Exception as e:
                 clean_layout(layout)
-                label("Um erro aconteceu no servidor, verfique a conexão",window)
+                label(f"Um erro aconteceu no servidor, verfique a conexão{e}",window)
                 
 
         button("Pronto", send, window)
