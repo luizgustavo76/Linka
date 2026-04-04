@@ -46,6 +46,12 @@ def main_app():
     back_text = translator.translate("global.back")
     message_text = translator.translate("add friends.message")
     send_text = translator.translate("global.send")
+    accept_text = translator.translate("inbox.accept")
+    denied_text = translator.translate("inbox.denied")
+    friends_requests_text = translator.translate("inbox.friends requests")
+    news_text = translator.translate("inbox.news")
+    signout_text = translator.translate("configurations.sign-out")
+    exit_label_text = translator.translate("configurations.exit label")
     def clean_layout(layout):
         while layout.count():
             item = layout.takeAt(0)
@@ -146,14 +152,34 @@ def main_app():
 
         button(send_text, send, window)
         button(back_text, main, window)
-        
+    def inbox():
+        clean_layout(layout)
+        label(friends_requests_text, window)
+        data_inbox = requests.post(
+            url + "/inbox",
+            json={
+                "username":username
+            },
+            timeout=5
+        )
+        if data_inbox.status_code in (200, 201):
+            response_inbox = data_inbox.json()
+            print(response_inbox)
+        back_button = button(back_text, main, window)
+    def configurations():
+        clean_layout(layout)
+        def sign_out():
+            os.remove("config-login.cfg")
+            clean_layout(layout)
+            label(exit_label_text, window)
+        button(signout_text, sign_out, window)
     def main():
         clean_layout(layout)
         label("welcome back", window)
         icon_button("../assets", "chat.png", chat_text, "None")
         icon_button("../assets", "add-friends.png", add_friends_text, add_friends)
-        icon_button("../assets", "configurations.png", configurations_text, "None")
-        icon_button("./assets","inbox.webp", inbox_text, "None")
+        icon_button("../assets", "configurations.png", configurations_text, configurations)
+        icon_button("./assets","inbox.webp", inbox_text, inbox)
 
     if __name__ != "__main__":
         try:

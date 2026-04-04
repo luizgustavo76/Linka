@@ -25,5 +25,15 @@
     },
     "chat":{
         "type here":"Escreva aqui"
+    },
+    "inbox":{
+        "accept":"aceitar",
+        "denied":"recusar",
+        "friends requests":"Pedidos de amizades",
+        "news":"novidades"
+    },
+    "configurations":{
+        "sign-out":"Sair da conta",
+        "exit label":"pode fechar o app agora"
     }
 }

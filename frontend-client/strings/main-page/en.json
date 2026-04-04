@@ -20,9 +20,20 @@
         "send":"send"
     },
     "add friends":{
-        "message":"message"
+        "message":"message",
+        "request send":"friend request sent"
     },
     "chat":{
         "type here":"Type here"
+    },
+     "inbox":{
+        "accept":"accept",
+        "denied":"denied",
+        "friends requests":"friends requests",
+        "news":"news"
+    },
+    "configurations":{
+        "sign-out":"Sign-out",
+        "exit label":"you can exit app now"
     }
 }

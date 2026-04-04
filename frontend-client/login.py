@@ -1,5 +1,4 @@
-def main_app():
-    #TERMINAR HOJE AINDA    
+def main_app():    
     import sys
     import os
     import time
@@ -119,6 +118,7 @@ def main_app():
                     timeout=5
                 )
                 if dados_login.status_code in (200, 201):
+                    config["FAST-LOGIN"]["username"] = nome
                     config["FAST-LOGIN"]["password"] = senha
                     with open("config-login.cfg", "w", encoding="utf-8") as f:
                         config.write(f)
@@ -197,6 +197,7 @@ def main_app():
                         )
                         new_token = data_token.json().get("token")
                         config["FAST-LOGIN"]["username"] = user
+                        config["FAST-LOGIN"]["password"] = password
                         config["FAST-LOGIN"]["token"] = new_token
                         with open("config-login.cfg", "w", encoding="utf-8") as f:
                             config.write(f)
