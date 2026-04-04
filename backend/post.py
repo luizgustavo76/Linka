@@ -71,7 +71,7 @@ def feed():
     lista_posts = []
 
     for post in posts:
-        lista_posts.post_bpend({
+        lista_posts.append({
             "id": post[0],
             "username": post[1],
             "text_post": post[2],
