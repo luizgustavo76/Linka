@@ -63,7 +63,7 @@ def register():
     try:
         dados = request.get_json()
         username = dados.get("username")
-        senha = dados.get("senha")
+        password = dados.get("password")
         email = dados.get("email")
         conn = login_system.get_db_login()
         cur = conn.cursor()
@@ -73,7 +73,7 @@ def register():
         if resultado:
             return jsonify({"status":"username já existe"}),400
         else:
-            senha_com_hash = login_system.gerar_hash(senha)
+            senha_com_hash = login_system.gerar_hash(password)
             conn = login_system.get_db_login()
             cur = conn.cursor()
             cur.execute("""
@@ -135,7 +135,7 @@ def login():
     oauth = dados.get("oauth")
     if not oauth:
         username = dados.get("username")
-        senha = dados.get("senha")
+        password = dados.get("password")
         conn = login_system.get_db_login()
         cur = conn.cursor()
         cur.execute("SELECT username FROM login WHERE username = ?", (username,))
@@ -150,7 +150,7 @@ def login():
             cur.execute("SELECT senha FROM login WHERE username =?", (username,))
             resultado_senha = cur.fetchone()
             hash_salvo = resultado_senha[0]
-            senha_descodificada = login_system.verificar_hash(senha, hash_salvo)
+            senha_descodificada = login_system.verificar_hash(password, hash_salvo)
             conn.close()
             if senha_descodificada:
                 return jsonify({"status":"login is sucessful"}), 200

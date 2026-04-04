@@ -38,7 +38,7 @@ def view():
     remittee = data.get("remittee")
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT receiver, remittee, message, date FROM chat WHERE receiver = ?", (receiver,))
+    cur.execute("SELECT receiver, remittee, message, date FROM chat WHERE receiver = ?", (receiver, remittee))
     resultado = cur.fetchall()
     conn.commit()
     conn.close()
