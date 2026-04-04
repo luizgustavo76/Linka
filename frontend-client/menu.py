@@ -52,6 +52,7 @@ def main_app():
     news_text = translator.translate("inbox.news")
     signout_text = translator.translate("configurations.sign-out")
     exit_label_text = translator.translate("configurations.exit label")
+    error_feed_text = translator.translate("feed.error")
     def clean_layout(layout):
         while layout.count():
             item = layout.takeAt(0)
@@ -130,6 +131,41 @@ def main_app():
         entrada.setPlaceholderText(texto)
         layout.addWidget(entrada)
         return entrada
+    def icon_buttons_row(buttons_info):
+        """
+        Cria uma linha de botões lado a lado.
+        buttons_info = [
+            {"dir": "../assets", "icon": "chat.png", "text": "Chat", "action": "None"},
+            {"dir": "../assets", "icon": "add-friends.png", "text": "Add Friends", "action": add_friends}
+        ]
+        """
+        row_container = QWidget()
+        row_layout = QHBoxLayout(row_container)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(10)
+
+        for info in buttons_info:
+            botao_container = QWidget()
+            botao_layout = QVBoxLayout(botao_container)
+            botao_layout.setContentsMargins(0,0,0,0)
+            botao_layout.setSpacing(4)
+
+            botao = QPushButton("")
+            botao.setIcon(QIcon(info["dir"] + "/" + info["icon"]))
+            botao.setIconSize(QSize(48,48))
+            botao.setFixedSize(60,60)
+            if info["action"] != "None":
+                botao.clicked.connect(info["action"])
+
+            label_widget = QLabel(info["text"])
+            label_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            label_widget.setStyleSheet("color: white; font-weight: bold;")
+
+            botao_layout.addWidget(botao, alignment=Qt.AlignmentFlag.AlignCenter)
+            botao_layout.addWidget(label_widget)
+            row_layout.addWidget(botao_container)
+
+        layout.addWidget(row_container)
     def add_friends():
         clean_layout(layout)
         username_entry = user_entry(username_text)
@@ -152,6 +188,10 @@ def main_app():
 
         button(send_text, send, window)
         button(back_text, main, window)
+    def scroll_area():
+        scroll = QScrollArea()          
+        scroll.setWidgetResizable(True) 
+        layout.addWidget(scroll)
     def inbox():
         clean_layout(layout)
         label(friends_requests_text, window)
@@ -174,18 +214,32 @@ def main_app():
             label(exit_label_text, window)
         button(signout_text, sign_out, window)
         button(back_text, main, window)
+    def feed():
+        clean_layout(layout)
+        scroll_area()
+        button(back_text, main, window)
+        try:
+            data_feed = requests.get(url + "/feed")
+            if data_feed.status_code in (200, 201):
+                response_feed = data_feed.json()
+                print(response_feed)
+        except:
+            label(error_feed_text, window)
     def main():
         clean_layout(layout)
-        label("welcome back", window)
-        icon_button("../assets", "chat.png", chat_text, "None")
-        icon_button("../assets", "add-friends.png", add_friends_text, add_friends)
-        icon_button("../assets", "configurations.png", configurations_text, configurations)
-        icon_button("./assets","inbox.webp", inbox_text, inbox)
-
+        label(welcome_text, window)
+        icon_buttons_row([
+            {"dir": "../assets", "icon": "chat.png", "text": chat_text, "action": add_friends},
+            {"dir": "../assets", "icon": "add-friends.png", "text": add_friends_text, "action": add_friends}
+        ])
+        icon_buttons_row([
+            {"dir": "../assets", "icon": "configurations.png", "text": configurations_text, "action": configurations},
+            {"dir": "../assets", "icon": "inbox.png", "text": inbox_text, "action": inbox}
+        ])
+        icon_buttons_row([{"dir": "../assets", "icon": "posts.png", "text": feed_text, "action": feed}])
+        
     if __name__ != "__main__":
-        try:
-            main()
-            window.show()
-            sys.exit(app.exec())
-        except Exception as e:
-            print(f"Erro ao executar a aplicação: {e}")
+        main()
+        window.show()
+        sys.exit(app.exec())
+       
