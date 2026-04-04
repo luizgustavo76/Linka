@@ -114,7 +114,7 @@ def main_app():
             try:
                 dados_login = requests.post(
                     url + "/login",
-                    json={"username":nome, "senha":senha},
+                    json={"username":nome, "password":senha},
                     timeout=5
                 )
                 if dados_login.status_code in (200, 201):
@@ -179,7 +179,7 @@ def main_app():
                         url + "/register",
                         json={
                             "username":user,
-                            "senha":password,
+                            "password":password,
                             "email":email
                         },
                         timeout=5
