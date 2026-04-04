@@ -173,6 +173,7 @@ def main_app():
             clean_layout(layout)
             label(exit_label_text, window)
         button(signout_text, sign_out, window)
+        button(back_text, main, window)
     def main():
         clean_layout(layout)
         label("welcome back", window)
