@@ -1,6 +1,6 @@
 import os
 import shutil
-import plataform
+import platform
 import subprocess
 system_os = platform.system()
 
