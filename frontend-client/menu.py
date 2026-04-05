@@ -54,6 +54,7 @@ def main_app():
     signout_text = translator.translate("configurations.sign-out")
     exit_label_text = translator.translate("configurations.exit label")
     error_feed_text = translator.translate("feed.error")
+    edit_text = translator.translate("my account.edit")
     def clean_layout(layout):
         while layout.count():
             item = layout.takeAt(0)
@@ -287,6 +288,38 @@ def main_app():
     def my_account():
         clean_layout(layout)
         button(back_text, main, window)
+        label(username, window)
+
+        try:
+            data_account = requests.get(url + f"/view_profile/{username}", timeout=5)
+
+            if data_account.status_code in (200, 201):
+                response = data_account.json()
+                print(response)
+
+                if response == []:
+                    data_new_profile = requests.post(
+                        url + "/create_profile",
+                        json={"username": username},
+                        timeout=5
+                    )
+
+                    if data_new_profile.status_code in (200, 201):
+                        label("Perfil criado com sucesso!", window)
+                    else:
+                        label("CRITICAL ERROR!", window)
+
+                else:
+                    label("Perfil carregado!", window)
+
+            else:
+                label("Erro ao carregar perfil!", window)
+
+        except Exception as e:
+            print(e)
+            label("Erro de conexão!", window)
+
+        button(edit_text, "None", window)
     def main():
         clean_layout(layout)
         label(welcome_text, window)

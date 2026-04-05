@@ -1,5 +1,6 @@
-from flask import Flask, request, jsonify, Blueprint, uuid, send_from_directory
+from flask import Flask, request, jsonify, Blueprint, send_from_directory
 import os
+import uuid
 import sqlite3
 #pasta atual
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -14,7 +15,15 @@ def get_db():
 def create_table():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS profile (username TEXT, bio TEXT, ProfilePicture TEXT followers INTEGER, following INTEGER)")
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS profile (
+            username TEXT PRIMARY KEY,
+            bio TEXT,
+            ProfilePicture TEXT,
+            followers INTEGER,
+            following INTEGER
+        )
+        """)
     conn.commit()
     conn.close()
 create_table()
@@ -25,13 +34,38 @@ def edit():
     content = data.get("content")
     username = data.get("username")
     if edit_mode == "bio":
-        conn = get_db
+        conn = get_db()
         cur = conn.cursor()
-        cur.execute("INSERT INTO profile (bio) VALUES (?,) WHERE username = ?", (content, username))
+        cur.execute("UPDATE profile SET bio = ? WHERE username = ?", (content, username))
         conn.commit()
         conn.close()
         return jsonify({"status":"edit is sucessful"}),200
+@profile_bp.route("/create_profile",methods=["post"])
+def create():
+    data = request.get_json()
+    username = data.get("username")
 
+    if isinstance(username, dict):
+        username = username.get("username")
+
+    if not username or not isinstance(username, str):
+        return jsonify({"error": "username inválido"}), 400
+
+    bio_default = "Olá! Eu sou novo aqui."
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO profile (username, bio) VALUES (?,?)", (username, bio_default))
+    conn.commit()
+    conn.close()
+    return jsonify({"status":"Ok"})
+@profile_bp.route("/view_profile/<username>")
+def view(username):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM profile WHERE username = ?",(username,))
+    response = cur.fetchall()
+    conn.close()
+    return jsonify(response), 200
 UPLOAD_FOLDER = "../profile-pictures"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -70,7 +104,7 @@ def upload_profile_pic():
     )
 
     conn.commit()
-
+    conn.close()
     return jsonify({"success": True, "filename": filename}), 200
 
 
