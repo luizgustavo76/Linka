@@ -223,37 +223,70 @@ def main_app():
             label(exit_label_text, window)
         button(signout_text, sign_out, window)
         button(back_text, main, window)
+    from functools import partial
+
     def feed():
         clean_layout(layout)
         button(back_text, main, window)
+
         data_feed = requests.get(url + "/feed")
         if data_feed.status_code in (200, 201):
             posts = data_feed.json()
-
-            
             posts_dict = {post['id']: post for post in posts}
 
-            
             labels = []
 
             for post in posts_dict.values():
-                
+
                 frame = QFrame()
                 frame_layout = QVBoxLayout(frame)
-                
-                
+                star_layout = QHBoxLayout()
+
                 frame_layout.addWidget(QLabel(f"{post['username']}"))
                 frame_layout.addWidget(QLabel(f"{post['text_post']}"))
                 frame_layout.addWidget(QLabel(f"{post['datetime']}"))
+
                 icon_button = QPushButton()
                 icon_button.setIcon(QIcon("../assets/default_star.png"))
                 icon_button.setIconSize(QSize(24, 24))
                 icon_button.setFixedSize(30, 30)
                 icon_button.setStyleSheet("border: none;")
-                frame_layout.addWidget(icon_button)
-                labels.append(frame)  
+                icon_button.clicked.connect(partial(toggle_star, icon_button))
+                star_label = QLabel("0")
+                star_label.setStyleSheet("color: white; font-size: 14px;")
+
+                star_layout.addWidget(icon_button)
+                star_layout.addWidget(star_label)
+                star_layout.addStretch()
+
+                frame_layout.addLayout(star_layout)
+
+                labels.append(frame)
 
             scroll_area(layout, labels)
+
+
+    def toggle_star(button, post_id):
+        if button.property("clicked") == True:
+            button.setProperty("clicked", False)
+            button.setIcon(QIcon("../assets/default_star.png"))
+        else:
+            button.setProperty("clicked", True)
+            try:
+                data_star = requests.post(
+                    url + "/star",
+                    json={
+                        "post_id":post_id,
+                        "add-or-remove":"add"
+                    },
+                    timeout=5
+                )
+            except:
+                pass
+            button.setIcon(QIcon("../assets/star.png"))
+    def my_account():
+        clean_layout(layout)
+        button(back_text, main, window)
     def main():
         clean_layout(layout)
         label(welcome_text, window)
@@ -265,7 +298,7 @@ def main_app():
             {"dir": "../assets", "icon": "configurations.png", "text": configurations_text, "action": configurations},
             {"dir": "../assets", "icon": "inbox.png", "text": inbox_text, "action": inbox}
         ])
-        icon_buttons_row([{"dir": "../assets", "icon": "posts.png", "text": feed_text, "action": feed}])
+        icon_buttons_row([{"dir": "../assets", "icon": "posts.png", "text": feed_text, "action": feed}, {"dir": "../assets", "icon": "my-account.png", "text": my_account_text, "action": my_account}])
         
     if __name__ != "__main__":
         main()

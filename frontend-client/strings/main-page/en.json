@@ -36,5 +36,9 @@
     "configurations":{
         "sign-out":"Sign-out",
         "exit label":"you can exit app now"
+    },
+    "my account":{
+        "upload":"upload a profile picture",
+        "edit":"edit"
     }
 }
