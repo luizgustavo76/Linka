@@ -101,6 +101,7 @@ def main_app():
     def get_text(entrada):
         texto = entrada.text()
         return texto
+
     def sigin():
         global token
         clean_layout(layout)

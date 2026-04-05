@@ -12,7 +12,8 @@
     },
     "feed":{
         "new post":"novo post",
-        "search": "pesquisar"
+        "search": "pesquisar",
+        "error":"erro ao carregar o feed"
     },
     "global":{
         "username":"Nome de usuário",
@@ -35,5 +36,9 @@
     "configurations":{
         "sign-out":"Sair da conta",
         "exit label":"pode fechar o app agora"
+    },
+    "my account":{
+        "upload":"upload uma foto de perfil",
+        "edit":"editar"
     }
 }
