@@ -15,12 +15,13 @@ def main_app():
     import os
     import requests
 
-
+    
     app = QApplication(sys.argv)
     window = QWidget()
     layout = QVBoxLayout(window)
     window.setWindowTitle("Menu Linka")
-    window.resize(400, 300)
+    window.setMinimumSize(900, 600)
+    window.setMaximumSize(1200, 800)
     config = configparser.ConfigParser()
     config.read("config-login.cfg")
     username = config["FAST-LOGIN"]["username"]
@@ -66,6 +67,7 @@ def main_app():
                 clean_layout(sub_layout)
             
     def button(texto,  acao, janela):
+        
         if acao == "None":
             botao = QPushButton(texto, janela)
             layout.addWidget(botao)
@@ -75,6 +77,7 @@ def main_app():
             botao.clicked.connect(acao)
             layout.addWidget(botao)
             return botao
+    
     def label(text, window):
         label_text = QLabel(text)
 
@@ -188,10 +191,16 @@ def main_app():
 
         button(send_text, send, window)
         button(back_text, main, window)
-    def scroll_area():
-        scroll = QScrollArea()          
-        scroll.setWidgetResizable(True) 
-        layout.addWidget(scroll)
+    def scroll_area(parent_layout, widgets_list):
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
+        for w in widgets_list:
+            scroll_layout.addWidget(w)
+        
+        scroll.setWidget(scroll_content)
+        parent_layout.addWidget(scroll)
     def inbox():
         clean_layout(layout)
         label(friends_requests_text, window)
@@ -216,15 +225,35 @@ def main_app():
         button(back_text, main, window)
     def feed():
         clean_layout(layout)
-        scroll_area()
         button(back_text, main, window)
-        try:
-            data_feed = requests.get(url + "/feed")
-            if data_feed.status_code in (200, 201):
-                response_feed = data_feed.json()
-                print(response_feed)
-        except:
-            label(error_feed_text, window)
+        data_feed = requests.get(url + "/feed")
+        if data_feed.status_code in (200, 201):
+            posts = data_feed.json()
+
+            
+            posts_dict = {post['id']: post for post in posts}
+
+            
+            labels = []
+
+            for post in posts_dict.values():
+                
+                frame = QFrame()
+                frame_layout = QVBoxLayout(frame)
+                
+                
+                frame_layout.addWidget(QLabel(f"{post['username']}"))
+                frame_layout.addWidget(QLabel(f"{post['text_post']}"))
+                frame_layout.addWidget(QLabel(f"{post['datetime']}"))
+                icon_button = QPushButton()
+                icon_button.setIcon(QIcon("../assets/default_star.png"))
+                icon_button.setIconSize(QSize(24, 24))
+                icon_button.setFixedSize(30, 30)
+                icon_button.setStyleSheet("border: none;")
+                frame_layout.addWidget(icon_button)
+                labels.append(frame)  
+
+            scroll_area(layout, labels)
     def main():
         clean_layout(layout)
         label(welcome_text, window)
