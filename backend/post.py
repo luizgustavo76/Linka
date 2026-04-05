@@ -21,6 +21,7 @@ def create_db():
                 username TEXT,
                 text_post TEXT,
                 star INTEGER,
+                unstar INTEGER,
                 datetime TEXT,
                 id INTEGER PRIMARY KEY AUTOINCREMENT)""")
     conn.commit()
@@ -60,6 +61,29 @@ def view_post(post_id):
             "username":username
         }
         return corpo_retorno
+@post_bp.route("/star", methods=["POST"])
+def star():
+    data = request.get_json()
+    post_id = data.get("post_id")
+    add_remove = data.get("add-or-remove")
+    star = 0
+    if add_remove == "add":
+        star = 1
+    else:
+        star = 0
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO posts(?) WHERE id = ?", (star, post_id,))
+    conn.commit()
+    conn.close()
+@post_bp.route("/return-stars<int:post_id>")
+def return_stars(post_id):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT star FROM posts WHERE id = ?", (post_id,))
+    stars = cur.fetchone()
+    conn.close()
+    return stars
 @post_bp.route("/feed")
 def feed():
     conn = get_db()
