@@ -9,6 +9,7 @@ def main_app():
     from PyQt6.QtCore import QSize
     from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QObject
     from PyQt6.QtWidgets import QSizePolicy
+    from PyQt6.QtGui import QPalette
     import Translator
     import configparser
     import subprocess
@@ -31,7 +32,34 @@ def main_app():
         translator = Translator.Translator("strings/main-page/pt-br.json")
     else:
         translator = Translator.Translator("strings/main-page/en.json")
+    
+    app.setStyleSheet("""
+        QWidget {
+            background-color: palette(window);
+            color: palette(window-text);
+        }
 
+        QPushButton {
+            background-color: palette(button);
+            color: palette(button-text);
+            border-radius: 8px;
+            padding: 6px;
+        }
+
+        QPushButton:hover {
+            border: 1px solid #1e90ff;
+        }
+
+        QLineEdit {
+            background-color: palette(base);
+            color: palette(text);
+            border: 1px solid gray;
+            padding: 5px;
+        }
+        """)
+    palette = app.palette()
+    text_color = palette.color(QPalette.ColorRole.WindowText).name()
+    bg_color = palette.color(QPalette.ColorRole.Window).name()
     #translated texts
     welcome_text = translator.translate("initial-page.welcome back")
     chat_text = translator.translate("initial-page.chat")
@@ -81,7 +109,7 @@ def main_app():
     
     def label(text, window):
         label_text = QLabel(text)
-
+        QLabel.setStyleSheet(window, f"color: {text_color};")
         if window.layout() is None:
             layout = QVBoxLayout()
             window.setLayout(layout)
@@ -103,19 +131,7 @@ def main_app():
         botao.setIconSize(QSize(48, 48))
         botao.setFixedSize(60, 60)
 
-        botao.setStyleSheet("""
-        QPushButton {
-            background-color: #1b1b1b;
-            border-radius: 10px;
-            border: 2px solid #2b2b2b;
-        }
-        QPushButton:hover {
-            border: 2px solid #1e90ff;
-        }
-        """)
-
         label = QLabel(text)
-        label.setStyleSheet("font-size: 16px; font-weight: bold; color: white;")
 
         linha.addWidget(botao)
         linha.addWidget(label)
@@ -163,7 +179,7 @@ def main_app():
 
             label_widget = QLabel(info["text"])
             label_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            label_widget.setStyleSheet("color: white; font-weight: bold;")
+            label_widget.setStyleSheet("font-weight: bold;")
 
             botao_layout.addWidget(botao, alignment=Qt.AlignmentFlag.AlignCenter)
             botao_layout.addWidget(label_widget)
@@ -334,7 +350,9 @@ def main_app():
         icon_buttons_row([{"dir": "../assets", "icon": "posts.png", "text": feed_text, "action": feed}, {"dir": "../assets", "icon": "my-account.png", "text": my_account_text, "action": my_account}])
         
     if __name__ != "__main__":
-        main()
-        window.show()
-        sys.exit(app.exec())
-       
+        try:
+            main()
+            window.show()
+            sys.exit(app.exec())
+        except Exception as e:
+            print(e)
