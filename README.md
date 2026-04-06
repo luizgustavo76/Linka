@@ -2,6 +2,7 @@
 
 Linka is an open-source social network focused on decentralization.
 It allows anyone to host their own server and customize the platform, including algorithms and core features.
+its so easy to deploy a server and start to use
 
 ## Features
 - Decentralized servers
