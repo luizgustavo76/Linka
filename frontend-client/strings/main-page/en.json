@@ -13,7 +13,8 @@
     "feed":{
         "new post":"new post",
         "search": "search",
-        "error":"error in feed loading"
+        "error":"error in feed loading",
+        "text post":"text post"
     },
     "global":{
         "username":"username",

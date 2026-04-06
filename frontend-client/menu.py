@@ -15,7 +15,7 @@ def main_app():
     import subprocess
     import os
     import requests
-
+    from datetime import datetime, date
     
     app = QApplication(sys.argv)
     window = QWidget()
@@ -83,6 +83,8 @@ def main_app():
     exit_label_text = translator.translate("configurations.exit label")
     error_feed_text = translator.translate("feed.error")
     edit_text = translator.translate("my account.edit")
+    new_post_text = translator.translate("feed.new post")
+    text_post = translator.translate("feed.text post")
     def clean_layout(layout):
         while layout.count():
             item = layout.takeAt(0)
@@ -241,11 +243,35 @@ def main_app():
         button(signout_text, sign_out, window)
         button(back_text, main, window)
     from functools import partial
-
+    def new_post():
+        clean_layout(layout)
+        label(new_post_text, window)
+        entry_post = user_entry(text_post)
+        def send_post():
+            now = datetime.now()
+            formated_hour = now.strftime("%d/%m/%Y %H:%M:%S")
+            post = get_text(entry_post)
+            try:
+                data_post = requests.post(
+                    url + "/new",
+                    json={
+                        "username":username,
+                        "text_post":post,
+                        "datetime":formated_hour
+                    },
+                    timeout=5
+                )
+                if data_post.status_code in (200, 201):
+                    main()
+                else:
+                   pass
+            except Exception as e:
+                print(e) 
+        button(send_text, send_post, window)
     def feed():
         clean_layout(layout)
         button(back_text, main, window)
-
+        button(new_post_text, new_post, window)
         data_feed = requests.get(url + "/feed")
         if data_feed.status_code in (200, 201):
             posts = data_feed.json()
