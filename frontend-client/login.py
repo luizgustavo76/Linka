@@ -61,7 +61,9 @@ def main_app():
     change_server_text = translator.translate("initial-page.change server")
     login_with_github_text = translator.translate("initial-page.login with github")
     configuration_text = translator.translate("initial-page.configurations")
-    back_text = translator.translate("global.back")      
+    back_text = translator.translate("global.back") 
+    server_domain_text = translator.translate("change server.server domain")     
+    change_text = translator.translate("change server.change")
     app = QApplication(sys.argv)
 
     window = QWidget()
@@ -223,16 +225,31 @@ def main_app():
         entrada.setPlaceholderText(texto)
         layout.addWidget(entrada)
         return entrada
+    def change_server():
+        clean_layout(layout)
+        server_url = user_entry(server_domain_text)
+        def change():
+            try:
+                config["SERVER"]["url"] = get_text(server_url)
+                with open("config-login.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+                main()
+            except Exception as e:
+                print(e)
+        button(change_text,change_server, window)
+        button(back_text, main, window)
+
+
     def main():
         clean_layout(layout)
         label("Linka", window)
-        window.setWindowTitle("Faça login no Linka!")
+        window.setWindowTitle("Login")
         window.resize(400, 300) 
         window.show()
         button(sign_in_text, sigin, window)
         button(sign_up_text, signup, window)
         button(configuration_text, "None", window)
-        button(change_server_text, "None", window)
+        button(change_server_text, change_server, window)
         
 
     if __name__ != "__main__":

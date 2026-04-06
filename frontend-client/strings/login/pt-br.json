@@ -30,5 +30,9 @@
     },
     "global":{
         "back":"Voltar"
+    },
+    "change server":{
+        "server domain":"dominio do servidor",
+        "change":"mudar"
     }
 }
