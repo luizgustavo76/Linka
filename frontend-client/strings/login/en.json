@@ -30,5 +30,9 @@
     },
     "global":{
         "back":"back"
+    },
+    "change server":{
+        "server domain":"server domain",
+        "change":"change"
     }
 }
