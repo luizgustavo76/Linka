@@ -267,6 +267,7 @@ def main_app():
                    pass
             except Exception as e:
                 print(e) 
+        button(back_text, main, window)
         button(send_text, send_post, window)
     def feed():
         clean_layout(layout)
