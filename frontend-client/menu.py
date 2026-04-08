@@ -27,6 +27,7 @@ def main_app():
     config.read("config-login.cfg")
     username = config["FAST-LOGIN"]["username"]
     url = config["SERVER"]["url"]
+    url_federations = config["FEDERATIONS"]["url"]
     lang = config["LANG"]["lang"]
     if lang == "pt-br":
         translator = Translator.Translator("strings/main-page/pt-br.json")
@@ -240,6 +241,18 @@ def main_app():
             os.remove("config-login.cfg")
             clean_layout(layout)
             label(exit_label_text, window)
+        def add_federations():
+            clean_layout(layout)
+            label(translator.translate("configurations.add-federations"), window)
+            entry_url = user_entry("url")
+            def send():
+                url_text = get_text(entry_url)
+                config["FEDERATIONS"]["url"] = url_text
+                with open("config-login.cfg", "w", encoding="utf-8") as f:
+                    config.write(f)
+                configurations()
+            button(send_text,send, window)
+        button(translator.translate("configurations.add-federations"), add_federations, window)
         button(signout_text, sign_out, window)
         button(back_text, main, window)
     from functools import partial

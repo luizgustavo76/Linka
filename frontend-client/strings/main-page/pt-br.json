@@ -36,7 +36,8 @@
     },
     "configurations":{
         "sign-out":"Sair da conta",
-        "exit label":"pode fechar o app agora"
+        "exit label":"pode fechar o app agora",
+        "add-federations":"adicionar federações"
     },
     "my account":{
         "upload":"upload uma foto de perfil",
