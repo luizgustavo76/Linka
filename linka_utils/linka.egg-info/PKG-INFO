@@ -1,3 +1,25 @@
+Metadata-Version: 2.4
+Name: linka
+Version: 0.1.0
+Summary: linka federations api
+Home-page: https://github.com/luizgustavo76/Linka
+Author: Luiz Gustavo Custódio Ferreira Lourenço
+Classifier: Programming Language :: Python :: 3
+Classifier: Framework :: Flask
+Classifier: License :: OSI Approved :: MIT License
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: flask
+Requires-Dist: requests
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
 How to use federations
 
 Linka's biggest advantage is the ease of creating your own server and the simple implementation of federations in just a few lines of code.
