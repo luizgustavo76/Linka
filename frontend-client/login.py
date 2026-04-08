@@ -26,7 +26,7 @@ def main_app():
             config["SERVER"] = {"url": "http://127.0.0.1:5000"}
             config["LANG"] = {"lang": "en"}
             config["FAST-LOGIN"] = {"username": "", "token": ""}
-
+            config["FEDERATIONS"] = {"url":[]}
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 config.write(f)
 
@@ -34,7 +34,8 @@ def main_app():
 
         if "SERVER" not in config:
             config["SERVER"] = {"url": "http://127.0.0.1:5000"}
-
+        if "FEDERATIONS" not in config:
+            config["FEDERATIONS"] = {"url":[]}
         if "LANG" not in config:
             config["LANG"] = {"lang": "en"}
 

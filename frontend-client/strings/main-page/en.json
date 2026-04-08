@@ -36,7 +36,8 @@
     },
     "configurations":{
         "sign-out":"Sign-out",
-        "exit label":"you can exit app now"
+        "exit label":"you can exit app now",
+        "add-federations":"add federations"
     },
     "my account":{
         "upload":"upload a profile picture",
