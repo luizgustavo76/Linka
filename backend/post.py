@@ -26,6 +26,7 @@ def create_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT)""")
     conn.commit()
     conn.close()
+create_db()
 #rota pra criar novo post
 @post_bp.route("/new", methods=["POST"])
 def new_post():
