@@ -20,14 +20,19 @@ def create_db():
     cur.execute("CREATE TABLE IF NOT EXISTS inbox (receiver TEXT, remittee TEXT, message TEXT)")
     conn.commit()
     conn.close()
+conn = get_db()
+cur = conn.cursor()
+cur.execute("CREATE TABLE IF NOT EXISTS inbox (receiver TEXT, remittee TEXT, message TEXT)")
+conn.commit()
+conn.close()
 create_db()
 @friends_bp.route("/inbox", methods=["POST"])
 def inbox():
     data = request.get_json()
     username = data.get("username")
     conn = get_db()
-    cur = conn.cursor
-    cur.execute("SELECT (receiver, remittee, message) FROM inbox WHERE receiver = ?",(username,))
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM inbox WHERE receiver = ?", (username,))
     select_inbox = cur.fetchall()
     conn.close()
     if select_inbox == None:
