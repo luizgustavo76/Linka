@@ -18,8 +18,68 @@ def main_app():
     from datetime import datetime, date
     
     app = QApplication(sys.argv)
+    app.setStyleSheet("""
+QWidget {
+    background-color: #121212;
+    color: #EAEAEA;
+    font-family: Arial;
+    font-size: 14px;
+}
+
+QLabel {
+    color: #EAEAEA;
+}
+
+QPushButton {
+    background-color: #1E1E1E;
+    color: white;
+    border: 1px solid #2A2A2A;
+    border-radius: 12px;
+    padding: 10px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: #242424;
+    border: 1px solid #3A3A3A;
+}
+
+QPushButton:pressed {
+    background-color: #101010;
+}
+
+QLineEdit {
+    background-color: #1A1A1A;
+    color: white;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+QScrollArea {
+    border: none;
+}
+
+QScrollBar:vertical {
+    background: #111;
+    width: 10px;
+    margin: 0px;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:vertical {
+    background: #333;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #444;
+}
+""")
     window = QWidget()
     layout = QVBoxLayout(window)
+    layout.setContentsMargins(30, 30, 30, 30)
+    layout.setSpacing(18)
     window.setWindowTitle("Menu Linka")
     window.setMinimumSize(900, 600)
     window.setMaximumSize(1200, 800)
@@ -28,6 +88,29 @@ def main_app():
     username = config["FAST-LOGIN"]["username"]
     url = config["SERVER"]["url"]
     url_federations = config["FEDERATIONS"]["url"]
+    top_bar = QFrame()
+    top_bar.setFixedHeight(60)
+    top_bar.setStyleSheet("""
+    QFrame {
+        background-color: #181818;
+        border-radius: 16px;
+    }
+    """)
+
+    top_layout = QHBoxLayout(top_bar)
+    top_layout.setContentsMargins(15, 10, 15, 10)
+
+    logo = QLabel("Linka")
+    logo.setStyleSheet("font-size: 22px; font-weight: bold;")
+
+    user = QLabel(username)
+    user.setStyleSheet("font-size: 14px; color: #AAAAAA;")
+
+    top_layout.addWidget(logo)
+    top_layout.addStretch()
+    top_layout.addWidget(user)
+
+    layout.addWidget(top_bar)
     lang = config["LANG"]["lang"]
     if lang == "pt-br":
         translator = Translator.Translator("strings/main-page/pt-br.json")
@@ -170,13 +253,13 @@ def main_app():
         for info in buttons_info:
             botao_container = QWidget()
             botao_layout = QVBoxLayout(botao_container)
-            botao_layout.setContentsMargins(0,0,0,0)
+            botao_layout.setContentsMargins(0, 0, 0, 0)
             botao_layout.setSpacing(4)
 
             botao = QPushButton("")
             botao.setIcon(QIcon(info["dir"] + "/" + info["icon"]))
-            botao.setIconSize(QSize(48,48))
-            botao.setFixedSize(60,60)
+            botao.setIconSize(QSize(136,136))
+            botao.setFixedSize(180,180)
             if info["action"] != "None":
                 botao.clicked.connect(info["action"])
 
@@ -211,6 +294,14 @@ def main_app():
 
         button(send_text, send, window)
         button(back_text, main, window)
+    def title(text):
+        t = QLabel(text)
+        t.setStyleSheet("""
+            font-size: 26px;
+            font-weight: bold;
+            padding: 12px;
+        """)
+        layout.addWidget(t)
     def scroll_area(parent_layout, widgets_list):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -296,6 +387,14 @@ def main_app():
             for post in posts_dict.values():
 
                 frame = QFrame()
+                frame.setStyleSheet("""
+                    QFrame {
+                        background-color: #1A1A1A;
+                        border: 1px solid #2F2F2F;
+                        border-radius: 14px;
+                        padding: 10px;
+                    }
+                    """)
                 frame_layout = QVBoxLayout(frame)
                 star_layout = QHBoxLayout()
 
@@ -343,7 +442,7 @@ def main_app():
             button.setIcon(QIcon("../assets/star.png"))
     def my_account():
         clean_layout(layout)
-        button(back_text, main, window)
+        
         label(username, window)
 
         try:
@@ -376,9 +475,10 @@ def main_app():
             label("Erro de conexão!", window)
 
         button(edit_text, "None", window)
+        button(back_text, main, window)
     def main():
         clean_layout(layout)
-        label(welcome_text, window)
+        title(welcome_text)
         icon_buttons_row([
             {"dir": "../assets", "icon": "chat.png", "text": chat_text, "action": add_friends},
             {"dir": "../assets", "icon": "add-friends.png", "text": add_friends_text, "action": add_friends}
