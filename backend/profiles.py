@@ -51,7 +51,7 @@ def create():
     if not username or not isinstance(username, str):
         return jsonify({"error": "username inválido"}), 400
 
-    bio_default = "Olá! Eu sou novo aqui."
+    bio_default = "rare acount wow"
     conn = get_db()
     cur = conn.cursor()
     cur.execute("INSERT INTO profile (username, bio) VALUES (?,?)", (username, bio_default))
