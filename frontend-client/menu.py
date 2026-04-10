@@ -3,7 +3,7 @@ def main_app():
     from PyQt6.QtWidgets import (
         QApplication, QWidget, QLabel, QPushButton,
         QVBoxLayout, QHBoxLayout, QFrame,
-        QScrollArea, QLineEdit
+        QScrollArea, QLineEdit, QFileDialog
     )
     from PyQt6.QtGui import QIcon
     from PyQt6.QtCore import QSize
@@ -169,6 +169,7 @@ QScrollBar::handle:vertical:hover {
     edit_text = translator.translate("my account.edit")
     new_post_text = translator.translate("feed.new post")
     text_post = translator.translate("feed.text post")
+    profile_picture_text = translator.translate("my account.profile picture")
     def clean_layout(layout):
         while layout.count():
             item = layout.takeAt(0)
@@ -443,7 +444,7 @@ QScrollBar::handle:vertical:hover {
     def my_account():
         clean_layout(layout)
         
-        label(username, window)
+        title(username)
 
         try:
             data_account = requests.get(url + f"/view_profile/{username}", timeout=5)
@@ -465,7 +466,7 @@ QScrollBar::handle:vertical:hover {
                         label("CRITICAL ERROR!", window)
 
                 else:
-                    label("Perfil carregado!", window)
+                    label(response[0][1], window)
 
             else:
                 label("Erro ao carregar perfil!", window)
@@ -473,8 +474,40 @@ QScrollBar::handle:vertical:hover {
         except Exception as e:
             print(e)
             label("Erro de conexão!", window)
+        def edit():
+            clean_layout(layout)
+            title(edit_text)
+            def select_profile_picture():
+                picture, _ = QFileDialog.getOpenFileName(
+                window,
+                "Select a image",
+                "",
+                "Image (*.png *.jpg *.jpeg)"
+                )
 
-        button(edit_text, "None", window)
+                if picture:
+                    print("Imagem escolhida:", picture)
+            button(profile_picture_text, select_profile_picture, window)
+            bio_entry = user_entry("bio")
+            def send_edit():
+                bio_get = get_text(bio_entry)
+                if bio_get:
+                    data_edit = requests.post(
+                        url + "/edit",
+                        json={
+                            "edit-mode":"bio",
+                            "content":bio_get,
+                            "username":username
+                        },
+                        timeout=5
+                    )
+                else:
+                    pass
+            
+            
+            button("ok", send_edit, window)
+            button(back_text,my_account, window)
+        button(edit_text, edit, window)
         button(back_text, main, window)
     def main():
         clean_layout(layout)

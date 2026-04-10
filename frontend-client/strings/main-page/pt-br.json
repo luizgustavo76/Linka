@@ -41,6 +41,7 @@
     },
     "my account":{
         "upload":"upload uma foto de perfil",
-        "edit":"editar"
+        "edit":"editar",
+        "profile picture":"foto de perfil"
     }
 }
