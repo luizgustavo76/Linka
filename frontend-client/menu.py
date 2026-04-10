@@ -16,6 +16,8 @@ def main_app():
     import os
     import requests
     from datetime import datetime, date
+    from PyQt6.QtGui import QPixmap
+    from PyQt6.QtCore import Qt
     
     app = QApplication(sys.argv)
     app.setStyleSheet("""
@@ -441,9 +443,53 @@ QScrollBar::handle:vertical:hover {
             except:
                 pass
             button.setIcon(QIcon("../assets/star.png"))
+    def show_profile_picture(filename):
+        try:
+            image_url = url + "/profile_pics/" + filename
+            response = requests.get(image_url, timeout=10)
+
+            if response.status_code == 200:
+                pixmap = QPixmap()
+                pixmap.loadFromData(response.content)
+
+                label_pic = QLabel()
+                label_pic.setPixmap(
+                    pixmap.scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio)
+                )
+
+                layout.addWidget(label_pic)
+            else:
+                print("Erro ao baixar imagem:", response.status_code)
+
+        except Exception as e:
+            print("Erro:", e)
     def my_account():
         clean_layout(layout)
-        
+
+        try:
+            data_account = requests.get(url + f"/view_profile/{username}", timeout=5)
+
+            if data_account.status_code in (200, 201):
+                response_profile = data_account.json()
+
+                if response_profile != []:
+                    filename = response_profile[0][2]
+
+                    if filename:
+                        show_profile_picture(filename)
+                    else:
+                        show_profile_picture("default.png")
+                else:
+                    show_profile_picture("default.png")
+
+            else:
+                print("Erro ao carregar perfil:", data_account.status_code)
+                show_profile_picture("default.png")
+
+        except Exception as e:
+            print("Erro:", e)
+            show_profile_picture("default.png")
+
         title(username)
 
         try:
@@ -477,16 +523,47 @@ QScrollBar::handle:vertical:hover {
         def edit():
             clean_layout(layout)
             title(edit_text)
+            def upload_profile_picture(picture_path):
+                try:
+                    with open(picture_path, "rb") as f:
+                        files = {
+                            "file": f
+                        }
+
+                        data = {
+                            "username": username
+                        }
+
+                        response = requests.post(
+                            url + "/upload_profile_pic",
+                            files=files,
+                            data=data,
+                            timeout=10
+                        )
+
+                    print(response.status_code, response.text)
+
+                    if response.status_code in (200, 201):
+                        return response.json()
+                    else:
+                        print("Erro no upload:", response.text)
+                        return None
+
+                except Exception as e:
+                    print("Erro:", e)
+                    return None
             def select_profile_picture():
                 picture, _ = QFileDialog.getOpenFileName(
-                window,
-                "Select a image",
-                "",
-                "Image (*.png *.jpg *.jpeg)"
+                    window,
+                    "Select a image",
+                    "",
+                    "Image (*.png *.jpg *.jpeg *.webp)"
                 )
 
                 if picture:
-                    print("Imagem escolhida:", picture)
+                    result = upload_profile_picture(picture)
+
+
             button(profile_picture_text, select_profile_picture, window)
             bio_entry = user_entry("bio")
             def send_edit():
