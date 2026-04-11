@@ -67,17 +67,22 @@ def star():
     data = request.get_json()
     post_id = data.get("post_id")
     add_remove = data.get("add-or-remove")
-    star = 0
-    if add_remove == "add":
-        star = 1
-    else:
-        star = 0
+
+    star = 1 if add_remove == "add" else 0
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO posts(?) WHERE id = ?", (star, post_id,))
+
+    cur.execute(
+        "UPDATE posts SET star = ? WHERE id = ?",
+        (star, post_id,)
+    )
+
     conn.commit()
     conn.close()
-@post_bp.route("/return-stars<int:post_id>")
+
+    return {"status": "ok", "star": star}
+@post_bp.route("/return-stars/<int:post_id>")
 def return_stars(post_id):
     conn = get_db()
     cur = conn.cursor()
