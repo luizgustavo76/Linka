@@ -1,18 +1,19 @@
 #include <QApplication>
-#include <QTextEdit>
-#include <iostream>
-#include <QtWidgets>
-#include <QtCore>
-#include <QtGui>
-using namespace std;
-int main(int argv, char **args)
-{
-QApplication app(argv, args);
-QWidget window;
-window.setWindowTitle("Linka Mobile");
-window.resize(400, 600);
+#include <QWidget>
+#include <QPushButton>
 
-QPushButton button("HI!");
-button.show();
-return app.exec();
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+
+    QWidget window;
+    window.setWindowTitle("Linka Mobile");
+    window.resize(400, 600);
+
+    QPushButton button("HI!", &window);
+    button.move(150, 250);
+
+    window.show();
+
+    return app.exec();
 }
