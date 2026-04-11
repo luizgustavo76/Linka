@@ -1,0 +1,47 @@
+{
+    "initial-page": {
+        "welcome back":"Welcome back",
+        "Linka rights":"Linka 2026 all rights ",
+        "chat":"chat",
+        "add friends":"add friends",
+        "friends":"friends",
+        "inbox":"inbox",
+        "feed":"feed",
+        "my account":"my account",
+        "configurations":"configurations"
+    },
+    "feed":{
+        "new post":"new post",
+        "search": "search",
+        "error":"error in feed loading",
+        "text post":"text post"
+    },
+    "global":{
+        "username":"username",
+        "back":"back",
+        "send":"send"
+    },
+    "add friends":{
+        "message":"message",
+        "request send":"friend request sent"
+    },
+    "chat":{
+        "type here":"Type here"
+    },
+     "inbox":{
+        "accept":"accept",
+        "denied":"denied",
+        "friends requests":"friends requests",
+        "news":"news"
+    },
+    "configurations":{
+        "sign-out":"Sign-out",
+        "exit label":"you can exit app now",
+        "add-federations":"add federations"
+    },
+    "my account":{
+        "upload":"upload a profile picture",
+        "edit":"edit",
+        "profile picture":"profile picture"
+    }
+}
