@@ -410,7 +410,7 @@ QScrollBar::handle:vertical:hover {
                 icon_button.setIconSize(QSize(24, 24))
                 icon_button.setFixedSize(30, 30)
                 icon_button.setStyleSheet("border: none;")
-                icon_button.clicked.connect(partial(toggle_star, icon_button))
+                icon_button.clicked.connect(partial(toggle_star, icon_button, post["id"]))
                 qtd_stars = requests.get(url + "/return-stars/" + str(post["id"]))
                 star_label = QLabel(qtd_stars.text)
                 star_label.setStyleSheet("color: white; font-size: 14px;")
@@ -432,17 +432,21 @@ QScrollBar::handle:vertical:hover {
             button.setIcon(QIcon("../assets/default_star.png"))
         else:
             button.setProperty("clicked", True)
+
             try:
                 data_star = requests.post(
                     url + "/star",
                     json={
-                        "post_id":post_id,
-                        "add-or-remove":"add"
+                        "post_id": post_id,
+                        "add-or-remove": "add"
                     },
                     timeout=5
                 )
-            except:
-                pass
+                print(data_star.status_code, data_star.text)
+
+            except Exception as e:
+                print("Erro:", e)
+
             button.setIcon(QIcon("../assets/star.png"))
     def show_profile_picture(filename):
         try:
