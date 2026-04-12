@@ -411,7 +411,8 @@ QScrollBar::handle:vertical:hover {
                 icon_button.setFixedSize(30, 30)
                 icon_button.setStyleSheet("border: none;")
                 icon_button.clicked.connect(partial(toggle_star, icon_button))
-                star_label = QLabel("0")
+                qtd_stars = requests.get(url + "/return-stars/" + str(post["id"]))
+                star_label = QLabel(qtd_stars.text)
                 star_label.setStyleSheet("color: white; font-size: 14px;")
 
                 star_layout.addWidget(icon_button)
