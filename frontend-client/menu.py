@@ -378,8 +378,7 @@ QScrollBar::handle:vertical:hover {
         button(send_text, send_post, window)
     def feed():
         clean_layout(layout)
-        button(back_text, main, window)
-        button(new_post_text, new_post, window)
+        
         data_feed = requests.get(url + "/feed")
         if data_feed.status_code in (200, 201):
             posts = data_feed.json()
@@ -424,30 +423,28 @@ QScrollBar::handle:vertical:hover {
                 labels.append(frame)
 
             scroll_area(layout, labels)
+            button(back_text, main, window)
+            button(new_post_text, new_post, window)
 
 
     def toggle_star(button, post_id):
         if button.property("clicked") == True:
             button.setProperty("clicked", False)
             button.setIcon(QIcon("../assets/default_star.png"))
-        else:
-            button.setProperty("clicked", True)
 
             try:
-                data_star = requests.post(
-                    url + "/star",
-                    json={
-                        "post_id": post_id,
-                        "add-or-remove": "add"
-                    },
-                    timeout=5
-                )
-                print(data_star.status_code, data_star.text)
-
+                requests.post(url + "/star", json={"post_id": post_id, "username": username, "mode": "remove"})
             except Exception as e:
                 print("Erro:", e)
 
+        else:
+            button.setProperty("clicked", True)
             button.setIcon(QIcon("../assets/star.png"))
+
+            try:
+                requests.post(url + "/star", json={"post_id": post_id, "username": username, "mode": "add"})
+            except Exception as e:
+                print("Erro:", e)
     def show_profile_picture(filename):
         try:
             image_url = url + "/profile_pics/" + filename
