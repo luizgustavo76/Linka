@@ -89,7 +89,11 @@ def return_stars(post_id):
     cur.execute("SELECT star FROM posts WHERE id = ?", (post_id,))
     stars = cur.fetchone()
     conn.close()
-    return stars
+
+    if stars is None:
+        return "0"
+
+    return str(stars[0])
 @post_bp.route("/feed")
 def feed():
     conn = get_db()
