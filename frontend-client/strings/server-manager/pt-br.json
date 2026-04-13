@@ -1,0 +1,10 @@
+{
+    "welcome":"bem vindo ao server manager",
+    "initial-page":{
+        "start":"começar",
+        "your url":"insira a url do seu servidor pra prosseguir",
+        "help":"ajuda",
+        "send":"enviar",
+        "server name":"qual será o nome que aparecerá publicamente?"
+    }
+}

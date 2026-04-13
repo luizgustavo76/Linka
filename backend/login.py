@@ -64,7 +64,7 @@ def register():
     try:
         dados = request.get_json()
         username = dados.get("username")
-        password = dados.get("password")
+        password = dados.get("senha") or dados.get("password")
         email = dados.get("email")
         conn = login_system.get_db_login()
         cur = conn.cursor()
@@ -136,7 +136,7 @@ def login():
     oauth = dados.get("oauth")
     if not oauth:
         username = dados.get("username")
-        password = dados.get("password")
+        password = dados.get("senha") or dados.get("password")
         conn = login_system.get_db_login()
         cur = conn.cursor()
         cur.execute("SELECT username FROM login WHERE username = ?", (username,))
