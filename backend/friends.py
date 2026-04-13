@@ -26,6 +26,16 @@ cur.execute("CREATE TABLE IF NOT EXISTS inbox (receiver TEXT, remittee TEXT, mes
 conn.commit()
 conn.close()
 create_db()
+@friends_bp.route("/friends", methods=["POST"])
+def friends():
+    data = request.get_json()
+    username = data.get("username")
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute()
+    except:
+        pass
 @friends_bp.route("/inbox", methods=["POST"])
 def inbox():
     data = request.get_json()
@@ -50,7 +60,7 @@ def accept():
     conn.commit()
     conn.close()
     return jsonify({"status":"friend add"}),200
-@friends_bp.route("/send-friend")
+@friends_bp.route("/send-friend", methods=["POST"])
 def send():
     data = request.get_json()
     receiver = data.get("receiver")
