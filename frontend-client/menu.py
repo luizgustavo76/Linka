@@ -588,11 +588,42 @@ QScrollBar::handle:vertical:hover {
             button(back_text,my_account, window)
         button(edit_text, edit, window)
         button(back_text, main, window)
+    def chat():
+        clean_layout(layout)
+        title(chat_text)
+        card = QFrame()
+        card.setFixedSize(250, 120)
+
+        card.setStyleSheet("""
+            QFrame {
+                background-color: #1e1e1e;
+                border-radius: 15px;
+                border: 2px solid #333;
+            }
+        """)
+
+        layout_card = QVBoxLayout(card)
+        try:
+            data_friends = requests.post(
+                url + "/friends",
+                json={
+                    "username":username
+                },
+                timeout=5
+            )
+            friends_response = data_friends.json()
+            friends_list = friends_response["friends"]
+            for friend in friends_list:
+                layout_card.addWidget(QLabel(friend))
+            
+        except Exception as e:
+            print(e)
+        button(back_text, main, window)
     def main():
         clean_layout(layout)
         title(welcome_text)
         icon_buttons_row([
-            {"dir": "../assets", "icon": "chat.png", "text": chat_text, "action": add_friends},
+            {"dir": "../assets", "icon": "chat.png", "text": chat_text, "action": chat},
             {"dir": "../assets", "icon": "add-friends.png", "text": add_friends_text, "action": add_friends}
         ])
         icon_buttons_row([

@@ -10,6 +10,8 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     QString signup_text = QString::fromStdString(translate("initial-page", "sign-up"));
+    QString signin_text = QString::fromStdString(translate("initial-page", "sign-in"));
+    QString username_text = QString::fromStdString(translate("login", "username"));
     QWidget window;
     window.setWindowTitle("Linka Mobile");
     window.resize(400, 600);
@@ -23,7 +25,7 @@ int main(int argc, char *argv[])
     auto signup = [&]()
     {
         qDebug() << "CLICOU!";
-        entry("hi");
+        entry(username_text);
     };
     auto button = [&](QString text, std::function<void()> func)
     {
