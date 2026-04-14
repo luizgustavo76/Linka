@@ -27,8 +27,9 @@ window.setMaximumSize(1200, 800)
 palette = app.palette()
 text_color = palette.color(QPalette.ColorRole.WindowText).name()
 bg_color = palette.color(QPalette.ColorRole.Window).name()
+CONFIG_FILE = "config-server.cfg"
 def create_config():
-        CONFIG_FILE = "config-server.cfg"
+        
 
         config = configparser.ConfigParser()
 
@@ -156,6 +157,11 @@ def configuration():
                     title(server_name_text)
                     server_entry = user_entry("Server")
                     button(next_text, "None", window)
+                    def next():
+                        config["SERVER"]["url"] = get_text(server_entry)
+                        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+                            config.write(f)
+                        
                 button("ok", set_server, window)
         button(start_text, start, window)
 if __name__ == "__main__":
