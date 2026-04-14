@@ -125,7 +125,13 @@ def user_entry(texto):
 def main():
     clean_layout(layout)
     title(welcome_text)
-    button(start_text, "None", window)
+    def start():
+        clean_layout(layout)
+        with open("strings/server-manager/tutorial-plugin.txt", "r") as f:
+            conteudo = f.read()
+            label(conteudo, window)
+            button("ok", "None", window)
+    button(start_text, start, window)
 if __name__ == "__main__":
         try:
             main()
