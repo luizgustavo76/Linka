@@ -327,7 +327,21 @@ QScrollBar::handle:vertical:hover {
         )
         if data_inbox.status_code in (200, 201):
             response_inbox = data_inbox.json()
-            print(response_inbox)
+            card = QFrame()
+            card.setFixedSize(250, 120)
+
+            card.setStyleSheet("""
+                QFrame {
+                    background-color: #1e1e1e;
+                    border-radius: 15px;
+                    border: 2px solid #333;
+                }
+            """)
+
+            layout_card = QVBoxLayout(card)
+            for inbox_requests in response_inbox:
+                inbox_label = QLabel(inbox_requests, window)
+                layout.addWidget(inbox_label)
         back_button = button(back_text, main, window)
     def configurations():
         clean_layout(layout)
