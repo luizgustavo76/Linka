@@ -5,6 +5,7 @@
         "your url":"insira a url do seu servidor pra prosseguir",
         "help":"ajuda",
         "send":"enviar",
-        "server name":"qual será o nome que aparecerá publicamente?"
+        "server name":"qual será o nome que aparecerá publicamente?",
+        "next":"próximo"
     }
 }

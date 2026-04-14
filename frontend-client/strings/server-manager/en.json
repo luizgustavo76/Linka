@@ -5,6 +5,7 @@
         "your url":"insert the server url",
         "help":"help",
         "send":"send",
-        "server name":"what is the server name?"
+        "server name":"what is the server name?",
+        "next":"next"
     }
 }
