@@ -38,6 +38,13 @@ def create_db():
             UNIQUE(post_id, username)
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS comments(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                text_comment TEXT,
+                stars INTEGER,
+                post_id INTEGER  
+        )""")
 
     conn.commit()
     conn.close()
