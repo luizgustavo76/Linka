@@ -317,7 +317,20 @@ QScrollBar::handle:vertical:hover {
         parent_layout.addWidget(scroll)
     def inbox():
         clean_layout(layout)
-        label(friends_requests_text, window)
+        clean_layout(layout)
+        title(chat_text)
+        card = QFrame()
+        card.setFixedSize(250, 120)
+
+        card.setStyleSheet("""
+            QFrame {
+                background-color: #1e1e1e;
+                border-radius: 15px;
+                border: 2px solid #333;
+            }
+        """)
+
+        layout_card = QVBoxLayout(card)
         data_inbox = requests.post(
             url + "/inbox",
             json={
@@ -327,21 +340,11 @@ QScrollBar::handle:vertical:hover {
         )
         if data_inbox.status_code in (200, 201):
             response_inbox = data_inbox.json()
-            card = QFrame()
-            card.setFixedSize(250, 120)
-
-            card.setStyleSheet("""
-                QFrame {
-                    background-color: #1e1e1e;
-                    border-radius: 15px;
-                    border: 2px solid #333;
-                }
-            """)
-
-            layout_card = QVBoxLayout(card)
-            for inbox_requests in response_inbox:
-                inbox_label = QLabel(inbox_requests, window)
-                layout.addWidget(inbox_label)
+            inbox_list = response_inbox["inbox"]
+            for inbox_requests in inbox_list:
+                for msg in inbox_requests:
+                    print(msg)
+                    layout_card.addWidget(label(msg, window))
         back_button = button(back_text, main, window)
     def configurations():
         clean_layout(layout)
@@ -627,6 +630,8 @@ QScrollBar::handle:vertical:hover {
             )
             friends_response = data_friends.json()
             friends_list = friends_response["friends"]
+            if friends_list is None:
+                print("ANTI-SOCIAL DETECTED")
             for friend in friends_list:
                 layout_card.addWidget(QLabel(friend))
             
