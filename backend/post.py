@@ -41,6 +41,7 @@ def create_db():
     cur.execute("""
         CREATE TABLE IF NOT EXISTS comments(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT,
                 text_comment TEXT,
                 stars INTEGER,
                 post_id INTEGER  
@@ -52,7 +53,19 @@ def create_db():
 
 create_db()
 
-
+@post_bp.route("comments", methods=["POST"])
+def new_comment():
+    data = request.get_json()
+    username = data.get("username")
+    text_comment = data.get("text_comment")
+    post_id = data.get("post_id")
+    comment_id = data.get("comment_id")
+    if (username, text_comment, post_id, comment_id) is None:
+        return jsonify({"status":"as informações vieram vazias"}), 401
+    else:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO comments (text_comment, username, post_id) VALUES(?,?,?)", (text_comment, username, post_id))
 @post_bp.route("/new", methods=["POST"])
 def new_post():
     data = request.get_json()
