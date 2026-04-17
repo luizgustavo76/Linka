@@ -27,6 +27,7 @@ def main_app():
             config["LANG"] = {"lang": "en"}
             config["FAST-LOGIN"] = {"username": "", "token": ""}
             config["FEDERATIONS"] = {"url":[]}
+            config["THEMES"] = {"theme":"theme.qss"}
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 config.write(f)
 
@@ -41,6 +42,8 @@ def main_app():
 
         if "FAST-LOGIN" not in config:
             config["FAST-LOGIN"] = {"username": "", "token": "", "password":""}
+        if "THEMES" not in config:
+            config["THEMES"] = {"theme":"theme.qss"}
 
     create_config(None, None, None)
 
