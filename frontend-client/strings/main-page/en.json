@@ -37,7 +37,10 @@
     "configurations":{
         "sign-out":"Sign-out",
         "exit label":"you can exit app now",
-        "add-federations":"add federations"
+        "add-federations":"add federations",
+        "add theme":"add personalized theme",
+        "select theme":"select theme",
+        "turn default theme":"turn to the default theme"
     },
     "my account":{
         "upload":"upload a profile picture",

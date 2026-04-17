@@ -37,7 +37,10 @@
     "configurations":{
         "sign-out":"Sair da conta",
         "exit label":"pode fechar o app agora",
-        "add-federations":"adicionar federações"
+        "add-federations":"adicionar federações",
+        "add theme":"adicionar tema personalizado",
+        "select theme":"selecione o tema",
+        "turn default theme":"trocar pelo tema padrão"
     },
     "my account":{
         "upload":"upload uma foto de perfil",

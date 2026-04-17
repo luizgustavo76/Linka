@@ -98,7 +98,22 @@ QScrollBar::handle:vertical:hover {
         border-radius: 16px;
     }
     """)
+    def load_theme(app, qss_path):
+        try:
+            with open(qss_path, "r", encoding="utf-8") as f:
+                qss = f.read()
 
+            app.setStyleSheet(qss)
+            return True
+
+        except Exception as e:
+            print("Erro ao carregar tema:", e)
+            return False
+    theme = config["THEMES"]["theme"]
+    try:
+        load_theme(app, theme)
+    except Exception as e:
+        print(f"error in loading theme {e}")
     top_layout = QHBoxLayout(top_bar)
     top_layout.setContentsMargins(15, 10, 15, 10)
 
@@ -119,30 +134,6 @@ QScrollBar::handle:vertical:hover {
     else:
         translator = Translator.Translator("strings/main-page/en.json")
     
-    app.setStyleSheet("""
-        QWidget {
-            background-color: palette(window);
-            color: palette(window-text);
-        }
-
-        QPushButton {
-            background-color: palette(button);
-            color: palette(button-text);
-            border-radius: 8px;
-            padding: 6px;
-        }
-
-        QPushButton:hover {
-            border: 1px solid #1e90ff;
-        }
-
-        QLineEdit {
-            background-color: palette(base);
-            color: palette(text);
-            border: 1px solid gray;
-            padding: 5px;
-        }
-        """)
     palette = app.palette()
     text_color = palette.color(QPalette.ColorRole.WindowText).name()
     bg_color = palette.color(QPalette.ColorRole.Window).name()
@@ -275,6 +266,7 @@ QScrollBar::handle:vertical:hover {
             row_layout.addWidget(botao_container)
 
         layout.addWidget(row_container)
+    
     def add_friends():
         clean_layout(layout)
         username_entry = user_entry(username_text)
@@ -363,7 +355,25 @@ QScrollBar::handle:vertical:hover {
                     config.write(f)
                 configurations()
             button(send_text,send, window)
+        def change_theme():
+            clean_layout(layout)
+            def select_theme():
+                theme, _ = QFileDialog.getOpenFileName(
+                    window,
+                    "Select a theme file",
+                    "",
+                    "Theme (*.qss *.json)"
+                )
+                if theme:
+                    config["THEMES"]["theme"] = theme
+                    with open("config-login.cfg", "w", encoding="utf-8") as f:
+                        config.write(f)
+                    load_theme(app, theme)
+            button(translator.translate("configurations.select theme"), select_theme, window)
+            button(translator.translate("configurations.turn default theme"), "None", window)
+            button(back_text, configurations, window)
         button(translator.translate("configurations.add-federations"), add_federations, window)
+        button(translator.translate("configurations.add theme"), change_theme, window)
         button(signout_text, sign_out, window)
         button(back_text, main, window)
     from functools import partial
