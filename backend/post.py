@@ -41,19 +41,18 @@ def create_db():
     cur.execute("""
         CREATE TABLE IF NOT EXISTS comments(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT,
                 text_comment TEXT,
-                stars INTEGER,
-                post_id INTEGER  
-        )""")
-
+                post_id INTEGER,
+                username TEXT
+            )
+    """)
     conn.commit()
     conn.close()
 
 
 create_db()
 
-@post_bp.route("comments", methods=["POST"])
+@post_bp.route("/comments", methods=["POST"])
 def new_comment():
     data = request.get_json()
     username = data.get("username")
@@ -66,6 +65,17 @@ def new_comment():
         conn = get_db()
         cur = conn.cursor()
         cur.execute("INSERT INTO comments (text_comment, username, post_id) VALUES(?,?,?)", (text_comment, username, post_id))
+    return jsonify({"status":"o comentario foi criado com sucesso!"}), 200
+@post_bp.route("/view-comments", methods=["POST"])
+def view_comments():
+    data = request.get_json()
+    post_id = data.get("post_id")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM comments WHERE post_id = ?", (post_id,))      
+    result = cur.fetchall()
+    conn.close()
+    return jsonify({"comments":result})
 @post_bp.route("/new", methods=["POST"])
 def new_post():
     data = request.get_json()
