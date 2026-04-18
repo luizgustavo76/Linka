@@ -1,0 +1,12 @@
+QT += widgets network
+CONFIG += c++17
+DISTFILES += $$files(strings/**)
+INCLUDEPATH += $$PWD/third_party
+DISTFILES += strings/login
+RESOURCES += resources.qrc
+DISTFILES += strings/login/en.json
+ANDROID_EXTRA_FILES += strings
+SOURCES += login.cpp
+android:DEPLOYMENTFOLDERS += strings
+DISTFILES += strings/login/en.json
+HEADERS += translator.h
