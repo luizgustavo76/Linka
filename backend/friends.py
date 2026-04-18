@@ -36,9 +36,10 @@ def friends():
         cur.execute("SELECT * FROM friends WHERE receiver OR remittee = ?",(username,))
         friends_list = cur.fetchall()
         conn.close()
-        return jsonify({"friends":friends_list})
+        return jsonify({"friends":friends_list}),200
     except:
-        pass
+        return jsonify({"status":"error in the server side"}),500
+    
 @friends_bp.route("/inbox", methods=["POST"])
 def inbox():
     data = request.get_json()
