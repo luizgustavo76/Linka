@@ -16,7 +16,17 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include <QFile>
 
+
+void loadStyle()
+{
+    QFile file(":/styles/style.qss");
+
+    if (file.open(QFile::ReadOnly)) {
+        qApp->setStyleSheet(file.readAll());
+    }
+}
 
 std::map<std::string, std::map<std::string, std::string>> config;
 
@@ -92,7 +102,7 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     loadConfig();
-    
+    loadStyle();
     QString url = "http://127.0.0.1:5000";
     QString signup_text = QString::fromStdString(translate("initial-page", "sign-up"));
     QString signin_text = QString::fromStdString(translate("initial-page", "sign-in"));

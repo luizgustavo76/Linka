@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>strings/login/en.json</file>
+        <file>styles/theme.qss</file>
     </qresource>
 </RCC>
