@@ -2,8 +2,9 @@
 #define TRANSLATOR_H
 
 #include <nlohmann/json.hpp>
-#include <fstream>
-#include <iostream>
+#include <QFile>
+#include <QByteArray>
+#include <QDebug>
 #include <string>
 
 using json = nlohmann::json;
@@ -12,19 +13,25 @@ inline std::string lang = "en";
 
 inline std::string translate(const std::string& section, const std::string& key)
 {
-    std::string path = "strings/login/" + lang + ".json";
+    std::string path = ":/strings/login/" + lang + ".json";
 
-    std::ifstream f(path);
+    QFile file(QString::fromStdString(path));
 
-    if (!f.is_open()) {
-        std::cout << "ERRO: nao consegui abrir o arquivo: " << path << std::endl;
+    if (!file.open(QIODevice::ReadOnly)) {
+        qDebug() << "ERRO: nao consegui abrir o arquivo:" << QString::fromStdString(path);
         return "???";
     }
 
-    json data;
-    f >> data;
+    QByteArray raw = file.readAll();
 
-    return data[section][key];
+    try {
+        json data = json::parse(raw.constData());
+        return data[section][key].get<std::string>();
+    }
+    catch (const std::exception& e) {
+        qDebug() << "ERRO JSON:" << e.what();
+        return "???";
+    }
 }
 
 #endif

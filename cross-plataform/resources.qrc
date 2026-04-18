@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>strings/login/en.json</file>
+    </qresource>
+</RCC>
