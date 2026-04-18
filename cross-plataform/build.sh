@@ -2,8 +2,7 @@
 
 echo "Compilando login.cpp com Qt..."
 
-g++ -fPIC login.cpp -o login \
-`pkg-config --cflags --libs Qt5Widgets Qt5Gui Qt5Core`
+g++ login.cpp -o login $(pkg-config --cflags --libs Qt6Widgets Qt6Network)
 
 if [ $? -eq 0 ]; then
     echo "OK!"
