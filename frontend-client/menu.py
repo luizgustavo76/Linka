@@ -440,7 +440,7 @@ QScrollBar::handle:vertical:hover {
                 qtd_stars = requests.get(url + "/return-stars/" + str(post["id"]))
                 star_label = QLabel(qtd_stars.text)
                 star_label.setStyleSheet("color: white; font-size: 14px;")
-
+                
                 star_layout.addWidget(icon_button)
                 star_layout.addWidget(star_label)
                 star_layout.addStretch()

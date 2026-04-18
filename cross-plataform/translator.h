@@ -5,24 +5,26 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+
 using json = nlohmann::json;
-std::string lang = "";
-std::ifstream f("strings/login/en.json");
-int define_lang()
-{
-    if (lang == "pt-br"){
-        std::ifstream f("strings/login/pt-br.json");
-    }
-    if (lang == "en"){
-        std::ifstream f("strings/login/en.json");
-    }
-    return 0;
-}
+
+inline std::string lang = "en";
+
 inline std::string translate(const std::string& section, const std::string& key)
 {
+    std::string path = "strings/login/" + lang + ".json";
+
+    std::ifstream f(path);
+
+    if (!f.is_open()) {
+        std::cout << "ERRO: nao consegui abrir o arquivo: " << path << std::endl;
+        return "???";
+    }
+
     json data;
     f >> data;
+
     return data[section][key];
-    return 0;
 }
+
 #endif

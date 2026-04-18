@@ -16,6 +16,7 @@ def connect(json_file):
 
 @app.route("/", methods=["POST"])
 def federations_recept():
+    
     try:
         data_request = request.get_json()
         url = data_request.get("url")
@@ -36,6 +37,5 @@ def federations_recept():
 
     except Exception as e:
         return jsonify({"ERROR": "Linka API side error", "details": str(e)}), 500
-
 def start(debug=False, port=5000):
     app.run(debug=debug, port=port)
