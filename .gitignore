@@ -1,0 +1,17 @@
+# Qt build
+build-*/
+Makefile
+*.pro.user
+*.o
+*.obj
+moc_*
+ui_*
+qrc_*
+
+# Android build
+android-build-*
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
