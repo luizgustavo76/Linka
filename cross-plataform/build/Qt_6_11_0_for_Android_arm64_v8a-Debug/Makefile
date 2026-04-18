@@ -58,6 +58,7 @@ OBJECTS       = login.o \
 DIST          = ../../strings/login \
 		../../strings/main-page \
 		../../strings/login \
+		../../styles/theme.qss \
 		../../strings/login/en.json \
 		../../strings/login/en.json \
 		/qt-for-mobile/6.11.0/android_arm64_v8a/mkspecs/features/spec_pre.prf \
@@ -841,7 +842,8 @@ compiler_rcc_clean:
 	-$(DEL_FILE) qrc_resources.cpp
 qrc_resources.cpp: ../../resources.qrc \
 		../../../../qt-for-mobile/6.11.0/gcc_64/libexec/rcc \
-		../../strings/login/en.json
+		../../strings/login/en.json \
+		../../styles/theme.qss
 	/home/luiz/qt-for-mobile/6.11.0/gcc_64/libexec/rcc -name resources --no-zstd ../../resources.qrc -o qrc_resources.cpp
 
 compiler_moc_predefs_make_all: moc_predefs.h

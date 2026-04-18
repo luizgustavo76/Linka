@@ -4,6 +4,7 @@ DISTFILES += $$files(strings/**)
 INCLUDEPATH += $$PWD/third_party
 DISTFILES += strings/login
 RESOURCES += resources.qrc
+DISTFILES += styles/theme.qss
 DISTFILES += strings/login/en.json
 ANDROID_EXTRA_FILES += strings
 SOURCES += login.cpp
