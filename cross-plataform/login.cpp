@@ -2,7 +2,6 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include "translator.h"
 #include <QLineEdit>
 #include <QDebug>
 #include <functional>
@@ -17,7 +16,23 @@
 #include <string>
 #include <map>
 #include <QFile>
+#include <QTranslator>
 
+QTranslator translator;
+
+void loadLanguage(const QString& lang)
+{
+    qApp->removeTranslator(&translator);
+
+    if (lang == "pt-br") {
+        bool ok = translator.load(":/translations/pt-br.qm");
+        qDebug() << "PT-BR carregado?" << ok;
+    } else {
+        translator.load(":/translations/en.qm");
+    }
+
+    qApp->installTranslator(&translator);
+}
 
 void loadStyle()
 {
@@ -103,15 +118,17 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     loadConfig();
     loadStyle();
+    loadLanguage("pt-br");
     QString url = "http://127.0.0.1:5000";
-    QString signup_text = QString::fromStdString(translate("initial-page", "sign-up"));
-    QString signin_text = QString::fromStdString(translate("initial-page", "sign-in"));
-    QString username_text = QString::fromStdString(translate("login", "username"));
-    QString password_text = QString::fromStdString(translate("login", "password"));
-    QString back_text = QString::fromStdString(translate("global", "back"));
-    QString send_text = QString::fromStdString(translate("login", "send"));
-    QString repeat_password_text = QString::fromStdString(translate("sign-up", "repeat the password"));
-    QString error_401 = QString::fromStdString(translate("errors", "401"));
+    QString signup_text = QCoreApplication::translate("login", "sign-up");
+    QString signin_text = QCoreApplication::translate("login", "sign-in");
+    QString username_text = QCoreApplication::translate("login", "username");
+    QString password_text = QCoreApplication::translate("login", "password");
+    QString back_text = QCoreApplication::translate("global", "back");
+    QString send_text = QCoreApplication::translate("login", "send");
+    QString repeat_password_text = QCoreApplication::translate("sign-up", "repeat the password");
+    QString error_401 = QCoreApplication::translate("errors", "401");
+
     QWidget window;
     window.setWindowTitle("Linka Mobile");
     window.resize(400, 600);

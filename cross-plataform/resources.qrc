@@ -1,6 +1,6 @@
 <RCC>
-    <qresource prefix="/">
-        <file>strings/login/en.json</file>
-        <file>styles/theme.qss</file>
+    <qresource prefix="/translations">
+        <file>translations/en.qm</file>
+        <file>translations/pt-br.qm</file>
     </qresource>
 </RCC>

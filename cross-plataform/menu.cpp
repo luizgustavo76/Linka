@@ -2,7 +2,6 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QVBoxLayout>
-#include "translator.h"
 #include <QLineEdit>
 #include <QDebug>
 #include <functional>
@@ -129,9 +128,9 @@ int main(int argc, char *argv[])
 
     loadConfig();
     loadStyle();
-
+    //url do servidor
     QString url = "http://127.0.0.1:5000";
-
+    //janela principal
     QMainWindow window;
     window.setWindowTitle("Linka Mobile");
     window.resize(400, 600);
@@ -139,7 +138,8 @@ int main(int argc, char *argv[])
     // CENTRAL WIDGET
     QWidget *central = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout(central);
-
+    //strings traduzidas
+    QString _text = QString::fromStdString(translate("global", "back"));
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
@@ -148,6 +148,29 @@ int main(int argc, char *argv[])
     QNetworkAccessManager *manager = new QNetworkAccessManager(&window);
     std::function<void()> showfeed;
     std::function<void()> initialPage;
+    auto entry = [&](QString text) -> QLineEdit* {
+        QLineEdit *input = new QLineEdit();
+        input->setPlaceholderText(text);
+        layout->addWidget(input);
+        return input;
+    };
+
+    // Declara antes
+    std::function<void()> showInitialPage;
+    std::function<void()> signupPage;
+    std::function<void()> signinPage;
+
+    auto button = [&](QString text, std::function<void()> func)
+    {
+        QPushButton *btn = new QPushButton(text);
+        layout->addWidget(btn);
+
+        QObject::connect(btn, &QPushButton::clicked, func);
+    };
+    new_post = [&](){
+        clearLayout(layout);
+        //QLineEdit *text_post = new entry()
+    }
     showfeed = [&]()
     {
         clearLayout(layout);
