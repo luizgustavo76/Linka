@@ -27,12 +27,16 @@
 #include <QFrame>
 #include <QIcon>
 #include <QSize>
+
 void loadStyle()
 {
-    QFile file(":/styles/style.qss");
+    QFile file(":/styles/theme.qss");
 
     if (file.open(QFile::ReadOnly)) {
+        qDebug() << "QSS loaded";
         qApp->setStyleSheet(file.readAll());
+    } else {
+        qDebug() << "QSS FAILED";
     }
 }
 
@@ -125,7 +129,7 @@ void clearLayout(QLayout *layout) {
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-
+    QApplication::setStyle("Fusion");
     loadConfig();
     loadStyle();
     //url do servidor
@@ -139,7 +143,8 @@ int main(int argc, char *argv[])
     QWidget *central = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout(central);
     //strings traduzidas
-    QString _text = QString::fromStdString(translate("global", "back"));
+    QString text_post = QCoreApplication::translate("feed", "text post");
+    QString back_text = QCoreApplication::translate("global", "back");
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
@@ -167,10 +172,12 @@ int main(int argc, char *argv[])
 
         QObject::connect(btn, &QPushButton::clicked, func);
     };
-    new_post = [&](){
+    //novo ppost
+    auto new_post = [&](){
         clearLayout(layout);
-        //QLineEdit *text_post = new entry()
-    }
+        QLineEdit *text = entry(text_post);
+        button(back_text, initialPage);
+    };
     showfeed = [&]()
     {
         clearLayout(layout);
@@ -303,7 +310,7 @@ int main(int argc, char *argv[])
            
 
             QObject::connect(btnNewPost, &QPushButton::clicked, [=](){
-                qDebug() << "Novo post";
+                new_post();
                 // new_post();
             });
 
