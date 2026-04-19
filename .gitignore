@@ -1,17 +1,34 @@
-# Qt build
+# Qt / CMake / Build folders
+build/
 build-*/
-Makefile
 *.pro.user
-*.o
-*.obj
-moc_*
-ui_*
-qrc_*
+*.user
+*.user.*
+*.autosave
 
-# Android build
-android-build-*
+# Makefiles gerados
+Makefile
+Makefile.*
+*.make
 
-# CMake
+# Qt Creator / CMake files
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
+compile_commands.json
+
+# Android Qt build
+android-build/
+*.apk
+*.aab
+*.so
+
+# Objetos compilados
+*.o
+*.obj
+*.lo
+*.a
+*.lib
+*.dll
+*.exe
+*.out
