@@ -409,6 +409,7 @@ QScrollBar::handle:vertical:hover {
         data_feed = requests.get(url + "/feed")
         if data_feed.status_code in (200, 201):
             posts = data_feed.json()
+            print(posts)
             posts_dict = {post['id']: post for post in posts}
 
             labels = []

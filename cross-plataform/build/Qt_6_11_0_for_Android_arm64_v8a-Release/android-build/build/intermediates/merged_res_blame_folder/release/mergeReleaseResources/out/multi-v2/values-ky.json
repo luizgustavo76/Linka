@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "org.qtproject.example.linka-mergeReleaseResources-9:/values-ky/values-ky.xml",
+            "map": [
+                {
+                    "source": "/home/luiz/.gradle/caches/9.3.1/transforms/b51518a94f09ee8117d69f5260ad0efa/transformed/core-1.17.0/res/values-ky/values-ky.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,155,257,360,467,569,673,784",
+                        "endColumns": "99,101,102,106,101,103,110,100",
+                        "endOffsets": "150,252,355,462,564,668,779,880"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -52,8 +52,8 @@ OBJECTS_DIR   = ./
 
 ####### Files
 
-SOURCES       = ../../login.cpp qrc_resources.cpp
-OBJECTS       = login.o \
+SOURCES       = ../../menu.cpp qrc_resources.cpp
+OBJECTS       = menu.o \
 		qrc_resources.o
 DIST          = ../../strings/login \
 		../../strings/main-page \
@@ -295,7 +295,7 @@ DIST          = ../../strings/login \
 		/qt-for-mobile/6.11.0/android_arm64_v8a/mkspecs/features/exceptions.prf \
 		/qt-for-mobile/6.11.0/android_arm64_v8a/mkspecs/features/yacc.prf \
 		/qt-for-mobile/6.11.0/android_arm64_v8a/mkspecs/features/lex.prf \
-		../../../../linka.pro ../../translator.h ../../login.cpp
+		../../../../linka.pro ../../translator.h ../../menu.cpp
 QMAKE_TARGET  = liblinka_arm64-v8a.so
 DESTDIR       = 
 TARGET        = liblinka_arm64-v8a.so
@@ -805,7 +805,7 @@ distdir: FORCE
 	$(COPY_FILE) --parents ../../resources.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents ../../../../qt-for-mobile/6.11.0/android_arm64_v8a/mkspecs/features/data/dummy.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../../translator.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../../login.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../../menu.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -870,7 +870,7 @@ compiler_clean: compiler_rcc_clean compiler_moc_predefs_clean
 
 ####### Compile
 
-login.o: ../../login.cpp ../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtWidgets/QApplication \
+menu.o: ../../menu.cpp ../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtWidgets/QApplication \
 		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtWidgets/qapplication.h \
 		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtWidgets/qtwidgetsglobal.h \
 		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtGui/qtguiglobal.h \
@@ -1191,8 +1191,12 @@ login.o: ../../login.cpp ../../../../qt-for-mobile/6.11.0/android_arm64_v8a/incl
 		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtCore/qjsonobject.h \
 		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtWidgets/QLabel \
 		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtWidgets/qlabel.h \
-		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtGui/qpicture.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o login.o ../../login.cpp
+		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtGui/qpicture.h \
+		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtWidgets/QTabWidget \
+		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtWidgets/qtabwidget.h \
+		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtWidgets/QMainWindow \
+		../../../../qt-for-mobile/6.11.0/android_arm64_v8a/include/QtWidgets/qmainwindow.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o menu.o ../../menu.cpp
 
 qrc_resources.o: qrc_resources.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qrc_resources.o qrc_resources.cpp

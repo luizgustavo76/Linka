@@ -1,0 +1,30 @@
+<variant
+    name="release"
+    package="org.qtproject.example.linka"
+    minSdkVersion="28"
+    targetSdkVersion="36.0"
+    mergedManifest="build/intermediates/merged_manifest/release/processReleaseMainManifest/AndroidManifest.xml"
+    proguardFiles="build/intermediates/default_proguard_files/global/proguard-android-optimize.txt-9.0.0"
+    resourceConfigurations="en"
+    partialResultsDir="build/intermediates/lint_vital_partial_results/release/lintVitalAnalyzeRelease/out"
+    desugaredMethodsFiles="/home/luiz/.gradle/caches/9.3.1/transforms/9c47c694f85b9c3d59d9f2afde999674/transformed/D8BackportedDesugaredMethods.txt">
+  <buildFeatures/>
+  <sourceProviders>
+    <sourceProvider
+        manifests="AndroidManifest.xml"
+        javaDirectories="/home/luiz/qt-for-mobile/6.11.0/android_arm64_v8a/src/android/java/src:src:java:src/release/java:kotlin:src/release/kotlin"
+        resDirectories="/home/luiz/qt-for-mobile/6.11.0/android_arm64_v8a/src/android/java/res:res:src/release/res"
+        assetsDirectories="assets:src/release/assets"/>
+  </sourceProviders>
+  <testSourceProviders>
+  </testSourceProviders>
+  <testFixturesSourceProviders>
+  </testFixturesSourceProviders>
+  <artifact
+      classOutputs="build/intermediates/javac/release/compileReleaseJavaWithJavac/classes:build/intermediates/built_in_kotlinc/release/compileReleaseKotlin/classes:build/intermediates/compile_r_class_jar/release/generateReleaseRFile/R.jar"
+      type="MAIN"
+      applicationId="org.qtproject.example.linka"
+      generatedSourceFolders="build/generated/ap_generated_sources/release/out"
+      desugaredMethodsFiles="/home/luiz/.gradle/caches/9.3.1/transforms/9c47c694f85b9c3d59d9f2afde999674/transformed/D8BackportedDesugaredMethods.txt">
+  </artifact>
+</variant>

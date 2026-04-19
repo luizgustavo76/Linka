@@ -1,0 +1,4 @@
+#Sun Apr 19 11:52:03 GMT-03:00 2026
+base.0=/home/luiz/linka/cross-plataform/build/Qt_6_11_0_for_Android_arm64_v8a-Release/android-build/build/intermediates/dex/release/mergeDexRelease/classes.dex
+path.0=classes.dex
+renamed.0=classes.dex

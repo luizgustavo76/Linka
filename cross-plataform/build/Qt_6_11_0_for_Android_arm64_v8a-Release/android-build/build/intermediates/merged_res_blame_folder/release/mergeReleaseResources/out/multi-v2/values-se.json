@@ -1,0 +1,26 @@
+{
+    "logs": [
+        {
+            "outputFile": "org.qtproject.example.linka-mergeReleaseResources-9:/values-se/values-se.xml",
+            "map": [
+                {
+                    "source": "/home/luiz/qt-for-mobile/6.11.0/android_arm64_v8a/src/android/java/res/values-se/strings.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "102",
+                        "endColumns": "148",
+                        "endOffsets": "246"
+                    },
+                    "to": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "100",
+                        "endColumns": "146",
+                        "endOffsets": "242"
+                    }
+                }
+            ]
+        }
+    ]
+}
