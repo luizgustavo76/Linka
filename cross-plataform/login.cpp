@@ -25,10 +25,10 @@ void loadLanguage(const QString& lang)
     qApp->removeTranslator(&translator);
 
     if (lang == "pt-br") {
-        bool ok = translator.load(":/translations/pt-br.qm");
+        bool ok = translator.load(":/translations/pt-br-login.qm");
         qDebug() << "PT-BR carregado?" << ok;
     } else {
-        translator.load(":/translations/en.qm");
+        translator.load(":/translations/en-login.qm");
     }
 
     qApp->installTranslator(&translator);
