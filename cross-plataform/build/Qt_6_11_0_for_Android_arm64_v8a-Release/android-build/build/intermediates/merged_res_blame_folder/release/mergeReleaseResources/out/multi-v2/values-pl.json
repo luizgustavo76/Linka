@@ -1,0 +1,43 @@
+{
+    "logs": [
+        {
+            "outputFile": "org.qtproject.example.linka-mergeReleaseResources-9:/values-pl/values-pl.xml",
+            "map": [
+                {
+                    "source": "/home/luiz/qt-for-mobile/6.11.0/android_arm64_v8a/src/android/java/res/values-pl/strings.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "102",
+                        "endColumns": "129",
+                        "endOffsets": "227"
+                    },
+                    "to": {
+                        "startLines": "9",
+                        "startColumns": "4",
+                        "startOffsets": "837",
+                        "endColumns": "127",
+                        "endOffsets": "960"
+                    }
+                },
+                {
+                    "source": "/home/luiz/.gradle/caches/9.3.1/transforms/b51518a94f09ee8117d69f5260ad0efa/transformed/core-1.17.0/res/values-pl/values-pl.xml",
+                    "from": {
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,152,254,352,451,565,670,792",
+                        "endColumns": "96,101,97,98,113,104,121,100",
+                        "endOffsets": "147,249,347,446,560,665,787,888"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7,8,10",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "100,197,299,397,496,610,715,965",
+                        "endColumns": "96,101,97,98,113,104,121,100",
+                        "endOffsets": "192,294,392,491,605,710,832,1061"
+                    }
+                }
+            ]
+        }
+    ]
+}
