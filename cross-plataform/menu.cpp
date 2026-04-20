@@ -143,32 +143,35 @@ void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
     layout->addWidget(scroll);
 }
 void loadConfig() {
-    std::ifstream file(":/config-login.cfg");
-    std::string line;
+    QFile file(":/config-login.cfg");
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Erro ao abrir config";
+        return;
+    }
+
+    QTextStream in(&file);
+
     std::string section;
+    QString line;
 
-    while (std::getline(file, line)) {
+    while (!in.atEnd()) {
+        line = in.readLine().trimmed();
 
-        line = trim(line);
+        if (line.isEmpty()) continue;
 
-        if(line.empty()) continue;
-
-        // detectar seção
-        if(line[0] == '['){
-            section = line.substr(1, line.find(']') - 1);
+        if (line.startsWith("[")) {
+            section = line.toStdString();
+            section = section.substr(1, section.find(']') - 1);
         }
-
         else {
-            size_t pos = line.find('=');
-            if(pos != std::string::npos){
+            int pos = line.indexOf('=');
+            if (pos != -1) {
 
-                std::string key = line.substr(0, pos);
-                std::string value = line.substr(pos + 1);
+                QString key = line.left(pos).trimmed();
+                QString value = line.mid(pos + 1).trimmed();
 
-                key = trim(key);
-                value = trim(value);
-
-                config[section][key] = value;
+                config[section][key.toStdString()] = value.toStdString();
             }
         }
     }
@@ -213,6 +216,7 @@ void clearLayout(QLayout *layout) {
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+    qDebug() << QSslSocket::supportsSsl();
     app.setStyle(QStyleFactory::create("breeze"));
     loadConfig();
     loadStyle();
