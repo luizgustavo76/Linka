@@ -8,4 +8,7 @@
     <qresource prefix="/styles">
         <file>styles/theme.qss</file>
     </qresource>
+    <qresource prefix="/">
+        <file>config-login.cfg</file>
+    </qresource>
 </RCC>
