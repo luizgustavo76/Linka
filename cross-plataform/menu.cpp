@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
             "POST",
             post
         );
-
+        
     };
     auto new_post = [&](){
         clearLayout(layout);
@@ -294,6 +294,7 @@ int main(int argc, char *argv[])
                 );
             }
         );
+        QLabel("post created with sucess!");
     };
     showfeed = [&]()
     {
@@ -415,8 +416,8 @@ int main(int argc, char *argv[])
             scroll_area(layout, labels);
 
             // botões de baixo
-            QPushButton *btnBack = new QPushButton("Voltar");
-            QPushButton *btnNewPost = new QPushButton("Novo Post");
+            QPushButton *btnBack = new QPushButton(back_text);
+            QPushButton *btnNewPost = new QPushButton(new_post_text);
             QObject::connect(btnBack, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
                     initialPage();
