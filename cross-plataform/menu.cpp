@@ -8,12 +8,15 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QStyleFactory>
 #include <QVector>
 #include <QJsonDocument>
+#include <iostream>
 #include <QJsonObject>
 #include <QLabel>
 #include <QUrl>
 #include <fstream>
+#include <QEventLoop>
 #include <string>
 #include <QStackedWidget>
 #include <map>
@@ -27,7 +30,87 @@
 #include <QFrame>
 #include <QIcon>
 #include <QSize>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+std::string trim(const std::string &s)
+{
+    size_t start = s.find_first_not_of(" \t\r\n");
+    size_t end = s.find_last_not_of(" \t\r\n");
 
+    if(start == std::string::npos)
+        return "";
+
+    return s.substr(start, end - start + 1);
+}
+
+QString requestHTTP(const QString &url,
+                    const QString &method,
+                    const QJsonObject &json,
+                    int timeoutMs = 10000)
+{
+    QNetworkAccessManager manager;
+
+    QNetworkRequest request;
+    request.setUrl(QUrl(url));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QNetworkReply *reply = nullptr;
+
+    QByteArray jsonData = QJsonDocument(json).toJson();
+
+    QString m = method.toUpper();
+
+    if (m == "GET")
+    {
+        reply = manager.get(request);
+    }
+    else if (m == "POST")
+    {
+        reply = manager.post(request, jsonData);
+    }
+    else if (m == "PUT")
+    {
+        reply = manager.put(request, jsonData);
+    }
+    else if (m == "DELETE")
+    {
+        reply = manager.sendCustomRequest(request, "DELETE", jsonData);
+    }
+    else
+    {
+        return "ERRO: Método HTTP inválido (" + method + ")";
+    }
+
+    QEventLoop loop;
+
+    QTimer timer;
+    timer.setSingleShot(true);
+
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+
+    timer.start(timeoutMs);
+    loop.exec();
+
+    if (!timer.isActive())
+    {
+        reply->abort();
+        reply->deleteLater();
+        return "ERRO: Timeout na requisição.";
+    }
+
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        QString errorMsg = "ERRO: " + reply->errorString();
+        reply->deleteLater();
+        return errorMsg;
+    }
+
+    QString response = reply->readAll();
+    reply->deleteLater();
+
+    return response;
+}
 void loadStyle()
 {
     QFile file(":/styles/theme.qss");
@@ -60,11 +143,13 @@ void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
     layout->addWidget(scroll);
 }
 void loadConfig() {
-    std::ifstream file("config-login.cfg");
+    std::ifstream file(":/config-login.cfg");
     std::string line;
     std::string section;
 
     while (std::getline(file, line)) {
+
+        line = trim(line);
 
         if(line.empty()) continue;
 
@@ -80,9 +165,8 @@ void loadConfig() {
                 std::string key = line.substr(0, pos);
                 std::string value = line.substr(pos + 1);
 
-                // remover espaços simples
-                if(key[0] == ' ') key = key.substr(1);
-                if(value[0] == ' ') value = value.substr(1);
+                key = trim(key);
+                value = trim(value);
 
                 config[section][key] = value;
             }
@@ -90,7 +174,7 @@ void loadConfig() {
     }
 }
 void saveConfig() {
-    std::ofstream file("config-login.cfg");
+    std::ofstream file(":/config-login.cfg");
 
     file << "[SERVER]\n";
     file << "url = " << config["SERVER"]["url"] << "\n\n";
@@ -129,11 +213,18 @@ void clearLayout(QLayout *layout) {
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    QApplication::setStyle("Fusion");
+    app.setStyle(QStyleFactory::create("breeze"));
     loadConfig();
     loadStyle();
     //url do servidor
-    QString url = "http://127.0.0.1:5000";
+    for (auto &sec : config) {
+        std::cout << "[" << sec.first << "]\n";
+        for (auto &kv : sec.second) {
+            std::cout << "  " << kv.first << " = " << kv.second << "\n";
+        }
+    }
+    QString url = QString::fromStdString(config["SERVER"]["url"]);
+    qDebug() << "url" << url;   
     //janela principal
     QMainWindow window;
     window.setWindowTitle("Linka Mobile");
@@ -145,6 +236,7 @@ int main(int argc, char *argv[])
     //strings traduzidas
     QString text_post = QCoreApplication::translate("feed", "text post");
     QString back_text = QCoreApplication::translate("global", "back");
+    QString new_post_text = QCoreApplication::translate("feed", "new post");
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
@@ -173,16 +265,38 @@ int main(int argc, char *argv[])
         QObject::connect(btn, &QPushButton::clicked, func);
     };
     //novo ppost
+    auto new_post_request = [&](QString text, QString username){
+        QJsonObject post;
+        post["username"] = username;
+        post["text_post"] = text;
+        post["datetime"] = "11/09/2001";
+        QString response = requestHTTP(
+            url + "/new",
+            "POST",
+            post
+        );
+
+    };
     auto new_post = [&](){
         clearLayout(layout);
-        QLineEdit *text = entry(text_post);
+        QLineEdit *text_input = entry(text_post);
         button(back_text, initialPage);
+        button(
+            new_post_text,
+            [=]() {
+                new_post_request(
+                    text_input->text(),
+                    QString::fromStdString(config["FAST-LOGIN"]["username"])
+                );
+            }
+        );
     };
     showfeed = [&]()
     {
         clearLayout(layout);
-
-        QNetworkRequest request(QUrl(url + "/feed"));
+        QString url_feed = url + "/feed";
+        qDebug() << "url feed" << url_feed;
+        QNetworkRequest request{QUrl(url_feed)};
         QNetworkReply *reply = manager->get(request);
 
         QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
