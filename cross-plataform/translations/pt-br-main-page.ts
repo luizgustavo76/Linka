@@ -107,6 +107,10 @@
       <translation>recusar</translation>
     </message>
     <message>
+      <source>friends</source>
+      <translation>friends</translation>
+    </message>
+    <message>
       <source>friends requests</source>
       <translation>Pedidos de amizade</translation>
     </message>

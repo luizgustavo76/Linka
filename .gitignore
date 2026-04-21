@@ -1,5 +1,6 @@
 # Qt / CMake / Build folders
-build/
+cross-platafrom/build/
+cross-plataform/json
 build-*/
 *.pro.user
 *.user

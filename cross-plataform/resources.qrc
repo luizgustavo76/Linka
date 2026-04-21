@@ -15,5 +15,6 @@
         <file>assets/home.png</file>
         <file>assets/chat.png</file>
         <file>assets/account.png</file>
+        <file>assets/options.png</file>
     </qresource>
 </RCC>
