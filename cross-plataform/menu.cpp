@@ -237,6 +237,8 @@ int main(int argc, char *argv[])
     // CENTRAL WIDGET
     QWidget *central = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout(central);
+    //username no config-login.cfg
+    QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
     //strings traduzidas
     QString text_post = QCoreApplication::translate("feed", "text post");
     QString back_text = QCoreApplication::translate("global", "back");
@@ -261,13 +263,16 @@ int main(int argc, char *argv[])
     std::function<void()> initialPage;
     std::function<void()> showInitialPage;
     std::function<void()> options;
+    std::function<void()> account;
 
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
         layout->addWidget(btn);
 
-        QObject::connect(btn, &QPushButton::clicked, func);
+        QObject::connect(btn, &QPushButton::clicked, [func]() {
+            func();
+        });
     };
     //novo ppost
     auto new_post_request = [&](QString text, QString username){
@@ -312,6 +317,18 @@ int main(int argc, char *argv[])
                 });
         });
         scroll_area(layout, buttons);
+    };
+    account = [&](){
+        clearLayout(layout);
+        QLabel *label_username = new QLabel(username);
+        layout->addWidget(label_username);
+        QPushButton *buttonBack = new QPushButton(back_text);
+        layout->addWidget(buttonBack);
+        QObject::connect(buttonBack, &QPushButton::clicked, [=](){
+            QTimer::singleShot(0, [&](){
+                    initialPage();
+                });
+        });
     };
     showfeed = [&]()
     {
@@ -509,6 +526,9 @@ int main(int argc, char *argv[])
         });
         QObject::connect(btnOptions, &QPushButton::clicked, [=]() {
             options();
+        });
+        QObject::connect(btnProfile, &QPushButton::clicked, [=]() {
+            account();
         });
         btnHome->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnChat->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
