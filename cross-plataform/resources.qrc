@@ -11,4 +11,9 @@
     <qresource prefix="/">
         <file>config-login.cfg</file>
     </qresource>
+    <qresource prefix="/">
+        <file>assets/home.png</file>
+        <file>assets/chat.png</file>
+        <file>assets/account.png</file>
+    </qresource>
 </RCC>
