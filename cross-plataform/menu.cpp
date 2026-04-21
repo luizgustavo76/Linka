@@ -468,14 +468,26 @@ int main(int argc, char *argv[])
         QWidget *bottomBar = new QWidget(central);
         bottomBar->setFixedHeight(90);
 
-        QPushButton *btnHome = new QPushButton("🏠", bottomBar);
-        QPushButton *btnSearch = new QPushButton("🔍", bottomBar);
-        QPushButton *btnProfile = new QPushButton("👤", bottomBar);
+        QPushButton *btnHome = new QPushButton( bottomBar);
+        QPushButton *btnChat = new QPushButton(bottomBar);
+        QPushButton *btnProfile = new QPushButton(bottomBar);
+        QIcon icon_home(":/assets/home.png");
+        btnHome->setIcon(icon_home);
+        btnHome->setIconSize(QSize(64, 64));
+        QIcon icon_chat(":/assets/chat.png");
+        btnChat->setIcon(icon_chat);
+        btnChat->setIconSize(QSize(64, 64));
+        QIcon icon_account(":/assets/account.png");
+        btnProfile->setIcon(icon_account);
+        btnProfile->setIconSize(QSize(64, 64));
+        btnHome->setFixedSize(64, 64);
+        btnChat->setFixedSize(64, 64);
+        btnProfile->setFixedSize(64, 64);
         QObject::connect(btnHome, &QPushButton::clicked, [=]() {
             showfeed();
         });
         btnHome->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        btnSearch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        btnChat->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnProfile->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
         QHBoxLayout *barLayout = new QHBoxLayout(bottomBar);
@@ -483,14 +495,14 @@ int main(int argc, char *argv[])
         barLayout->setSpacing(10);
 
         barLayout->addWidget(btnHome);
-        barLayout->addWidget(btnSearch);
+        barLayout->addWidget(btnChat);
         barLayout->addWidget(btnProfile);
 
         QObject::connect(btnHome, &QPushButton::clicked, [=](){
             stack->setCurrentIndex(0);
         });
 
-        QObject::connect(btnSearch, &QPushButton::clicked, [=](){
+        QObject::connect(btnChat, &QPushButton::clicked, [=](){
             stack->setCurrentIndex(1);
         });
 
@@ -502,12 +514,12 @@ int main(int argc, char *argv[])
         bottomBar->setStyleSheet("background: #111;");
 
         btnHome->setStyleSheet("font-size: 32px; border: none; color: #00ffea; background: transparent;");
-        btnSearch->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
+        btnChat->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
         btnProfile->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
 
         // ======= MONTAGEM =======
-        layout->addWidget(stack);
-        layout->addWidget(bottomBar);
+        layout->addWidget(stack, 1);
+        layout->addWidget(bottomBar, 0);
     };
     //chamada da função
     initialPage();
