@@ -241,14 +241,14 @@ int main(int argc, char *argv[])
     QString text_post = QCoreApplication::translate("feed", "text post");
     QString back_text = QCoreApplication::translate("global", "back");
     QString new_post_text = QCoreApplication::translate("feed", "new post");
+    QString friends_text = QCoreApplication::translate("add friends", "friends");
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
     window.setCentralWidget(central);
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(&window);
-    std::function<void()> showfeed;
-    std::function<void()> initialPage;
+    
     auto entry = [&](QString text) -> QLineEdit* {
         QLineEdit *input = new QLineEdit();
         input->setPlaceholderText(text);
@@ -257,9 +257,10 @@ int main(int argc, char *argv[])
     };
 
     // Declara antes
+    std::function<void()> showfeed;
+    std::function<void()> initialPage;
     std::function<void()> showInitialPage;
-    std::function<void()> signupPage;
-    std::function<void()> signinPage;
+    std::function<void()> options;
 
     auto button = [&](QString text, std::function<void()> func)
     {
@@ -295,6 +296,22 @@ int main(int argc, char *argv[])
             }
         );
         QLabel("post created with sucess!");
+    };
+    //menu de opções extras
+    options = [&]()
+    {
+        clearLayout(layout);
+        QList<QWidget*> buttons;
+        QPushButton *friends = new QPushButton(friends_text);
+        QPushButton *back = new QPushButton(back_text);
+        buttons.append(friends);
+        buttons.append(back);
+        QObject::connect(back, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    initialPage();
+                });
+        });
+        scroll_area(layout, buttons);
     };
     showfeed = [&]()
     {
@@ -471,6 +488,10 @@ int main(int argc, char *argv[])
         QPushButton *btnHome = new QPushButton( bottomBar);
         QPushButton *btnChat = new QPushButton(bottomBar);
         QPushButton *btnProfile = new QPushButton(bottomBar);
+        QPushButton *btnOptions = new QPushButton(bottomBar);
+        QIcon options_icon(":/assets/options.png");
+        btnOptions->setIcon(options_icon);
+        btnOptions->setIconSize(QSize(64, 64));
         QIcon icon_home(":/assets/home.png");
         btnHome->setIcon(icon_home);
         btnHome->setIconSize(QSize(64, 64));
@@ -486,18 +507,20 @@ int main(int argc, char *argv[])
         QObject::connect(btnHome, &QPushButton::clicked, [=]() {
             showfeed();
         });
+        QObject::connect(btnOptions, &QPushButton::clicked, [=]() {
+            options();
+        });
         btnHome->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnChat->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnProfile->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
+        btnOptions->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         QHBoxLayout *barLayout = new QHBoxLayout(bottomBar);
         barLayout->setContentsMargins(10, 10, 10, 10);
         barLayout->setSpacing(10);
-
         barLayout->addWidget(btnHome);
         barLayout->addWidget(btnChat);
         barLayout->addWidget(btnProfile);
-
+        barLayout->addWidget(btnOptions);
         QObject::connect(btnHome, &QPushButton::clicked, [=](){
             stack->setCurrentIndex(0);
         });
@@ -509,10 +532,13 @@ int main(int argc, char *argv[])
         QObject::connect(btnProfile, &QPushButton::clicked, [=](){
             stack->setCurrentIndex(2);
         });
+        QObject::connect(btnOptions, &QPushButton::clicked, [=](){
+            stack->setCurrentIndex(3);
+        });
 
         // ======= ESTILO =======
         bottomBar->setStyleSheet("background: #111;");
-
+        btnOptions->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
         btnHome->setStyleSheet("font-size: 32px; border: none; color: #00ffea; background: transparent;");
         btnChat->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
         btnProfile->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");

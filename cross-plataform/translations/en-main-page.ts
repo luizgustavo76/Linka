@@ -79,6 +79,10 @@
   <context>
     <name>add friends</name>
     <message>
+      <source>friends</source>
+      <translation>friends</translation>
+    </message>
+    <message>
       <source>message</source>
       <translation>message</translation>
     </message>
