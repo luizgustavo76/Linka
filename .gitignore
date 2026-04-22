@@ -1,6 +1,7 @@
 # Qt / CMake / Build folders
 cross-plataform/build/
 cross-plataform/json/
+cross-plataform/third-party/
 build-*/
 build/
 debug/
