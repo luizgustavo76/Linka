@@ -16,5 +16,6 @@
         <file>assets/chat.png</file>
         <file>assets/account.png</file>
         <file>assets/options.png</file>
+        <file>assets/search.png</file>
     </qresource>
 </RCC>

@@ -244,6 +244,7 @@ int main(int argc, char *argv[])
     QString back_text = QCoreApplication::translate("global", "back");
     QString new_post_text = QCoreApplication::translate("feed", "new post");
     QString friends_text = QCoreApplication::translate("add friends", "friends");
+    QString search_text = QCoreApplication::translate("main-page", "search");
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
@@ -264,6 +265,7 @@ int main(int argc, char *argv[])
     std::function<void()> showInitialPage;
     std::function<void()> options;
     std::function<void()> account;
+    std::function<void()> searchPage;
 
     auto button = [&](QString text, std::function<void()> func)
     {
@@ -431,9 +433,7 @@ int main(int argc, char *argv[])
 
                 // clique da estrela (toggle)
                 QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
-                    // aqui você chamaria sua função toggle_star
-                    // exemplo:
-                    // toggle_star(iconButton, postId);
+                    
 
                     qDebug() << "Star clicada no post:" << postId;
                 });
@@ -469,25 +469,36 @@ int main(int argc, char *argv[])
 
         });
     };
+    searchPage = [&](){
+        clearLayout(layout);
+        QLineEdit *searchEntry = entry(search_text);
+        layout->addWidget(searchEntry);
+        QPushButton *buttonSearch = new QPushButton(search_text + "!");
+        layout->addWidget(buttonSearch);
+        QPushButton *button_back = new QPushButton(back_text);
+        QObject::connect(button_back, &QPushButton::clicked, [=](){
+            QTimer::singleShot(0, [=](){
+                    initialPage();
+                });
+        });
+        layout->addWidget(button_back);
+    };
     //pagina inicial para renderizar
     initialPage = [&]()
     {
         clearLayout(layout);
         QStackedWidget *stack = new QStackedWidget(central);
-
         // ======= PÁGINAS =======
         QWidget *pageHome = new QWidget();
         QVBoxLayout *homeLayout = new QVBoxLayout(pageHome);
         QLabel *homeLabel = new QLabel("🏠 HOME");
         homeLabel->setAlignment(Qt::AlignCenter);
         homeLayout->addWidget(homeLabel);
-
         QWidget *pageSearch = new QWidget();
         QVBoxLayout *searchLayout = new QVBoxLayout(pageSearch);
         QLabel *searchLabel = new QLabel("🔍 BUSCA");
         searchLabel->setAlignment(Qt::AlignCenter);
         searchLayout->addWidget(searchLabel);
-
         QWidget *pageProfile = new QWidget();
         QVBoxLayout *profileLayout = new QVBoxLayout(pageProfile);
         QLabel *profileLabel = new QLabel("👤 PERFIL");
@@ -495,17 +506,14 @@ int main(int argc, char *argv[])
         profileLayout->addWidget(profileLabel);
         QWidget *pageChat = new QWidget();
         QWidget *pageOptions = new QWidget();
-
         stack->addWidget(pageChat);    // index 3
         stack->addWidget(pageOptions); // index 4
         stack->addWidget(pageHome);
         stack->addWidget(pageSearch);
         stack->addWidget(pageProfile);
-
         // ======= BARRA INFERIOR =======
         QWidget *bottomBar = new QWidget(central);
         bottomBar->setFixedHeight(90);
-
         QPushButton *btnHome = new QPushButton(bottomBar);
         QPushButton *btnSearch = new QPushButton(bottomBar);
         QPushButton *btnChat = new QPushButton(bottomBar);
@@ -536,6 +544,9 @@ int main(int argc, char *argv[])
         });
         QObject::connect(btnOptions, &QPushButton::clicked, [=]() {
             options();
+        });
+        QObject::connect(btnSearch, &QPushButton::clicked, [=]() {
+            searchPage();
         });
         QObject::connect(btnProfile, &QPushButton::clicked, [=]() {
             account();
@@ -570,7 +581,6 @@ int main(int argc, char *argv[])
             stack->setCurrentIndex(4);
         });
         
-
         // ======= ESTILO =======
         bottomBar->setStyleSheet("background: #111;");
         btnOptions->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
@@ -586,9 +596,6 @@ int main(int argc, char *argv[])
     //chamada da função
     initialPage();
     //função para exibir o feed
-    
-    
-
     window.show();
     return app.exec();
 }
