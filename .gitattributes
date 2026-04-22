@@ -1,5 +1,2 @@
-docs/**/*.html linguist-language=HTML
-docs/**/*.css linguist-language=CSS
-docs/**/*.js linguist-language=JavaScripts
 *.wasm filter=lfs diff=lfs merge=lfs -text
 qdoc filter=lfs diff=lfs merge=lfs -text

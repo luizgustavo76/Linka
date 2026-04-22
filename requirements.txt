@@ -1,5 +1,0 @@
-pyqt6
-flask
-requests
-pyinstaller
-flask_cors
