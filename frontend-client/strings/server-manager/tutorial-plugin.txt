@@ -1,5 +1,0 @@
-para usar o server manager basta seguir alguns passos
-1-baixar o plugin do server manager em sua VPS ou web server
-*disponivel no repositorio no github na pasta server plugin
-2-executar ele e deixar rodando a todo momento
-pronto agora já poderá administrar e rodar seu server remotamente
