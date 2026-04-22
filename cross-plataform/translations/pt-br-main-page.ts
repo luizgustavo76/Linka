@@ -11,6 +11,10 @@
       <translation>Linka 2026 todos os direitos reservados</translation>
     </message>
     <message>
+      <source>Search</source>
+      <translation>Procurar</translation>
+    </message>
+    <message>
       <source>chat</source>
       <translation>mensagens</translation>
     </message>
