@@ -2,6 +2,7 @@
 cross-plataform/build/
 cross-plataform/json/
 cross-plataform/third-party/
+backend/DB/
 build-*/
 build/
 debug/

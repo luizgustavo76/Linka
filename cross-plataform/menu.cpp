@@ -493,7 +493,11 @@ int main(int argc, char *argv[])
         QLabel *profileLabel = new QLabel("👤 PERFIL");
         profileLabel->setAlignment(Qt::AlignCenter);
         profileLayout->addWidget(profileLabel);
+        QWidget *pageChat = new QWidget();
+        QWidget *pageOptions = new QWidget();
 
+        stack->addWidget(pageChat);    // index 3
+        stack->addWidget(pageOptions); // index 4
         stack->addWidget(pageHome);
         stack->addWidget(pageSearch);
         stack->addWidget(pageProfile);
@@ -502,13 +506,17 @@ int main(int argc, char *argv[])
         QWidget *bottomBar = new QWidget(central);
         bottomBar->setFixedHeight(90);
 
-        QPushButton *btnHome = new QPushButton( bottomBar);
+        QPushButton *btnHome = new QPushButton(bottomBar);
+        QPushButton *btnSearch = new QPushButton(bottomBar);
         QPushButton *btnChat = new QPushButton(bottomBar);
         QPushButton *btnProfile = new QPushButton(bottomBar);
         QPushButton *btnOptions = new QPushButton(bottomBar);
         QIcon options_icon(":/assets/options.png");
         btnOptions->setIcon(options_icon);
         btnOptions->setIconSize(QSize(64, 64));
+        QIcon search_icon(":/assets/search.png");
+        btnSearch->setIcon(search_icon);
+        btnSearch->setIconSize(QSize(64, 64));
         QIcon icon_home(":/assets/home.png");
         btnHome->setIcon(icon_home);
         btnHome->setIconSize(QSize(64, 64));
@@ -521,6 +529,8 @@ int main(int argc, char *argv[])
         btnHome->setFixedSize(64, 64);
         btnChat->setFixedSize(64, 64);
         btnProfile->setFixedSize(64, 64);
+        btnSearch->setFixedSize(64, 64);
+        btnOptions->setFixedSize(64, 64);
         QObject::connect(btnHome, &QPushButton::clicked, [=]() {
             showfeed();
         });
@@ -534,6 +544,7 @@ int main(int argc, char *argv[])
         btnChat->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnProfile->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnOptions->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        btnSearch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         QHBoxLayout *barLayout = new QHBoxLayout(bottomBar);
         barLayout->setContentsMargins(10, 10, 10, 10);
         barLayout->setSpacing(10);
@@ -541,20 +552,24 @@ int main(int argc, char *argv[])
         barLayout->addWidget(btnChat);
         barLayout->addWidget(btnProfile);
         barLayout->addWidget(btnOptions);
+        barLayout->addWidget(btnSearch);
         QObject::connect(btnHome, &QPushButton::clicked, [=](){
             stack->setCurrentIndex(0);
         });
-
-        QObject::connect(btnChat, &QPushButton::clicked, [=](){
+        QObject::connect(btnSearch, &QPushButton::clicked, [=](){
             stack->setCurrentIndex(1);
+        });
+        QObject::connect(btnChat, &QPushButton::clicked, [=](){
+            stack->setCurrentIndex(2);
         });
 
         QObject::connect(btnProfile, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(2);
-        });
-        QObject::connect(btnOptions, &QPushButton::clicked, [=](){
             stack->setCurrentIndex(3);
         });
+        QObject::connect(btnOptions, &QPushButton::clicked, [=](){
+            stack->setCurrentIndex(4);
+        });
+        
 
         // ======= ESTILO =======
         bottomBar->setStyleSheet("background: #111;");
@@ -562,6 +577,7 @@ int main(int argc, char *argv[])
         btnHome->setStyleSheet("font-size: 32px; border: none; color: #00ffea; background: transparent;");
         btnChat->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
         btnProfile->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
+        btnSearch->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
 
         // ======= MONTAGEM =======
         layout->addWidget(stack, 1);
