@@ -1,18 +1,25 @@
 # Qt / CMake / Build folders
-cross-platafrom/build/
-cross-plataform/json
+cross-plataform/build/
+cross-plataform/json/
 build-*/
+build/
+debug/
+release/
+cmake-build-*/
+
+# Qt Creator / user files
 *.pro.user
 *.user
 *.user.*
 *.autosave
+*.qmlproject.user*
 
 # Makefiles gerados
 Makefile
 Makefile.*
 *.make
 
-# Qt Creator / CMake files
+# CMake
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
