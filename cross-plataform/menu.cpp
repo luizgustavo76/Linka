@@ -469,6 +469,16 @@ int main(int argc, char *argv[])
 
         });
     };
+    //termino amanhã filho
+    auto searchRequest[&](QString content){
+        QJsonObject search;
+        search["content"] = content;
+        QString response = requestHTTP(
+            url + "/search",
+            "POST",
+            search
+        );
+    };
     searchPage = [&](){
         clearLayout(layout);
         QLineEdit *searchEntry = entry(search_text);
