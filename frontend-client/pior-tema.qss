@@ -1,0 +1,176 @@
+/* ==========================
+   Linka CHAOS Theme (.qss)
+   EXTREMAMENTE AVACALHADO
+   ========================== */
+
+QWidget {
+    background-color: #05000A;
+    color: #00FFEA;
+    font-family: "Comic Sans MS";
+    font-size: 15px;
+}
+
+/* Labels */
+QLabel {
+    color: #00FFEA;
+    font-weight: bold;
+}
+
+/* Botões */
+QPushButton {
+    background-color: #FF00FF;
+    color: black;
+    border: 3px solid #00FFEA;
+    border-radius: 20px;
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+/* Hover: modo ataque */
+QPushButton:hover {
+    background-color: #00FFEA;
+    color: black;
+    border: 3px solid #FF00FF;
+}
+
+/* Pressionado: colapso nuclear */
+QPushButton:pressed {
+    background-color: #FF0000;
+    border: 3px solid yellow;
+    color: white;
+}
+
+/* Inputs */
+QLineEdit {
+    background-color: #0D0015;
+    color: #39FF14;
+    border: 2px solid #39FF14;
+    border-radius: 12px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+/* Focus: virou portal dimensional */
+QLineEdit:focus {
+    border: 3px solid #FF00FF;
+    background-color: #14001F;
+}
+
+/* Frames viram caixas radioativas */
+QFrame {
+    background-color: rgba(255, 0, 255, 0.10);
+    border: 2px solid #00FFEA;
+    border-radius: 18px;
+}
+
+/* ScrollArea */
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+/* Scrollbar vertical */
+QScrollBar:vertical {
+    background: #0D0015;
+    width: 14px;
+    border-radius: 7px;
+}
+
+QScrollBar::handle:vertical {
+    background: #39FF14;
+    border-radius: 7px;
+    min-height: 30px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #FF00FF;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: transparent;
+}
+
+/* Menu */
+QMenu {
+    background-color: #05000A;
+    color: #00FFEA;
+    border: 2px solid #FF00FF;
+    border-radius: 12px;
+    padding: 8px;
+}
+
+QMenu::item {
+    padding: 8px 14px;
+    border-radius: 8px;
+}
+
+QMenu::item:selected {
+    background-color: #39FF14;
+    color: black;
+}
+
+/* Tooltips */
+QToolTip {
+    background-color: #FF00FF;
+    color: black;
+    border: 2px solid #00FFEA;
+    border-radius: 10px;
+    padding: 8px;
+    font-size: 13px;
+}
+
+/* Checkbox */
+QCheckBox {
+    color: #00FFEA;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+}
+
+QCheckBox::indicator:unchecked {
+    background-color: #0D0015;
+    border: 2px solid #39FF14;
+    border-radius: 6px;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #FF00FF;
+    border: 2px solid #00FFEA;
+    border-radius: 6px;
+}
+
+/* MessageBox */
+QMessageBox {
+    background-color: #05000A;
+}
+
+QMessageBox QLabel {
+    color: #00FFEA;
+    font-weight: bold;
+}
+
+/* ProgressBar (se usar) */
+QProgressBar {
+    background-color: #0D0015;
+    border: 2px solid #00FFEA;
+    border-radius: 10px;
+    text-align: center;
+    color: #00FFEA;
+    font-weight: bold;
+}
+
+QProgressBar::chunk {
+    background-color: #FF00FF;
+    border-radius: 10px;
+}

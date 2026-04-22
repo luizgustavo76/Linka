@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/translations">
+        <file>translations/en-login.qm</file>
+        <file>translations/en-main-page.qm</file>
+        <file>translations/pt-br-login.qm</file>
+        <file>translations/pt-br-main-page.qm</file>
+    </qresource>
+    <qresource prefix="/styles">
+        <file>styles/theme.qss</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>config-login.cfg</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>assets/home.png</file>
+        <file>assets/chat.png</file>
+        <file>assets/account.png</file>
+        <file>assets/options.png</file>
+    </qresource>
+</RCC>
