@@ -266,6 +266,7 @@ int main(int argc, char *argv[])
     std::function<void()> options;
     std::function<void()> account;
     std::function<void()> searchPage;
+    std::function<void()> chatPage;
 
     auto button = [&](QString text, std::function<void()> func)
     {
@@ -481,7 +482,40 @@ int main(int argc, char *argv[])
 
         return response;
     };
-
+    chatPage = [&](){
+        clearLayout(layout);
+        QList<QWidget*> widgets;
+        QJsonObject friends_json;
+        friends_json["username"];
+        QString response_friends = requestHTTP(
+            url + "/friends",
+            "POST",
+            friends_json
+        );
+        QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
+        QJsonObject obj = doc.object();
+        QJsonArray friends = obj["friends"].toArray();
+        if (friends.isEmpty())
+        {
+            QLabel *label_error = new QLabel("sem amigos ;)");
+            widgets.append(label_error);
+        }
+        else
+        {
+            for(int i = 0; i < friends.size(); i++){
+                QLabel *user = new QLabel(friends[i].toString());
+                widgets.append(user);
+            };
+        };
+        QPushButton *back_button = new QPushButton(back_text);
+        QObject::connect(back_button, &QPushButton::clicked, [=]() mutable{
+            QTimer::singleShot(0, [=](){
+                initialPage();
+            });
+        });
+        widgets.append(back_button);
+        scroll_area(layout, widgets);
+    };
     searchPage = [&](){
         clearLayout(layout);
 
@@ -681,6 +715,9 @@ int main(int argc, char *argv[])
         });
         QObject::connect(btnProfile, &QPushButton::clicked, [=]() {
             account();
+        });
+        QObject::connect(btnChat, &QPushButton::clicked, [=]() {
+            chatPage();
         });
         btnHome->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnChat->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
