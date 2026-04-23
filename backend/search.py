@@ -16,9 +16,14 @@ def get_db_profile():
 def get_db_post():
     return sqlite3.connect(post_db)
 
-@search_bp.route("/search", methods=["GET"])
+@search_bp.route("/search", methods=["POST"])
 def search():
-    content = request.args.get("content")
+    data = request.get_json(silent=True)
+    
+    if not data or "content" not in data:
+        return jsonify({"error": "content vazio"}), 400
+
+    content = data["content"]
 
     if not content:
         return jsonify({"error": "content vazio"}), 400
@@ -36,7 +41,7 @@ def search():
 
     cursor.execute("""
         SELECT username
-        FROM profiles
+        FROM profile
         WHERE username LIKE ?
         LIMIT 20
     """, (f"%{content}%",))
@@ -48,15 +53,14 @@ def search():
 
     conn.close()
 
-
     # ===== BUSCA POSTS =====
     conn = get_db_post()
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT text
+        SELECT text_post
         FROM posts
-        WHERE text LIKE ?
+        WHERE text_post LIKE ?
         LIMIT 20
     """, (f"%{content}%",))
 
