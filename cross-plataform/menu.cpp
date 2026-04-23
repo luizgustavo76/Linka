@@ -469,7 +469,6 @@ int main(int argc, char *argv[])
 
         });
     };
-    //termino amanhã filho
     auto searchRequest[&](QString content){
         QJsonObject search;
         search["content"] = content;
@@ -478,20 +477,32 @@ int main(int argc, char *argv[])
             "POST",
             search
         );
+        return response;
     };
     searchPage = [&](){
         clearLayout(layout);
+        QList<QWidget*> content;
+        QString source_response = nullptr;
         QLineEdit *searchEntry = entry(search_text);
-        layout->addWidget(searchEntry);
+        content->addWidget(searchEntry);
         QPushButton *buttonSearch = new QPushButton(search_text + "!");
-        layout->addWidget(buttonSearch);
+        content->addWidget(buttonSearch);
         QPushButton *button_back = new QPushButton(back_text);
         QObject::connect(button_back, &QPushButton::clicked, [=](){
             QTimer::singleShot(0, [=](){
                     initialPage();
                 });
         });
-        layout->addWidget(button_back);
+        QObject::connect(buttonSearch, &QPushButton::clicked, [=](){
+            QTimer::singleShot(0, [=](){
+                    source_response = searchRequest(searchEntry->text());
+                });
+        });
+        if (source_response != nullptr){
+            
+        }
+        content->addWidget(button_back);
+        scroll_area(layout, content);
     };
     //pagina inicial para renderizar
     initialPage = [&]()
