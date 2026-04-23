@@ -1,7 +1,7 @@
-# backend/main.py (MODIFICADO)
+
 
 from flask import Flask
-from flask_cors import CORS  # ✅ NOVO
+from flask_cors import CORS 
 from post import post_bp
 from chat import chat_bp
 from friends import friends_bp

@@ -245,8 +245,8 @@ int main(int argc, char *argv[])
     QString new_post_text = QCoreApplication::translate("feed", "new post");
     QString friends_text = QCoreApplication::translate("add friends", "friends");
     QString search_text = QCoreApplication::translate("main-page", "search");
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
+    layout->setContentsMargins(12, 12, 12, 12);
+    layout->setSpacing(10);
 
     window.setCentralWidget(central);
 
@@ -469,39 +469,149 @@ int main(int argc, char *argv[])
 
         });
     };
-    auto searchRequest[&](QString content){
+    auto searchRequest = [&](QString content){
         QJsonObject search;
         search["content"] = content;
+
         QString response = requestHTTP(
             url + "/search",
             "POST",
             search
         );
+
         return response;
     };
+
     searchPage = [&](){
         clearLayout(layout);
+
         QList<QWidget*> content;
-        QString source_response = nullptr;
-        QLineEdit *searchEntry = entry(search_text);
-        content->addWidget(searchEntry);
+
+        QLineEdit *searchEntry = new QLineEdit();
+        searchEntry->setPlaceholderText(search_text);
+        content.append(searchEntry);
+
         QPushButton *buttonSearch = new QPushButton(search_text + "!");
-        content->addWidget(buttonSearch);
+        content.append(buttonSearch);
+
+        QLabel *resultLabel = new QLabel("");
+        resultLabel->setWordWrap(true);
+        content.append(resultLabel);
+
+        // Área onde os resultados vão aparecer
+        QWidget *resultsContainer = new QWidget();
+        QVBoxLayout *resultsLayout = new QVBoxLayout(resultsContainer);
+        resultsLayout->setContentsMargins(0,0,0,0);
+        resultsLayout->setSpacing(10);
+
+        content.append(resultsContainer);
+
         QPushButton *button_back = new QPushButton(back_text);
+
         QObject::connect(button_back, &QPushButton::clicked, [=](){
             QTimer::singleShot(0, [=](){
-                    initialPage();
-                });
+                initialPage();
+            });
         });
-        QObject::connect(buttonSearch, &QPushButton::clicked, [=](){
-            QTimer::singleShot(0, [=](){
-                    source_response = searchRequest(searchEntry->text());
-                });
+
+        QObject::connect(buttonSearch, &QPushButton::clicked, [=]() mutable {
+            QTimer::singleShot(0, [=]() mutable {
+
+                // limpar resultados anteriores
+                QLayoutItem *child;
+                while ((child = resultsLayout->takeAt(0)) != nullptr) {
+                    if (child->widget()) {
+                        child->widget()->deleteLater();
+                    }
+                    delete child;
+                }
+
+                QString source_response = searchRequest(searchEntry->text());
+
+                if (source_response.isEmpty())
+                {
+                    resultLabel->setText("");
+                    return;
+                }
+
+                QJsonDocument doc = QJsonDocument::fromJson(source_response.toUtf8());
+
+                if (!doc.isObject())
+                {
+                    resultLabel->setText(source_response);
+                    return;
+                }
+
+                QJsonObject obj = doc.object();
+
+                // ===== usernames =====
+                if (obj.contains("usernames") && obj["usernames"].isArray())
+                {
+                    QJsonArray arr = obj["usernames"].toArray();
+
+                    for (auto v : arr)
+                    {
+                        QString user = v.toString();
+
+                        QFrame *frame = new QFrame();
+                        frame->setStyleSheet(R"(
+                            QFrame {
+                                background-color: #1A1A1A;
+                                border: 1px solid #2F2F2F;
+                                border-radius: 14px;
+                                padding: 10px;
+                            }
+                        )");
+
+                        QVBoxLayout *frameLayout = new QVBoxLayout(frame);
+
+                        QLabel *lbl = new QLabel(user);
+                        lbl->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
+
+                        frameLayout->addWidget(lbl);
+
+                        resultsLayout->addWidget(frame);
+                    }
+                }
+
+                // ===== posts =====
+                if (obj.contains("posts") && obj["posts"].isArray())
+                {
+                    QJsonArray arr = obj["posts"].toArray();
+
+                    for (auto v : arr)
+                    {
+                        QString post = v.toString();
+
+                        QFrame *frame = new QFrame();
+                        frame->setStyleSheet(R"(
+                            QFrame {
+                                background-color: #1A1A1A;
+                                border: 1px solid #2F2F2F;
+                                border-radius: 14px;
+                                padding: 10px;
+                            }
+                        )");
+
+                        QVBoxLayout *frameLayout = new QVBoxLayout(frame);
+
+                        QLabel *lbl = new QLabel(post);
+                        lbl->setWordWrap(true);
+                        lbl->setStyleSheet("color: white; font-size: 14px;");
+
+                        frameLayout->addWidget(lbl);
+
+                        resultsLayout->addWidget(frame);
+                    }
+                }
+
+                resultsLayout->addStretch();
+
+            });
         });
-        if (source_response != nullptr){
-            
-        }
-        content->addWidget(button_back);
+
+        content.append(button_back);
+
         scroll_area(layout, content);
     };
     //pagina inicial para renderizar
