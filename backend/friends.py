@@ -20,11 +20,6 @@ def create_db():
     cur.execute("CREATE TABLE IF NOT EXISTS inbox (receiver TEXT, remittee TEXT, message TEXT)")
     conn.commit()
     conn.close()
-conn = get_db()
-cur = conn.cursor()
-cur.execute("CREATE TABLE IF NOT EXISTS inbox (receiver TEXT, remittee TEXT, message TEXT)")
-conn.commit()
-conn.close()
 create_db()
 @friends_bp.route("/friends", methods=["POST"])
 def friends():
@@ -33,7 +28,7 @@ def friends():
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT * FROM friends WHERE receiver OR remittee = ?",(username,))
+        cur.execute("SELECT * FROM friends WHERE receiver = ? OR remittee = ?",(username, username))
         friends_list = cur.fetchall()
         conn.close()
         return jsonify({"friends":friends_list}),200
@@ -61,9 +56,21 @@ def accept():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("INSERT INTO friends (receiver, remittee) VALUES (?, ?)",(receiver, remittee))
+    cur.execute("DELETE FROM inbox WHERE receiver = ? AND remittee = ?", (receiver, remittee))
     conn.commit()
     conn.close()
     return jsonify({"status":"friend add"}),200
+@friends_bp.route("/denied", methods=["POST"])
+def denied():
+    data = request.get_json()
+    receiver = data.get("receiver")
+    remittee = data.get("remittee")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM inbox WHERE receiver = ? AND remittee = ?", (receiver, remittee))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "the request was deleted"})
 @friends_bp.route("/send-friend", methods=["POST"])
 def send():
     data = request.get_json()

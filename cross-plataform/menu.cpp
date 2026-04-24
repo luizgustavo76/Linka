@@ -250,6 +250,8 @@ int main(int argc, char *argv[])
     QString message_text = QCoreApplication::translate("add friends", "message");
     QString send_text = QCoreApplication::translate("global", "send");
     QString inbox_text = QCoreApplication::translate("main-page", "inbox");
+    QString accept_text = QCoreApplication::translate("inbox", "accept");
+    QString denied_text = QCoreApplication::translate("inbox", "denied");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -366,6 +368,52 @@ int main(int argc, char *argv[])
     inboxPage = [&](){
         clearLayout(layout);
         QList<QWidget*> notifications;
+        QJsonObject inbox;
+        inbox["username"] = username;
+        QString response_inbox = requestHTTP(
+            url + "/inbox",
+            "POST",
+            inbox
+        );
+        QJsonDocument doc = QJsonDocument::fromJson(response_inbox.toUtf8());
+        QJsonObject obj = doc.object();
+        QJsonArray inbox_json = obj["inbox"].toArray();
+        for(int i = 0; i < inbox_json.size(); i++){
+            for(int b = 0; b < inbox_json[i].toArray().size(); b++){
+                QLabel *notification_inbox = new QLabel(inbox_json[i][b].toString());
+                notifications.append(notification_inbox);
+            };
+            QPushButton *accept_button = new QPushButton(accept_text);
+            notifications.append(accept_button);
+            QPushButton *denied_button = new QPushButton(denied_text);
+            notifications.append(denied_button);
+            QObject::connect(accept_button, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    QJsonObject accept_json;
+                    accept_json["receiver"] = username;
+                    accept_json["remittee"] = inbox_json[i][1].toString();
+                    requestHTTP(
+                        url + "/accept",
+                        "POST",
+                        accept_json
+                    );
+                });
+            });
+            QObject::connect(denied_button, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    QJsonObject denied_json;
+                    denied_json["receiver"] = username;
+                    denied_json["remittee"] = inbox_json[i][1].toString();
+                    requestHTTP(
+                        url + "/denied",
+                        "POST",
+                        denied_json
+                    );
+                });
+            });
+
+        };
+        scroll_area(layout, notifications);
         QPushButton *back_button = new QPushButton(back_text);
         layout->addWidget(back_button);
         QObject::connect(back_button, &QPushButton::clicked, [=](){
