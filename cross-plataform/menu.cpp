@@ -249,6 +249,7 @@ int main(int argc, char *argv[])
     QString username_text = QCoreApplication::translate("global", "username");
     QString message_text = QCoreApplication::translate("add friends", "message");
     QString send_text = QCoreApplication::translate("global", "send");
+    QString inbox_text = QCoreApplication::translate("main-page", "inbox");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -273,6 +274,7 @@ int main(int argc, char *argv[])
     std::function<void()> chatPage;
     std::function<void()> friendsPage;
     std::function<void()> addFriendsPage;
+    std::function<void()> inboxPage;
     std::function<void(const QString&, const QString&)> addFriendsRequest;
     auto button = [&](QString text, std::function<void()> func)
     {
@@ -361,6 +363,17 @@ int main(int argc, char *argv[])
                 });
         });
     };
+    inboxPage = [&](){
+        clearLayout(layout);
+        QList<QWidget*> notifications;
+        QPushButton *back_button = new QPushButton(back_text);
+        layout->addWidget(back_button);
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    initialPage();
+                });
+        });
+    };
     //menu de opções extras
     options = [&]()
     {
@@ -368,8 +381,15 @@ int main(int argc, char *argv[])
         QList<QWidget*> buttons;
         QPushButton *friends = new QPushButton(friends_text);
         QPushButton *back = new QPushButton(back_text);
+        QPushButton *inbox = new QPushButton(inbox_text);
+        buttons.append(inbox);
         buttons.append(friends);
         buttons.append(back);
+        QObject::connect(inbox, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    inboxPage();
+                });
+        });
         QObject::connect(back, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
                     initialPage();
