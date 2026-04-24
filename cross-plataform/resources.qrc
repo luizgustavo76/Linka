@@ -5,7 +5,7 @@
         <file>translations/pt-br-login.qm</file>
         <file>translations/pt-br-main-page.qm</file>
     </qresource>
-    <qresource prefix="/styles">
+    <qresource prefix="/">
         <file>styles/theme.qss</file>
     </qresource>
     <qresource prefix="/">

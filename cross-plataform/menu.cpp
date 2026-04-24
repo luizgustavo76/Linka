@@ -245,6 +245,8 @@ int main(int argc, char *argv[])
     QString new_post_text = QCoreApplication::translate("feed", "new post");
     QString friends_text = QCoreApplication::translate("add friends", "friends");
     QString search_text = QCoreApplication::translate("main-page", "search");
+    QString add_friends_text = QCoreApplication::translate("main-page", "add friends");
+    QString username_text = QCoreApplication::translate("global", "username");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -267,7 +269,8 @@ int main(int argc, char *argv[])
     std::function<void()> account;
     std::function<void()> searchPage;
     std::function<void()> chatPage;
-
+    std::function<void()> friendsPage;
+    std::function<void()> addFriendsPage;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -305,6 +308,35 @@ int main(int argc, char *argv[])
         );
         QLabel("post created with sucess!");
     };
+    addFriendsPage = [&](){
+        clearLayout(layout);
+        QLineEdit *usernameEntry = entry(username_text);
+        layout->addWidget(usernameEntry);
+        QPushButton *back_button = new QPushButton(back_text);
+        layout->addWidget(back_button);
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    initialPage();
+                });
+        });
+    };
+    friendsPage = [&](){
+        clearLayout(layout);
+        QPushButton *new_friend = new QPushButton(add_friends_text);
+        layout->addWidget(new_friend);
+        QPushButton *back_button = new QPushButton(back_text);
+        layout->addWidget(back_button);
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    initialPage();
+                });
+        });
+        QObject::connect(new_friend, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    addFriendsPage();
+                });
+        });
+    };
     //menu de opções extras
     options = [&]()
     {
@@ -317,6 +349,11 @@ int main(int argc, char *argv[])
         QObject::connect(back, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
                     initialPage();
+                });
+        });
+        QObject::connect(friends, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    friendsPage();
                 });
         });
         scroll_area(layout, buttons);
