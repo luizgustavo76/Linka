@@ -18,6 +18,7 @@
 #include <fstream>
 #include <QEventLoop>
 #include <string>
+#include <QScrollBar>
 #include <QStackedWidget>
 #include <map>
 #include <QFile>
@@ -31,6 +32,56 @@
 #include <QIcon>
 #include <QSize>
 #include <nlohmann/json.hpp>
+#include <QPainter>
+#include <QFontMetrics>
+
+class ChatBubble : public QWidget {
+public:
+    ChatBubble(QString text, bool isMe, QWidget *parent = nullptr)
+        : QWidget(parent), message(text), mine(isMe)
+    {
+        setMaximumWidth(400);
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    }
+
+protected:
+    void paintEvent(QPaintEvent *event) override {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+
+        QRect bubbleRect = rect().adjusted(10, 5, -10, -5);
+
+        QColor bubbleColor;
+        if (mine)
+            bubbleColor = QColor(0, 200, 120); // verde tipo "mensagem enviada"
+        else
+            bubbleColor = QColor(60, 60, 60);  // cinza tipo "mensagem recebida"
+
+        painter.setBrush(bubbleColor);
+        painter.setPen(Qt::NoPen);
+
+        painter.drawRoundedRect(bubbleRect, 18, 18);
+
+        painter.setPen(Qt::white);
+        painter.setFont(QFont("Arial", 11));
+
+        painter.drawText(
+            bubbleRect.adjusted(15, 10, -15, -10),
+            Qt::TextWordWrap,
+            message
+        );
+    }
+
+    QSize sizeHint() const override {
+        QFontMetrics fm(QFont("Arial", 11));
+        QRect r = fm.boundingRect(0, 0, 300, 1000, Qt::TextWordWrap, message);
+        return QSize(r.width() + 60, r.height() + 30);
+    }
+
+private:
+    QString message;
+    bool mine;
+};
 using json = nlohmann::json;
 std::string trim(const std::string &s)
 {
@@ -216,7 +267,6 @@ void clearLayout(QLayout *layout) {
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    qDebug() << QSslSocket::supportsSsl();
     app.setStyle(QStyleFactory::create("breeze"));
     loadConfig();
     loadStyle();
@@ -252,6 +302,7 @@ int main(int argc, char *argv[])
     QString inbox_text = QCoreApplication::translate("main-page", "inbox");
     QString accept_text = QCoreApplication::translate("inbox", "accept");
     QString denied_text = QCoreApplication::translate("inbox", "denied");
+    QString type_text = QCoreApplication::translate("chat", "type here");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -277,7 +328,9 @@ int main(int argc, char *argv[])
     std::function<void()> friendsPage;
     std::function<void()> addFriendsPage;
     std::function<void()> inboxPage;
+    std::function<void(const QString&)> chat;
     std::function<void(const QString&, const QString&)> addFriendsRequest;
+    std::function<void(const QString&, const QString&)> sendMessage;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -611,11 +664,147 @@ int main(int argc, char *argv[])
 
         return response;
     };
+    sendMessage = [&](QString message, QString user){
+        QJsonObject chatJson;
+        chatJson["receiver"] = user;
+        chatJson["sender"] = username;
+        chatJson["message"] = message;
+        requestHTTP(
+            url + "/send-message",
+            "POST",
+            chatJson
+        );
+    };
+    //tela quando você esta conversando com o usuario
+    chat = [&](QString user){
+        clearLayout(layout);
+        QList<QWidget*> message;
+        QHBoxLayout *lineMessage;
+
+        //scroll area pra mensagens
+        QScrollArea *scroll = new QScrollArea();
+        scroll->setWidgetResizable(true);
+
+        QWidget *containerScroll = new QWidget();
+        QVBoxLayout *containerLayout = new QVBoxLayout(containerScroll);
+
+        scroll->setWidget(containerScroll);
+        layout->addWidget(scroll);
+
+        //parte grafica
+        QTimer *timer = new QTimer();
+
+        QObject::connect(timer, &QTimer::timeout, [=]() mutable{
+            QJsonObject view_chat;
+            view_chat["user1"] = username;
+            view_chat["user2"] = user;
+
+            QString chat_message = requestHTTP(
+                url + "/view",
+                "POST",
+                view_chat
+            );
+
+            QJsonDocument doc = QJsonDocument::fromJson(chat_message.toUtf8());
+            if (!doc.isObject()) return;
+
+            QJsonObject obj = doc.object();
+            if (!obj.contains("messages")) return;
+
+            QJsonArray msgs = obj["messages"].toArray();
+            QLayoutItem *child;
+            while ((child = containerLayout->takeAt(0)) != nullptr)
+            {
+                if (child->widget())
+                {
+                    delete child->widget();
+                }
+                delete child;
+            }
+
+            for (int i = 0; i < msgs.size(); i++)
+            {
+                QJsonObject msg = msgs[i].toObject();
+
+                QString sender = msg["sender"].toString();
+                QString receiver = msg["receiver"].toString();
+                QString text = msg["message"].toString();
+
+                bool isMe = (sender == username);
+
+                ChatBubble *bubble = new ChatBubble(text, isMe);
+
+                QHBoxLayout *line = new QHBoxLayout();
+
+                if (isMe)
+                {
+                    line->addStretch();
+                    line->addWidget(bubble);
+                }
+                else
+                {
+                    line->addWidget(bubble);
+                    line->addStretch();
+                }
+
+                QWidget *lineWidget = new QWidget();
+                lineWidget->setLayout(line);
+
+                containerLayout->addWidget(lineWidget);
+            }
+
+            
+
+            //auto scroll pra baixo
+            QTimer::singleShot(50, [=](){
+                scroll->verticalScrollBar()->setValue(scroll->verticalScrollBar()->maximum());
+            });
+        });
+
+        timer->start(2000);
+
+        QLineEdit *message_box = new QLineEdit();
+        message_box->setPlaceholderText(type_text);
+
+        QHBoxLayout *entryBox = new QHBoxLayout();
+        QPushButton *send_button = new QPushButton(send_text);
+
+        entryBox->addWidget(message_box);
+        entryBox->addWidget(send_button);
+
+        QWidget *container = new QWidget();
+        container->setLayout(entryBox);
+
+        QPushButton *back_button = new QPushButton(back_text);
+
+        QObject::connect(back_button, &QPushButton::clicked, [=]() mutable{
+            QTimer::singleShot(0, [=](){
+                timer->stop();
+                initialPage();
+            });
+        });
+
+        QObject::connect(send_button, &QPushButton::clicked, [=]() mutable{
+            QTimer::singleShot(0, [=](){
+                sendMessage(message_box->text(), user);
+                message_box->clear();
+            });
+        });
+
+        QObject::connect(message_box, &QLineEdit::returnPressed, [=]() mutable{
+            send_button->click();
+        });
+
+        layout->addWidget(container);
+        layout->addWidget(back_button);
+
+    };
+    //pagina inicial de chat
     chatPage = [&](){
         clearLayout(layout);
         QList<QWidget*> widgets;
         QJsonObject friends_json;
-        friends_json["username"];
+        friends_json["username"] = username;
         QString response_friends = requestHTTP(
             url + "/friends",
             "POST",
@@ -632,7 +821,20 @@ int main(int argc, char *argv[])
         else
         {
             for(int i = 0; i < friends.size(); i++){
-                QLabel *user = new QLabel(friends[i].toString());
+                QJsonArray row = friends[i].toArray();
+                QString receiver = row[0].toString();
+                QString remittee = row[1].toString();
+                QString friendName;
+                if(receiver == username)
+                    friendName = remittee;
+                else
+                    friendName = receiver;
+                QPushButton *user = new QPushButton(friendName);
+                QObject::connect(user, &QPushButton::clicked, [=]() mutable{
+                    QTimer::singleShot(0, [=](){
+                        chat(friendName);
+                    });
+                });
                 widgets.append(user);
             };
         };
