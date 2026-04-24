@@ -247,6 +247,8 @@ int main(int argc, char *argv[])
     QString search_text = QCoreApplication::translate("main-page", "search");
     QString add_friends_text = QCoreApplication::translate("main-page", "add friends");
     QString username_text = QCoreApplication::translate("global", "username");
+    QString message_text = QCoreApplication::translate("add friends", "message");
+    QString send_text = QCoreApplication::translate("global", "send");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -271,6 +273,7 @@ int main(int argc, char *argv[])
     std::function<void()> chatPage;
     std::function<void()> friendsPage;
     std::function<void()> addFriendsPage;
+    std::function<void(const QString&, const QString&)> addFriendsRequest;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -308,12 +311,33 @@ int main(int argc, char *argv[])
         );
         QLabel("post created with sucess!");
     };
+    addFriendsRequest = [&](QString receiver, QString message){
+        QJsonObject friend_json;
+        friend_json["receiver"] = receiver;
+        friend_json["remittee"] = username;
+        friend_json["message"] = message;
+        requestHTTP(
+            url + "/send-friend",
+            "POST",
+            friend_json
+        );
+    };
     addFriendsPage = [&](){
         clearLayout(layout);
         QLineEdit *usernameEntry = entry(username_text);
         layout->addWidget(usernameEntry);
+        QLineEdit *messageEntry = entry(message_text);
+        layout->addWidget(messageEntry);
         QPushButton *back_button = new QPushButton(back_text);
         layout->addWidget(back_button);
+        QPushButton *send_button = new QPushButton(send_text);
+        layout->addWidget(send_button);
+        QObject::connect(send_button, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    addFriendsRequest(usernameEntry->text(), messageEntry->text());
+                    initialPage();
+                });
+        });
         QObject::connect(back_button, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
                     initialPage();
