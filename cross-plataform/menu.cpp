@@ -11,6 +11,7 @@
 #include <QStyleFactory>
 #include <QVector>
 #include <QSplashScreen>
+#include <QStandardPaths>
 #include <QJsonDocument>
 #include <iostream>
 #include <QJsonObject>
@@ -23,6 +24,8 @@
 #include <QStackedWidget>
 #include <map>
 #include <QFile>
+#include <QDir>
+#include <QFileInfo>
 #include <QTabWidget>
 #include <QTabBar>
 #include <QMainWindow>
@@ -193,12 +196,35 @@ void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
     scroll->setWidget(container);
 
     layout->addWidget(scroll);
-}
+};
+QString configPath()
+{
+    return QCoreApplication::applicationDirPath() + "/config-login.cfg";
+};
 void loadConfig() {
-    QFile file(":/config-login.cfg");
+
+    QString path = configPath();
+    qDebug() << "Caminho config:" << path;
+
+    if (!QFile::exists(path))
+    {
+        QFile res(":/config-login.cfg");
+        if (res.open(QIODevice::ReadOnly))
+        {
+            QFile out(path);
+            if (out.open(QIODevice::WriteOnly))
+            {
+                out.write(res.readAll());
+                out.close();
+            }
+            res.close();
+        }
+    }
+
+    QFile file(path);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Erro ao abrir config";
+        qDebug() << "Erro ao abrir config-login.cfg";
         return;
     }
 
@@ -219,7 +245,6 @@ void loadConfig() {
         else {
             int pos = line.indexOf('=');
             if (pos != -1) {
-
                 QString key = line.left(pos).trimmed();
                 QString value = line.mid(pos + 1).trimmed();
 
@@ -227,9 +252,17 @@ void loadConfig() {
             }
         }
     }
-}
+};
 void saveConfig() {
-    std::ofstream file(":/config-login.cfg");
+
+    QString dirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(dirPath);
+
+    QString filePath = dirPath + "/config-login.cfg";
+
+    qDebug() << "Salvando config em:" << filePath;
+
+    std::ofstream file(filePath.toStdString());
 
     file << "[SERVER]\n";
     file << "url = " << config["SERVER"]["url"] << "\n\n";
@@ -243,7 +276,7 @@ void saveConfig() {
     file << "password = " << config["FAST-LOGIN"]["password"] << "\n\n";
 
     file << "[FEDERATIONS]\n";
-    file << "url = []\n\n";
+    file << "url = " << config["FEDERATIONS"]["url"] << "\n\n";
 
     file << "[THEMES]\n";
     file << "theme = " << config["THEMES"]["theme"] << "\n";
@@ -341,6 +374,7 @@ int main(int argc, char *argv[])
     std::function<void(const QString&, const QString&)> addFriendsRequest;
     std::function<void(const QString&, const QString&)> sendMessage;
     std::function<void()> optionsPage;
+    std::function<void()> addFederationsPage;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -485,6 +519,47 @@ int main(int argc, char *argv[])
                 });
         });
     };
+    addFederationsPage = [&](){
+        clearLayout(layout);
+        QLineEdit *urlEntry = entry("url:");
+        QPushButton *buttonAdd = new QPushButton(send_text);
+        QPushButton *button_back = new QPushButton(back_text);
+        QObject::connect(button_back, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    initialPage();
+                });
+        });
+        layout->addWidget(urlEntry);
+        layout->addWidget(buttonAdd);
+        layout->addWidget(button_back);
+        QObject::connect(buttonAdd, &QPushButton::clicked, [=]() mutable {
+
+            qDebug() << "Caminho config:" << QFileInfo("config-login.cfg").absoluteFilePath();
+            qDebug() << "Digitado:" << urlEntry->text();
+
+            QString raw = QString::fromStdString(config["FEDERATIONS"]["url"]);
+
+            if(raw.trimmed().isEmpty())
+                raw = "[]";
+
+            QJsonDocument doc = QJsonDocument::fromJson(raw.toUtf8());
+            QJsonArray arr;
+
+            if(doc.isArray())
+                arr = doc.array();
+
+            arr.append(urlEntry->text());
+
+            QJsonDocument newDoc(arr);
+
+            config["FEDERATIONS"]["url"] =
+                newDoc.toJson(QJsonDocument::Compact).toStdString();
+
+            saveConfig();
+
+            qDebug() << "Depois de salvar:" << QString::fromStdString(config["FEDERATIONS"]["url"]);
+        });
+    };
     //menu de opções extras
     optionsPage = [&](){
         QList<QWidget*> buttons;
@@ -495,6 +570,11 @@ int main(int argc, char *argv[])
         QObject::connect(button_back, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
                     initialPage();
+                });
+        });
+        QObject::connect(button_add_federation, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    addFederationsPage();
                 });
         });
         buttons.append(button_back);

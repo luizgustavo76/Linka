@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/translations">
+    <qresource prefix="/">
         <file>translations/en-login.qm</file>
         <file>translations/en-main-page.qm</file>
         <file>translations/pt-br-login.qm</file>

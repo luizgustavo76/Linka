@@ -80,7 +80,7 @@ void saveConfig() {
 
     file << "[SERVER]\n";
     file << "url = " << config["SERVER"]["url"] << "\n\n";
-
+    file << "federations = " << config["SERVER"]["federations"] << "\n\n";
     file << "[LANG]\n";
     file << "lang = " << config["LANG"]["lang"] << "\n\n";
 
