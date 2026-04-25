@@ -10,6 +10,7 @@
 #include <QNetworkReply>
 #include <QStyleFactory>
 #include <QVector>
+#include <QSplashScreen>
 #include <QJsonDocument>
 #include <iostream>
 #include <QJsonObject>
@@ -281,6 +282,11 @@ int main(int argc, char *argv[])
     qDebug() << "url" << url;   
     //janela principal
     QMainWindow window;
+    app.setWindowIcon(QIcon(":/assets/icon.png"));
+    QPixmap pixmap(":/assets/icon.png");
+
+    QSplashScreen splash(pixmap);
+    splash.show();
     window.setWindowTitle("Linka Mobile");
     window.resize(400, 600);
 
@@ -303,6 +309,9 @@ int main(int argc, char *argv[])
     QString accept_text = QCoreApplication::translate("inbox", "accept");
     QString denied_text = QCoreApplication::translate("inbox", "denied");
     QString type_text = QCoreApplication::translate("chat", "type here");
+    QString add_theme_text = QCoreApplication::translate("configurations", "add theme");
+    QString add_federations_text = QCoreApplication::translate("configurations", "add federations");
+    QString options_text = QCoreApplication::translate("main-page", "configurations");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -331,6 +340,7 @@ int main(int argc, char *argv[])
     std::function<void(const QString&)> chat;
     std::function<void(const QString&, const QString&)> addFriendsRequest;
     std::function<void(const QString&, const QString&)> sendMessage;
+    std::function<void()> optionsPage;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -340,7 +350,7 @@ int main(int argc, char *argv[])
             func();
         });
     };
-    //novo ppost
+    //novo post
     auto new_post_request = [&](QString text, QString username){
         QJsonObject post;
         post["username"] = username;
@@ -476,6 +486,22 @@ int main(int argc, char *argv[])
         });
     };
     //menu de opções extras
+    optionsPage = [&](){
+        QList<QWidget*> buttons;
+        clearLayout(layout);
+        QPushButton *button_back = new QPushButton(back_text);
+        QPushButton *button_add_theme = new QPushButton(add_theme_text);
+        QPushButton *button_add_federation = new QPushButton(add_federations_text);
+        QObject::connect(button_back, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    initialPage();
+                });
+        });
+        buttons.append(button_back);
+        buttons.append(button_add_theme);
+        buttons.append(button_add_federation);
+        scroll_area(layout, buttons);
+    };
     options = [&]()
     {
         clearLayout(layout);
@@ -483,9 +509,16 @@ int main(int argc, char *argv[])
         QPushButton *friends = new QPushButton(friends_text);
         QPushButton *back = new QPushButton(back_text);
         QPushButton *inbox = new QPushButton(inbox_text);
+        QPushButton *button_options = new QPushButton(options_text);
+        buttons.append(button_options);
         buttons.append(inbox);
         buttons.append(friends);
         buttons.append(back);
+        QObject::connect(button_options, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    optionsPage();
+                });
+        });
         QObject::connect(inbox, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
                     inboxPage();
@@ -1002,6 +1035,7 @@ int main(int argc, char *argv[])
     initialPage = [&]()
     {
         clearLayout(layout);
+        splash.finish(&window);
         QStackedWidget *stack = new QStackedWidget(central);
         // ======= PÁGINAS =======
         QWidget *pageHome = new QWidget();

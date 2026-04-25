@@ -131,6 +131,10 @@
       <translation>Sair da conta</translation>
     </message>
     <message>
+      <source>add theme</source>
+      <translation>adicionar tema</translation>
+    </message>
+    <message>
       <source>exit label</source>
       <translation>pode fechar o app agora</translation>
     </message>
