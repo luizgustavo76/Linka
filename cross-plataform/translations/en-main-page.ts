@@ -11,6 +11,10 @@
       <translation>Linka 2026 all rights</translation>
     </message>
     <message>
+      <source>Search</source>
+      <translation>Search</translation>
+    </message>
+    <message>
       <source>chat</source>
       <translation>chat</translation>
     </message>
@@ -125,6 +129,10 @@
     <message>
       <source>sign-out</source>
       <translation>Sign-out</translation>
+    </message>
+    <message>
+      <source>add theme</source>
+      <translation>add theme</translation>
     </message>
     <message>
       <source>exit label</source>

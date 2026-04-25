@@ -21,5 +21,6 @@
         <file>assets/unstar.png</file>
         <file>assets/options.png</file>
         <file>assets/search.png</file>
+        <file>assets/icon.png</file>
     </qresource>
 </RCC>
