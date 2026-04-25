@@ -588,7 +588,7 @@ int main(int argc, char *argv[])
 
                 // ===== BOTÃO STAR =====
                 QPushButton *iconButton = new QPushButton();
-                iconButton->setIcon(QIcon("../assets/default_star.png"));
+                iconButton->setIcon(QIcon(":/assets/default_star.png"));
                 iconButton->setIconSize(QSize(24, 24));
                 iconButton->setFixedSize(30, 30);
                 iconButton->setStyleSheet("border: none;");
@@ -616,9 +616,28 @@ int main(int argc, char *argv[])
 
                 // clique da estrela (toggle)
                 QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
-                    
+                    QJsonObject star_json;
+                    star_json["username"] = username;
+                    star_json["post_id"] = postId;
+                    requestHTTP(
+                        url + "/star",
+                        "POST",
+                        star_json
+                    );
+                    QString has_starred = requestHTTP(
+                        url + "/has-star",
+                        "POST",
+                        star_json
+                    );
+                    QJsonDocument doc = QJsonDocument::fromJson(has_starred.toUtf8());
+                    QJsonObject obj = doc.object();
+                    bool starred = obj["starred"].toBool();
+                    if (starred == true){
+                        iconButton->setIcon(QIcon(":/assets/star.png"));
+                    }else{
+                        iconButton->setIcon(QIcon(":/assets/default_star.png"));
+                    };
 
-                    qDebug() << "Star clicada no post:" << postId;
                 });
 
                 starLayout->addWidget(iconButton);
