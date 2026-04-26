@@ -9,6 +9,8 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QJsonDocument>
+#include "config.h"
+#include "global.h"
 #include <QJsonObject>
 #include <QLabel>
 #include <QUrl>
@@ -43,7 +45,7 @@ void loadStyle()
     }
 }
 
-std::map<std::string, std::map<std::string, std::string>> config;
+
 
 void loadConfig() {
     std::ifstream file("config-login.cfg");
@@ -113,7 +115,7 @@ void clearLayout(QLayout *layout) {
     }
 }
 
-int main(int argc, char *argv[])
+int openLogin(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     loadConfig();
@@ -188,8 +190,8 @@ int main(int argc, char *argv[])
                 config["FAST-LOGIN"]["password"] = password.toStdString();
 
                 saveConfig();
-
-                QApplication::quit();
+                window.close();
+                openMenu();
             } else {
                 QLabel *labelTexto = new QLabel(error_401);
                 layout->addWidget(labelTexto);
@@ -237,8 +239,8 @@ int main(int argc, char *argv[])
                 config["FAST-LOGIN"]["password"] = password.toStdString();
 
                 saveConfig();
-
-                QApplication::quit();
+                window.close();
+                openMenu();
             } else {
                 QLabel *labelTexto = new QLabel(error_401);
                 layout->addWidget(labelTexto);

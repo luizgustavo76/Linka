@@ -15,8 +15,10 @@
 #include <QJsonDocument>
 #include <iostream>
 #include <QJsonObject>
+#include "global.h"
 #include <QLabel>
 #include <QUrl>
+#include "config.h"
 #include <fstream>
 #include <QEventLoop>
 #include <string>
@@ -38,7 +40,6 @@
 #include <nlohmann/json.hpp>
 #include <QPainter>
 #include <QFontMetrics>
-
 class ChatBubble : public QWidget {
 public:
     ChatBubble(QString text, bool isMe, QWidget *parent = nullptr)
@@ -166,7 +167,7 @@ QString requestHTTP(const QString &url,
 
     return response;
 }
-void loadStyle()
+void loadStyleMenu ()
 {
     QFile file(":/styles/theme.qss");
 
@@ -178,7 +179,7 @@ void loadStyle()
     }
 }
 
-std::map<std::string, std::map<std::string, std::string>> config;
+
 void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
 {
     QScrollArea *scroll = new QScrollArea();
@@ -201,7 +202,7 @@ QString configPath()
 {
     return QCoreApplication::applicationDirPath() + "/config-login.cfg";
 };
-void loadConfig() {
+void loadConfigMenu () {
 
     QString path = configPath();
     qDebug() << "Caminho config:" << path;
@@ -253,7 +254,7 @@ void loadConfig() {
         }
     }
 };
-void saveConfig() {
+void saveConfigMenu() {
 
     QString dirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QDir().mkpath(dirPath);
@@ -283,13 +284,13 @@ void saveConfig() {
 
     file.close();
 }
-void clearLayout(QLayout *layout) {
+void clearLayoutMenu(QLayout *layout) {
     if (!layout) return;
 
     QLayoutItem *item;
     while ((item = layout->takeAt(0)) != nullptr) {
         if (item->layout()) {
-            clearLayout(item->layout());
+            clearLayoutMenu(item->layout());
             delete item->layout();
         }
         if (item->widget()) {
@@ -298,12 +299,12 @@ void clearLayout(QLayout *layout) {
         delete item;
     }
 }
-int main(int argc, char *argv[])
+int openMenu(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     app.setStyle(QStyleFactory::create("breeze"));
-    loadConfig();
-    loadStyle();
+    loadConfigMenu ();
+    loadStyleMenu ();
     //url do servidor
     for (auto &sec : config) {
         std::cout << "[" << sec.first << "]\n";
@@ -398,7 +399,7 @@ int main(int argc, char *argv[])
         
     };
     auto new_post = [&](){
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QLineEdit *text_input = entry(text_post);
         button(back_text, initialPage);
         button(
@@ -424,7 +425,7 @@ int main(int argc, char *argv[])
         );
     };
     addFriendsPage = [&](){
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QLineEdit *usernameEntry = entry(username_text);
         layout->addWidget(usernameEntry);
         QLineEdit *messageEntry = entry(message_text);
@@ -446,7 +447,7 @@ int main(int argc, char *argv[])
         });
     };
     friendsPage = [&](){
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QPushButton *new_friend = new QPushButton(add_friends_text);
         layout->addWidget(new_friend);
         QPushButton *back_button = new QPushButton(back_text);
@@ -463,7 +464,7 @@ int main(int argc, char *argv[])
         });
     };
     inboxPage = [&](){
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QList<QWidget*> notifications;
         QJsonObject inbox;
         inbox["username"] = username;
@@ -520,7 +521,7 @@ int main(int argc, char *argv[])
         });
     };
     addFederationsPage = [&](){
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QLineEdit *urlEntry = entry("url:");
         QPushButton *buttonAdd = new QPushButton(send_text);
         QPushButton *button_back = new QPushButton(back_text);
@@ -555,7 +556,7 @@ int main(int argc, char *argv[])
             config["FEDERATIONS"]["url"] =
                 newDoc.toJson(QJsonDocument::Compact).toStdString();
 
-            saveConfig();
+            saveConfigMenu();
 
             qDebug() << "Depois de salvar:" << QString::fromStdString(config["FEDERATIONS"]["url"]);
         });
@@ -563,7 +564,7 @@ int main(int argc, char *argv[])
     //menu de opções extras
     optionsPage = [&](){
         QList<QWidget*> buttons;
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QPushButton *button_back = new QPushButton(back_text);
         QPushButton *button_add_theme = new QPushButton(add_theme_text);
         QPushButton *button_add_federation = new QPushButton(add_federations_text);
@@ -584,7 +585,7 @@ int main(int argc, char *argv[])
     };
     options = [&]()
     {
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QList<QWidget*> buttons;
         QPushButton *friends = new QPushButton(friends_text);
         QPushButton *back = new QPushButton(back_text);
@@ -617,7 +618,7 @@ int main(int argc, char *argv[])
         scroll_area(layout, buttons);
     };
     account = [&](){
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QLabel *label_username = new QLabel(username);
         layout->addWidget(label_username);
         QPushButton *buttonBack = new QPushButton(back_text);
@@ -630,7 +631,7 @@ int main(int argc, char *argv[])
     };
     showfeed = [&]()
     {
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QString url_feed = url + "/feed";
         qDebug() << "url feed" << url_feed;
         QNetworkRequest request{QUrl(url_feed)};
@@ -809,7 +810,7 @@ int main(int argc, char *argv[])
     };
     //tela quando você esta conversando com o usuario
     chat = [&](QString user){
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QList<QWidget*> message;
         QHBoxLayout *lineMessage;
 
@@ -933,7 +934,7 @@ int main(int argc, char *argv[])
     };
     //pagina inicial de chat
     chatPage = [&](){
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         QList<QWidget*> widgets;
         QJsonObject friends_json;
         friends_json["username"] = username;
@@ -980,7 +981,7 @@ int main(int argc, char *argv[])
         scroll_area(layout, widgets);
     };
     searchPage = [&](){
-        clearLayout(layout);
+        clearLayoutMenu(layout);
 
         QList<QWidget*> content;
 
@@ -1114,7 +1115,7 @@ int main(int argc, char *argv[])
     //pagina inicial para renderizar
     initialPage = [&]()
     {
-        clearLayout(layout);
+        clearLayoutMenu(layout);
         splash.finish(&window);
         QStackedWidget *stack = new QStackedWidget(central);
         // ======= PÁGINAS =======
