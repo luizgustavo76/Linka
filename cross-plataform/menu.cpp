@@ -297,11 +297,190 @@ void clearLayout(QLayout *layout) {
     }
 }
 int login(int argc, char *argv[], QApplication &app);
-int menu(int argc, char *argv[], QApplication *app);
-int menu(int argc, char *argv[], QApplication *app)
+int menu(int argc, char *argv[], QApplication &app);
+int login(int argc, char *argv[], QApplication &app)
+    {
+    
+        QString url = "http://127.0.0.1:5000";
+        QString signup_text = QCoreApplication::translate("login", "sign-up");
+        QString signin_text = QCoreApplication::translate("login", "sign-in");
+        QString username_text = QCoreApplication::translate("login", "username");
+        QString password_text = QCoreApplication::translate("login", "password");
+        QString back_text = QCoreApplication::translate("global", "back");
+        QString send_text = QCoreApplication::translate("login", "send");
+        QString repeat_password_text = QCoreApplication::translate("sign-up", "repeat the password");
+        QString error_401 = QCoreApplication::translate("errors", "401");
+
+        QWidget *window = new QWidget();
+        window->setWindowTitle("Linka Mobile");
+        window->resize(400, 600);
+        QVBoxLayout *layout = new QVBoxLayout(window);
+        QNetworkAccessManager *manager = new QNetworkAccessManager(window);
+        auto entry = [&](QString text) -> QLineEdit* {
+            QLineEdit *input = new QLineEdit();
+            input->setPlaceholderText(text);
+            layout->addWidget(input);
+            return input;
+        };
+
+        // Declara antes
+        std::function<void()> showInitialPage;
+        std::function<void()> signupPage;
+        std::function<void()> signinPage;
+
+        auto button = [&](QString text, std::function<void()> func)
+        {
+            QPushButton *btn = new QPushButton(text);
+            layout->addWidget(btn);
+
+            QObject::connect(btn, &QPushButton::clicked, [=]() {
+                if(func) func();
+            });
+        };
+        auto login_server = [&](QString username, QString password){
+            qDebug() << "BASE URL:" << url;
+            qDebug() << "FINAL:" << url + "/login";
+            QUrl url_server(url + "/login");
+            QNetworkRequest request(url_server);
+            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+            QJsonObject body;
+            body["username"] = username;
+            body["password"] = password;
+            QJsonDocument doc(body);
+            QByteArray data = doc.toJson();
+            QNetworkReply *reply = manager->post(request, data);
+
+            QObject::connect(reply, &QNetworkReply::finished, [&]() {
+
+                int status = reply->attribute(
+                    QNetworkRequest::HttpStatusCodeAttribute
+                ).toInt();
+
+                QByteArray body = reply->readAll();
+
+
+                if(status == 200){
+
+                    config["FAST-LOGIN"]["username"] = username.toStdString();
+                    config["FAST-LOGIN"]["password"] = password.toStdString();
+
+                    saveConfig();
+
+                    QTimer::singleShot(0, [&](){
+                        window->hide();
+                        menu(argc, argv, app);
+                    });
+                } else {
+                    QLabel *labelTexto = new QLabel(error_401);
+                    layout->addWidget(labelTexto);
+                }
+
+                reply->deleteLater();
+            });
+        };
+        signinPage = [=]() mutable {
+            clearLayout(layout);
+            QLineEdit *user_entry = new QLineEdit();
+            QLineEdit *password_entry = new QLineEdit();
+            password_entry->setPlaceholderText(password_text);
+            user_entry->setPlaceholderText(username_text);
+            password_entry->setEchoMode(QLineEdit::Password);
+            QPushButton *back = new QPushButton(back_text);
+            QObject::connect(back, &QPushButton::clicked, [=]() {
+                if(showInitialPage) showInitialPage();
+            });
+            
+            
+            QPushButton *send_button = new QPushButton(send_text);
+            QObject::connect(send_button, &QPushButton::clicked, [=]() {
+                login_server(user_entry->text(), password_entry->text());
+            });
+            layout->addWidget(user_entry);
+            layout->addWidget(password_entry);
+            layout->addWidget(back);
+            layout->addWidget(send_button);
+        };
+        auto signup_server = [&](QString username, QString password, QString email){
+            qDebug() << "BASE URL:" << url;
+            qDebug() << "FINAL:" << url + "/register";
+            QUrl url_server(url + "/register");
+            QNetworkRequest request(url_server);
+            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+            QJsonObject body;
+            body["username"] = username;
+            body["password"] = password;
+            body["email"] = email;
+            QJsonDocument doc(body);
+            QByteArray data = doc.toJson();
+            QNetworkReply *reply = manager->post(request, data);
+
+            QObject::connect(reply, &QNetworkReply::finished, [&]() {
+
+                int status = reply->attribute(
+                    QNetworkRequest::HttpStatusCodeAttribute
+                ).toInt();
+
+                QByteArray body = reply->readAll();
+
+
+                if(status == 200||status == 201){
+
+                    config["FAST-LOGIN"]["username"] = username.toStdString();
+                    config["FAST-LOGIN"]["password"] = password.toStdString();
+
+                    saveConfig();
+
+                    QTimer::singleShot(0, [&](){
+                        window->hide();
+                        menu(argc, argv, app);
+                    });
+                } else {
+                    QLabel *labelTexto = new QLabel(error_401);
+                    layout->addWidget(labelTexto);
+                }
+
+                reply->deleteLater();
+            });
+        };
+        signupPage = [=]() mutable {
+            clearLayout(layout);
+            QLineEdit *user_entry = entry(username_text);
+            QLineEdit *password_entry = entry(password_text);
+            QLineEdit *repeat_entry = entry(repeat_password_text);
+            QLineEdit *email_entry = entry("email");
+            password_entry->setEchoMode(QLineEdit::Password);
+            repeat_entry->setEchoMode(QLineEdit::Password);
+            button(back_text, showInitialPage);
+            button(send_text, [=]() {
+                signup_server(user_entry->text(), password_entry->text(), email_entry->text());
+            });
+        };
+        showInitialPage = [=]() mutable {
+            clearLayout(layout);
+            QPushButton *signin_button = new QPushButton(signin_text);
+            QPushButton *signup_button = new QPushButton(signup_text);
+            layout->addWidget(signin_button);
+            layout->addWidget(signup_button);
+            QObject::connect(signin_button, &QPushButton::clicked, [=](){
+                signinPage();
+            });
+            QObject::connect(signup_button, &QPushButton::clicked, [=](){
+                signupPage();
+            });
+            //button(signin_text, signinPage); // depois você cria
+        };
+        
+
+        // começa na tela inicial
+        showInitialPage();
+
+        window->show();
+        return 0;
+    };
+int menu(int argc, char *argv[], QApplication &app)
     {
         QMainWindow *window = new QMainWindow();
-        app->setStyle(QStyleFactory::create("breeze"));
+        app.setStyle(QStyleFactory::create("breeze"));
         loadConfig();
         loadStyle();
         //url do servidor
@@ -314,7 +493,7 @@ int menu(int argc, char *argv[], QApplication *app)
         QString url = QString::fromStdString(config["SERVER"]["url"]);
         qDebug() << "url" << url;   
         //janela principal
-        app->setWindowIcon(QIcon(":/assets/icon.png"));
+        app.setWindowIcon(QIcon(":/assets/icon.png"));
         QPixmap pixmap(":/assets/icon.png");
 
         QSplashScreen splash(pixmap);
@@ -1228,186 +1407,8 @@ int menu(int argc, char *argv[], QApplication *app)
         initialPage();
         //função para exibir o feed
         window->show();
-        return app->exec();
+        return app.exec();
     };
-int login(int argc, char *argv[], QApplication &app)
-    {
-    
-        QString url = "http://127.0.0.1:5000";
-        QString signup_text = QCoreApplication::translate("login", "sign-up");
-        QString signin_text = QCoreApplication::translate("login", "sign-in");
-        QString username_text = QCoreApplication::translate("login", "username");
-        QString password_text = QCoreApplication::translate("login", "password");
-        QString back_text = QCoreApplication::translate("global", "back");
-        QString send_text = QCoreApplication::translate("login", "send");
-        QString repeat_password_text = QCoreApplication::translate("sign-up", "repeat the password");
-        QString error_401 = QCoreApplication::translate("errors", "401");
-
-        QWidget *window = new QWidget();
-        window->setWindowTitle("Linka Mobile");
-        window->resize(400, 600);
-        QVBoxLayout *layout = new QVBoxLayout(window);
-        QNetworkAccessManager *manager = new QNetworkAccessManager(window);
-        auto entry = [&](QString text) -> QLineEdit* {
-            QLineEdit *input = new QLineEdit();
-            input->setPlaceholderText(text);
-            layout->addWidget(input);
-            return input;
-        };
-
-        // Declara antes
-        std::function<void()> showInitialPage;
-        std::function<void()> signupPage;
-        std::function<void()> signinPage;
-
-        auto button = [&](QString text, std::function<void()> func)
-        {
-            QPushButton *btn = new QPushButton(text);
-            layout->addWidget(btn);
-
-            QObject::connect(btn, &QPushButton::clicked, [=]() {
-                if(func) func();
-            });
-        };
-        auto login_server = [&](QString username, QString password){
-            QUrl url_server(QUrl(url).resolved(QUrl("/login")));
-            QNetworkRequest request(url_server);
-            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-            QJsonObject body;
-            body["username"] = username;
-            body["password"] = password;
-            QJsonDocument doc(body);
-            QByteArray data = doc.toJson();
-            QNetworkReply *reply = manager->post(request, data);
-
-            QObject::connect(reply, &QNetworkReply::finished, [=]() {
-
-                int status = reply->attribute(
-                    QNetworkRequest::HttpStatusCodeAttribute
-                ).toInt();
-
-                QByteArray body = reply->readAll();
-
-                if(status == 200){
-
-                    config["FAST-LOGIN"]["username"] = username.toStdString();
-                    config["FAST-LOGIN"]["password"] = password.toStdString();
-
-                    saveConfig();
-
-                    QTimer::singleShot(0, [=]() {
-                        window->hide();
-                        showInitialPage();
-                    });
-
-                } else {
-                    QLabel *labelTexto = new QLabel(error_401);
-                    layout->addWidget(labelTexto);
-                }
-
-                reply->deleteLater();
-            });
-        };
-        signinPage = [=]() mutable {
-            clearLayout(layout);
-            QLineEdit *user_entry = new QLineEdit();
-            QLineEdit *password_entry = new QLineEdit();
-            password_entry->setPlaceholderText(password_text);
-            user_entry->setPlaceholderText(username_text);
-            password_entry->setEchoMode(QLineEdit::Password);
-            QPushButton *back = new QPushButton(back_text);
-            QObject::connect(back, &QPushButton::clicked, [=]() {
-                if(showInitialPage) showInitialPage();
-            });
-            
-            
-            QPushButton *send_button = new QPushButton(send_text);
-            QObject::connect(send_button, &QPushButton::clicked, [=]() {
-                login_server(user_entry->text(), password_entry->text());
-            });
-            layout->addWidget(user_entry);
-            layout->addWidget(password_entry);
-            layout->addWidget(back);
-            layout->addWidget(send_button);
-        };
-        auto signup_server = [&](QString username, QString password, QString email){
-            qDebug() << "BASE URL:" << url;
-            qDebug() << "FINAL:" << url + "/register";
-            QUrl url_server(url + "/register");
-            QNetworkRequest request(url_server);
-            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-            QJsonObject body;
-            body["username"] = username;
-            body["password"] = password;
-            body["email"] = email;
-            QJsonDocument doc(body);
-            QByteArray data = doc.toJson();
-            QNetworkReply *reply = manager->post(request, data);
-
-            QObject::connect(reply, &QNetworkReply::finished, [&]() {
-
-                int status = reply->attribute(
-                    QNetworkRequest::HttpStatusCodeAttribute
-                ).toInt();
-
-                QByteArray body = reply->readAll();
-
-
-                if(status == 200||status == 201){
-
-                    config["FAST-LOGIN"]["username"] = username.toStdString();
-                    config["FAST-LOGIN"]["password"] = password.toStdString();
-
-                    saveConfig();
-
-                    QTimer::singleShot(0, [&](){
-                        window->hide();
-                        menu(argc, argv, &app);
-                    });
-                } else {
-                    QLabel *labelTexto = new QLabel(error_401);
-                    layout->addWidget(labelTexto);
-                }
-
-                reply->deleteLater();
-            });
-        };
-        signupPage = [=]() mutable {
-            clearLayout(layout);
-            QLineEdit *user_entry = entry(username_text);
-            QLineEdit *password_entry = entry(password_text);
-            QLineEdit *repeat_entry = entry(repeat_password_text);
-            QLineEdit *email_entry = entry("email");
-            password_entry->setEchoMode(QLineEdit::Password);
-            repeat_entry->setEchoMode(QLineEdit::Password);
-            button(back_text, showInitialPage);
-            button(send_text, [=]() {
-                signup_server(user_entry->text(), password_entry->text(), email_entry->text());
-            });
-        };
-        showInitialPage = [=]() mutable {
-            clearLayout(layout);
-            QPushButton *signin_button = new QPushButton(signin_text);
-            QPushButton *signup_button = new QPushButton(signup_text);
-            layout->addWidget(signin_button);
-            layout->addWidget(signup_button);
-            QObject::connect(signin_button, &QPushButton::clicked, [=](){
-                signinPage();
-            });
-            QObject::connect(signup_button, &QPushButton::clicked, [=](){
-                signupPage();
-            });
-            //button(signin_text, signinPage); // depois você cria
-        };
-        
-
-        // começa na tela inicial
-        showInitialPage();
-
-        window->show();
-        return 0;
-    };
-
 int main(int argc, char *argv[]){
     QApplication app(argc, argv);
 
