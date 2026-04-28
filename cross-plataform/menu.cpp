@@ -384,6 +384,8 @@ int main(int argc, char *argv[])
     std::function<void()> loginPage;
     std::function<void()> signinPage;
     std::function<void()> signupPage;
+    std::function<void(const QString&, const QString&, const QString&)> signinRequest;
+    std::function<void(const QString&, const QString&)> signupRequest;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -421,6 +423,17 @@ int main(int argc, char *argv[])
         );
         QLabel("post created with sucess!");
     };
+    signinRequest = [&](QString username, QString password, QString email){
+        QJsonObject json_signin;
+        json_signin["username"] = username;
+        json_signin["password"] = password;
+        json_signin["email"] = email;
+        QString request_signin = requestHTTP(
+            url + "/register",
+            "POST",
+            json_signin
+        );
+    }
     signinPage = [&](){
         clearLayout(layout);
         QLineEdit *usernameEntry = new QLineEdit();
@@ -436,6 +449,11 @@ int main(int argc, char *argv[])
         QObject::connect(back_button, &QPushButton::clicked, [=](){
             loginPage();
         });
+        QObject::connect(send_button, &QPushButton::clicked, [=](){
+            if (passwordEntry == retryPasswordEntry){
+                signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
+            };
+        });
         layout->addWidget(usernameEntry);
         layout->addWidget(passwordEntry);
         layout->addWidget(retryPasswordEntry);
@@ -443,6 +461,16 @@ int main(int argc, char *argv[])
         layout->addWidget(send_button);
         layout->addWidget(back_button);
 
+    };
+    signupRequest = [&](QString username, QString password){
+        QJsonObject json_signup;
+        json_signup["username"] = username;
+        json_signup["password"] = password;
+        QString response_signup = requestHTTP(
+            url + "/login",
+            "POST",
+            json_signup
+        );
     };
     signupPage = [&](){
         clearLayout(layout);
@@ -458,6 +486,9 @@ int main(int argc, char *argv[])
         layout->addWidget(back_button);
         QObject::connect(back_button, &QPushButton::clicked, [=](){
             loginPage();
+        });
+        QObject::connect(send_button, &QPushButton::clicked, [=](){
+            signupRequest(usernameEntry->text(), passwordEntry->text());
         });
     };
     loginPage = [&](){
