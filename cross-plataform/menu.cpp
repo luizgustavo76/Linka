@@ -101,7 +101,8 @@ std::string trim(const std::string &s)
 QString requestHTTP(const QString &url,
                     const QString &method,
                     const QJsonObject &json,
-                    int timeoutMs = 10000)
+                    int timeoutMs = 10000,
+                    int *statusCode = nullptr)
 {
     QNetworkAccessManager manager;
 
@@ -133,6 +134,7 @@ QString requestHTTP(const QString &url,
     }
     else
     {
+        if (statusCode) *statusCode = -1;
         return "ERRO: Método HTTP inválido (" + method + ")";
     }
 
@@ -150,9 +152,14 @@ QString requestHTTP(const QString &url,
     if (!timer.isActive())
     {
         reply->abort();
+
+        if (statusCode) *statusCode = 408; 
         reply->deleteLater();
         return "ERRO: Timeout na requisição.";
     }
+
+    int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode) *statusCode = code;
 
     if (reply->error() != QNetworkReply::NoError)
     {
@@ -385,7 +392,7 @@ int main(int argc, char *argv[])
     std::function<void()> signinPage;
     std::function<void()> signupPage;
     std::function<void(const QString&, const QString&, const QString&)> signinRequest;
-    std::function<void(const QString&, const QString&)> signupRequest;
+    std::function<int(const QString&, const QString&)> signupRequest;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -423,120 +430,7 @@ int main(int argc, char *argv[])
         );
         QLabel("post created with sucess!");
     };
-    signinRequest = [&](QString username, QString password, QString email){
-        QJsonObject json_signin;
-        json_signin["username"] = username;
-        json_signin["password"] = password;
-        json_signin["email"] = email;
-        QString request_signin = requestHTTP(
-            url + "/register",
-            "POST",
-            json_signin
-        );
-    }
-    signinPage = [&](){
-        clearLayout(layout);
-        QLineEdit *usernameEntry = new QLineEdit();
-        QLineEdit *passwordEntry = new QLineEdit();
-        QLineEdit *retryPasswordEntry = new QLineEdit();
-        QLineEdit *emailEntry = new QLineEdit();
-        usernameEntry->setPlaceholderText(username_text);
-        passwordEntry->setPlaceholderText(password_text);
-        retryPasswordEntry->setPlaceholderText(retry_password_text);
-        emailEntry->setPlaceholderText(email_text);
-        QPushButton *send_button = new QPushButton(send_text);
-        QPushButton *back_button = new QPushButton(back_text);
-        QObject::connect(back_button, &QPushButton::clicked, [=](){
-            loginPage();
-        });
-        QObject::connect(send_button, &QPushButton::clicked, [=](){
-            if (passwordEntry == retryPasswordEntry){
-                signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
-            };
-        });
-        layout->addWidget(usernameEntry);
-        layout->addWidget(passwordEntry);
-        layout->addWidget(retryPasswordEntry);
-        layout->addWidget(emailEntry);
-        layout->addWidget(send_button);
-        layout->addWidget(back_button);
-
-    };
-    signupRequest = [&](QString username, QString password){
-        QJsonObject json_signup;
-        json_signup["username"] = username;
-        json_signup["password"] = password;
-        QString response_signup = requestHTTP(
-            url + "/login",
-            "POST",
-            json_signup
-        );
-    };
-    signupPage = [&](){
-        clearLayout(layout);
-        QLineEdit *usernameEntry = new QLineEdit();
-        QLineEdit *passwordEntry = new QLineEdit();
-        usernameEntry->setPlaceholderText(username_text);
-        passwordEntry->setPlaceholderText(password_text);
-        QPushButton *send_button = new QPushButton(send_text);
-        QPushButton *back_button = new QPushButton(back_text);
-        layout->addWidget(usernameEntry);
-        layout->addWidget(passwordEntry);
-        layout->addWidget(send_button);
-        layout->addWidget(back_button);
-        QObject::connect(back_button, &QPushButton::clicked, [=](){
-            loginPage();
-        });
-        QObject::connect(send_button, &QPushButton::clicked, [=](){
-            signupRequest(usernameEntry->text(), passwordEntry->text());
-        });
-    };
-    loginPage = [&](){
-        clearLayout(layout);
-        QPushButton *signinPage_button = new QPushButton(signin_text);
-        QPushButton *signupPage_button = new QPushButton(signup_text);
-        layout->addWidget(signinPage_button);
-        layout->addWidget(signupPage_button);
-        QObject::connect(signinPage_button, &QPushButton::clicked, [&](){
-            signinPage();
-        });
-        QObject::connect(signupPage_button, &QPushButton::clicked, [&](){
-            signupPage();
-        });
-    };
-    addFriendsRequest = [&](QString receiver, QString message){
-        QJsonObject friend_json;
-        friend_json["receiver"] = receiver;
-        friend_json["remittee"] = username;
-        friend_json["message"] = message;
-        requestHTTP(
-            url + "/send-friend",
-            "POST",
-            friend_json
-        );
-    };
-    addFriendsPage = [&](){
-        clearLayout(layout);
-        QLineEdit *usernameEntry = entry(username_text);
-        layout->addWidget(usernameEntry);
-        QLineEdit *messageEntry = entry(message_text);
-        layout->addWidget(messageEntry);
-        QPushButton *back_button = new QPushButton(back_text);
-        layout->addWidget(back_button);
-        QPushButton *send_button = new QPushButton(send_text);
-        layout->addWidget(send_button);
-        QObject::connect(send_button, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    addFriendsRequest(usernameEntry->text(), messageEntry->text());
-                    initialPage();
-                });
-        });
-        QObject::connect(back_button, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    initialPage();
-                });
-        });
-    };
+    
     friendsPage = [&](){
         clearLayout(layout);
         QPushButton *new_friend = new QPushButton(add_friends_text);
@@ -1322,6 +1216,134 @@ int main(int argc, char *argv[])
         // ======= MONTAGEM =======
         layout->addWidget(stack, 1);
         layout->addWidget(bottomBar, 0);
+    };
+    signinRequest = [&](QString username, QString password, QString email){
+        QJsonObject json_signin;
+        json_signin["username"] = username;
+        json_signin["password"] = password;
+        json_signin["email"] = email;
+        QString request_signin = requestHTTP(
+            url + "/register",
+            "POST",
+            json_signin
+        );
+    };
+    signinPage = [&](){
+        clearLayout(layout);
+        QLineEdit *usernameEntry = new QLineEdit();
+        QLineEdit *passwordEntry = new QLineEdit();
+        QLineEdit *retryPasswordEntry = new QLineEdit();
+        QLineEdit *emailEntry = new QLineEdit();
+        usernameEntry->setPlaceholderText(username_text);
+        passwordEntry->setPlaceholderText(password_text);
+        retryPasswordEntry->setPlaceholderText(retry_password_text);
+        emailEntry->setPlaceholderText(email_text);
+        QPushButton *send_button = new QPushButton(send_text);
+        QPushButton *back_button = new QPushButton(back_text);
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+            loginPage();
+        });
+        QObject::connect(send_button, &QPushButton::clicked, [=](){
+            if (passwordEntry == retryPasswordEntry){
+                signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
+            };
+        });
+        layout->addWidget(usernameEntry);
+        layout->addWidget(passwordEntry);
+        layout->addWidget(retryPasswordEntry);
+        layout->addWidget(emailEntry);
+        layout->addWidget(send_button);
+        layout->addWidget(back_button);
+
+    };
+    signupRequest = [&](QString username, QString password){
+        int status_code = 0;
+        QJsonObject json_signup;
+        json_signup["username"] = username;
+        json_signup["password"] = password;
+        QString response_signup = requestHTTP(
+            url + "/login",
+            "POST",
+            json_signup,
+            10000,
+            &status_code
+        );
+        return status_code;
+    };
+    signupPage = [&](){
+        clearLayout(layout);
+        QLineEdit *usernameEntry = new QLineEdit();
+        QLineEdit *passwordEntry = new QLineEdit();
+        usernameEntry->setPlaceholderText(username_text);
+        passwordEntry->setPlaceholderText(password_text);
+        QPushButton *send_button = new QPushButton(send_text);
+        QPushButton *back_button = new QPushButton(back_text);
+        layout->addWidget(usernameEntry);
+        layout->addWidget(passwordEntry);
+        layout->addWidget(send_button);
+        layout->addWidget(back_button);
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+            loginPage();
+        });
+        QObject::connect(send_button, &QPushButton::clicked, [=](){
+            loadConfig();
+            int status_signup = signupRequest(usernameEntry->text(), passwordEntry->text());
+            if (status_signup == 200|| status_signup == 201){
+                config["FAST-LOGIN"]["username"] = usernameEntry->text().toStdString();
+                config["FAST-LOGIN"]["password"] = passwordEntry->text().toStdString();
+                saveConfig();
+                initialPage();
+            }else{
+                QLabel *error_label = new QLabel("ERROR!");
+                layout->addWidget(error_label);
+            };
+        });
+    };
+    loginPage = [&](){
+        clearLayout(layout);
+        QPushButton *signinPage_button = new QPushButton(signin_text);
+        QPushButton *signupPage_button = new QPushButton(signup_text);
+        layout->addWidget(signinPage_button);
+        layout->addWidget(signupPage_button);
+        QObject::connect(signinPage_button, &QPushButton::clicked, [&](){
+            signinPage();
+        });
+        QObject::connect(signupPage_button, &QPushButton::clicked, [&](){
+            signupPage();
+        });
+    };
+    addFriendsRequest = [&](QString receiver, QString message){
+        QJsonObject friend_json;
+        friend_json["receiver"] = receiver;
+        friend_json["remittee"] = username;
+        friend_json["message"] = message;
+        requestHTTP(
+            url + "/send-friend",
+            "POST",
+            friend_json
+        );
+    };
+    addFriendsPage = [&](){
+        clearLayout(layout);
+        QLineEdit *usernameEntry = entry(username_text);
+        layout->addWidget(usernameEntry);
+        QLineEdit *messageEntry = entry(message_text);
+        layout->addWidget(messageEntry);
+        QPushButton *back_button = new QPushButton(back_text);
+        layout->addWidget(back_button);
+        QPushButton *send_button = new QPushButton(send_text);
+        layout->addWidget(send_button);
+        QObject::connect(send_button, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    addFriendsRequest(usernameEntry->text(), messageEntry->text());
+                    initialPage();
+                });
+        });
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    initialPage();
+                });
+        });
     };
     //chamada da função
     initialPage();
