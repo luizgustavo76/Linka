@@ -436,6 +436,12 @@ int main(int argc, char *argv[])
         QObject::connect(back_button, &QPushButton::clicked, [=](){
             loginPage();
         });
+        layout->addWidget(usernameEntry);
+        layout->addWidget(passwordEntry);
+        layout->addWidget(retryPasswordEntry);
+        layout->addWidget(emailEntry);
+        layout->addWidget(send_button);
+        layout->addWidget(back_button);
 
     };
     signupPage = [&](){
