@@ -1,162 +1,345 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TS version="2.1" language="pt_BR">
+
   <context>
     <name>initial-page</name>
+
     <message>
       <source>welcome back</source>
-      <translation>Bem vindo de volta</translation>
+      <translation>Bem-vindo de volta</translation>
     </message>
+
     <message>
       <source>Linka rights</source>
-      <translation>Linka 2026 todos os direitos reservados</translation>
+      <translation>Linka 2026. Todos os direitos reservados.</translation>
     </message>
+
     <message>
       <source>Search</source>
-      <translation>Procurar</translation>
+      <translation>Pesquisar</translation>
     </message>
+
     <message>
       <source>chat</source>
-      <translation>mensagens</translation>
+      <translation>Mensagens</translation>
     </message>
+
     <message>
       <source>add friends</source>
-      <translation>adicionar amigos</translation>
+      <translation>Adicionar amigos</translation>
     </message>
+
     <message>
       <source>friends</source>
-      <translation>amigos</translation>
+      <translation>Amigos</translation>
     </message>
+
     <message>
       <source>inbox</source>
-      <translation>caixa de entrada</translation>
+      <translation>Caixa de entrada</translation>
     </message>
+
     <message>
       <source>feed</source>
-      <translation>feed</translation>
+      <translation>Feed</translation>
     </message>
+
     <message>
       <source>my account</source>
-      <translation>minha conta</translation>
+      <translation>Minha conta</translation>
     </message>
+
     <message>
       <source>configurations</source>
-      <translation>configurações</translation>
+      <translation>Configurações</translation>
     </message>
+
+    <message>
+      <source>sign-up</source>
+      <translation>Cadastrar-se</translation>
+    </message>
+
+    <message>
+      <source>sign-in</source>
+      <translation>Entrar</translation>
+    </message>
+
+    <message>
+      <source>change server</source>
+      <translation>Alterar servidor</translation>
+    </message>
+
   </context>
+
 
   <context>
     <name>feed</name>
+
     <message>
       <source>new post</source>
-      <translation>novo post</translation>
+      <translation>Novo post</translation>
     </message>
+
     <message>
       <source>search</source>
-      <translation>pesquisar</translation>
+      <translation>Pesquisar</translation>
     </message>
+
     <message>
       <source>error</source>
-      <translation>erro ao carregar o feed</translation>
+      <translation>Erro ao carregar o feed</translation>
     </message>
+
     <message>
       <source>text post</source>
-      <translation>texto do post</translation>
+      <translation>Post de texto</translation>
     </message>
+
   </context>
+
 
   <context>
     <name>global</name>
+
     <message>
       <source>username</source>
       <translation>Nome de usuário</translation>
     </message>
+
     <message>
       <source>back</source>
-      <translation>voltar</translation>
+      <translation>Voltar</translation>
     </message>
+
     <message>
       <source>send</source>
-      <translation>enviar</translation>
+      <translation>Enviar</translation>
     </message>
+
   </context>
+
 
   <context>
     <name>add friends</name>
+
     <message>
       <source>message</source>
-      <translation>Recado</translation>
+      <translation>Mensagem</translation>
     </message>
+
     <message>
       <source>request send</source>
-      <translation>pedido de amizade enviado</translation>
+      <translation>Pedido de amizade enviado</translation>
     </message>
+
   </context>
+
 
   <context>
     <name>chat</name>
+
     <message>
       <source>type here</source>
-      <translation>Escreva aqui</translation>
+      <translation>Digite aqui</translation>
     </message>
+
   </context>
+
 
   <context>
     <name>inbox</name>
+
     <message>
       <source>accept</source>
-      <translation>aceitar</translation>
+      <translation>Aceitar</translation>
     </message>
+
     <message>
       <source>denied</source>
-      <translation>recusar</translation>
+      <translation>Recusar</translation>
     </message>
+
     <message>
       <source>friends</source>
-      <translation>friends</translation>
+      <translation>Amigos</translation>
     </message>
+
     <message>
       <source>friends requests</source>
       <translation>Pedidos de amizade</translation>
     </message>
+
     <message>
       <source>news</source>
-      <translation>novidades</translation>
+      <translation>Novidades</translation>
     </message>
+
   </context>
+
 
   <context>
     <name>configurations</name>
+
     <message>
       <source>sign-out</source>
       <translation>Sair da conta</translation>
     </message>
+
     <message>
       <source>add theme</source>
-      <translation>adicionar tema</translation>
+      <translation>Adicionar tema</translation>
     </message>
+
     <message>
       <source>exit label</source>
-      <translation>pode fechar o app agora</translation>
+      <translation>Você pode fechar o aplicativo agora</translation>
     </message>
+
     <message>
       <source>add-federations</source>
-      <translation>adicionar federações</translation>
+      <translation>Adicionar federações</translation>
     </message>
+
   </context>
+
 
   <context>
     <name>my account</name>
+
     <message>
       <source>upload</source>
-      <translation>enviar foto de perfil</translation>
+      <translation>Enviar foto de perfil</translation>
     </message>
+
     <message>
       <source>edit</source>
-      <translation>editar</translation>
+      <translation>Editar</translation>
     </message>
+
     <message>
       <source>profile picture</source>
-      <translation>foto de perfil</translation>
+      <translation>Foto de perfil</translation>
     </message>
+
   </context>
+
+
+  <context>
+    <name>login</name>
+
+    <message>
+      <source>username</source>
+      <translation>Nome de usuário</translation>
+    </message>
+
+    <message>
+      <source>password</source>
+      <translation>Senha</translation>
+    </message>
+
+    <message>
+      <source>send</source>
+      <translation>Enviar</translation>
+    </message>
+
+    <message>
+      <source>welcome back</source>
+      <translation>Bem-vindo de volta</translation>
+    </message>
+
+  </context>
+
+
+  <context>
+    <name>sign-up</name>
+
+    <message>
+      <source>username</source>
+      <translation>Nome de usuário</translation>
+    </message>
+
+    <message>
+      <source>email</source>
+      <translation>E-mail</translation>
+    </message>
+
+    <message>
+      <source>password</source>
+      <translation>Senha</translation>
+    </message>
+
+    <message>
+      <source>repeat the password</source>
+      <translation>Repetir senha</translation>
+    </message>
+
+    <message>
+      <source>welcome</source>
+      <translation>Bem-vindo</translation>
+    </message>
+
+    <message>
+      <source>finish</source>
+      <translation>Finalizar</translation>
+    </message>
+
+    <message>
+      <source>top text</source>
+      <translation>Crie sua conta</translation>
+    </message>
+
+    <message>
+      <source>top text password fail</source>
+      <translation>As senhas não coincidem</translation>
+    </message>
+
+  </context>
+
+
+  <context>
+    <name>errors</name>
+
+    <message>
+      <source>400</source>
+      <translation>:( Verifique seus dados. Erro 400 (Bad Request)</translation>
+    </message>
+
+    <message>
+      <source>401</source>
+      <translation>:( Verifique seus dados de autenticação. Erro 401 (Unauthorized)</translation>
+    </message>
+
+    <message>
+      <source>403</source>
+      <translation>:( Envie todas as credenciais. Erro 403 (Forbidden)</translation>
+    </message>
+
+    <message>
+      <source>404</source>
+      <translation>:( Isso não existe. Erro 404 (Not Found)</translation>
+    </message>
+
+    <message>
+      <source>500</source>
+      <translation>:( Erro interno. Erro 500 (Server Error)</translation>
+    </message>
+
+  </context>
+
+
+  <context>
+    <name>change server</name>
+
+    <message>
+      <source>server domain</source>
+      <translation>Domínio do servidor</translation>
+    </message>
+
+    <message>
+      <source>change</source>
+      <translation>Mudar</translation>
+    </message>
+
+  </context>
+
 </TS>
