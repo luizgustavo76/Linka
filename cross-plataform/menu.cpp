@@ -209,30 +209,46 @@ QString configPath() {
     QDir().mkpath(dirPath);
     return dirPath + "/config-login.cfg";
 };
-void loadConfig() {
-
+void loadConfig()
+{
     QString path = configPath();
     qDebug() << "Caminho config:" << path;
 
+    // Se não existe, copia do resource
     if (!QFile::exists(path))
     {
+        qDebug() << "Config não existe, copiando do resource...";
+
         QFile res(":/config-login.cfg");
-        if (res.open(QIODevice::ReadOnly))
+
+        if (!res.open(QIODevice::ReadOnly | QIODevice::Text))
         {
-            QFile out(path);
-            if (out.open(QIODevice::WriteOnly))
-            {
-                out.write(res.readAll());
-                out.close();
-            }
-            res.close();
+            qDebug() << "ERRO: não conseguiu abrir o resource :/config-login.cfg";
+            return;
         }
+
+        QFile out(path);
+
+        if (!out.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            qDebug() << "ERRO: não conseguiu criar config em:" << path;
+            res.close();
+            return;
+        }
+
+        out.write(res.readAll());
+
+        out.close();
+        res.close();
+
+        qDebug() << "Config copiada com sucesso!";
     }
 
     QFile file(path);
 
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Erro ao abrir config-login.cfg";
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "ERRO ao abrir config-login.cfg no caminho:" << path;
         return;
     }
 
@@ -241,18 +257,23 @@ void loadConfig() {
     std::string section;
     QString line;
 
-    while (!in.atEnd()) {
+    while (!in.atEnd())
+    {
         line = in.readLine().trimmed();
 
         if (line.isEmpty()) continue;
 
-        if (line.startsWith("[")) {
+        if (line.startsWith("[") && line.contains("]"))
+        {
             section = line.toStdString();
             section = section.substr(1, section.find(']') - 1);
         }
-        else {
+        else
+        {
             int pos = line.indexOf('=');
-            if (pos != -1) {
+
+            if (pos != -1)
+            {
                 QString key = line.left(pos).trimmed();
                 QString value = line.mid(pos + 1).trimmed();
 
@@ -260,7 +281,11 @@ void loadConfig() {
             }
         }
     }
-};
+
+    file.close();
+
+    qDebug() << "Config carregada com sucesso!";
+}
 void saveConfig() {
 
     QString dirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -391,8 +416,9 @@ int main(int argc, char *argv[])
     std::function<void()> loginPage;
     std::function<void()> signinPage;
     std::function<void()> signupPage;
-    std::function<void(const QString&, const QString&, const QString&)> signinRequest;
+    std::function<int(const QString&, const QString&, const QString&)> signinRequest;
     std::function<int(const QString&, const QString&)> signupRequest;
+    std::function<void()> changeServerPage;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -1222,11 +1248,15 @@ int main(int argc, char *argv[])
         json_signin["username"] = username;
         json_signin["password"] = password;
         json_signin["email"] = email;
+        int status_code = 0;
         QString request_signin = requestHTTP(
             url + "/register",
             "POST",
-            json_signin
+            json_signin,
+            10000,
+            &status_code
         );
+        return status_code;
     };
     signinPage = [&](){
         clearLayout(layout);
@@ -1245,7 +1275,17 @@ int main(int argc, char *argv[])
         });
         QObject::connect(send_button, &QPushButton::clicked, [=](){
             if (passwordEntry == retryPasswordEntry){
-                signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
+                int status_code = signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
+                if (status_code == 200| status_code == 201){
+                    loadConfig();
+                    config["FAST-LOGIN"]["username"] = usernameEntry->text().toStdString();
+                    config["FAST-LOGIN"]["password"] = passwordEntry->text().toStdString();
+                    saveConfig();
+                    initialPage();
+                }else{
+                    QLabel *error_label = new QLabel("ERROR!");
+                    layout->addWidget(error_label);
+                };
             };
         });
         layout->addWidget(usernameEntry);
@@ -1299,18 +1339,37 @@ int main(int argc, char *argv[])
             };
         });
     };
+    changeServerPage = [&](){
+        clearLayout(layout);
+        QLineEdit *urlEntry = new QLineEdit();
+        urlEntry->setPlaceholderText("url");
+        QPushButton *ok_button = new QPushButton("ok");
+        QPushButton *back_button = new QPushButton(back_text);
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+            loginPage();
+        });
+        layout->addWidget(urlEntry);
+        layout->addWidget(ok_button);
+        layout->addWidget(back_button);
+    };
     loginPage = [&](){
         clearLayout(layout);
         QPushButton *signinPage_button = new QPushButton(signin_text);
         QPushButton *signupPage_button = new QPushButton(signup_text);
+        QPushButton *change_server_button = new QPushButton("so um placeholder");
         layout->addWidget(signinPage_button);
         layout->addWidget(signupPage_button);
+        layout->addWidget(change_server_button);
         QObject::connect(signinPage_button, &QPushButton::clicked, [&](){
             signinPage();
         });
         QObject::connect(signupPage_button, &QPushButton::clicked, [&](){
             signupPage();
         });
+        QObject::connect(change_server_button, &QPushButton::clicked, [&](){
+            changeServerPage();
+        });
+
     };
     addFriendsRequest = [&](QString receiver, QString message){
         QJsonObject friend_json;
