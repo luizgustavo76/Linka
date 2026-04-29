@@ -38,7 +38,7 @@
 #include <nlohmann/json.hpp>
 #include <QPainter>
 #include <QFontMetrics>
-
+#include <QTranslator>
 class ChatBubble : public QWidget {
 public:
     ChatBubble(QString text, bool isMe, QWidget *parent = nullptr)
@@ -334,6 +334,12 @@ void clearLayout(QLayout *layout) {
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+    QTranslator *translator = new QTranslator(&app);
+
+    if (translator->load(":/translations/pt-br-main-page.qm")) {
+        app.installTranslator(translator);
+    }
+    
     app.setStyle(QStyleFactory::create("breeze"));
     loadConfig();
     loadStyle();
