@@ -333,6 +333,7 @@ void clearLayout(QLayout *layout) {
 }
 int main(int argc, char *argv[])
 {
+    
     QApplication app(argc, argv);
     QTranslator *translator = new QTranslator(&app);
 
@@ -351,6 +352,13 @@ int main(int argc, char *argv[])
         }
     }
     QString url = QString::fromStdString(config["SERVER"]["url"]);
+
+    if (url.isEmpty())
+    {
+        config["SERVER"]["url"] = "https://linkaproject.pythonanywhere.com";
+        url = QString::fromStdString(config["SERVER"]["url"]);
+        saveConfig();
+    }
     qDebug() << "url" << url;   
     //janela principal
     QMainWindow window;
@@ -656,13 +664,6 @@ int main(int argc, char *argv[])
 
         QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
 
-            if(reply->error() != QNetworkReply::NoError)
-            {
-                QLabel *err = new QLabel("Erro ao carregar feed!");
-                layout->addWidget(err);
-                reply->deleteLater();
-                return;
-            }
 
             QByteArray responseData = reply->readAll();
             reply->deleteLater();
