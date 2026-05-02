@@ -145,7 +145,7 @@ def register():
                         <td style="padding:30px; color:#ffffff;">
 
                         <h2 style="margin-top:0; font-size:22px; color:#00ffcc;">
-                            Hello, {{username}} 👋
+                            Hello, {username} 👋
                         </h2>
 
                         <p style="font-size:15px; line-height:1.6; color:#dcdcdc;">
