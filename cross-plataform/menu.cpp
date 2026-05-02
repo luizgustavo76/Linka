@@ -101,77 +101,109 @@ std::string trim(const std::string &s)
 QString requestHTTP(const QString &url,
                     const QString &method,
                     const QJsonObject &json,
-                    int timeoutMs = 10000,
-                    int *statusCode = nullptr)
+                    int timeoutMs,
+                    int *statusCode,
+                    const QString &federations)
 {
-    QNetworkAccessManager manager;
-
-    QNetworkRequest request;
-    request.setUrl(QUrl(url));
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-    QNetworkReply *reply = nullptr;
-
-    QByteArray jsonData = QJsonDocument(json).toJson();
-
-    QString m = method.toUpper();
-
-    if (m == "GET")
+    auto performRequest = [&](const QString &targetUrl) -> QString
     {
-        reply = manager.get(request);
-    }
-    else if (m == "POST")
-    {
-        reply = manager.post(request, jsonData);
-    }
-    else if (m == "PUT")
-    {
-        reply = manager.put(request, jsonData);
-    }
-    else if (m == "DELETE")
-    {
-        reply = manager.sendCustomRequest(request, "DELETE", jsonData);
-    }
-    else
-    {
-        if (statusCode) *statusCode = -1;
-        return "ERRO: Método HTTP inválido (" + method + ")";
-    }
+        QNetworkAccessManager manager;
 
-    QEventLoop loop;
+        QNetworkRequest request;
+        request.setUrl(QUrl(targetUrl));
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    QTimer timer;
-    timer.setSingleShot(true);
+        QByteArray jsonData = QJsonDocument(json).toJson();
+        QString m = method.toUpper();
 
-    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        QNetworkReply *reply = nullptr;
 
-    timer.start(timeoutMs);
-    loop.exec();
+        if (m == "GET")
+        {
+            reply = manager.get(request);
+        }
+        else if (m == "POST")
+        {
+            reply = manager.post(request, jsonData);
+        }
+        else if (m == "PUT")
+        {
+            reply = manager.put(request, jsonData);
+        }
+        else if (m == "DELETE")
+        {
+            reply = manager.sendCustomRequest(request, "DELETE", jsonData);
+        }
+        else
+        {
+            if (statusCode) *statusCode = -1;
+            return "ERRO: Método HTTP inválido (" + method + ")";
+        }
 
-    if (!timer.isActive())
-    {
-        reply->abort();
+        QEventLoop loop;
+        QTimer timer;
+        timer.setSingleShot(true);
 
-        if (statusCode) *statusCode = 408; 
+        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+
+        timer.start(timeoutMs);
+        loop.exec();
+
+        if (!timer.isActive())
+        {
+            reply->abort();
+            if (statusCode) *statusCode = 408;
+            reply->deleteLater();
+            return "ERRO: Timeout na requisição.";
+        }
+
+        int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (statusCode) *statusCode = code;
+
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            QString err = "ERRO: " + reply->errorString();
+            reply->deleteLater();
+            return err;
+        }
+
+        QString response = reply->readAll();
         reply->deleteLater();
-        return "ERRO: Timeout na requisição.";
-    }
 
-    int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (statusCode) *statusCode = code;
+        return response;
+    };
 
-    if (reply->error() != QNetworkReply::NoError)
+    // =========================
+    // FEDERAÇÕES
+    // =========================
+    if (!federations.isEmpty())
     {
-        QString errorMsg = "ERRO: " + reply->errorString();
-        reply->deleteLater();
-        return errorMsg;
+        loadConfig();
+
+        QString url_list = QString::fromStdString(config["FEDERATIONS"]["url"]);
+        QStringList urls = url_list.split(",", Qt::SkipEmptyParts);
+
+        for (QString &u : urls)
+            u = u.trimmed();
+
+        for (const QString &fUrl : urls)
+        {
+            QString result = performRequest(fUrl);
+
+            // Se deu certo, retorna logo
+            if (!result.startsWith("ERRO"))
+                return result;
+        }
+
+        if (statusCode) *statusCode = 500;
+        return "ERRO: todas as federações falharam.";
     }
 
-    QString response = reply->readAll();
-    reply->deleteLater();
-
-    return response;
+    // =========================
+    // REQUEST NORMAL
+    // =========================
+    return performRequest(url);
 }
 void loadStyle()
 {
@@ -1283,7 +1315,7 @@ int main(int argc, char *argv[])
         QObject::connect(send_button, &QPushButton::clicked, [=](){
             if (passwordEntry->text() == retryPasswordEntry->text()) {
                 int status_code = signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
-                if (status_code == 200| status_code == 201){
+                if (status_code == 200 || status_code == 201){
                     loadConfig();
                     config["FAST-LOGIN"]["username"] = usernameEntry->text().toStdString();
                     config["FAST-LOGIN"]["password"] = passwordEntry->text().toStdString();
