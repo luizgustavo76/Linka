@@ -1281,7 +1281,7 @@ int main(int argc, char *argv[])
             loginPage();
         });
         QObject::connect(send_button, &QPushButton::clicked, [=](){
-            if (passwordEntry == retryPasswordEntry){
+            if (passwordEntry->text() == retryPasswordEntry->text()) {
                 int status_code = signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
                 if (status_code == 200| status_code == 201){
                     loadConfig();
@@ -1363,7 +1363,7 @@ int main(int argc, char *argv[])
         clearLayout(layout);
         QPushButton *signinPage_button = new QPushButton(signin_text);
         QPushButton *signupPage_button = new QPushButton(signup_text);
-        QPushButton *change_server_button = new QPushButton("so um placeholder");
+        QPushButton *change_server_button = new QPushButton();
         layout->addWidget(signinPage_button);
         layout->addWidget(signupPage_button);
         layout->addWidget(change_server_button);
