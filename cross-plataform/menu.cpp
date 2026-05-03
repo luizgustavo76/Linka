@@ -1,3 +1,7 @@
+#include <QFileDialog>
+#include <QTextStream>
+#include <QMessageBox>
+#include <QPointer>
 #include <QApplication>
 #include <QWidget>
 #include <QPushButton>
@@ -173,17 +177,6 @@ QString requestHTTP(const QString &url,
 
     return response;
 }
-void loadStyle()
-{
-    QFile file(":/styles/theme.qss");
-
-    if (file.open(QFile::ReadOnly)) {
-        qDebug() << "QSS loaded";
-        qApp->setStyleSheet(file.readAll());
-    } else {
-        qDebug() << "QSS FAILED";
-    }
-}
 
 std::map<std::string, std::map<std::string, std::string>> config;
 void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
@@ -316,6 +309,20 @@ void saveConfig() {
 
     file.close();
 }
+void loadStyle()
+{
+    loadConfig();
+    QString dir_file = QString::fromStdString(config["THEMES"]["theme"]);
+    QFile file(dir_file);
+
+    if (file.open(QFile::ReadOnly)) {
+        qDebug() << "QSS loaded";
+        qApp->setStyleSheet(file.readAll());
+    } else {
+        qDebug() << "QSS FAILED";
+    }
+}
+
 void clearLayout(QLayout *layout) {
     if (!layout) return;
 
@@ -380,8 +387,8 @@ int main(int argc, char *argv[])
     QString back_text = QCoreApplication::translate("global", "back");
     QString new_post_text = QCoreApplication::translate("feed", "new post");
     QString friends_text = QCoreApplication::translate("add friends", "friends");
-    QString search_text = QCoreApplication::translate("main-page", "search");
-    QString add_friends_text = QCoreApplication::translate("main-page", "add friends");
+    QString search_text = QCoreApplication::translate("initial-page", "search");
+    QString add_friends_text = QCoreApplication::translate("initial-page", "add friends");
     QString username_text = QCoreApplication::translate("global", "username");
     QString message_text = QCoreApplication::translate("add friends", "message");
     QString send_text = QCoreApplication::translate("global", "send");
@@ -392,8 +399,8 @@ int main(int argc, char *argv[])
     QString add_theme_text = QCoreApplication::translate("configurations", "add theme");
     QString add_federations_text = QCoreApplication::translate("configurations", "add federations");
     QString options_text = QCoreApplication::translate("main-page", "configurations");
-    QString signin_text = QCoreApplication::translate("main-page", "sign-in");
-    QString signup_text = QCoreApplication::translate("main-page", "sign-up");
+    QString signin_text = QCoreApplication::translate("initial-page", "sign-in");
+    QString signup_text = QCoreApplication::translate("initial-page", "sign-up");
     QString password_text = QCoreApplication::translate("sign-up", "password");
     QString retry_password_text = QCoreApplication::translate("sign-up", "retry the password");
     QString email_text = QCoreApplication::translate("sign-up", "email");
@@ -433,6 +440,7 @@ int main(int argc, char *argv[])
     std::function<int(const QString&, const QString&, const QString&)> signinRequest;
     std::function<int(const QString&, const QString&)> signupRequest;
     std::function<void()> changeServerPage;
+    std::function<void()> addThemePage;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -586,6 +594,53 @@ int main(int argc, char *argv[])
             qDebug() << "Depois de salvar:" << QString::fromStdString(config["FEDERATIONS"]["url"]);
         });
     };
+    //menu de adicionar tema
+    addThemePage = [&](){
+        clearLayout(layout);
+        loadConfig();
+        QLabel *labelTheme = new QLabel(QString::fromStdString(config["THEMES"]["theme"]));;
+        layout->addWidget(labelTheme);
+        QPushButton *button_add_theme = new QPushButton(add_theme_text);
+        layout->addWidget(button_add_theme);
+        QPushButton *back_button = new QPushButton(back_text);
+        layout->addWidget(back_button);
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    initialPage();
+                });
+        });
+        QObject::connect(button_add_theme, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    QString filePath = QFileDialog::getOpenFileName(
+                        nullptr,
+                        "Select a theme",
+                        QDir::homePath(),
+                        "Todos os arquivos (*.*);;Texto (*.txt);;Imagens (*.png *.jpg)"
+                    );
+
+                    if(filePath.isEmpty())
+                    {
+                        return; 
+                    }
+
+                    QFile file(filePath);
+
+                    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                    {
+                        QMessageBox::critical(nullptr, "Erro", "Não foi possível abrir o arquivo!");
+                        return;
+                    }
+
+                    QTextStream in(&file);
+                    QString content = in.readAll();
+                    file.close();
+
+                    config["THEMES"]["theme"] = filePath.toStdString();
+                    qApp->setStyleSheet(content);
+                    saveConfig();
+                });
+        });
+    };
     //menu de opções extras
     optionsPage = [&](){
         QList<QWidget*> buttons;
@@ -601,6 +656,11 @@ int main(int argc, char *argv[])
         QObject::connect(button_add_federation, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
                     addFederationsPage();
+                });
+        });
+        QObject::connect(button_add_theme, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    addThemePage();
                 });
         });
         buttons.append(button_back);
@@ -720,27 +780,41 @@ int main(int argc, char *argv[])
 
                 // ===== BOTÃO STAR =====
                 QPushButton *iconButton = new QPushButton();
+                QLabel *starLabel = new QLabel("...");
+
+                frameLayout->addWidget(iconButton);
+                frameLayout->addWidget(starLabel);
+
                 iconButton->setIcon(QIcon(":/assets/default_star.png"));
                 iconButton->setIconSize(QSize(24, 24));
                 iconButton->setFixedSize(30, 30);
                 iconButton->setStyleSheet("border: none;");
 
-                QLabel *starLabel = new QLabel("...");
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
+
+                // ponteiro seguro
+                QPointer<QLabel> safeStarLabel = starLabel;
 
                 // buscar quantidade de estrelas
                 QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
                 QNetworkReply *starsReply = manager->get(starsReq);
 
                 QObject::connect(starsReply, &QNetworkReply::finished, [=]() mutable {
+
+                    if (!safeStarLabel) {
+                        starsReply->deleteLater();
+                        return;
+                    }
+
                     if(starsReply->error() == QNetworkReply::NoError)
                     {
-                        QString starsText = starsReply->readAll();
-                        starLabel->setText(starsText);
+                        QString starsText = QString(starsReply->readAll()).trimmed();
+                        if(starsText.isEmpty()) starsText = "0";
+                        safeStarLabel->setText(starsText);
                     }
                     else
                     {
-                        starLabel->setText("0");
+                        safeStarLabel->setText("0");
                     }
 
                     starsReply->deleteLater();
