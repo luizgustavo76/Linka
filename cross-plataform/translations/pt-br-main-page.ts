@@ -48,7 +48,10 @@
       <source>my account</source>
       <translation>Minha conta</translation>
     </message>
-
+    <message>
+      <source>biography</source>
+      <translation>biografia</translation>
+    </message>
     <message>
       <source>configurations</source>
       <translation>Configurações</translation>
