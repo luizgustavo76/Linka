@@ -43,6 +43,21 @@
 #include <QPainter>
 #include <QFontMetrics>
 #include <QTranslator>
+#include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
+
+void fadeTransition(QWidget *widget)
+{
+    QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(widget);
+    widget->setGraphicsEffect(effect);
+
+    QPropertyAnimation *anim = new QPropertyAnimation(effect, "opacity");
+    anim->setDuration(300);
+    anim->setStartValue(0);
+    anim->setEndValue(1);
+
+    anim->start(QAbstractAnimation::DeleteWhenStopped);
+}
 class ChatBubble : public QWidget {
 public:
     ChatBubble(QString text, bool isMe, QWidget *parent = nullptr)
@@ -740,10 +755,17 @@ int main(int argc, char *argv[])
                     initialPage();
                 });
         });
+        QObject::connect(button_edit, &QPushButton::clicked, [=](){
+            QTimer::singleShot(0, [&](){
+                    editAccount();
+                });
+        });
+        
     };
     showfeed = [&]()
     {
         clearLayout(layout);
+        fadeTransition(central);
         QString url_feed = url + "/feed";
         qDebug() << "url feed" << url_feed;
         QNetworkRequest request{QUrl(url_feed)};
