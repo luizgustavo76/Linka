@@ -424,6 +424,10 @@ int main(int argc, char *argv[])
     QString password_text = QCoreApplication::translate("sign-up", "password");
     QString retry_password_text = QCoreApplication::translate("sign-up", "retry the password");
     QString email_text = QCoreApplication::translate("sign-up", "email");
+    QString edit_text = QCoreApplication::translate("my account", "edit");
+    QString upload_text = QCoreApplication::translate("my account", "upload");
+    QString bio_text = QCoreApplication::translate("my account", "biography");
+    QString profile_picture_text = QCoreApplication::translate("my account", "profile picture");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -727,7 +731,8 @@ int main(int argc, char *argv[])
         clearLayout(layout);
         QList<QWidget*> scroll_layout;
         QLineEdit *bioEntry = new QLineEdit();
-        QPushButton *loadPhoto = new QPushButton();
+        bioEntry->setPlaceholderText(bio_text);
+        QPushButton *loadPhoto = new QPushButton(profile_picture_text);
         QPushButton *sendButton = new QPushButton(send_text);
         QPushButton *backButton = new QPushButton(back_text);
         scroll_layout.append(bioEntry);
@@ -744,7 +749,7 @@ int main(int argc, char *argv[])
         clearLayout(layout);
         QLabel *label_username = new QLabel(username);
         layout->addWidget(label_username);
-        QPushButton *button_edit = new QPushButton();
+        QPushButton *button_edit = new QPushButton(edit_text);
         layout->addWidget(button_edit);
         QPushButton *buttonBack = new QPushButton(back_text);
         layout->addWidget(buttonBack);
