@@ -101,134 +101,7 @@ std::string trim(const std::string &s)
 
     return s.substr(start, end - start + 1);
 }
-
-QString requestHTTP(const QString &url,
-                    const QString &method,
-                    const QJsonObject &json,
-                    int timeoutMs,
-                    int *statusCode,
-                    const QString &federations)
-{
-    auto performRequest = [&](const QString &targetUrl) -> QString
-    {
-        QNetworkAccessManager manager;
-
-        QNetworkRequest request;
-        request.setUrl(QUrl(targetUrl));
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-        QByteArray jsonData = QJsonDocument(json).toJson();
-        QString m = method.toUpper();
-
-        QNetworkReply *reply = nullptr;
-
-        if (m == "GET")
-        {
-            reply = manager.get(request);
-        }
-        else if (m == "POST")
-        {
-            reply = manager.post(request, jsonData);
-        }
-        else if (m == "PUT")
-        {
-            reply = manager.put(request, jsonData);
-        }
-        else if (m == "DELETE")
-        {
-            reply = manager.sendCustomRequest(request, "DELETE", jsonData);
-        }
-        else
-        {
-            if (statusCode) *statusCode = -1;
-            return "ERRO: Método HTTP inválido (" + method + ")";
-        }
-
-        QEventLoop loop;
-        QTimer timer;
-        timer.setSingleShot(true);
-
-        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-
-        timer.start(timeoutMs);
-        loop.exec();
-
-        if (!timer.isActive())
-        {
-            reply->abort();
-            if (statusCode) *statusCode = 408;
-            reply->deleteLater();
-            return "ERRO: Timeout na requisição.";
-        }
-
-        int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (statusCode) *statusCode = code;
-
-        if (reply->error() != QNetworkReply::NoError)
-        {
-            QString err = "ERRO: " + reply->errorString();
-            reply->deleteLater();
-            return err;
-        }
-
-        QString response = reply->readAll();
-        reply->deleteLater();
-
-        return response;
-    };
-
-    // =========================
-    // FEDERAÇÕES
-    // =========================
-    if (!federations.isEmpty())
-    {
-        loadConfig();
-
-        QString url_list = QString::fromStdString(config["FEDERATIONS"]["url"]);
-        QStringList urls = url_list.split(",", Qt::SkipEmptyParts);
-
-        for (QString &u : urls)
-            u = u.trimmed();
-
-        for (const QString &fUrl : urls)
-        {
-            QString result = performRequest(fUrl);
-
-            // Se deu certo, retorna logo
-            if (!result.startsWith("ERRO"))
-                return result;
-        }
-
-        if (statusCode) *statusCode = 500;
-        return "ERRO: todas as federações falharam.";
-    }
-
-    // =========================
-    // REQUEST NORMAL
-    // =========================
-    return performRequest(url);
-}
-
 std::map<std::string, std::map<std::string, std::string>> config;
-void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
-{
-    QScrollArea *scroll = new QScrollArea();
-    scroll->setWidgetResizable(true);
-
-    QWidget *container = new QWidget();
-    QVBoxLayout *containerLayout = new QVBoxLayout(container);
-
-    for(QWidget *w : widgets)
-    {
-        containerLayout->addWidget(w);
-    }
-
-    containerLayout->addStretch();
-    scroll->setWidget(container);
-
-    layout->addWidget(scroll);
-};
 QString configPath() {
     QString dirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QDir().mkpath(dirPath);
@@ -341,6 +214,108 @@ void saveConfig() {
 
     file.close();
 }
+QString requestHTTP(const QString &url,
+                    const QString &method,
+                    const QJsonObject &json,
+                    int timeoutMs = 5000,
+                    int *statusCode = nullptr)
+{
+    auto performRequest = [&](const QString &targetUrl) -> QString
+    {
+        QNetworkAccessManager manager;
+
+        QNetworkRequest request;
+        request.setUrl(QUrl(targetUrl));
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+        QByteArray jsonData = QJsonDocument(json).toJson();
+        QString m = method.toUpper();
+
+        QNetworkReply *reply = nullptr;
+
+        if (m == "GET")
+        {
+            reply = manager.get(request);
+        }
+        else if (m == "POST")
+        {
+            reply = manager.post(request, jsonData);
+        }
+        else if (m == "PUT")
+        {
+            reply = manager.put(request, jsonData);
+        }
+        else if (m == "DELETE")
+        {
+            reply = manager.sendCustomRequest(request, "DELETE", jsonData);
+        }
+        else
+        {
+            if (statusCode) *statusCode = -1;
+            return "ERRO: Método HTTP inválido (" + method + ")";
+        }
+
+        QEventLoop loop;
+        QTimer timer;
+        timer.setSingleShot(true);
+
+        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+
+        timer.start(timeoutMs);
+        loop.exec();
+
+        if (!timer.isActive())
+        {
+            reply->abort();
+            if (statusCode) *statusCode = 408;
+            reply->deleteLater();
+            return "ERRO: Timeout na requisição.";
+        }
+
+        int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (statusCode) *statusCode = code;
+
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            QString err = "ERRO: " + reply->errorString();
+            reply->deleteLater();
+            return err;
+        }
+
+        QString response = reply->readAll();
+        reply->deleteLater();
+
+        return response;
+    };
+
+
+    // =========================
+    // REQUEST NORMAL
+    // =========================
+    return performRequest(url);
+}
+
+
+void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
+{
+    QScrollArea *scroll = new QScrollArea();
+    scroll->setWidgetResizable(true);
+
+    QWidget *container = new QWidget();
+    QVBoxLayout *containerLayout = new QVBoxLayout(container);
+
+    for(QWidget *w : widgets)
+    {
+        containerLayout->addWidget(w);
+    }
+
+    containerLayout->addStretch();
+    scroll->setWidget(container);
+
+    layout->addWidget(scroll);
+};
+
 void loadStyle()
 {
     loadConfig();
@@ -746,7 +721,7 @@ int main(int argc, char *argv[])
         scroll_layout.append(loadPhoto);
         scroll_layout.append(sendButton);
         scroll_layout.append(backButton);
-        QObject::connect(backButton, &QPushButton::clicked = [=](){
+        QObject::connect(backButton, &QPushButton::clicked, [=](){
             initialPage();
         });
         scroll_area(layout, scroll_layout);
