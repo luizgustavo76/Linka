@@ -473,6 +473,7 @@ int main(int argc, char *argv[])
     std::function<int(const QString&, const QString&)> signupRequest;
     std::function<void()> changeServerPage;
     std::function<void()> addThemePage;
+    std::function<void()> editAccount;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -734,10 +735,29 @@ int main(int argc, char *argv[])
         });
         scroll_area(layout, buttons);
     };
+    editAccount = [&](){
+        clearLayout(layout);
+        QList<QWidget*> scroll_layout;
+        QLineEdit *bioEntry = new QLineEdit();
+        QPushButton *loadPhoto = new QPushButton();
+        QPushButton *sendButton = new QPushButton(send_text);
+        QPushButton *backButton = new QPushButton(back_text);
+        scroll_layout.append(bioEntry);
+        scroll_layout.append(loadPhoto);
+        scroll_layout.append(sendButton);
+        scroll_layout.append(backButton);
+        QObject::connect(backButton, &QPushButton::clicked = [=](){
+            initialPage();
+        });
+        scroll_area(layout, scroll_layout);
+
+    };
     account = [&](){
         clearLayout(layout);
         QLabel *label_username = new QLabel(username);
         layout->addWidget(label_username);
+        QPushButton *button_edit = new QPushButton();
+        layout->addWidget(button_edit);
         QPushButton *buttonBack = new QPushButton(back_text);
         layout->addWidget(buttonBack);
         QObject::connect(buttonBack, &QPushButton::clicked, [=](){
