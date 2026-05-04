@@ -32,7 +32,7 @@ android-build/
 *.apk
 *.aab
 *.so
-
+*.keystore
 # Objetos compilados
 *.o
 *.obj
