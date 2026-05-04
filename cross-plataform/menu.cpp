@@ -305,9 +305,7 @@ QString requestHTTP(const QString &url,
     };
 
 
-    // =========================
-    // REQUEST NORMAL
-    // =========================
+    
     return performRequest(url);
 }
 

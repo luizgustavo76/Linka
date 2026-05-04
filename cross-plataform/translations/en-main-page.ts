@@ -155,6 +155,10 @@
       <translation>edit</translation>
     </message>
     <message>
+      <source>biography</source>
+      <translation>biography</translation>
+    </message>
+    <message>
       <source>profile picture</source>
       <translation>profile picture</translation>
     </message>
