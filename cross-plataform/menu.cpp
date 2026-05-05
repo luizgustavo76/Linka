@@ -334,7 +334,9 @@ void loadStyle()
     loadConfig();
     QString dir_file = QString::fromStdString(config["THEMES"]["theme"]);
     QFile file(dir_file);
-
+    if (config["THEMES"]["theme"].empty()){
+        qApp->setStyleSheet(":/assets/theme.qss");
+    };
     if (file.open(QFile::ReadOnly)) {
         qDebug() << "QSS loaded";
         qApp->setStyleSheet(file.readAll());
