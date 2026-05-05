@@ -468,6 +468,7 @@ int main(int argc, char *argv[])
     std::function<void()> changeServerPage;
     std::function<void()> addThemePage;
     std::function<void()> editAccount;
+    std::function<void()> sendEdit;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -729,6 +730,18 @@ int main(int argc, char *argv[])
         });
         scroll_area(layout, buttons);
     };
+    sendEdit = [&](QString content){
+        QJsonObject edit;
+        edit["edit-mode"] = "bio";
+        edit["content"] = content;
+        edit["username"] = username;
+        edit_response = requestHTTP(
+            url + "/edit",
+            "POST",
+            edit
+        );
+        initialPage();
+    };
     editAccount = [&](){
         clearLayout(layout);
         QList<QWidget*> scroll_layout;
@@ -743,6 +756,9 @@ int main(int argc, char *argv[])
         scroll_layout.append(backButton);
         QObject::connect(backButton, &QPushButton::clicked, [=](){
             initialPage();
+        });
+        QObject::connect(sendButton, &QPushButton::clicked, [=](){
+            sendEdit(QString bioEntry->text());
         });
         scroll_area(layout, scroll_layout);
 
