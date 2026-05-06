@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify,Blueprint, redirect, send_from_directory, abort, render_template
+from flask import Flask, request, jsonify,Blueprint, redirect, send_from_directory, abort, render_template, g
 import sqlite3
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -81,7 +81,10 @@ def enviar_email(destino, assunto, mensagem_html):
 
     print("Email enviado com sucesso!")
 
-
+#rota pra criar token de sessão
+login_bp.route("/session", methods= ["POST"])
+def session():
+    pass
 #rota pra registrar usuarios
 @login_bp.route("/register", methods=["POST"])
 def register():
