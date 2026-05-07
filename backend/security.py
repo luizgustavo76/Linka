@@ -64,9 +64,22 @@ def new_session():
 def valide():
     data = request.get_json()
     token = data.get("token")
+    username = data.get("username")
     conn = get_db()
     cur = conn.cursor()     
-    cur.execute("SELECT token FROM tokens WHERE token = ?", (token,))
+    cur.execute("SELECT token, username FROM tokens WHERE token = ?", (token,))
     result = cur.fetchone()
     if token = result[0]:
-        cur.execute()
+        g.user = result[1]
+        cur.execute("DELETE token,emission_date, expire_date FROM tokens WHERE token = ?", (token,))
+        conn.commit()
+        conn.close()
+        token_hex = secrets.token_hex(16)
+        emission_date = datetime.now()
+        expire_date = emission_date + timedelta(hours=2)
+        cur.execute("INSERT INTO friends (token, emission_date, expire_date), VALUES (?,?,?) WHERE username = ?",(token_hex, emission_date, expire_date, username))
+        conn.commit()
+        conn.close()
+        return jsonify({"status":"token is valid", "token":token_hex}), 200
+    else:
+        return jsonify({"status":"the token is invalid or expired, please make the login again"}), 403
