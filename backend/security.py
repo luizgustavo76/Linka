@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, Blueprint
+from flask import Flask, request, jsonify, Blueprint,g
 import sqlite3
 import os
 from datetime import datetime, timedelta
@@ -60,3 +60,13 @@ def new_session():
             return jsonify({"status":"session is sucessful", "token":token}), 200
         else:
             return jsonify({"status": "wrong password, check the password entry"}), 401
+@secure_app.route("/valide", methods=["POST"])
+def valide():
+    data = request.get_json()
+    token = data.get("token")
+    conn = get_db()
+    cur = conn.cursor()     
+    cur.execute("SELECT token FROM tokens WHERE token = ?", (token,))
+    result = cur.fetchone()
+    if token = result[0]:
+        cur.execute()
