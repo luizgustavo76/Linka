@@ -17,19 +17,19 @@ def get_db_login():
 def create_db():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""CREATE TABLE IF NOT EXISTS tokens
+    cur.execute("""CREATE TABLE IF NOT EXISTS tokens(
                 username TEXT UNIQUE,
                 token TEXT,
                 emission_date TEXT,
-                expire_date TEXT""")
+                expire_date TEXT)""")
     conn.commit()
     conn.close()
 create_db()
-def verificar_hash(self, senha, hash):
+def verificar_hash(senha, hash):
     return check_password_hash(hash, senha)
-security_app.route("/new-session", methods=["post"])
+@security_app.route("/new-session", methods=["POST"])
 def new_session():
-    data = request.get()
+    data = request.get_json()
     username = data.get("username")
     password = data.get("password")
     conn = get_db_login()
@@ -50,11 +50,13 @@ def new_session():
         conn.close()
         if senha_descodificada:
             token = secrets.token_hex(16)
-            date = datetime.datetime.now()
+            date = datetime.now()
             expire_date = date + timedelta(hours=2)
             conn = get_db()
             cur = conn.cursor()
-            cur.execute("INSERT INTO tokens (username, token, date)")
-            return jsonify({"status":"login is sucessful"}), 200
+            cur.execute("INSERT INTO tokens (username, token, emission_date, expire_date) VALUES(?, ?, ?, ?)", (username, token, date, expire_date))
+            conn.commit()
+            conn.close()
+            return jsonify({"status":"session is sucessful", "token":token}), 200
         else:
             return jsonify({"status": "wrong password, check the password entry"}), 401

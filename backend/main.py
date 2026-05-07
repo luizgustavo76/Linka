@@ -9,6 +9,7 @@ from login import login_bp
 from profiles import profile_bp
 from search import search_bp
 from community import community_bp
+from security import security_app
 app = Flask(__name__)
 
 
@@ -19,6 +20,7 @@ app.register_blueprint(profile_bp)
 app.register_blueprint(login_bp)
 app.register_blueprint(post_bp)
 app.register_blueprint(chat_bp)
+app.register_blueprint(security_app)
 app.register_blueprint(friends_bp)
 
 
