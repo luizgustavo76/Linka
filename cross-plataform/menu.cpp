@@ -241,9 +241,9 @@ QString requestHTTP(const QString &url,
         loadConfig();
         QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
         QString token_session = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-        json["username"] = username;
-        json["token"] = token_session;
+        json["username"] = username; 
         QNetworkRequest request;
+        request.setRawHeader("Authorization", QString("Bearer %1").arg(token_session).toUtf8());
         request.setUrl(QUrl(targetUrl));
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
@@ -335,17 +335,35 @@ void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
 void loadStyle()
 {
     loadConfig();
-    QString dir_file = QString::fromStdString(config["THEMES"]["theme"]);
-    QFile file(dir_file);
-    if (config["THEMES"]["theme"].empty()){
-        qApp->setStyleSheet(":/assets/theme.qss");
-    };
-    if (file.open(QFile::ReadOnly)) {
-        qDebug() << "QSS loaded";
-        qApp->setStyleSheet(file.readAll());
-    } else {
-        qDebug() << "QSS FAILED";
+
+    QString themePath = QString::fromStdString(config["THEMES"]["theme"]);
+
+    // fallback seguro
+    if (themePath.isEmpty()) {
+        themePath = ":/styles/theme.qss";
     }
+
+    QFile file(themePath);
+
+    if (!file.exists()) {
+        qDebug() << "QSS not found:" << themePath;
+        return;
+    }
+
+    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+        qDebug() << "QSS FAILED:" << file.errorString();
+        return;
+    }
+
+    QString qss = file.readAll();
+
+    if (qss.isEmpty()) {
+        qDebug() << "QSS empty file!";
+        return;
+    }
+
+    qApp->setStyleSheet(qss);
+    qDebug() << "QSS loaded";
 }
 
 void clearLayout(QLayout *layout) {
