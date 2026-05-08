@@ -529,6 +529,7 @@ int main(int argc, char *argv[])
     };
     auto new_post = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QLineEdit *text_input = entry(text_post);
         button(back_text, initialPage);
         button(
@@ -545,6 +546,7 @@ int main(int argc, char *argv[])
     
     friendsPage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QPushButton *new_friend = new QPushButton(add_friends_text);
         layout->addWidget(new_friend);
         QPushButton *back_button = new QPushButton(back_text);
@@ -562,6 +564,7 @@ int main(int argc, char *argv[])
     };
     inboxPage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QList<QWidget*> notifications;
         QJsonObject inbox;
         inbox["username"] = username;
@@ -619,6 +622,7 @@ int main(int argc, char *argv[])
     };
     addFederationsPage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QLineEdit *urlEntry = entry("url:");
         QPushButton *buttonAdd = new QPushButton(send_text);
         QPushButton *button_back = new QPushButton(back_text);
@@ -661,6 +665,7 @@ int main(int argc, char *argv[])
     //menu de adicionar tema
     addThemePage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         loadConfig();
         QLabel *labelTheme = new QLabel(QString::fromStdString(config["THEMES"]["theme"]));;
         layout->addWidget(labelTheme);
@@ -709,6 +714,7 @@ int main(int argc, char *argv[])
     optionsPage = [&](){
         QList<QWidget*> buttons;
         clearLayout(layout);
+        fadeTransition(central);
         QPushButton *button_back = new QPushButton(back_text);
         QPushButton *button_add_theme = new QPushButton(add_theme_text);
         QPushButton *button_add_federation = new QPushButton(add_federations_text);
@@ -734,6 +740,7 @@ int main(int argc, char *argv[])
     };
     change_url = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QLineEdit *urlEntry = new QLineEdit();
         urlEntry->setPlaceholderText("url:");
         QPushButton *button_send = new QPushButton(send_text);
@@ -757,6 +764,7 @@ int main(int argc, char *argv[])
     options = [&]()
     {
         clearLayout(layout);
+        fadeTransition(central);
         QList<QWidget*> buttons;
         QPushButton *friends = new QPushButton(friends_text);
         QPushButton *back = new QPushButton(back_text);
@@ -809,6 +817,7 @@ int main(int argc, char *argv[])
     };
     editAccount = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QList<QWidget*> scroll_layout;
         QLineEdit *bioEntry = new QLineEdit();
         bioEntry->setPlaceholderText(bio_text);
@@ -830,6 +839,7 @@ int main(int argc, char *argv[])
     };
     account = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QLabel *label_username = new QLabel(username);
         layout->addWidget(label_username);
         QPushButton *button_edit = new QPushButton(edit_text);
@@ -1347,8 +1357,8 @@ int main(int argc, char *argv[])
             loginPage();
             return;
         }
-        
         clearLayout(layout);
+        fadeTransition(central);
         splash.finish(&window);
         QStackedWidget *stack = new QStackedWidget(central);
         // ======= PÁGINAS =======
@@ -1476,6 +1486,7 @@ int main(int argc, char *argv[])
     };
     signinPage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QLineEdit *usernameEntry = new QLineEdit();
         QLineEdit *passwordEntry = new QLineEdit();
         QLineEdit *retryPasswordEntry = new QLineEdit();
@@ -1528,6 +1539,7 @@ int main(int argc, char *argv[])
     };
     signupPage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QLineEdit *usernameEntry = new QLineEdit();
         QLineEdit *passwordEntry = new QLineEdit();
         usernameEntry->setPlaceholderText(username_text);
@@ -1557,6 +1569,7 @@ int main(int argc, char *argv[])
     };
     changeServerPage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QLineEdit *urlEntry = new QLineEdit();
         urlEntry->setPlaceholderText("url");
         QPushButton *ok_button = new QPushButton("ok");
@@ -1570,6 +1583,7 @@ int main(int argc, char *argv[])
     };
     loginPage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QPushButton *signinPage_button = new QPushButton(signin_text);
         QPushButton *signupPage_button = new QPushButton(signup_text);
         QPushButton *change_server_button = new QPushButton();
@@ -1600,6 +1614,7 @@ int main(int argc, char *argv[])
     };
     addFriendsPage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QLineEdit *usernameEntry = entry(username_text);
         layout->addWidget(usernameEntry);
         QLineEdit *messageEntry = entry(message_text);
