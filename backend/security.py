@@ -35,8 +35,9 @@ create_db()
 def verificar_hash(senha, hash):
     return check_password_hash(hash, senha)
 
-@security_app.route("/new-session", methods=["POST"])
+@security_app.before_request
 def new_session():
+    
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
@@ -79,6 +80,7 @@ def new_session():
 
 @security_app.route("/valide", methods=["POST"])
 def valide():
+    print("SESSÃO!!!!!")
     data = request.get_json()
     token = data.get("token")
     username = data.get("username")

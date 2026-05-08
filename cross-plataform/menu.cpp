@@ -220,7 +220,7 @@ void saveConfig() {
     file << "username = " << config["FAST-LOGIN"]["username"] << "\n";
     file << "token = " << config["FAST-LOGIN"]["token"] << "\n";
     file << "password = " << config["FAST-LOGIN"]["password"] << "\n\n";
-
+    file << "token_session = " << config["FAST-LOGIN"]["token_session"] << "\n\n";
     file << "[FEDERATIONS]\n";
     file << "url = " << config["FEDERATIONS"]["url"] << "\n\n";
 
@@ -238,7 +238,11 @@ QString requestHTTP(const QString &url,
     auto performRequest = [&](const QString &targetUrl) -> QString
     {
         QNetworkAccessManager manager;
-
+        loadConfig();
+        QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
+        QString token_session = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+        json["username"] = username;
+        json["token"] = token_session;
         QNetworkRequest request;
         request.setUrl(QUrl(targetUrl));
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -307,8 +311,7 @@ QString requestHTTP(const QString &url,
 
     
     return performRequest(url);
-}
-
+};
 
 void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
 {
@@ -362,10 +365,26 @@ void clearLayout(QLayout *layout) {
 }
 int main(int argc, char *argv[])
 {
-    
+    QString url = QString::fromStdString(config["SERVER"]["url"]);
     QApplication app(argc, argv);
     QTranslator *translator = new QTranslator(&app);
-
+    loadConfig();
+    QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
+    QString token_session = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+    if (token_session.isEmpty()){
+        QJsonObject json_token;
+        QString response = requestHTTP(
+            url + "/new-session",
+            "POST",
+            json_token
+        );
+        QByteArray byteArray = response.toUtf8();
+        QJsonDocument doc = QJsonDocument::fromJson(byteArray);
+        QJsonObject jsonObject = doc.object();
+        QString new_token = jsonObject["token"].toString();
+        config["FAST-LOGIN"]["token_session"] = new_token.toStdString();
+        saveConfig();
+    }
     if (translator->load(":/translations/pt-br-main-page.qm")) {
         app.installTranslator(translator);
     }
@@ -380,11 +399,11 @@ int main(int argc, char *argv[])
             std::cout << "  " << kv.first << " = " << kv.second << "\n";
         }
     }
-    QString url = QString::fromStdString(config["SERVER"]["url"]);
+    
 
     if (url.isEmpty())
     {
-        config["SERVER"]["url"] = "https://linkaproject.pythonanywhere.com";
+        config["SERVER"]["url"] = "http://127.0.0.1:5000";
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }
@@ -402,8 +421,6 @@ int main(int argc, char *argv[])
     // CENTRAL WIDGET
     QWidget *central = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout(central);
-    //username no config-login.cfg
-    QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
     //strings traduzidas
     QString text_post = QCoreApplication::translate("feed", "text post");
     QString back_text = QCoreApplication::translate("global", "back");
@@ -468,7 +485,8 @@ int main(int argc, char *argv[])
     std::function<void()> changeServerPage;
     std::function<void()> addThemePage;
     std::function<void()> editAccount;
-    std::function<void()> sendEdit;
+    std::function<void(QString)> sendEdit;
+    std::function<void()> change_url;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -696,6 +714,28 @@ int main(int argc, char *argv[])
         buttons.append(button_add_federation);
         scroll_area(layout, buttons);
     };
+    change_url = [&](){
+        clearLayout(layout);
+        QLineEdit *urlEntry = new QLineEdit();
+        urlEntry->setPlaceholderText("url:");
+        QPushButton *button_send = new QPushButton(send_text);
+        QPushButton *button_back = new QPushButton(back_text);
+        layout->addWidget(urlEntry);
+        layout->addWidget(button_send);
+        layout->addWidget(button_back);
+        QObject::connect(button_back, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    initialPage();
+                });
+        });
+        QObject::connect(button_send, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    config["SERVER"]["url"] = urlEntry->text().toStdString();
+                    saveConfig();
+                    initialPage();
+                });
+        });
+    };
     options = [&]()
     {
         clearLayout(layout);
@@ -704,10 +744,12 @@ int main(int argc, char *argv[])
         QPushButton *back = new QPushButton(back_text);
         QPushButton *inbox = new QPushButton(inbox_text);
         QPushButton *button_options = new QPushButton(options_text);
+        QPushButton *button_change_url = new QPushButton(url);
         buttons.append(button_options);
         buttons.append(inbox);
         buttons.append(friends);
         buttons.append(back);
+        buttons.append(button_change_url);
         QObject::connect(button_options, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
                     optionsPage();
@@ -728,6 +770,11 @@ int main(int argc, char *argv[])
                     friendsPage();
                 });
         });
+        QObject::connect(button_change_url, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    change_url();
+                });
+        });
         scroll_area(layout, buttons);
     };
     sendEdit = [&](QString content){
@@ -735,7 +782,7 @@ int main(int argc, char *argv[])
         edit["edit-mode"] = "bio";
         edit["content"] = content;
         edit["username"] = username;
-        edit_response = requestHTTP(
+        QString edit_response = requestHTTP(
             url + "/edit",
             "POST",
             edit
@@ -758,7 +805,7 @@ int main(int argc, char *argv[])
             initialPage();
         });
         QObject::connect(sendButton, &QPushButton::clicked, [=](){
-            sendEdit(QString bioEntry->text());
+            sendEdit(bioEntry->text());
         });
         scroll_area(layout, scroll_layout);
 
