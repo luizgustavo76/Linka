@@ -48,7 +48,7 @@ def create_db():
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS tokens(
-        username TEXT UNIQUE,
+        username TEXT,
         token TEXT,
         emission_date TEXT,
         expire_date TEXT
@@ -99,21 +99,23 @@ def new_session():
     else:
         return jsonify({"status":"the password is incorret"}),401
 public_routes = [
-    "feed",
-    "new-session",
-    "search",
-    "view-profile",
-    "view-comments",
-    "view-stars"
+    "post.feed",
+    "new_session",
+    "search.search",
+    "profile.view-profile",
+    "post.view-comments",
+    "post.view-stars"
 ]
 @app.before_request
 def valide():
     token = request.headers.get("Authorization")
-    token = token.replace("Bearer ", "")
+    print(request.endpoint)
     if request.endpoint in public_routes:
         return None
     if token == None:
         return jsonify({"status":"the token is empty"}),401
+    else:
+        token = token.replace("Bearer ", "")
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT username, expire_date, token FROM tokens WHERE token = ?", (token,))
