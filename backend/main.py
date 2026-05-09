@@ -104,7 +104,9 @@ public_routes = [
     "search.search",
     "profile.view-profile",
     "post.view-comments",
-    "post.view-stars"
+    "post.view-stars",
+    "login.register",
+    "login.login"
 ]
 @app.before_request
 def valide():
