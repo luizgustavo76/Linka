@@ -3,44 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="doc-style.css">
+    
     <title>Login</title>
 </head>
 
 <body>
 
-    <div class="main-page">
-        <div>
-            <button onclick="document.getElementById('login').style.display='block'">
-                login
-            </button>
-        </div>
-
-        <div>
-            <button>
-                register
-            </button>
-        </div>
+    <div id="main" class="main-page">
+        <button onclick="irPara('login')">login</button>
+        <button onclick="irPara('register')">register</button>
     </div>
 
-    <div style="height: 600px;"></div>
-
-    <div id="login">
+    <div id="login" class="tela">
         <h2>Login</h2>
-        <div>
-            <input type="text" placeholder="username">
-        </div>
-        <div>
-            <input type="password" placeholder="password">
-        </div>
-        <button>submitt</button>
-        
-
+        <input id = "user" type="text" placeholder="username">
+        <input id = "pass" type="password" placeholder="password">
+        <button onclick="login_request()">Entrar</button>
     </div>
+
+    <div id="register" class="tela">
+        <h2>register</h2>
+        <input id="reg-user" type="text" placeholder="username">
+        <input id="reg-pass"type="password" placeholder="password">
+        <input type="password" placeholder="repeat the password">
+        <input id="reg-email" type="email" placeholder="e-mail">
+        <button onclick="register_request()">Create Account</button>
+    </div>
+
+    <script>
+    function irPara(tela) {
+        document.getElementById("main").style.display = "none";
+
+        document.querySelectorAll(".tela").forEach(el => {
+            el.style.display = "none";
+        });
+
+        document.getElementById(tela).style.display = "block";
+    }
+    </script>
+
+    <style>
+    .tela {
+        display: none;
+    }
+    </style>
     <style>
     #login {
         display: none;
     }
+    #register {
+        display: none;
+    }
     </style>
-
+<script src="login.js"></script>
 </body>
 </html>

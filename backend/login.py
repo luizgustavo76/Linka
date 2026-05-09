@@ -90,6 +90,7 @@ def session():
 def register():
     try:
         dados = request.get_json()
+        print("DADOS RECEBIDOS:", dados)
         username = dados.get("username")
         password = dados.get("senha") or dados.get("password")
         email = dados.get("email")
