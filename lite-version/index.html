@@ -17,5 +17,16 @@
         <a>options</a>
         <a>search</a>
     </footer>
+<script>
+    function irPara(tela) {
+        document.getElementById("main").style.display = "none";
+
+        document.querySelectorAll(".tela").forEach(el => {
+            el.style.display = "none";
+        });
+
+        document.getElementById(tela).style.display = "block";
+    }
+    </script>
 </body>
 </html>
