@@ -505,6 +505,7 @@ int main(int argc, char *argv[])
     std::function<void()> editAccount;
     std::function<void(QString)> sendEdit;
     std::function<void()> change_url;
+    std::function<QString(QString, QString)> newSession;
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -1523,6 +1524,20 @@ int main(int argc, char *argv[])
         layout->addWidget(back_button);
 
     };
+    newSession = [&](QString username, QString password){
+        QJsonObject json_session;
+        json_session["username"] = username;
+        json_session["password"] = password;
+        QString response_session = requestHTTP(
+            url + "/new-session",
+            "POST",
+            json_session
+        );
+        QJsonDocument doc = QJsonDocument::fromJson(response_session.toUtf8());
+        QJsonObject obj = doc.object();
+        QString token = obj["token"].toString();
+        return token;
+    };
     signupRequest = [&](QString username, QString password){
         int status_code = 0;
         QJsonObject json_signup;
@@ -1535,6 +1550,7 @@ int main(int argc, char *argv[])
             10000,
             &status_code
         );
+        
         return status_code;
     };
     signupPage = [&](){
@@ -1553,12 +1569,14 @@ int main(int argc, char *argv[])
         QObject::connect(back_button, &QPushButton::clicked, [=](){
             loginPage();
         });
-        QObject::connect(send_button, &QPushButton::clicked, [=](){
+        QObject::connect(send_button, &QPushButton::clicked, [=, &token_session]() mutable {
             loadConfig();
             int status_signup = signupRequest(usernameEntry->text(), passwordEntry->text());
             if (status_signup == 200|| status_signup == 201){
+                QString token_session = newSession(usernameEntry->text(), passwordEntry->text());
                 config["FAST-LOGIN"]["username"] = usernameEntry->text().toStdString();
                 config["FAST-LOGIN"]["password"] = passwordEntry->text().toStdString();
+                config["FAST-LOGIN"]["token_session"] = token_session.toStdString();
                 saveConfig();
                 initialPage();
             }else{
@@ -1584,8 +1602,8 @@ int main(int argc, char *argv[])
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
-        QPushButton *signinPage_button = new QPushButton(signin_text);
-        QPushButton *signupPage_button = new QPushButton(signup_text);
+        QPushButton *signinPage_button = new QPushButton(signup_text);
+        QPushButton *signupPage_button = new QPushButton(signin_text);
         QPushButton *change_server_button = new QPushButton();
         layout->addWidget(signinPage_button);
         layout->addWidget(signupPage_button);
