@@ -67,3 +67,17 @@ body {
         a:hover {
             text-decoration: underline;
         }
+        button {
+            background-color: #000;
+            color: #fff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.8;
+            transform: scale(1.03);
+        }

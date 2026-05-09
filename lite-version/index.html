@@ -10,23 +10,38 @@
     <div class="card">
         <h3>Linka</h3>
     </div>
+    <div id="feed"></div>
+    <div id="options" style="display:none">
+        <div>
+            <button>add friend</button>
+        </div>
+        <div>
+            <button>inbox</button>
+        </div>
+        <div>
+            <button>back</button>
+        </div>
+    </div>
     <footer class="footer">
-        <a>home</a>
+        <a onclick="carregarFeed()">home</a>
         <a>chat</a>
         <a>profile</a>
-        <a>options</a>
+        <a onclick="irPara('options')">options</a>
         <a>search</a>
     </footer>
 <script>
-    function irPara(tela) {
-        document.getElementById("main").style.display = "none";
+function irPara(tela) {
+    document.getElementById("options").style.display = "none";
+    document.querySelector(".card").style.display = "none";
 
-        document.querySelectorAll(".tela").forEach(el => {
-            el.style.display = "none";
-        });
-
-        document.getElementById(tela).style.display = "block";
+    document.getElementById(tela).style.display = "block";
+}
+</script>
+<style>
+    #options {
+        display: none;
     }
-    </script>
+</style>
+<script src="main-page.js"></script>
 </body>
 </html>
