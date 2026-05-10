@@ -3,7 +3,7 @@ function login_request() {
     var password = document.getElementById("pass").value;
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "http://127.0.0.1:5000/login", true);
+    xhr.open("POST", "http://linkaProject.pythonanywhere.com/login", true);
     xhr.setRequestHeader("Content-Type", "application/json");
 
     xhr.onreadystatechange = function () {
