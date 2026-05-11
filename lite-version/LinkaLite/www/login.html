@@ -9,44 +9,20 @@
 </head>
 
 <body>
-
     <div id="main" class="main-page">
-        <button onclick="irPara('login')">login</button>
-        <button onclick="irPara('register')">register</button>
+        <a id="loginButton" href="loginPage.html">login</a>
+        <a id="registerButton" href="registerPage.html">register</a>
     </div>
+    <footer>
+        <p>Linka project</p>
+        <p>
+            <a href="https://github.com/luizgustavo76/Linka">official repository</a>
+            <a href="https://luizgustavo76.github.io/Linka">main page</a>
+        </p>
+    </footer>
 
-    <div id="login" class="tela">
-        <h2>Login</h2>
-        <div>
-            <input id = "user" type="text" placeholder="username">
-        </div>
-        <div>
-            <input id = "pass" type="password" placeholder="password">
-        </div>
-        <div>
-            <button onclick="login_request()">Entrar</button>
-        </div>
-        
-    </div>
 
-    <div id="register" class="tela">
-        <h2>register</h2>
-        <div>
-            <input id="reg-user" type="text" placeholder="username">
-        </div>
-        <div>
-            <input id="reg-pass"type="password" placeholder="password">
-        </div>
-        <div>
-            <input type="password" placeholder="repeat the password">
-        </div>
-        <div>
-            <input id="reg-email" type="email" placeholder="e-mail">
-        </div>
-        <div>
-            <button onclick="register_request()">Create Account</button>
-        </div>
-    </div>
+    
 
     <script>
     function irPara(tela) {
