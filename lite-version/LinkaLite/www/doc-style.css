@@ -26,7 +26,6 @@ body {
 
         h2 {
             color: #58a6ff;
-            border-bottom: 1px solid #30363d;
             padding-bottom: 5px;
         }
 
@@ -80,4 +79,33 @@ body {
         button:hover {
             opacity: 0.8;
             transform: scale(1.03);
+        }
+        .main-page{
+            gap:20px;
+            display:flex;
+            flex-direction: column;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
+        }
+        input{
+            background-color: #000;
+            color:#fff;
+            border: 2px #000;
+        }
+        .loginPage{
+            gap:20px;
+            display:flex;
+            flex-direction: column;
+            justify-content:center;
+            align-items:center;
+            height:100vh; 
+        }
+        .requestPage{
+            gap:20px;
+            display:flex;
+            flex-direction: column;
+            justify-content:center;
+            align-items:center;
+            height:100vh;
         }
