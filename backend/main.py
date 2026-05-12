@@ -102,11 +102,12 @@ public_routes = [
     "post.feed",
     "new_session",
     "search.search",
-    "profile.view-profile",
-    "post.view-comments",
-    "post.view-stars",
+    "profile.view_profile",
+    "post.view_comments",
     "login.register",
-    "login.login"
+    "login.login",
+    "post.return_stars",
+    "None"
 ]
 @app.before_request
 def valide():
