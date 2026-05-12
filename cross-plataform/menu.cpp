@@ -506,6 +506,43 @@ int main(int argc, char *argv[])
     std::function<void(QString)> sendEdit;
     std::function<void()> change_url;
     std::function<QString(QString, QString)> newSession;
+    loginPage = [&](){
+        clearLayout(layout);
+        fadeTransition(central);
+        QPushButton *signinPage_button = new QPushButton(signup_text);
+        QPushButton *signupPage_button = new QPushButton(signin_text);
+        QPushButton *change_server_button = new QPushButton();
+        layout->addWidget(signinPage_button);
+        layout->addWidget(signupPage_button);
+        layout->addWidget(change_server_button);
+        QObject::connect(signinPage_button, &QPushButton::clicked, [&](){
+            signinPage();
+        });
+        QObject::connect(signupPage_button, &QPushButton::clicked, [&](){
+            signupPage();
+        });
+        QObject::connect(change_server_button, &QPushButton::clicked, [&](){
+            changeServerPage();
+        });
+
+    };
+    // validation of token
+    QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+    QJsonObject json_valide;
+    json_valide["token"] = token;
+    int status_code;
+    requestHTTP(
+        url + "/valide",
+        "POST",
+        json_valide,
+        5000,
+        &status_code
+    );
+    if (status_code == 200 || status_code == 201){
+        qDebug() << "200";
+    }else{
+        loginPage();
+    };
     auto button = [&](QString text, std::function<void()> func)
     {
         QPushButton *btn = new QPushButton(text);
@@ -1353,11 +1390,13 @@ int main(int argc, char *argv[])
     //pagina inicial para renderizar
     initialPage = [&]()
     {
-        
+        if (config["FAST-LOGIN"]["token_session"].empty()){
+            loginPage();
+        };
         if (config["FAST-LOGIN"]["username"].empty() || config["FAST-LOGIN"]["password"].empty()){
             loginPage();
             return;
-        }
+        };
         clearLayout(layout);
         fadeTransition(central);
         splash.finish(&window);
@@ -1599,26 +1638,7 @@ int main(int argc, char *argv[])
         layout->addWidget(ok_button);
         layout->addWidget(back_button);
     };
-    loginPage = [&](){
-        clearLayout(layout);
-        fadeTransition(central);
-        QPushButton *signinPage_button = new QPushButton(signup_text);
-        QPushButton *signupPage_button = new QPushButton(signin_text);
-        QPushButton *change_server_button = new QPushButton();
-        layout->addWidget(signinPage_button);
-        layout->addWidget(signupPage_button);
-        layout->addWidget(change_server_button);
-        QObject::connect(signinPage_button, &QPushButton::clicked, [&](){
-            signinPage();
-        });
-        QObject::connect(signupPage_button, &QPushButton::clicked, [&](){
-            signupPage();
-        });
-        QObject::connect(change_server_button, &QPushButton::clicked, [&](){
-            changeServerPage();
-        });
-
-    };
+    
     addFriendsRequest = [&](QString receiver, QString message){
         QJsonObject friend_json;
         friend_json["receiver"] = receiver;
