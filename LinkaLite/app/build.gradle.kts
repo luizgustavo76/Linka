@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("com.android.application") version "8.2.2" apply false
 }
 
 android {
@@ -8,7 +7,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.linkalite"
+        applicationId = "com.LinkaProject.linkalite"
         minSdk = 9
         targetSdk = 9
         versionCode = 1
