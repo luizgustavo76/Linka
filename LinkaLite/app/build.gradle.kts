@@ -3,11 +3,12 @@ plugins {
 }
 
 android {
-    namespace = "com.example.linkalite"
+    namespace = "com.LinkaProject.linkalite"
     compileSdk = 34
 
     defaultConfig {
         applicationId = "com.LinkaProject.linkalite"
+
         minSdk = 9
         targetSdk = 9
         versionCode = 1

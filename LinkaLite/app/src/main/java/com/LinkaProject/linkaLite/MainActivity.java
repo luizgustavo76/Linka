@@ -1,4 +1,4 @@
-package com.linka.lite;
+package com.LinkaProject.linkalite;
 
 import android.app.Activity;
 import android.os.Bundle;

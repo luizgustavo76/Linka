@@ -15,38 +15,13 @@
     
     <footer>
         <p>
-            <a onclick="carregarFeed()">home</a>
+            <a href="feed.html">home</a>
             <a>chat</a>
             <a>profile</a>
             <a href="options.html">options</a>
             <a href="searchPage.html">search</a>
         </p>
     </footer>
-<script>
-function irPara(tela) {
-    document.getElementById("options").style.display = "none";
-    document.querySelector(".card").style.display = "none";
-
-    document.getElementById(tela).style.display = "block";
-}
-</script>
-
-<pre id="saida" style="background:#222;padding:10px;"></pre>
-
-<script>
-function carregarFeed() {
-    document.getElementById("saida").innerHTML = "Carregando...";
-    Linka.httpGet("http://linkaProject.pythonanywhere.com/feed");
-}
-
-
-function receberResposta(txt) {
-    document.getElementById("saida").innerHTML = "RESPOSTA:\n" + txt;
-}
-function receberErro(txt) {
-    document.getElementById("saida").innerHTML = "FALHOU:\n" + txt;
-}
-</script>
 <style>
     #options {
         display: none;

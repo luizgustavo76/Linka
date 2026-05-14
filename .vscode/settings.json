@@ -1,5 +1,6 @@
 {
     "files.associations": {
         "\"files.associations\": ": "{     \"*.ts\": \"xml\" }"
-    }
+    },
+    "java.configuration.updateBuildConfiguration": "interactive"
 }
