@@ -4,24 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="doc-style.css">
+    <script src="login.js"></script>
     <title>Linka Login</title>
 </head>
 <body>
-    <div id="login" class="loginPage">
-        <h2>Login</h2>
-        <div>
-            <input id = "user" type="text" placeholder="username">
-        </div>
-        <div>
-            <input id = "pass" type="password" placeholder="password">
-        </div>
-        <div>
-            <button onclick="login_request()">Entrar</button>
-        </div>
-        <div>
-            <a href="login.html">back</a>
-        </div>
-        
+    <div class="main-page">
+        <input id="username" placeholder="Username"></input>
+        <input id="password" placeholder="Password"></input>
+        <a href="#" onclick="login_request(); return false;">Submmit</a>
     </div>
+    <div id="saida">Esperando...</div>
+    <script>
+        function receberResposta(txt) {
+            document.getElementById("saida").innerHTML = txt;
+        }
+
+        function receberErro(txt) {
+            document.getElementById("saida").innerHTML = "ERRO: " + txt;
+        }
+    </script>
 </body>
 </html>
