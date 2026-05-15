@@ -1,16 +1,22 @@
 function feed(){
-    Linka.httpGet("http://linkaProject.pythonanywhere.com/feed", function(txt) {
-        let obj = JSON.parse(txt);
+    Linka.httpGet("http://linkaProject.pythonanywhere.com/feed");
+}
 
-        let html = "";
-        for (let i = 0; i < obj.length; i++) {
-            html +=
-                "<div class='post'>" +
-                "<b>" + obj[i].user + "</b><br>" +
-                obj[i].text +
-                "</div><hr>";
-        }
+function receberResposta(txt){
+    let obj = JSON.parse(txt);
 
-        document.getElementById("saida").innerHTML = html;
-    });
+    let html = "";
+    for (let i = 0; i < obj.length; i++) {
+        html +=
+            "<div class='post'>" +
+            "<b>" + obj[i].user + "</b><br>" +
+            obj[i].text +
+            "</div><hr>";
+    }
+
+    document.getElementById("saida").innerHTML = html;
+}
+
+function receberErro(err){
+    document.getElementById("saida").innerHTML = err;
 }

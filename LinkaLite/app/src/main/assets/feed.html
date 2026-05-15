@@ -3,18 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link rel="stylesheet" href="doc-style.css">
     <script src="feed.js"></script>
+
     <title>Feed Linka</title>
 </head>
+
 <body>
-    <h2>Feed</h2>
-    <script>window.onload = feed;</script>
-    <div>
-        <a>New post</a>
-    </div>
-    <div>
-        <a href="index.html">Back</a>
-    </div>
- </body>
+
+<h2>Feed</h2>
+
+<div id="saida">Loading...</div>
+
+<div>
+    <a href="#" onclick="feed()">Carregar feed</a>
+</div>
+
+<div>
+    <a href="index.html">Back</a>
+</div>
+
+<script>
+
+
+window.onload = function () {
+    setTimeout(function () {
+
+        if (typeof Linka === "undefined") {
+            document.getElementById("saida").innerHTML =
+                "Request engine is not Loaded";
+            return;
+        }
+
+        feed();
+
+    }, 300);
+};
+
+</script>
+
+</body>
 </html>
