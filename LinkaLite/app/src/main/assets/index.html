@@ -7,21 +7,67 @@
     <title>Linka Lite</title>
 </head>
 <body>
-    <div class="card">
-        <h2>Linka</h2>
-        <h3>Welcome back!</h3>
+    <div id="initial-page">
+        <div class="card">
+            <h3>Linka</h3>
+            <h2>Welcome back!</h2>
+        </div>
+
+        
+        <footer>
+            <p>
+                <a onclick="carregarFeed()">home</a>
+                <a>chat</a>
+                <a>profile</a>
+                <a href="options.html">options</a>
+                <a href="searchPage.html">search</a>
+            </p>
+        </footer>
     </div>
     <div id="feed"></div>
-    
-    <footer>
-        <p>
-            <a href="feed.html">home</a>
-            <a>chat</a>
-            <a>profile</a>
-            <a href="options.html">options</a>
-            <a href="searchPage.html">search</a>
-        </p>
-    </footer>
+<script>
+function irPara(tela) {
+    document.getElementById("options").style.display = "none";
+    document.querySelector(".card").style.display = "none";
+
+    document.getElementById(tela).style.display = "block";
+}
+</script>
+
+<pre id="saida" style="background:#222;padding:10px;"></pre>
+
+<script>
+function carregarFeed() {
+    document.getElementById("saida").innerHTML = "Carregando...";
+    Linka.httpGet("http://linkaProject.pythonanywhere.com/feed");
+}
+
+
+function receberResposta(txt) {
+    var obj = JSON.parse(txt);
+    var html = "";
+
+    for (var i = 0; i < obj.length; i++) {
+        var post = obj[i];
+
+        html +=
+            "<div class='post'>" +
+            "<b>" + post.username + "</b><br>" +
+            post.text_post + "<br>" +
+            "<small>" + post.datetime + "</small>" +
+            "</div><hr>";
+    }
+
+    document.getElementById("saida").innerHTML = html;
+}
+function receberErro(txt) {
+    document.getElementById("saida").innerHTML = "FALHOU:\n" + txt;
+}
+</script>
+<style>
+    #options {
+        display: none;
+    }
 </style>
 <script src="main-page.js"></script>
 </body>
