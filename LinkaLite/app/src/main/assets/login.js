@@ -3,7 +3,7 @@ function receberResposta(txt){
 }
 function login_request() {
 
-    var cfg = JSON.parse(Linka.loadCfgAsJson("config.cfg"));
+    var cfg = JSON.parse(Linka.loadCfgAsJson("config-login.cfg"));
     var url = cfg["SERVER"]["url"];
     if (url == null){
         var content = ""

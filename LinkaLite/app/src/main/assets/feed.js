@@ -1,5 +1,5 @@
 function feed(){
-    document.getElementById("debug").innerHTML = "Loading...";
+    document.getElementById("debug").innerHTML = "Chamando feed...";
     Linka.httpGet("http://linkaProject.pythonanywhere.com/feed");
 }
 

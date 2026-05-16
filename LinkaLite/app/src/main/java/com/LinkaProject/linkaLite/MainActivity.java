@@ -11,19 +11,17 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MainActivity extends Activity {
 
-    public static MainActivity instance;
     WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        instance = this;
 
         webView = new WebView(this);
         setContentView(webView);
@@ -37,7 +35,7 @@ public class MainActivity extends Activity {
         webView.loadUrl("file:///android_asset/index.html");
     }
 
-
+    // 🌐 GET
     public String requestGET(String urlStr) throws Exception {
 
         URL url = new URL(urlStr);
@@ -47,14 +45,9 @@ public class MainActivity extends Activity {
         conn.setConnectTimeout(8000);
         conn.setReadTimeout(8000);
 
-        int status = conn.getResponseCode();
-
-        BufferedReader br;
-        try {
-            br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-        } catch (Exception e) {
-            br = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "UTF-8"));
-        }
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(conn.getInputStream(), "UTF-8")
+        );
 
         String line;
         StringBuilder sb = new StringBuilder();
@@ -66,14 +59,10 @@ public class MainActivity extends Activity {
         br.close();
         conn.disconnect();
 
-        return "{\"status\":" + status + ",\"body\":\""
-                + sb.toString()
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                + "\"}";
+        return sb.toString();
     }
 
+    // 🌐 POST
     public String requestPOST(String urlStr, String jsonBody) throws Exception {
 
         URL url = new URL(urlStr);
@@ -86,16 +75,14 @@ public class MainActivity extends Activity {
         conn.setDoOutput(true);
         conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
 
-        conn.getOutputStream().write(jsonBody.getBytes("UTF-8"));
+        OutputStream os = conn.getOutputStream();
+        os.write(jsonBody.getBytes("UTF-8"));
+        os.flush();
+        os.close();
 
-        int status = conn.getResponseCode();
-
-        BufferedReader br;
-        try {
-            br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-        } catch (Exception e) {
-            br = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "UTF-8"));
-        }
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(conn.getInputStream(), "UTF-8")
+        );
 
         String line;
         StringBuilder sb = new StringBuilder();
@@ -107,23 +94,82 @@ public class MainActivity extends Activity {
         br.close();
         conn.disconnect();
 
-        return "{\"status\":" + status + ",\"body\":\""
-                + sb.toString()
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                + "\"}";
+        return sb.toString();
     }
 
-
+    // 🌉 BRIDGE
     public class LinkaBridge {
 
+        // 📡 GET
+        @JavascriptInterface
+        public void httpGet(final String url) {
+            new Thread(() -> {
+                try {
+                    String response = requestGET(url);
+
+                    final String safe = response
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
+
+                    runOnUiThread(() ->
+                            webView.loadUrl("javascript:receberResposta('" + safe + "')")
+                    );
+
+                } catch (Exception e) {
+                    final String err = ("ERRO: " + e.toString())
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
+
+                    runOnUiThread(() ->
+                            webView.loadUrl("javascript:receberErro('" + err + "')")
+                    );
+                }
+            }).start();
+        }
+
+        // 📡 POST
+        @JavascriptInterface
+        public void httpPost(final String url, final String jsonBody) {
+            new Thread(() -> {
+                try {
+                    String response = requestPOST(url, jsonBody);
+
+                    final String safe = response
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
+
+                    runOnUiThread(() ->
+                            webView.loadUrl("javascript:receberResposta('" + safe + "')")
+                    );
+
+                } catch (Exception e) {
+                    final String err = ("ERRO: " + e.toString())
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
+
+                    runOnUiThread(() ->
+                            webView.loadUrl("javascript:receberErro('" + err + "')")
+                    );
+                }
+            }).start();
+        }
+
+        // 📁 VERIFICAR ARQUIVO
         @JavascriptInterface
         public String fileExists(String filename) {
             File file = getFileStreamPath(filename);
             return String.valueOf(file.exists());
         }
 
+        // 📁 CRIAR ARQUIVO VAZIO
         @JavascriptInterface
         public void createEmptyFile(String filename) {
             try {
@@ -134,6 +180,7 @@ public class MainActivity extends Activity {
             }
         }
 
+        // 💾 SALVAR CONFIG
         @JavascriptInterface
         public void saveCfg(String filename, String content) {
             try {
@@ -146,6 +193,7 @@ public class MainActivity extends Activity {
             }
         }
 
+        // 📖 LER CONFIG → JSON
         @JavascriptInterface
         public String loadCfgAsJson(String filename) {
             try {
@@ -207,74 +255,6 @@ public class MainActivity extends Activity {
             } catch (Exception e) {
                 return "{}";
             }
-        }
-
-        @JavascriptInterface
-        public void httpGet(final String url) {
-            new Thread(() -> {
-                try {
-                    String response = MainActivity.instance.requestGET(url);
-
-                    final String safe = response
-                            .replace("\\", "\\\\")
-                            .replace("'", "\\'")
-                            .replace("\n", "\\n")
-                            .replace("\r", "");
-
-                    MainActivity.instance.runOnUiThread(() ->
-                            MainActivity.instance.webView.loadUrl(
-                                    "javascript:receberResposta('" + safe + "')"
-                            )
-                    );
-
-                } catch (Exception e) {
-                    final String err = ("ERRO: " + e.toString())
-                            .replace("\\", "\\\\")
-                            .replace("'", "\\'")
-                            .replace("\n", "\\n")
-                            .replace("\r", "");
-
-                    MainActivity.instance.runOnUiThread(() ->
-                            MainActivity.instance.webView.loadUrl(
-                                    "javascript:receberErro('" + err + "')"
-                            )
-                    );
-                }
-            }).start();
-        }
-
-        @JavascriptInterface
-        public void httpPost(final String url, final String jsonBody) {
-            new Thread(() -> {
-                try {
-                    String response = MainActivity.instance.requestPOST(url, jsonBody);
-
-                    final String safe = response
-                            .replace("\\", "\\\\")
-                            .replace("'", "\\'")
-                            .replace("\n", "\\n")
-                            .replace("\r", "");
-
-                    MainActivity.instance.runOnUiThread(() ->
-                            MainActivity.instance.webView.loadUrl(
-                                    "javascript:receberResposta('" + safe + "')"
-                            )
-                    );
-
-                } catch (Exception e) {
-                    final String err = ("ERRO: " + e.toString())
-                            .replace("\\", "\\\\")
-                            .replace("'", "\\'")
-                            .replace("\n", "\\n")
-                            .replace("\r", "");
-
-                    MainActivity.instance.runOnUiThread(() ->
-                            MainActivity.instance.webView.loadUrl(
-                                    "javascript:receberErro('" + err + "')"
-                            )
-                    );
-                }
-            }).start();
         }
     }
 }
