@@ -2,7 +2,16 @@ function receberResposta(txt){
     let obj = JSON.parse(txt);
 }
 function login_request() {
-    var url = Linka.loadCfgAsJson("config-login.cfg");
+
+    var cfg = JSON.parse(Linka.loadCfgAsJson("config.cfg"));
+    var url = cfg["SERVER"]["url"];
+    if (url == null){
+        var content = ""
+        url = "http://linkaProject.pythonanywhere.com"
+        content += "[SERVER]";
+        content += "ulr=" + url;
+        Linka.saveCfg("config-login.cfg", content);
+    }
     var username = document.getElementById("username").value;
     var password = document.getElementById("password").value;
     login_json = {
@@ -17,7 +26,7 @@ function login_request() {
         content += "[FAST-LOGIN]\n";
         content += "username=" + username;
         content += "token_session" + token;
-        Linka.saveCfg("config-login.cfg", content)
+        Linka.saveCfg("config-login.cfg", content);
         window.location.replace("index.html");
     }
     else{

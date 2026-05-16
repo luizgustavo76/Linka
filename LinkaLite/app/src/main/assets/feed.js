@@ -13,7 +13,7 @@ function receberResposta(txt){
     for (let i = 0; i < obj.length; i++) {
         html += "<div class='post'>" +
             "<b>" + obj[i].username + "</b><br>" +
-            obj[i].text_post + "<a>Star</a>"
+            obj[i].text_post +
             "</div><hr>";
     }
 
