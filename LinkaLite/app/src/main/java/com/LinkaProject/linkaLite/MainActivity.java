@@ -6,49 +6,146 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.JavascriptInterface;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MainActivity extends Activity {
 
+    public static MainActivity instance;
     WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        instance = this;
+
         webView = new WebView(this);
         setContentView(webView);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
-
-        // Permite acessar arquivos locais e internet
         settings.setAllowFileAccess(true);
 
-        // Bridge Java -> JS
         webView.addJavascriptInterface(new LinkaBridge(), "Linka");
 
-        // Carrega seu HTML local
         webView.loadUrl("file:///android_asset/index.html");
     }
 
+
+    public String requestGET(String urlStr) throws Exception {
+
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+        conn.setRequestMethod("GET");
+        conn.setConnectTimeout(8000);
+        conn.setReadTimeout(8000);
+
+        int status = conn.getResponseCode();
+
+        BufferedReader br;
+        try {
+            br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+        } catch (Exception e) {
+            br = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "UTF-8"));
+        }
+
+        String line;
+        StringBuilder sb = new StringBuilder();
+
+        while ((line = br.readLine()) != null) {
+            sb.append(line).append("\n");
+        }
+
+        br.close();
+        conn.disconnect();
+
+        return "{\"status\":" + status + ",\"body\":\""
+                + sb.toString()
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                + "\"}";
+    }
+
+    public String requestPOST(String urlStr, String jsonBody) throws Exception {
+
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+        conn.setRequestMethod("POST");
+        conn.setConnectTimeout(8000);
+        conn.setReadTimeout(8000);
+
+        conn.setDoOutput(true);
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+
+        conn.getOutputStream().write(jsonBody.getBytes("UTF-8"));
+
+        int status = conn.getResponseCode();
+
+        BufferedReader br;
+        try {
+            br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+        } catch (Exception e) {
+            br = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "UTF-8"));
+        }
+
+        String line;
+        StringBuilder sb = new StringBuilder();
+
+        while ((line = br.readLine()) != null) {
+            sb.append(line).append("\n");
+        }
+
+        br.close();
+        conn.disconnect();
+
+        return "{\"status\":" + status + ",\"body\":\""
+                + sb.toString()
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                + "\"}";
+    }
+
+
     public class LinkaBridge {
+
+        @JavascriptInterface
+        public String fileExists(String filename) {
+            File file = getFileStreamPath(filename);
+            return String.valueOf(file.exists());
+        }
+
+        @JavascriptInterface
+        public void createEmptyFile(String filename) {
+            try {
+                FileOutputStream fos = openFileOutput(filename, MODE_PRIVATE);
+                fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         @JavascriptInterface
         public void saveCfg(String filename, String content) {
             try {
-                OutputStreamWriter writer = new OutputStreamWriter(
-                        openFileOutput(filename, MODE_PRIVATE)
-                );
+                OutputStreamWriter writer =
+                        new OutputStreamWriter(openFileOutput(filename, MODE_PRIVATE));
                 writer.write(content);
                 writer.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
         @JavascriptInterface
         public String loadCfgAsJson(String filename) {
             try {
@@ -70,7 +167,6 @@ public class MainActivity extends Activity {
                         continue;
                     }
 
-                    // Seção [FAST-LOGIN]
                     if (line.startsWith("[") && line.endsWith("]")) {
                         section = line.substring(1, line.length() - 1);
 
@@ -83,13 +179,11 @@ public class MainActivity extends Activity {
                         continue;
                     }
 
-                    // chave=valor
                     int eq = line.indexOf("=");
                     if (eq > 0 && section.length() > 0) {
                         String key = line.substring(0, eq).trim();
                         String value = line.substring(eq + 1).trim();
 
-                        // escapar aspas e barras
                         value = value.replace("\\", "\\\\").replace("\"", "\\\"");
 
                         json.append("\"").append(key).append("\":\"").append(value).append("\",");
@@ -98,12 +192,10 @@ public class MainActivity extends Activity {
 
                 br.close();
 
-                // remover última vírgula
                 if (json.charAt(json.length() - 1) == ',') {
                     json.deleteCharAt(json.length() - 1);
                 }
 
-                // fechar última seção
                 if (!firstSection) {
                     json.append("}");
                 }
@@ -116,180 +208,73 @@ public class MainActivity extends Activity {
                 return "{}";
             }
         }
+
         @JavascriptInterface
         public void httpGet(final String url) {
+            new Thread(() -> {
+                try {
+                    String response = MainActivity.instance.requestGET(url);
 
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        String response = requestGET(url);
+                    final String safe = response
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
 
-                        // Envia resposta pro HTML chamando função JS
-                        final String safe = response
-                                .replace("\\", "\\\\")
-                                .replace("'", "\\'")
-                                .replace("\n", "\\n")
-                                .replace("\r", "");
+                    MainActivity.instance.runOnUiThread(() ->
+                            MainActivity.instance.webView.loadUrl(
+                                    "javascript:receberResposta('" + safe + "')"
+                            )
+                    );
 
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                webView.loadUrl("javascript:receberResposta('" + safe + "')");
-                            }
-                        });
+                } catch (Exception e) {
+                    final String err = ("ERRO: " + e.toString())
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
 
-                    } catch (Exception e) {
-                        final String err = ("ERRO: " + e.toString())
-                                .replace("\\", "\\\\")
-                                .replace("'", "\\'")
-                                .replace("\n", "\\n")
-                                .replace("\r", "");
-
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                webView.loadUrl("javascript:receberErro('" + err + "')");
-                            }
-                        });
-                    }
+                    MainActivity.instance.runOnUiThread(() ->
+                            MainActivity.instance.webView.loadUrl(
+                                    "javascript:receberErro('" + err + "')"
+                            )
+                    );
                 }
             }).start();
         }
-
 
         @JavascriptInterface
         public void httpPost(final String url, final String jsonBody) {
+            new Thread(() -> {
+                try {
+                    String response = MainActivity.instance.requestPOST(url, jsonBody);
 
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        String response = requestPOST(url, jsonBody);
-                        int status = conn.getResponseCode();
-                        final String safe = response
-                                .replace("\\", "\\\\")
-                                .replace("'", "\\'")
-                                .replace("\n", "\\n")
-                                .replace("\r", "");
+                    final String safe = response
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
 
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                webView.loadUrl("javascript:receberResposta('" + safe + "')");
-                            }
-                        });
-                        
-                    } catch (Exception e) {
-                        final String err = ("ERRO: " + e.toString())
-                                .replace("\\", "\\\\")
-                                .replace("'", "\\'")
-                                .replace("\n", "\\n")
-                                .replace("\r", "");
+                    MainActivity.instance.runOnUiThread(() ->
+                            MainActivity.instance.webView.loadUrl(
+                                    "javascript:receberResposta('" + safe + "')"
+                            )
+                    );
 
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                webView.loadUrl("javascript:receberErro('" + err + "')");
-                            }
-                        });
-                    }
+                } catch (Exception e) {
+                    final String err = ("ERRO: " + e.toString())
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
+
+                    MainActivity.instance.runOnUiThread(() ->
+                            MainActivity.instance.webView.loadUrl(
+                                    "javascript:receberErro('" + err + "')"
+                            )
+                    );
                 }
             }).start();
         }
-    }
-
-
-    public String requestGET(String urlStr) throws Exception {
-
-        URL url = new URL(urlStr);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-        conn.setRequestMethod("GET");
-        conn.setConnectTimeout(8000);
-        conn.setReadTimeout(8000);
-
-        int status = conn.getResponseCode();
-
-        BufferedReader br;
-
-        try {
-            br = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream(), "UTF-8")
-            );
-        } catch (Exception e) {
-            br = new BufferedReader(
-                    new InputStreamReader(conn.getErrorStream(), "UTF-8")
-            );
-        }
-
-        String line;
-        StringBuilder sb = new StringBuilder();
-
-        while ((line = br.readLine()) != null) {
-            sb.append(line);
-            sb.append("\n");
-        }
-
-        br.close();
-        conn.disconnect();
-
-        return "{\"status\":" + status + ",\"body\":\""
-                + sb.toString()
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\n", "\\n")
-                + "\"}";
-    }
-
-
-    public String requestPOST(String urlStr, String jsonBody) throws Exception {
-
-        URL url = new URL(urlStr);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-        conn.setRequestMethod("POST");
-        conn.setConnectTimeout(8000);
-        conn.setReadTimeout(8000);
-
-        conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-
-        OutputStream os = conn.getOutputStream();
-        os.write(jsonBody.getBytes("UTF-8"));
-        os.flush();
-        os.close();
-
-        int status = conn.getResponseCode();
-
-        BufferedReader br;
-
-        try {
-            br = new BufferedReader(
-                    new InputStreamReader(conn.getInputStream(), "UTF-8")
-            );
-        } catch (Exception e) {
-            br = new BufferedReader(
-                    new InputStreamReader(conn.getErrorStream(), "UTF-8")
-            );
-        }
-
-        String line;
-        StringBuilder sb = new StringBuilder();
-
-        while ((line = br.readLine()) != null) {
-            sb.append(line);
-            sb.append("\n");
-        }
-
-        br.close();
-        conn.disconnect();
-
-        return "{\"status\":" + status + ",\"body\":\""
-                + sb.toString()
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-                    .replace("\n", "\\n")
-                + "\"}";
     }
 }
