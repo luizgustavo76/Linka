@@ -37,7 +37,85 @@ public class MainActivity extends Activity {
     }
 
     public class LinkaBridge {
+        @JavascriptInterface
+        public void saveCfg(String filename, String content) {
+            try {
+                OutputStreamWriter writer = new OutputStreamWriter(
+                        openFileOutput(filename, MODE_PRIVATE)
+                );
+                writer.write(content);
+                writer.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        @JavascriptInterface
+        public String loadCfgAsJson(String filename) {
+            try {
+                BufferedReader br = new BufferedReader(
+                        new InputStreamReader(openFileInput(filename), "UTF-8")
+                );
 
+                String line;
+                String section = "";
+                StringBuilder json = new StringBuilder();
+                json.append("{");
+
+                boolean firstSection = true;
+
+                while ((line = br.readLine()) != null) {
+                    line = line.trim();
+
+                    if (line.equals("") || line.startsWith("#") || line.startsWith(";")) {
+                        continue;
+                    }
+
+                    // Seção [FAST-LOGIN]
+                    if (line.startsWith("[") && line.endsWith("]")) {
+                        section = line.substring(1, line.length() - 1);
+
+                        if (!firstSection) {
+                            json.append("},");
+                        }
+
+                        json.append("\"").append(section).append("\":{");
+                        firstSection = false;
+                        continue;
+                    }
+
+                    // chave=valor
+                    int eq = line.indexOf("=");
+                    if (eq > 0 && section.length() > 0) {
+                        String key = line.substring(0, eq).trim();
+                        String value = line.substring(eq + 1).trim();
+
+                        // escapar aspas e barras
+                        value = value.replace("\\", "\\\\").replace("\"", "\\\"");
+
+                        json.append("\"").append(key).append("\":\"").append(value).append("\",");
+                    }
+                }
+
+                br.close();
+
+                // remover última vírgula
+                if (json.charAt(json.length() - 1) == ',') {
+                    json.deleteCharAt(json.length() - 1);
+                }
+
+                // fechar última seção
+                if (!firstSection) {
+                    json.append("}");
+                }
+
+                json.append("}");
+
+                return json.toString();
+
+            } catch (Exception e) {
+                return "{}";
+            }
+        }
         @JavascriptInterface
         public void httpGet(final String url) {
 
@@ -88,7 +166,7 @@ public class MainActivity extends Activity {
                 public void run() {
                     try {
                         String response = requestPOST(url, jsonBody);
-
+                        int status = conn.getResponseCode();
                         final String safe = response
                                 .replace("\\", "\\\\")
                                 .replace("'", "\\'")
@@ -101,7 +179,7 @@ public class MainActivity extends Activity {
                                 webView.loadUrl("javascript:receberResposta('" + safe + "')");
                             }
                         });
-
+                        
                     } catch (Exception e) {
                         final String err = ("ERRO: " + e.toString())
                                 .replace("\\", "\\\\")
@@ -131,9 +209,19 @@ public class MainActivity extends Activity {
         conn.setConnectTimeout(8000);
         conn.setReadTimeout(8000);
 
-        BufferedReader br = new BufferedReader(
-                new InputStreamReader(conn.getInputStream(), "UTF-8")
-        );
+        int status = conn.getResponseCode();
+
+        BufferedReader br;
+
+        try {
+            br = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream(), "UTF-8")
+            );
+        } catch (Exception e) {
+            br = new BufferedReader(
+                    new InputStreamReader(conn.getErrorStream(), "UTF-8")
+            );
+        }
 
         String line;
         StringBuilder sb = new StringBuilder();
@@ -146,7 +234,12 @@ public class MainActivity extends Activity {
         br.close();
         conn.disconnect();
 
-        return sb.toString();
+        return "{\"status\":" + status + ",\"body\":\""
+                + sb.toString()
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                + "\"}";
     }
 
 
@@ -167,9 +260,19 @@ public class MainActivity extends Activity {
         os.flush();
         os.close();
 
-        BufferedReader br = new BufferedReader(
-                new InputStreamReader(conn.getInputStream(), "UTF-8")
-        );
+        int status = conn.getResponseCode();
+
+        BufferedReader br;
+
+        try {
+            br = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream(), "UTF-8")
+            );
+        } catch (Exception e) {
+            br = new BufferedReader(
+                    new InputStreamReader(conn.getErrorStream(), "UTF-8")
+            );
+        }
 
         String line;
         StringBuilder sb = new StringBuilder();
@@ -182,6 +285,11 @@ public class MainActivity extends Activity {
         br.close();
         conn.disconnect();
 
-        return sb.toString();
+        return "{\"status\":" + status + ",\"body\":\""
+                + sb.toString()
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                + "\"}";
     }
 }

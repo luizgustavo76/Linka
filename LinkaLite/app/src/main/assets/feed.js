@@ -1,5 +1,5 @@
 function feed(){
-    document.getElementById("debug").innerHTML = "Chamando feed...";
+    document.getElementById("debug").innerHTML = "Loading...";
     Linka.httpGet("http://linkaProject.pythonanywhere.com/feed");
 }
 
@@ -13,7 +13,7 @@ function receberResposta(txt){
     for (let i = 0; i < obj.length; i++) {
         html += "<div class='post'>" +
             "<b>" + obj[i].username + "</b><br>" +
-            obj[i].text_post +
+            obj[i].text_post + "<a>Star</a>"
             "</div><hr>";
     }
 
