@@ -16,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MainActivity extends Activity {
+    int lastStatusCode = 0;
     WebView webView;
 
     @Override
@@ -60,6 +61,8 @@ public class MainActivity extends Activity {
         conn.setConnectTimeout(8000);
         conn.setReadTimeout(8000);
 
+        lastStatusCode = conn.getResponseCode();
+
         BufferedReader br = new BufferedReader(
                 new InputStreamReader(conn.getInputStream(), "UTF-8")
         );
@@ -88,16 +91,27 @@ public class MainActivity extends Activity {
         conn.setReadTimeout(8000);
 
         conn.setDoOutput(true);
+        conn.setDoInput(true);
+
         conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        conn.setRequestProperty("Accept", "application/json");
 
         OutputStream os = conn.getOutputStream();
-        os.write(jsonBody.getBytes("UTF-8"));
+        byte[] input = jsonBody.getBytes("UTF-8");
+
+        os.write(input, 0, input.length);
         os.flush();
         os.close();
 
-        BufferedReader br = new BufferedReader(
-                new InputStreamReader(conn.getInputStream(), "UTF-8")
-        );
+        lastStatusCode = conn.getResponseCode();
+
+        BufferedReader br;
+
+        if (lastStatusCode >= 200 && lastStatusCode < 400) {
+            br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+        } else {
+            br = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "UTF-8"));
+        }
 
         String line;
         StringBuilder sb = new StringBuilder();
@@ -127,10 +141,11 @@ public class MainActivity extends Activity {
                             .replace("'", "\\'")
                             .replace("\n", "\\n")
                             .replace("\r", "");
-
-                    runOnUiThread(() ->
-                            webView.loadUrl("javascript:receberResposta('" + safe + "')")
-                    );
+                    runOnUiThread(() -> {
+                        webView.loadUrl("javascript:receberStatusCode(" + lastStatusCode + ")");
+                        webView.loadUrl("javascript:receberResposta('" + safe + "')");
+                    });
+                    
 
                 } catch (Exception e) {
                     final String err = ("ERRO: " + e.toString())
@@ -158,10 +173,10 @@ public class MainActivity extends Activity {
                             .replace("'", "\\'")
                             .replace("\n", "\\n")
                             .replace("\r", "");
-
-                    runOnUiThread(() ->
-                            webView.loadUrl("javascript:receberResposta('" + safe + "')")
-                    );
+                    runOnUiThread(() -> {
+                        webView.loadUrl("javascript:receberStatusCode(" + lastStatusCode + ")");
+                        webView.loadUrl("javascript:receberResposta('" + safe + "')");
+                    });
 
                 } catch (Exception e) {
                     final String err = ("ERRO: " + e.toString())

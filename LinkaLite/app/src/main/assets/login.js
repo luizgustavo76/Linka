@@ -1,5 +1,9 @@
 var lastResponse = null;
+var statusCode = 0;
 
+function receberStatusCode(code){
+    statusCode = code;
+}
 function receberResposta(txt){
     lastResponse = txt;
     document.getElementById("saida").innerHTML = txt;
@@ -38,7 +42,7 @@ function login_request() {
 
         var obj = JSON.parse(lastResponse);
 
-        if (obj.status == 200 || obj.status == 201){
+        if (statusCode == 200 || statusCode == 201){
 
             Linka.httpPost(url + "/new-session", JSON.stringify(login_json));
 
@@ -55,7 +59,7 @@ function login_request() {
 
                 Linka.saveCfg("config-login.cfg", content);
 
-                window.location.href = "file:///android_asset/index.html";
+                window.location.replace("index.html");
 
             }, 600);
 
@@ -82,7 +86,6 @@ function register_request(){
         url = cfg["SERVER"]["url"];
     }
     Linka.httpPost(url + "/register", JSON.stringify(request_json))
-    Linka.httpPost(url + "/login", JSON.stringify(login_json));
 
     setTimeout(function(){
 
@@ -93,7 +96,7 @@ function register_request(){
 
         var obj = JSON.parse(lastResponse);
 
-        if (obj.status == 200 || obj.status == 201){
+        if (statusCode == 200 || statusCode == 201){
             window.location.href = "file:///android_asset/index.html";
         }else{
             document.getElementById("saida").innerHTML =
