@@ -16,7 +16,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class MainActivity extends Activity {
-
     WebView webView;
 
     @Override
@@ -32,10 +31,26 @@ public class MainActivity extends Activity {
 
         webView.addJavascriptInterface(new LinkaBridge(), "Linka");
 
-        webView.loadUrl("file:///android_asset/index.html");
+        webView.loadUrl("file:///android_asset/init.html");
     }
 
-    // 🌐 GET
+    @JavascriptInterface
+    public String ensureFile(String filename) {
+        try {
+            File file = getFileStreamPath(filename);
+
+            if (file.exists()) {
+                return "EXISTS";
+            } else {
+                FileOutputStream fos = openFileOutput(filename, MODE_PRIVATE);
+                fos.close();
+                return "CREATED";
+            }
+
+        } catch (Exception e) {
+            return "ERROR:" + e.toString();
+        }
+    }
     public String requestGET(String urlStr) throws Exception {
 
         URL url = new URL(urlStr);
@@ -62,7 +77,7 @@ public class MainActivity extends Activity {
         return sb.toString();
     }
 
-    // 🌐 POST
+    
     public String requestPOST(String urlStr, String jsonBody) throws Exception {
 
         URL url = new URL(urlStr);

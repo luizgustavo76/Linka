@@ -1,6 +1,3 @@
-
-
-
 from flask_cors import CORS 
 from post import post_bp
 from chat import chat_bp
@@ -100,7 +97,7 @@ def new_session():
         return jsonify({"status":"the password is incorret"}),401
 public_routes = [
     "post.feed",
-    "post.new",
+    "post.new_post",
     "new_session",
     "search.search",
     "profile.view_profile",
