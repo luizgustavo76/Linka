@@ -78,7 +78,13 @@ def view_comments():
     return jsonify({"comments":result})
 @post_bp.route("/new", methods=["POST"])
 def new_post():
-    data = request.get_json()
+    print("RAW DATA:", request.data)
+    print("JSON:", request.get_json(silent=True))
+
+    data = request.get_json(silent=True)
+
+    if data is None:
+        return jsonify({"status": "JSON inválido ou vazio"}), 400
 
     username = data.get("username")
     text_post = data.get("text_post")
@@ -102,7 +108,6 @@ def new_post():
     conn.close()
 
     return jsonify({"status": "post criado com sucesso"}), 200
-
 
 @post_bp.route("/feed", methods=["GET"])
 def feed():

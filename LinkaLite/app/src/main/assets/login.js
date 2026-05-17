@@ -18,9 +18,9 @@ function login_request() {
         "username":username,
         "password":password
     };
-    Linka.requestPOST(url + "/login", login_json)
+    Linka.requestPOST(url + "/login", JSON.stringify(login_json))
     if (obj.status in (200, 201)){
-        Linka.requestPOST(url + "/new-session", login_json)
+        Linka.requestPOST(url + "/new-session", JSON.stringify(login_json))
         var token = obj.body["token"];
         var content = ""
         content += "[FAST-LOGIN]\n";
