@@ -1,36 +1,105 @@
+var lastResponse = null;
+
 function receberResposta(txt){
-    let obj = JSON.parse(txt);
+    lastResponse = txt;
+    document.getElementById("saida").innerHTML = txt;
 }
+
+function receberErro(txt){
+    document.getElementById("saida").innerHTML = "ERRO: " + txt;
+}
+
 function login_request() {
 
     var cfg = JSON.parse(Linka.loadCfgAsJson("config-login.cfg"));
-    var url = cfg["SERVER"]["url"];
-    if (url == null){
-        var content = ""
-        url = "http://linkaProject.pythonanywhere.com"
-        content += "[SERVER]";
-        content += "ulr=" + url;
-        Linka.saveCfg("config-login.cfg", content);
+
+    var url = "http://linkaProject.pythonanywhere.com";
+
+    if (cfg["SERVER"] && cfg["SERVER"]["url"]) {
+        url = cfg["SERVER"]["url"];
     }
+
     var username = document.getElementById("username").value;
     var password = document.getElementById("password").value;
-    login_json = {
+
+    var login_json = {
+        "username": username,
+        "password": password
+    };
+
+    Linka.httpPost(url + "/login", JSON.stringify(login_json));
+
+    setTimeout(function(){
+
+        if (!lastResponse){
+            document.getElementById("saida").innerHTML = "error in the server side";
+            return;
+        }
+
+        var obj = JSON.parse(lastResponse);
+
+        if (obj.status == 200 || obj.status == 201){
+
+            Linka.httpPost(url + "/new-session", JSON.stringify(login_json));
+
+            setTimeout(function(){
+
+                var sessionObj = JSON.parse(lastResponse);
+
+                var token = sessionObj.token;
+
+                var content = "";
+                content += "[FAST-LOGIN]\n";
+                content += "username=" + username + "\n";
+                content += "token_session=" + token + "\n";
+
+                Linka.saveCfg("config-login.cfg", content);
+
+                window.location.href = "file:///android_asset/index.html";
+
+            }, 600);
+
+        } else {
+            document.getElementById("saida").innerHTML =
+                "<h3>The username or password is invalid</h3>";
+        }
+
+    }, 600);
+}
+function register_request(){
+    var username = document.getElementById("reg-user").value;
+    var password = document.getElementById("reg-pass").value;
+    var email = document.getElementById("reg-email").value;
+    var request_json = {
         "username":username,
-        "password":password
+        "password":password,
+        "email":email
     };
-    Linka.requestPOST(url + "/login", JSON.stringify(login_json))
-    if (obj.status in (200, 201)){
-        Linka.requestPOST(url + "/new-session", JSON.stringify(login_json))
-        var token = obj.body["token"];
-        var content = ""
-        content += "[FAST-LOGIN]\n";
-        content += "username=" + username;
-        content += "token_session" + token;
-        Linka.saveCfg("config-login.cfg", content);
-        window.location.replace("index.html");
+    var cfg = JSON.parse(Linka.loadCfgAsJson("config-login.cfg"));
+    var url = "http://linkaProject.pythonanywhere.com";
+
+    if (cfg["SERVER"] && cfg["SERVER"]["url"]) {
+        url = cfg["SERVER"]["url"];
     }
-    else{
-        html="<h3>The username or password is invalid</h3>"
-        document.getElementById("saida").innerHTML = html;
-    };
+    Linka.httpPost(url + "/register", JSON.stringify(request_json))
+    Linka.httpPost(url + "/login", JSON.stringify(login_json));
+
+    setTimeout(function(){
+
+        if (!lastResponse){
+            document.getElementById("saida").innerHTML = "error in the server side";
+            return;
+        }
+
+        var obj = JSON.parse(lastResponse);
+
+        if (obj.status == 200 || obj.status == 201){
+            window.location.href = "file:///android_asset/index.html";
+        }else{
+            document.getElementById("saida").innerHTML =
+                "<h3>The username or password is invalid</h3>";
+        }
+    })
+
+
 }
