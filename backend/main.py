@@ -100,6 +100,7 @@ def new_session():
         return jsonify({"status":"the password is incorret"}),401
 public_routes = [
     "post.feed",
+    "post.new",
     "new_session",
     "search.search",
     "profile.view_profile",
