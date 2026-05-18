@@ -6,7 +6,13 @@ body {
     margin: 0;
     padding: 0;
     }
-
+pre {
+    background: #161b22;
+    padding: 12px;
+    border-radius: 10px;
+    overflow-x: auto;
+    border: 1px solid #30363d;
+}
 header {
     background: #161b22;
     padding: 20px;
@@ -96,7 +102,9 @@ button:hover {
 input{
     background-color: #000;
     color:#fff;
-    border: 2px #000;
+    border: 2px solid #30363d;
+    border-radius: 10px;
+    padding: 10px;
 }
 .loginPage{
     gap:20px;
