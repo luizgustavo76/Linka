@@ -6,7 +6,7 @@ from login import login_bp
 from profiles import profile_bp
 from search import search_bp
 from community import community_bp
-
+from meta import meta_bp
 from flask import Flask, Blueprint, request, jsonify, g
 import sqlite3
 import os
@@ -15,17 +15,12 @@ from werkzeug.security import check_password_hash
 import secrets
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
-
 tokens_file = os.path.join(db_dir, "tokens.db")
 login_file = os.path.join(db_dir, "login.db")
-
 app = Flask(__name__)
-
-
 # =========================
 # BANCO DE DADOS
 # =========================
-
 def get_db():
     conn = sqlite3.connect(tokens_file)
     conn.row_factory = sqlite3.Row
@@ -97,6 +92,7 @@ def new_session():
         return jsonify({"status":"the password is incorret"}),401
 public_routes = [
     "post.feed",
+    "meta.return_version",
     "post.new_post",
     "new_session",
     "search.search",
@@ -155,7 +151,7 @@ app.register_blueprint(login_bp)
 app.register_blueprint(post_bp)
 app.register_blueprint(chat_bp)
 app.register_blueprint(friends_bp)
-
+app.register_blueprint(meta_bp)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
