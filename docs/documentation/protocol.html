@@ -8,14 +8,43 @@
     <title>How use the Linka protocol</title>
 </head>
 <body>
+    <header>
+        <img src="header.png" alt="main logo linka"></img>
+    </header>
     <main>
-        <h2>Protocol Linka, How to use?</h2>
-        <p>In the Linka, to standardize the Platform and ecosystem, Linka Protocol has created</p>
-        <p>in default, Json is used and recommend because it`s simple, clean and modern to backend</p>
+        <h2>Linka Protocol — How to Use</h2>
+
+        <p>
+            The Linka Protocol was created to standardize the Linka ecosystem,
+            allowing different clients and servers to communicate using the same rules.
+        </p>
+
+        <p>
+            Linka uses JSON as the default request/response format because it is simple,
+            lightweight, and supported by almost every programming language.
+        </p>
         <h2>Patterns</h2>
         <p>In the account requests:</p>
         <p>--/login</p>
         <p>--/register</p>
+        <p>It`s used the pattern</p>
+        <p>--username(the username of user)</p>
+        <p>--password(password of user)</p>
+        <p>and opcional in /register route</p>
+        <p>--email(email of user)</p>
+        <h4>Example:</h4>
+        <code>
+            {<br>
+                "username":username,<br>
+                "password":password,<br>
+                "email":email,<br>
+            }
+        </code>
+
     </main>
+    <footer>
+        <a href="https://github.com/luizgustavo76/Linka">official repository</a>
+        <a href="https://luizgustavo76.github.io/Linka">Home page</a>
+    </footer>
 </body>
 </html>
