@@ -13,9 +13,9 @@ if not os.path.exists(db_dir):
 
 
 def get_db():
-    conn = sqlite3.connect(post_dir)
+    conn = sqlite3.connect(post_dir, timeout=10)
+    conn.row_factory = sqlite3.Row
     return conn
-
 
 def create_db():
     conn = get_db()
@@ -65,6 +65,8 @@ def new_comment():
         conn = get_db()
         cur = conn.cursor()
         cur.execute("INSERT INTO comments (text_comment, username, post_id) VALUES(?,?,?)", (text_comment, username, post_id))
+        conn.commit()
+        conn.close()
     return jsonify({"status":"o comentario foi criado com sucesso!"}), 200
 @post_bp.route("/view-comments", methods=["POST"])
 def view_comments():
@@ -73,9 +75,17 @@ def view_comments():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM comments WHERE post_id = ?", (post_id,))      
-    result = cur.fetchall()
+    rows = cur.fetchall()
     conn.close()
-    return jsonify({"comments":result})
+    comments = []
+    for row in rows:
+        comments.append({
+            "username":row["username"],
+            "text_comment":row["text_comment"],
+            "post_id":row["post_id"],
+            "comment_id":row["id"]
+        })
+    return jsonify({"comments":comments})
 @post_bp.route("/new", methods=["POST"])
 def new_post():
     print("RAW DATA:", request.data)
@@ -107,7 +117,7 @@ def new_post():
     conn.commit()
     conn.close()
 
-    return jsonify({"status": "post criado com sucesso"}), 200
+    return jsonify({"status": "post criado com sucesso"}), 200 
 
 @post_bp.route("/feed", methods=["GET"])
 def feed():
