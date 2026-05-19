@@ -896,6 +896,32 @@ int main(int argc, char *argv[])
         });
         
     };
+    commentsPage = [&](QString post_id){
+        clearLayout(layout);
+        comment_layout = QList<QWidget*>();
+        QJsonObject json_comments;
+        json_comments["post_id"] = post_id;
+        QString response = requestHTTP(
+            url + "/view-comments",
+            "POST",
+            json_comments
+        );
+        QJsonParseError error;
+        QJsonDocument doc = QJsonDocument::fromJson(jsonString.toUtf8(), &error);
+        QJsonObject comments = obj["comments"].toAray();
+
+        for (int i = 0; i < comments.size(); i++) {
+            QJsonObject comment = comments[i].toObject();
+
+            int comment_id = comment["comment_id"].toInt();
+            int post_id = comment["post_id"].toInt();
+            QString username = comment["username"].toString();
+            QString text = comment["text_comment"].toString();
+
+            qDebug() << comment_id << post_id << username << text;
+        }
+
+    };
     showfeed = [&]()
     {
         clearLayout(layout);
