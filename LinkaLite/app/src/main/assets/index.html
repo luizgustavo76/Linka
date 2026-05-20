@@ -6,16 +6,19 @@
     <link rel="stylesheet" href="doc-style.css">
     <title>Linka Lite</title>
     <script src="main-page.js"></script>
+    <script src="comments.js"></script>
 </head>
 <body onload="existsLogin()">
     <div id="initial-page">
+        <header>
+            <img src="img/header.png" alt="linka header logo">
+        </header>
         <div class="card">
-            <h3>Linka</h3>
             <h2>Welcome back!</h2>
         </div>
 
         
-        <footer>
+        <div class="footer">
             <p>
                 <a onclick="carregarFeed()">Feed</a>
                 <a>chat</a>
@@ -23,7 +26,7 @@
                 <a href="options.html">options</a>
                 <a href="searchPage.html">search</a>
             </p>
-        </footer>
+        </div>
     </div>
     <div id="feed">
         <a href="new_post.html">New Post!</a>
@@ -57,6 +60,8 @@ function receberResposta(txt) {
             "<div class='post'>" +
             "<b>" + post.username + "</b><br>" +
             post.text_post + "<br>" +
+            "<a onclick='requestStar(" + post.id + ", \"" + post.username + "\")'>Star</a>"
+            + "<a href='comments.html?post_id='" + post.post_id + ")>Comments</a>"
             "<small>" + post.datetime + "</small>" +
             "</div><hr>";
     }
