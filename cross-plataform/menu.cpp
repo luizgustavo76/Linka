@@ -506,6 +506,7 @@ int main(int argc, char *argv[])
     std::function<void(QString)> sendEdit;
     std::function<void()> change_url;
     std::function<QString(QString, QString)> newSession;
+    std::function<void(QString post_id)> commentsPage;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -898,7 +899,7 @@ int main(int argc, char *argv[])
     };
     commentsPage = [&](QString post_id){
         clearLayout(layout);
-        comment_layout = QList<QWidget*>();
+        QList<QWidget*>() = comment_layout;
         QJsonObject json_comments;
         json_comments["post_id"] = post_id;
         QString response = requestHTTP(
