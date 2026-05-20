@@ -1,6 +1,8 @@
-function request_comments(post_id){
-    json_comment = {"post_id":post_id}
-    Linka.httpPost(url + "/view-comments");
+function request_comments(){
+    const params = new URLSearchParams(window.location.search);
+    const post_id = params.get("post_id");
+    json_comment = {"post_id":post_id};
+    Linka.httpPost(url + "/view-comments", JSON.stringify(json_comment));
     var obj = JSON.parse(txt);
     const comments = obj["comments"];
     for (var i = 0; i < comments.length; i++){

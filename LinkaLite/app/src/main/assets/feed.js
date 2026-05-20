@@ -26,6 +26,7 @@ function receberResposta(txt){
         html += "<div class='post'>" +
             "<b>" + obj[i].username + "</b><br>" +
             obj[i].text_post + "<a onclick='requestStar(" + obj[i].id + ", \"" + obj[i].username + "\")'>Star</a>"
+            + "<a href='comments.html?post_id='" + obj[i].post_id + ")></a>"
             "</div><hr>";
     }
 
