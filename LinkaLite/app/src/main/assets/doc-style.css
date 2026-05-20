@@ -24,7 +24,20 @@ main {
     margin: auto;
     padding: 20px;
 }
+#footer{
+    position: fixed;
+    bottom: 0;
+    left: 0;
 
+    width: 100%;
+
+    background: #111;
+    color: white;
+
+    padding: 10px;
+
+    text-align: center;
+}
 h2 {
     color: #58a6ff;
     padding-bottom: 5px;
