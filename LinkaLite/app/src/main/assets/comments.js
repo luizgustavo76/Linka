@@ -11,6 +11,6 @@ function request_comments(){
         var text_comment = comments[i]["text_comment"];
         var comment_id = comments[i]["comment_id"];
         html += '<div class="post">' + '<b>' + username + "</b>" +"<br>" + "<p>" + text_comment + "</p><br>";
-        document.getElementById("commments").innerHTML = html;
+        document.getElementById("comments").innerHTML = html;
     }
 }
