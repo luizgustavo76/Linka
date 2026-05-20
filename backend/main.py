@@ -128,14 +128,6 @@ def valide():
         if datetime.now() > expire_date:
             return jsonify({"status":"the token has been expired"}),401
         else:
-            new_token = gerar_token()
-            emission_date = datetime.now()
-            new_expire_date = emission_date + timedelta(hours=2)
-            cur.execute("""UPDATE tokens
-SET token = ?, emission_date = ?, expire_date = ?
-WHERE username = ?""",(new_token, emission_date, new_expire_date, username))
-            conn.commit()
-            conn.close()
             return None
     else:
         return jsonify({"status":"the token is invalid"}),401
