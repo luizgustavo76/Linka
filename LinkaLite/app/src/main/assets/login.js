@@ -95,14 +95,18 @@ function register_request(){
         }
 
         var obj = JSON.parse(lastResponse);
-
         if (statusCode == 200 || statusCode == 201){
+            var content = "";
+            content += "[FAST-LOGIN]\n";
+            content += "username = " + username;
+            content += "password = " + password;
+            
             window.location.href = "file:///android_asset/index.html";
         }else{
             document.getElementById("saida").innerHTML =
                 "<h3>The username or password is invalid</h3>";
         }
-    })
+    }, 600)
 
 
 }

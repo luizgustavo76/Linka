@@ -126,10 +126,9 @@ public class MainActivity extends Activity {
         return sb.toString();
     }
 
-    // 🌉 BRIDGE
     public class LinkaBridge {
 
-        // 📡 GET
+        
         @JavascriptInterface
         public void httpGet(final String url) {
             new Thread(() -> {
@@ -161,7 +160,7 @@ public class MainActivity extends Activity {
             }).start();
         }
 
-        // 📡 POST
+    
         @JavascriptInterface
         public void httpPost(final String url, final String jsonBody) {
             new Thread(() -> {
@@ -192,14 +191,14 @@ public class MainActivity extends Activity {
             }).start();
         }
 
-        // 📁 VERIFICAR ARQUIVO
+     
         @JavascriptInterface
         public String fileExists(String filename) {
             File file = getFileStreamPath(filename);
             return String.valueOf(file.exists());
         }
 
-        // 📁 CRIAR ARQUIVO VAZIO
+        
         @JavascriptInterface
         public void createEmptyFile(String filename) {
             try {
@@ -210,20 +209,22 @@ public class MainActivity extends Activity {
             }
         }
 
-        // 💾 SALVAR CONFIG
+  
         @JavascriptInterface
-        public void saveCfg(String filename, String content) {
+        public saveCfg(String filename, String content) {
             try {
                 OutputStreamWriter writer =
                         new OutputStreamWriter(openFileOutput(filename, MODE_PRIVATE));
                 writer.write(content);
                 writer.close();
+                return "sucessful!";
             } catch (Exception e) {
                 e.printStackTrace();
+                return e.toString();
             }
         }
 
-        // 📖 LER CONFIG → JSON
+      
         @JavascriptInterface
         public String loadCfgAsJson(String filename) {
             try {
