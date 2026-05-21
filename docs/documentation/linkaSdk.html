@@ -14,11 +14,29 @@
     <h2>Linka Sdk</h2>
     <p>To aid in the development of alternative clients, we created an SDK for new developers that serves as an abstraction layer and ready-to-use toolset.</p>
     <b>ToolsKits</b>
-    <p>
+    <code>
         <p>auth</p>
         <p>--login</p>
         <p>--register</p>
-    </p>
+        <p>Feed</p>
+        <p>--Feed<br>--Posts<br>--Stars<br>--Comments</p>
+    </code>
+    <h3>Examples</h3>
+    <p>Want to make a Login to your simple client?</p>
+    <small>
+        python<br>
+    </small>
+    <code>
+        from Linka import LinkaSdk<br>
+        url = "https://example.com"<br>
+        data = {<br>
+            "username":"example",<br>
+            "password":"123456"<br>
+        }<br>
+        login_response = LinkaSdk.Login(url, data)<br>
+    </code>
+    <h2>Available languages</h2>
+    <p>Python<br>JavaScript<br>C++</p>
     <div class="footer">
         <a href="https://luizgustavo76.github.io/Linka">Home Page</a>
     </div>
