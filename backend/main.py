@@ -101,7 +101,12 @@ public_routes = [
     "login.register",
     "login.login",
     "post.return_stars",
-    "None"
+    "None",
+    "friends.accept",
+    "friends.denied",
+    "friends.friends"
+    "friends.inbox",
+    "friends.send-friend"
 ]
 @app.before_request
 def valide():

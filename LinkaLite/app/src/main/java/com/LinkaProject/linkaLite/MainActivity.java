@@ -35,23 +35,7 @@ public class MainActivity extends Activity {
         webView.loadUrl("file:///android_asset/init.html");
     }
 
-    @JavascriptInterface
-    public String ensureFile(String filename) {
-        try {
-            File file = getFileStreamPath(filename);
-
-            if (file.exists()) {
-                return "EXISTS";
-            } else {
-                FileOutputStream fos = openFileOutput(filename, MODE_PRIVATE);
-                fos.close();
-                return "CREATED";
-            }
-
-        } catch (Exception e) {
-            return "ERROR:" + e.toString();
-        }
-    }
+    
     public String requestGET(String urlStr) throws Exception {
 
         URL url = new URL(urlStr);
@@ -128,7 +112,23 @@ public class MainActivity extends Activity {
 
     public class LinkaBridge {
 
-        
+        @JavascriptInterface
+        public String ensureFile(String filename) {
+            try {
+                File file = getFileStreamPath(filename);
+
+                if (file.exists()) {
+                    return "EXISTS";
+                } else {
+                    FileOutputStream fos = openFileOutput(filename, MODE_PRIVATE);
+                    fos.close();
+                    return "CREATED";
+                }
+
+            } catch (Exception e) {
+                return "ERROR:" + e.toString();
+            }
+        }
         @JavascriptInterface
         public void httpGet(final String url) {
             new Thread(() -> {
@@ -284,7 +284,7 @@ public class MainActivity extends Activity {
                 return json.toString();
 
             } catch (Exception e) {
-                return "{}";
+                return "{\"ERROR\":\"" + e.toString() + "\"}";
             }
         }
     }
