@@ -66,7 +66,7 @@ function login_request() {
                 var content = "";
                 content += "[SERVER]\n";
                 content += "url=" + url + "\n\n";
-                content += "[LOGIN]\n";
+                content += "[FAST-LOGIN]\n";
                 content += "username=" + username + "\n";
                 content += "token_session=" + token + "\n";
 

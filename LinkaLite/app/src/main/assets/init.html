@@ -32,6 +32,19 @@ setTimeout(function(){
         window.location.href = "file:///android_asset/login.html";
     }
 }, 300);
+try {
+
+    var raw = Linka.loadCfgAsJson("config-login.cfg");
+
+    document.body.innerHTML = raw;
+
+    var cfg = JSON.parse(raw);
+
+} catch(e) {
+
+    document.body.innerHTML = e.toString();
+
+}
 </script>
 
 </body>

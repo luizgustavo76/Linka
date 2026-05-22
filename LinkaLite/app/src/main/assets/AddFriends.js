@@ -12,5 +12,5 @@ function request_add_friends(){
         "message":message,
         "sender":sender
     };
-    Linka.httpPost(url + "/feed", JSON.stringify(json_friends));
+    Linka.httpPost(url + "/send-friend", JSON.stringify(json_friends));
 };
