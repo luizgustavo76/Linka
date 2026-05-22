@@ -74,12 +74,13 @@ footer {
     margin-top: 20px;
     font-size: 14px;
 }
-
 a {
     color: #58a6ff;
     text-decoration: none;
 }
-
+#options {
+    margin-right: 25px;
+}
 a:hover {
     text-decoration: underline;
 }
