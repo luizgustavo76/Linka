@@ -1,3 +1,16 @@
+function receberStatusCode(code){
+    statusCode = code;
+}
+
+function receberResposta(txt){
+    lastResponse = txt;
+    document.getElementById("saida").innerHTML = txt;
+}
+
+function receberErro(txt){
+    document.getElementById("saida").innerHTML = "ERRO: " + txt;
+}
+
 function request_comments(){
     const params = new URLSearchParams(window.location.search);
     const post_id = params.get("post_id");
