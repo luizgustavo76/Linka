@@ -106,5 +106,3 @@ def view():
     return jsonify({"messages": mensagens}), 200
 
 
-if __name__ == "__main__":
-    chat_bp.run(debug=True)
