@@ -104,7 +104,7 @@ public_routes = [
     "None",
     "friends.accept",
     "friends.denied",
-    "friends.friends"
+    "friends.friends",
     "friends.inbox",
     "friends.send",
     "chat.view",
@@ -128,7 +128,7 @@ def valide():
         conn.close()
         return jsonify({"status": "invalid token"}), 401
     token_db = result["token"]
-    username = result["username"]
+    g.username = username = result["username"]
     expire_date = result["expire_date"]
     expire_date = datetime.fromisoformat(expire_date)
     if token_db == token:

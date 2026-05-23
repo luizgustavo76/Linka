@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, Blueprint
+from flask import Flask, jsonify, request, Blueprint, g
 import os
 import sqlite3
 notifications_blueprint = Blueprint("notifications", __name__)
@@ -18,22 +18,25 @@ create_db()
 @notifications_blueprint.route("/notifications", methods=["POST"])
 def notifications():
     data = request.get_json()
-    username = request.get_json()
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM notifications WHERE username = ? AND  read = FALSE", (username,))
-    result = cur.fetchall()
-    notifications_list = []
-    for items in result:
-        notifications_list.append({
-            "receiver":items[0],
-            "from_user":items[1],
-            "datetime":items[2],
-            "type":items[3],
-            "content":items[4],
-            "read":items[5]
-        })
-    return jsonify(notifications_list)
+    username = data.get("username")
+    if g.username == username:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM notifications WHERE username = ? AND  read = FALSE", (username,))
+        result = cur.fetchall()
+        notifications_list = []
+        for items in result:
+            notifications_list.append({
+                "receiver":items[0],
+                "from_user":items[1],
+                "datetime":items[2],
+                "type":items[3],
+                "content":items[4],
+                "read":items[5]
+            })
+        return jsonify(notifications_list)
+    else:
+        return jsonify({"status":"forbiden"}),403
 @notifications_blueprint.route("/set-read-notification", methods=["POST"])
 def set_read():
     data = request.get_json()

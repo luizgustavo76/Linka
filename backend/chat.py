@@ -40,30 +40,33 @@ def send():
     data = request.get_json()
 
     sender = data.get("sender")
-    receiver = data.get("receiver")
-    message = data.get("message")
+    if sender == g.username:
+        receiver = data.get("receiver")
+        message = data.get("message")
 
-    if not receiver:
-        return jsonify({"status": "receiver cannot be null"}), 400
+        if not receiver:
+            return jsonify({"status": "receiver cannot be null"}), 400
 
-    if not sender:
-        return jsonify({"status": "sender cannot be null"}), 400
+        if not sender:
+            return jsonify({"status": "sender cannot be null"}), 400
 
-    if not message:
-        return jsonify({"status": "message cannot be empty"}), 400
+        if not message:
+            return jsonify({"status": "message cannot be empty"}), 400
 
-    conn = get_db()
-    cur = conn.cursor()
+        conn = get_db()
+        cur = conn.cursor()
 
-    cur.execute("""
-        INSERT INTO chat (sender, receiver, message)
-        VALUES (?, ?, ?)
-    """, (sender, receiver, message))
+        cur.execute("""
+            INSERT INTO chat (sender, receiver, message)
+            VALUES (?, ?, ?)
+        """, (sender, receiver, message))
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
 
-    return jsonify({"status": "message sent"}), 200
+        return jsonify({"status": "message sent"}), 200
+    else:
+        return jsonify({"status":"forbidden"}),403
 
 
 # ver conversa completa entre 2 usuários
@@ -73,36 +76,38 @@ def view():
 
     user1 = data.get("user1")
     user2 = data.get("user2")
+    if user1 or user2 == g.user:
+        if not user1:
+            return jsonify({"status": "user1 cannot be null"}), 400
 
-    if not user1:
-        return jsonify({"status": "user1 cannot be null"}), 400
+        if not user2:
+            return jsonify({"status": "user2 cannot be null"}), 400
 
-    if not user2:
-        return jsonify({"status": "user2 cannot be null"}), 400
+        conn = get_db()
+        cur = conn.cursor()
 
-    conn = get_db()
-    cur = conn.cursor()
+        cur.execute("""
+            SELECT sender, receiver, message, date
+            FROM chat
+            WHERE (sender = ? AND receiver = ?)
+            OR (sender = ? AND receiver = ?)
+            ORDER BY date ASC
+        """, (user1, user2, user2, user1))
 
-    cur.execute("""
-        SELECT sender, receiver, message, date
-        FROM chat
-        WHERE (sender = ? AND receiver = ?)
-           OR (sender = ? AND receiver = ?)
-        ORDER BY date ASC
-    """, (user1, user2, user2, user1))
+        resultado = cur.fetchall()
+        conn.close()
 
-    resultado = cur.fetchall()
-    conn.close()
+        mensagens = []
+        for row in resultado:
+            mensagens.append({
+                "sender": row[0],
+                "receiver": row[1],
+                "message": row[2],
+                "date": row[3]
+            })
 
-    mensagens = []
-    for row in resultado:
-        mensagens.append({
-            "sender": row[0],
-            "receiver": row[1],
-            "message": row[2],
-            "date": row[3]
-        })
-
-    return jsonify({"messages": mensagens}), 200
+        return jsonify({"messages": mensagens}), 200
+    else:
+        return jsonify({"status":"forbidden"}),403
 
 

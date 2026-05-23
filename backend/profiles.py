@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, Blueprint, send_from_directory
+from flask import Flask, request, jsonify, Blueprint, send_from_directory, g
 import os
 import uuid
 import sqlite3
@@ -33,31 +33,36 @@ def edit():
     edit_mode = data.get("edit-mode")
     content = data.get("content")
     username = data.get("username")
-    if edit_mode == "bio":
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("UPDATE profile SET bio = ? WHERE username = ?", (content, username))
-        conn.commit()
-        conn.close()
-        return jsonify({"status":"edit is sucessful"}),200
+    if username == g.username:
+        if edit_mode == "bio":
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("UPDATE profile SET bio = ? WHERE username = ?", (content, username))
+            conn.commit()
+            conn.close()
+            return jsonify({"status":"edit is sucessful"}),200
+    else:
+        return jsonify({"status":"forbidden"}),403
 @profile_bp.route("/create_profile",methods=["post"])
 def create():
     data = request.get_json()
     username = data.get("username")
+    if username == g.user:
+        if isinstance(username, dict):
+            username = username.get("username")
 
-    if isinstance(username, dict):
-        username = username.get("username")
+        if not username or not isinstance(username, str):
+            return jsonify({"error": "username is invalid"}), 400
 
-    if not username or not isinstance(username, str):
-        return jsonify({"error": "username inválido"}), 400
-
-    bio_default = "rare acount wow"
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO profile (username, bio) VALUES (?,?)", (username, bio_default))
-    conn.commit()
-    conn.close()
-    return jsonify({"status":"Ok"})
+        bio_default = f"Hi! my name is {username} and im new in the Linka, let be friends?"
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO profile (username, bio) VALUES (?,?)", (username, bio_default))
+        conn.commit()
+        conn.close()
+        return jsonify({"status":"Ok"})
+    else:
+        return jsonify({"status":"forbidden"}),403
 @profile_bp.route("/view_profile/<username>")
 def view(username):
     conn = get_db()
@@ -73,39 +78,41 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def upload_profile_pic():
 
     username = request.form.get("username")
+    if username == g.username:
+        if not username:
+            return jsonify({"error": "Username is missing"}), 400
 
-    if not username:
-        return jsonify({"error": "Username não enviado"}), 400
+        if "file" not in request.files:
+            return jsonify({"error": "nothing image is sent"}), 400
 
-    if "file" not in request.files:
-        return jsonify({"error": "Nenhum arquivo enviado"}), 400
+        file = request.files["file"]
 
-    file = request.files["file"]
+        if file.filename == "":
+            return jsonify({"error": "Archive empty"}), 400
 
-    if file.filename == "":
-        return jsonify({"error": "Arquivo vazio"}), 400
+        ext = file.filename.split(".")[-1].lower()
 
-    ext = file.filename.split(".")[-1].lower()
+        if ext not in ["png", "jpg", "jpeg", "webp"]:
+            return jsonify({"error": "Formato inválido"}), 400
 
-    if ext not in ["png", "jpg", "jpeg", "webp"]:
-        return jsonify({"error": "Formato inválido"}), 400
+        filename = f"{uuid.uuid4()}.{ext}"
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
 
-    filename = f"{uuid.uuid4()}.{ext}"
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
 
-    file.save(file_path)
+        conn = get_db()
+        cur = conn.cursor()
 
-    conn = get_db()
-    cur = conn.cursor()
+        cur.execute(
+            "UPDATE profile SET ProfilePicture = ? WHERE username = ?",
+            (filename, username)
+        )
 
-    cur.execute(
-        "UPDATE profile SET ProfilePicture = ? WHERE username = ?",
-        (filename, username)
-    )
-
-    conn.commit()
-    conn.close()
-    return jsonify({"success": True, "filename": filename}), 200
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True, "filename": filename}), 200
+    else:
+        return jsonify({"status":"forbidden"}),403
 
 
 @profile_bp.route("/profile_pics/<filename>")
