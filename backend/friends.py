@@ -1,12 +1,16 @@
 from flask import Flask, request, jsonify, Blueprint
 import sqlite3
 import os
+import datetime
 friends_bp = Blueprint("friends", __name__)
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = (base_dir + "/DB")
 friends_file = (db_dir + "/friends.db")
 def get_db():
     conn = sqlite3.connect(friends_file)
+    return conn
+def get_db_notifications():
+    conn = sqlite3.connect(db_dir + "/notifications.db")
     return conn
 def create_db():
     conn = get_db()
@@ -21,6 +25,13 @@ def create_db():
     conn.commit()
     conn.close()
 create_db()
+def create_notification(text, type, receiver, from_user):
+    conn = get_db_notifications()
+    cur = conn.cursor()
+    date = datetime.datetime.now()
+    cur.execute("INSERT INTO notifications (receiver, type, text, from_user, datetime) VALUES(?, ?, ?, ?, ?)",(receiver, type, text, from_user, date))
+    conn.commit()
+    conn.close()
 @friends_bp.route("/friends", methods=["POST"])
 def friends():
     data = request.get_json()
@@ -80,6 +91,7 @@ def send():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("INSERT INTO inbox (receiver, remittee, message) VALUES (?, ?, ?)",(receiver, remittee, message))
+    create_notification(f"{remittee} send a friend request for you!","inbox", receiver, remittee)
     conn.commit()
     conn.close()
     return({"status":"request is send"}),200
