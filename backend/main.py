@@ -106,7 +106,9 @@ public_routes = [
     "friends.denied",
     "friends.friends"
     "friends.inbox",
-    "friends.send"
+    "friends.send",
+    "chat.view",
+    "chat.send"
 ]
 @app.before_request
 def valide():
