@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, Blueprint
+from flask import Flask, request, jsonify, Blueprint, g
 import sqlite3
 import os
 import datetime
@@ -36,29 +36,35 @@ def create_notification(text, type, receiver, from_user):
 def friends():
     data = request.get_json()
     username = data.get("username")
-    try:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM friends WHERE receiver = ? OR remittee = ?",(username, username))
-        friends_list = cur.fetchall()
-        conn.close()
-        return jsonify({"friends":friends_list}),200
-    except:
-        return jsonify({"status":"error in the server side"}),500
+    if username == g.user:
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM friends WHERE receiver = ? OR remittee = ?",(username, username))
+            friends_list = cur.fetchall()
+            conn.close()
+            return jsonify({"friends":friends_list}),200
+        except:
+            return jsonify({"status":"error in the server side"}),500
+    else:
+        return jsonify({"status":"forbidden"}),403
     
 @friends_bp.route("/inbox", methods=["POST"])
 def inbox():
     data = request.get_json()
     username = data.get("username")
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM inbox WHERE receiver = ?", (username,))
-    select_inbox = cur.fetchall()
-    conn.close()
-    if select_inbox == None:
-        return jsonify({"status":"your inbox is empty"})
+    if username == g.user:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM inbox WHERE receiver = ?", (username,))
+        select_inbox = cur.fetchall()
+        conn.close()
+        if select_inbox == None:
+            return jsonify({"status":"your inbox is empty"})
+        else:
+            return jsonify({"inbox":select_inbox}),200
     else:
-        return jsonify({"inbox":select_inbox}),200
+        return jsonify({"status":"forbidden"}),403
 @friends_bp.route("/accept", methods=["POST"])
 def accept():
     data = request.get_json()
@@ -87,12 +93,15 @@ def send():
     data = request.get_json()
     receiver = data.get("receiver")
     remittee = data.get("remittee")
-    message = data.get("message")
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO inbox (receiver, remittee, message) VALUES (?, ?, ?)",(receiver, remittee, message))
-    create_notification(f"{remittee} send a friend request for you!","inbox", receiver, remittee)
-    conn.commit()
-    conn.close()
-    return({"status":"request is send"}),200
+    if remittee == g.user:
+        message = data.get("message")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO inbox (receiver, remittee, message) VALUES (?, ?, ?)",(receiver, remittee, message))
+        create_notification(f"{remittee} send a friend request for you!","inbox", receiver, remittee)
+        conn.commit()
+        conn.close()
+        return({"status":"request is send"}),200
+    else:
+        return jsonify({"status":"forbidden"}),403
 

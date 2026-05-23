@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 import sqlite3
 import os
 
@@ -56,18 +56,21 @@ create_db()
 def new_comment():
     data = request.get_json()
     username = data.get("username")
-    text_comment = data.get("text_comment")
-    post_id = data.get("post_id")
-    comment_id = data.get("comment_id")
-    if (username, text_comment, post_id, comment_id) is None:
-        return jsonify({"status":"as informações vieram vazias"}), 401
+    if username == g.user:
+        text_comment = data.get("text_comment")
+        post_id = data.get("post_id")
+        comment_id = data.get("comment_id")
+        if (username, text_comment, post_id, comment_id) is None:
+            return jsonify({"status":"as informações vieram vazias"}), 401
+        else:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO comments (text_comment, username, post_id) VALUES(?,?,?)", (text_comment, username, post_id))
+            conn.commit()
+            conn.close()
+        return jsonify({"status":"the comment has been created with sucess!"}), 200
     else:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("INSERT INTO comments (text_comment, username, post_id) VALUES(?,?,?)", (text_comment, username, post_id))
-        conn.commit()
-        conn.close()
-    return jsonify({"status":"o comentario foi criado com sucesso!"}), 200
+        return jsonify({"status":"forbidden"}),403
 @post_bp.route("/view-comments", methods=["POST"])
 def view_comments():
     data = request.get_json()
@@ -88,36 +91,36 @@ def view_comments():
     return jsonify({"comments":comments})
 @post_bp.route("/new", methods=["POST"])
 def new_post():
-    print("RAW DATA:", request.data)
-    print("JSON:", request.get_json(silent=True))
-
     data = request.get_json(silent=True)
 
     if data is None:
         return jsonify({"status": "JSON inválido ou vazio"}), 400
 
     username = data.get("username")
-    text_post = data.get("text_post")
-    datetime = data.get("datetime")
+    if username == g.user:
+        text_post = data.get("text_post")
+        datetime = data.get("datetime")
 
-    if not username:
-        return jsonify({"status": "username não informado"}), 400
+        if not username:
+            return jsonify({"status": "username not send"}), 400
 
-    if not text_post:
-        return jsonify({"status": "não é possível criar um post sem conteúdo"}), 400
+        if not text_post:
+            return jsonify({"status": "its not possible create a post with no cotent"}), 400
 
-    conn = get_db()
-    cur = conn.cursor()
+        conn = get_db()
+        cur = conn.cursor()
 
-    cur.execute(
-        "INSERT INTO posts(username, text_post, datetime) VALUES (?, ?, ?)",
-        (username, text_post, datetime)
-    )
+        cur.execute(
+            "INSERT INTO posts(username, text_post, datetime) VALUES (?, ?, ?)",
+            (username, text_post, datetime)
+        )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
 
-    return jsonify({"status": "post criado com sucesso"}), 200 
+        return jsonify({"status": "post created with sucess"}), 200
+    else:
+        return jsonify({"status":"forbidden"}),403 
 
 @post_bp.route("/feed", methods=["GET"])
 def feed():
@@ -149,37 +152,38 @@ def star():
 
     post_id = data.get("post_id")
     username = data.get("username")
+    if username == g.user:
+        if not post_id or not username:
+            return jsonify({"status": "post_id or username is missing"}), 400
 
-    if not post_id or not username:
-        return jsonify({"status": "post_id ou username faltando"}), 400
+        conn = get_db()
+        cur = conn.cursor()
 
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute(
-        "SELECT id FROM stars WHERE post_id = ? AND username = ?",
-        (post_id, username)
-    )
-    existing = cur.fetchone()
-
-    if existing:
         cur.execute(
-            "DELETE FROM stars WHERE post_id = ? AND username = ?",
+            "SELECT id FROM stars WHERE post_id = ? AND username = ?",
             (post_id, username)
         )
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "removed"}), 200
+        existing = cur.fetchone()
 
+        if existing:
+            cur.execute(
+                "DELETE FROM stars WHERE post_id = ? AND username = ?",
+                (post_id, username)
+            )
+            conn.commit()
+            conn.close()
+            return jsonify({"status": "removed"}), 200
+
+        else:
+            cur.execute(
+                "INSERT INTO stars(post_id, username) VALUES (?, ?)",
+                (post_id, username)
+            )
+            conn.commit()
+            conn.close()
+            return jsonify({"status": "added"}), 200
     else:
-        cur.execute(
-            "INSERT INTO stars(post_id, username) VALUES (?, ?)",
-            (post_id, username)
-        )
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "added"}), 200
-
+        return jsonify({"status":"forbidden"}),403
 
 @post_bp.route("/return-stars/<int:post_id>", methods=["GET"])
 def return_stars(post_id):
@@ -200,19 +204,21 @@ def has_star():
 
     post_id = data.get("post_id")
     username = data.get("username")
+    if username == g.user:
+        if not post_id or not username:
+            return jsonify({"starred": False}), 200
 
-    if not post_id or not username:
-        return jsonify({"starred": False}), 200
+        conn = get_db()
+        cur = conn.cursor()
 
-    conn = get_db()
-    cur = conn.cursor()
+        cur.execute(
+            "SELECT 1 FROM stars WHERE post_id = ? AND username = ?",
+            (post_id, username)
+        )
+        exists = cur.fetchone()
 
-    cur.execute(
-        "SELECT 1 FROM stars WHERE post_id = ? AND username = ?",
-        (post_id, username)
-    )
-    exists = cur.fetchone()
+        conn.close()
 
-    conn.close()
-
-    return jsonify({"starred": exists is not None}), 200
+        return jsonify({"starred": exists is not None}), 200
+    else:
+        return jsonify({"status":"forbidden"}),403

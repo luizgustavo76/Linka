@@ -3,8 +3,12 @@ import sqlite3
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
-
+from dotenv import load_dotenv
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 login_bp = Blueprint("login", __name__)
+load_dotenv()
 class Login:
     def __init__(self):
         #pasta atual
@@ -58,13 +62,10 @@ class Login:
     def verificar_hash(self, senha, hash):
         return check_password_hash(hash, senha)
 login_system = Login()
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 def enviar_email(destino, assunto, mensagem_html):
     remetente = "linka.plataform@gmail.com"
-    senha_app = "gthv xlyw cbyg raft"
+    senha_app = os.getenv("token_gmail")
 
     msg = MIMEMultipart()
     msg["From"] = remetente
@@ -81,16 +82,11 @@ def enviar_email(destino, assunto, mensagem_html):
 
     print("Email enviado com sucesso!")
 
-#rota pra criar token de sessão
-login_bp.route("/session", methods= ["POST"])
-def session():
-    pass
 #rota pra registrar usuarios
 @login_bp.route("/register", methods=["POST"])
 def register():
     try:
         dados = request.get_json()
-        print("DADOS RECEBIDOS:", dados)
         username = dados.get("username")
         password = dados.get("senha") or dados.get("password")
         email = dados.get("email")
@@ -234,13 +230,10 @@ def register():
             </html>
             """
             enviar_email(destino=email, assunto="Linka Login", mensagem_html=html_register)
-            return jsonify({"status":"conta criada com sucesso!"}), 201
+            return jsonify({"status":"account created with sucess!"}), 201
     except:
         return jsonify({"status":"a error as ocurred"})
-#route of main page
-@login_bp.route("/")
-def main():
-    return render_template("index.html") 
+
 #route of the fast login
 @login_bp.route("/fast-login", methods=["POST"])
 def FastLogin():
@@ -297,7 +290,7 @@ def login():
         resultado_username = cur.fetchone()
         conn.close()
         if not resultado_username:
-            return jsonify({"status":"usuário não existe, verifique o campo de usuário"}), 401
+            return jsonify({"status":"user not exists, please veriy the username"}), 401
         if resultado_username:
             conn = login_system.get_db_login()
             cur = conn.cursor()
