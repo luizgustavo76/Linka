@@ -36,13 +36,17 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(true);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
+
         webView.addJavascriptInterface(new LinkaBridge(), "Linka");
+
         webView.setHorizontalScrollBarEnabled(false);
         webView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
+
         webView.loadUrl("file:///android_asset/init.html");
     }
 
     public void loadToken() {
+
         try {
 
             BufferedReader br = new BufferedReader(
@@ -56,7 +60,9 @@ public class MainActivity extends Activity {
                 line = line.trim();
 
                 if (line.startsWith("token_session=")) {
-                    sessionToken = line.substring(6).trim();
+
+                    sessionToken = line.substring(14).trim();
+
                     break;
                 }
             }
@@ -71,32 +77,44 @@ public class MainActivity extends Activity {
     public String requestGET(String urlStr) throws Exception {
 
         URL url = new URL(urlStr);
+
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
         conn.setRequestMethod("GET");
+
         conn.setConnectTimeout(8000);
         conn.setReadTimeout(8000);
 
-        conn.setRequestProperty(
-                "Authorization",
-                "Bearer " + sessionToken
-        );
+        if (
+                sessionToken != null &&
+                !sessionToken.isEmpty()
+        ) {
+
+            conn.setRequestProperty(
+                    "Authorization",
+                    "Bearer " + sessionToken
+            );
+        }
 
         lastStatusCode = conn.getResponseCode();
 
         BufferedReader br;
 
         if (lastStatusCode >= 200 && lastStatusCode < 400) {
+
             br = new BufferedReader(
                     new InputStreamReader(conn.getInputStream(), "UTF-8")
             );
+
         } else {
+
             br = new BufferedReader(
                     new InputStreamReader(conn.getErrorStream(), "UTF-8")
             );
         }
 
         String line;
+
         StringBuilder sb = new StringBuilder();
 
         while ((line = br.readLine()) != null) {
@@ -104,6 +122,7 @@ public class MainActivity extends Activity {
         }
 
         br.close();
+
         conn.disconnect();
 
         return sb.toString();
@@ -112,29 +131,46 @@ public class MainActivity extends Activity {
     public String requestPOST(String urlStr, String jsonBody) throws Exception {
 
         URL url = new URL(urlStr);
+
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
         conn.setRequestMethod("POST");
+
         conn.setConnectTimeout(8000);
         conn.setReadTimeout(8000);
 
         conn.setDoOutput(true);
         conn.setDoInput(true);
 
-        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-        conn.setRequestProperty("Accept", "application/json");
+        conn.setRequestProperty(
+                "Content-Type",
+                "application/json; charset=UTF-8"
+        );
 
         conn.setRequestProperty(
-                "Authorization",
-                "Bearer " + sessionToken
+                "Accept",
+                "application/json"
         );
+
+        if (
+                sessionToken != null &&
+                !sessionToken.isEmpty()
+        ) {
+
+            conn.setRequestProperty(
+                    "Authorization",
+                    "Bearer " + sessionToken
+            );
+        }
 
         OutputStream os = conn.getOutputStream();
 
         byte[] input = jsonBody.getBytes("UTF-8");
 
         os.write(input, 0, input.length);
+
         os.flush();
+
         os.close();
 
         lastStatusCode = conn.getResponseCode();
@@ -142,16 +178,20 @@ public class MainActivity extends Activity {
         BufferedReader br;
 
         if (lastStatusCode >= 200 && lastStatusCode < 400) {
+
             br = new BufferedReader(
                     new InputStreamReader(conn.getInputStream(), "UTF-8")
             );
+
         } else {
+
             br = new BufferedReader(
                     new InputStreamReader(conn.getErrorStream(), "UTF-8")
             );
         }
 
         String line;
+
         StringBuilder sb = new StringBuilder();
 
         while ((line = br.readLine()) != null) {
@@ -159,6 +199,7 @@ public class MainActivity extends Activity {
         }
 
         br.close();
+
         conn.disconnect();
 
         return sb.toString();
@@ -174,16 +215,23 @@ public class MainActivity extends Activity {
                 File file = getFileStreamPath(filename);
 
                 if (file.exists()) {
+
                     return "EXISTS";
+
                 } else {
 
-                    FileOutputStream fos = openFileOutput(filename, MODE_PRIVATE);
+                    FileOutputStream fos = openFileOutput(
+                            filename,
+                            MODE_PRIVATE
+                    );
+
                     fos.close();
 
                     return "CREATED";
                 }
 
             } catch (Exception e) {
+
                 return "ERROR:" + e.toString();
             }
         }
@@ -223,6 +271,7 @@ public class MainActivity extends Activity {
                             .replace("\r", "");
 
                     runOnUiThread(() ->
+
                             webView.loadUrl(
                                     "javascript:receberErro('" + err + "')"
                             )
@@ -267,6 +316,7 @@ public class MainActivity extends Activity {
                             .replace("\r", "");
 
                     runOnUiThread(() ->
+
                             webView.loadUrl(
                                     "javascript:receberErro('" + err + "')"
                             )
@@ -289,7 +339,11 @@ public class MainActivity extends Activity {
 
             try {
 
-                FileOutputStream fos = openFileOutput(filename, MODE_PRIVATE);
+                FileOutputStream fos = openFileOutput(
+                        filename,
+                        MODE_PRIVATE
+                );
+
                 fos.close();
 
             } catch (Exception e) {
@@ -304,10 +358,14 @@ public class MainActivity extends Activity {
 
                 OutputStreamWriter writer =
                         new OutputStreamWriter(
-                                openFileOutput(filename, MODE_PRIVATE)
+                                openFileOutput(
+                                        filename,
+                                        MODE_PRIVATE
+                                )
                         );
 
                 writer.write(content);
+
                 writer.close();
 
                 return "successful!";
@@ -333,6 +391,7 @@ public class MainActivity extends Activity {
                 );
 
                 String line;
+
                 String section = "";
 
                 StringBuilder json = new StringBuilder();
@@ -347,15 +406,16 @@ public class MainActivity extends Activity {
 
                     if (
                             line.equals("") ||
-                                    line.startsWith("#") ||
-                                    line.startsWith(";")
+                            line.startsWith("#") ||
+                            line.startsWith(";")
                     ) {
+
                         continue;
                     }
 
                     if (
                             line.startsWith("[") &&
-                                    line.endsWith("]")
+                            line.endsWith("]")
                     ) {
 
                         section = line.substring(
@@ -380,9 +440,14 @@ public class MainActivity extends Activity {
 
                     if (eq > 0 && section.length() > 0) {
 
-                        String key = line.substring(0, eq).trim();
+                        String key = line.substring(
+                                0,
+                                eq
+                        ).trim();
 
-                        String value = line.substring(eq + 1).trim();
+                        String value = line.substring(
+                                eq + 1
+                        ).trim();
 
                         value = value
                                 .replace("\\", "\\\\")
