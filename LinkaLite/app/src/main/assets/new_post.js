@@ -1,7 +1,7 @@
 function new_post(){
     var text_post = document.getElementById("text_post").value;
     var cfg = JSON.parse(Linka.loadCfgAsJson("config-login.cfg"));
-    var username = "Linka";
+    var username = cfg["FAST-LOGIN"]["username"];
     var url = "http://linkaProject.pythonanywhere.com"
     if (url == null){
         url = "http://linkaProject.pythonanywhere.com"
