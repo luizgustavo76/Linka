@@ -1,10 +1,11 @@
 function receberResposta(txt) {
-    let data = JSON.parse(txt);
-
-    document.getElementById("usernameShow").innerText = data.username;
-    document.getElementById("bio").innerText = data.bio;
-    document.getElementById("create_at").innerText = data.created_at;
-    document.getElementById("saida").innerText = txt;
+    var data = JSON.parse(txt);
+    var friends = data["friends"];
+    var html = "";
+    for (let i = 0; i < friends.length; i++){
+        html += "<div><a>" += friends[i] += "</a>"
+    }
+    document.getElementById("Friends").innerHTML = html;
 }
 
 function receberErro(txt){
