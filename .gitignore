@@ -1,0 +1,45 @@
+# Qt / CMake / Build folders
+cross-plataform/build/
+cross-plataform/json/
+cross-plataform/third-party/
+backend/DB/
+build-*/
+build/
+debug/
+release/
+cmake-build-*/
+node_modules/
+# Qt Creator / user files
+*.pro.user
+*.user
+*.user.*
+*.autosave
+*.qmlproject.user*
+*.env
+# Makefiles gerados
+Makefile
+Makefile.*
+*.make
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+
+# Android Qt build
+android-build/
+*.apk
+*.aab
+*.so
+*.db
+# Objetos compilados
+*.o
+*.obj
+*.lo
+*.a
+*.lib
+*.dll
+*.exe
+*.keystore
+*.out

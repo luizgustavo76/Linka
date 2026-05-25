@@ -1,0 +1,27 @@
+<RCC>
+    <qresource prefix="/">
+        <file>translations/en-login.qm</file>
+        <file>translations/en-main-page.qm</file>
+        <file>translations/pt-br-login.qm</file>
+        <file>translations/pt-br-main-page.qm</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>styles/theme.qss</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>config-login.cfg</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>assets/home.png</file>
+        <file>assets/chat.png</file>
+        <file>assets/account.png</file>
+        <file>assets/default_star.png</file>
+        <file>assets/star.png</file>
+        <file>assets/default_unstar.png</file>
+        <file>assets/unstar.png</file>
+        <file>assets/options.png</file>
+        <file>assets/search.png</file>
+        <file>assets/icon.png</file>
+        <file>assets/icon.ico</file>
+    </qresource>
+</RCC>

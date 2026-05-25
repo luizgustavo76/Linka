@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linka Documentation</title>
+    <link rel="icon" type="image/x-icon" href="favicon.png">
+    <link rel="stylesheet" href="doc-style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Linka Documentation</h1>
+        <p>A customizable open-source social network base</p>
+    </header>
+
+    <main>
+
+        <h2>1 - How to Install</h2>
+
+        <p>
+            To install Linka, you can download it directly or compile the source code.
+        </p>
+
+        <p>
+            First, you will need a <b>VPS</b> or a <b>web server</b> if you want your Linka server online.
+        </p>
+
+        <p>
+            <b>1.</b> Download the source code:
+        </p>
+        <p>
+            <code>git clone https://github.com/luizgustavo76/Linka</code>
+        </p>
+
+        <p>
+            <b>2.</b> Compile Linka:
+        </p>
+        <p>
+            On Linux:
+        </p>
+        <p>
+            <code>make compile</code><br>
+            <code>make run</code>
+        </p>
+
+        <p>
+            On Windows:
+        </p>
+        <p>
+            <code>compile.bat</code>
+        </p>
+
+        <h2>2 - How to Launch My Own Server?</h2>
+
+        <p>
+            To launch your own server, follow these steps:
+        </p>
+
+        <p>
+            <b>1.</b> Clone the repository and enter the Linka directory:
+        </p>
+        <p>
+            <code>git clone https://github.com/luizgustavo76/Linka</code>
+        </p>
+
+        <p>
+            <b>2.</b> Install dependencies:
+        </p>
+        <p>
+            <code>pip install -r requirements.txt</code>
+        </p>
+
+        <p>
+            <b>3.</b> Go to the backend directory:
+        </p>
+        <p>
+            <code>cd backend</code>
+        </p>
+
+        <div class="warning">
+            <b>Important:</b> If you are running Linka on your personal computer, the server will only work on your local network.
+        </div>
+
+        <p>
+            Run the server:
+        </p>
+        <p>
+            <code>python main.py</code>
+        </p>
+        <h2>How to use federations</h2>
+        <p>
+            Linka's biggest advantage is the ease of creating your own server and the simple implementation of federations in just a few lines of code.
+
+        </p>
+        <p>
+            to use federations follow this steps:
+        </p>
+        <p>
+            1.1-import the api LinkaFederations
+        </p>
+        <p>
+            1.2-to download the api, run:
+            <code>pip install LinkaFederations</code>
+        </p>
+        <p>2-to use the api in your code:</p>
+        <code>
+            import LinkaFederations #import the api<br>
+            LinkaFederations.connect_json("route.json") #-- your routes json<br>
+            LinkaFederations.start()
+        </code>
+        <p>the route json in the method LinkaFederations This file is used to translate your server routes, identify servers you don't want to communicate with, and specify the domain your server is running on.</p>
+        <p>how to make this file?</p>
+        <code>
+            {<br>
+                "domain":"your-domain.com",<br>
+                "blacklist":{},<br>
+                "routes":{<br>
+                    "create-post":"/new-post",<br>
+                    "send-a-message":"/send-message",<br>
+                    "sign-out":"/out"<br>
+                }<br>
+            }
+        </code>
+        <p>the domain is your domain on the server is running</p>
+        <p>blacklist is servers you dont want communicate</p>
+        <p>and routes is a translator of your routes to universal routes</p>
+        <p>now, your server support federations!</p>
+        <h2>server routes and how to use</h2>
+        <p> this topic explain how to use the routes of the server in your own client</p>
+        <h3>login</h3>
+        <p>
+            /register<br>
+            method:post<br>
+            json="username", "password", "email"
+        </p>
+        <p>
+            /login<br>
+            method:post<br>
+            json="username", "password"
+        </p>
+        <h3>friends</h3>
+        <p>
+           /inbox<br>
+           methods:post<br> 
+           json="username"<br>
+           what is? is your inbox of friends requests and news 
+        </p>
+        <p>
+            /accept<br>
+            methods:post <br>
+            json="receiver", "remittee",<br>
+            what is? accept a friend requests
+        </p>
+        <p>
+            /send-friend<br>
+            methods:post<br>
+            json="receiver", "remittee"<br>
+            what is? is a route to send a friend request
+        </p>
+        <h3>Chat</h3>
+        <p>
+            /send<br>
+            methods:post<br>
+            json="receiver", "remittee", "message<br>
+            what is? a route to send message Chat
+        </p>
+        <p>
+            /view<br>
+            methods:post<br>
+            json="receiver", "remittee"<br>
+            what is? a route of view Chat
+        </p>
+        <h3>Post</h3>
+        <p>
+            /new<br>
+            methods:post<br>
+            json="username, text_post, datetime"<br>
+            what is?a route of creation of Post
+        </p>
+        <p>
+            /view<br>
+            methods:get<br>
+            endpoint:id_of_post<br>
+            what is? a route of view a post with post_id
+        </p>
+        <div class="warning">
+            <b>Note: Successful requests return HTTP status codes 200 or 201. Failed requests return error codes such as 400, 401, 403, 404, or 500</b>
+        </div>
+        <h2>Customization</h2>
+
+        <p>
+            Linka is fully customizable.
+        </p>
+
+        <p>
+            You can modify the client GUI or the server to create your own social network experience.
+        </p>
+        <p>
+            <b>Launch your own server. Build your own network.</b>
+        </p>
+
+    </main>
+
+    <footer>
+        Linka Project - <a href="https://github.com/luizgustavo76/Linka" target="_blank">GitHub Repository</a>
+    </footer>
+
+</body>
+</html>

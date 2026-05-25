@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="doc-style.css">
+    <script src="login.js"></script>
+    <title>Linka Login</title>
+</head>
+<body>
+    <div class="main-page">
+        <input id="username" placeholder="Username"></input>
+        <input id="password" placeholder="Password"></input>
+        <a href="#" onclick="login_request(); return false;">Submmit</a>
+        <a href="login.html">Back</a>
+    </div>
+    <div id="saida"></div>
+    <script>
+        function receberResposta(txt) {
+            document.getElementById("saida").innerHTML = txt;
+        }
+
+        function receberErro(txt) {
+            document.getElementById("saida").innerHTML = "ERRO: " + txt;
+        }
+    </script>
+</body>
+</html>

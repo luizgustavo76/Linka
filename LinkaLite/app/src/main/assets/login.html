@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="doc-style.css">
+    
+    <title>Login</title>
+</head>
+
+<body>
+    <h2>Linka</h2>
+    <div id="main" class="main-page">
+        <a id="loginButton" href="loginPage.html">login</a>
+        <a id="registerButton" href="registerPage.html">register</a>
+    </div>
+    <footer>
+        <p>
+            <p>Linka project - </p>
+            <a href="https://github.com/luizgustavo76/Linka">official repository - </a>
+            <a href="https://luizgustavo76.github.io/Linka">main page - </a>
+        </p>
+    </footer>
+
+
+    
+
+    <script>
+    function irPara(tela) {
+        document.getElementById("main").style.display = "none";
+
+        document.querySelectorAll(".tela").forEach(el => {
+            el.style.display = "none";
+        });
+
+        document.getElementById(tela).style.display = "block";
+    }
+    </script>
+
+    <style>
+    .tela {
+        display: none;
+    }
+    </style>
+    <style>
+    #login {
+        display: none;
+    }
+    #register {
+        display: none;
+    }
+    </style>
+<script src="login.js"></script>
+</body>
+</html>

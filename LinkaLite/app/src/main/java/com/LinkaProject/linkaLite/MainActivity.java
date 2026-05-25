@@ -1,0 +1,484 @@
+package com.LinkaProject.linkalite;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.JavascriptInterface;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+public class MainActivity extends Activity {
+
+    int lastStatusCode = 0;
+    String sessionToken = "";
+    WebView webView;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        webView = new WebView(this);
+
+        loadToken();
+
+        setContentView(webView);
+
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+
+        webView.addJavascriptInterface(new LinkaBridge(), "Linka");
+
+        webView.setHorizontalScrollBarEnabled(false);
+        webView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
+
+        webView.loadUrl("file:///android_asset/init.html");
+    }
+
+    public void loadToken() {
+
+        try {
+
+            BufferedReader br = new BufferedReader(
+                    new InputStreamReader(openFileInput("config.cfg"), "UTF-8")
+            );
+
+            String line;
+
+            while ((line = br.readLine()) != null) {
+
+                line = line.trim();
+
+                if (line.startsWith("token_session=")) {
+
+                    sessionToken = line.substring(14).trim();
+
+                    break;
+                }
+            }
+
+            br.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String requestGET(String urlStr) throws Exception {
+
+        URL url = new URL(urlStr);
+
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+        conn.setRequestMethod("GET");
+
+        conn.setConnectTimeout(8000);
+        conn.setReadTimeout(8000);
+
+        if (
+                sessionToken != null &&
+                !sessionToken.isEmpty()
+        ) {
+
+            conn.setRequestProperty(
+                    "Authorization",
+                    "Bearer " + sessionToken
+            );
+        }
+
+        lastStatusCode = conn.getResponseCode();
+
+        BufferedReader br;
+
+        if (lastStatusCode >= 200 && lastStatusCode < 400) {
+
+            br = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream(), "UTF-8")
+            );
+
+        } else {
+
+            br = new BufferedReader(
+                    new InputStreamReader(conn.getErrorStream(), "UTF-8")
+            );
+        }
+
+        String line;
+
+        StringBuilder sb = new StringBuilder();
+
+        while ((line = br.readLine()) != null) {
+            sb.append(line).append("\n");
+        }
+
+        br.close();
+
+        conn.disconnect();
+
+        return sb.toString();
+    }
+
+    public String requestPOST(String urlStr, String jsonBody) throws Exception {
+
+        URL url = new URL(urlStr);
+
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+        conn.setRequestMethod("POST");
+
+        conn.setConnectTimeout(8000);
+        conn.setReadTimeout(8000);
+
+        conn.setDoOutput(true);
+        conn.setDoInput(true);
+
+        conn.setRequestProperty(
+                "Content-Type",
+                "application/json; charset=UTF-8"
+        );
+
+        conn.setRequestProperty(
+                "Accept",
+                "application/json"
+        );
+
+        if (
+                sessionToken != null &&
+                !sessionToken.isEmpty()
+        ) {
+
+            conn.setRequestProperty(
+                    "Authorization",
+                    "Bearer " + sessionToken
+            );
+        }
+
+        OutputStream os = conn.getOutputStream();
+
+        byte[] input = jsonBody.getBytes("UTF-8");
+
+        os.write(input, 0, input.length);
+
+        os.flush();
+
+        os.close();
+
+        lastStatusCode = conn.getResponseCode();
+
+        BufferedReader br;
+
+        if (lastStatusCode >= 200 && lastStatusCode < 400) {
+
+            br = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream(), "UTF-8")
+            );
+
+        } else {
+
+            br = new BufferedReader(
+                    new InputStreamReader(conn.getErrorStream(), "UTF-8")
+            );
+        }
+
+        String line;
+
+        StringBuilder sb = new StringBuilder();
+
+        while ((line = br.readLine()) != null) {
+            sb.append(line).append("\n");
+        }
+
+        br.close();
+
+        conn.disconnect();
+
+        return sb.toString();
+    }
+
+    public class LinkaBridge {
+
+        @JavascriptInterface
+        public String ensureFile(String filename) {
+
+            try {
+
+                File file = getFileStreamPath(filename);
+
+                if (file.exists()) {
+
+                    return "EXISTS";
+
+                } else {
+
+                    FileOutputStream fos = openFileOutput(
+                            filename,
+                            MODE_PRIVATE
+                    );
+
+                    fos.close();
+
+                    return "CREATED";
+                }
+
+            } catch (Exception e) {
+
+                return "ERROR:" + e.toString();
+            }
+        }
+
+        @JavascriptInterface
+        public void httpGet(final String url) {
+
+            new Thread(() -> {
+
+                try {
+
+                    String response = requestGET(url);
+
+                    final String safe = response
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
+
+                    runOnUiThread(() -> {
+
+                        webView.loadUrl(
+                                "javascript:receberStatusCode(" + lastStatusCode + ")"
+                        );
+
+                        webView.loadUrl(
+                                "javascript:receberResposta('" + safe + "')"
+                        );
+                    });
+
+                } catch (Exception e) {
+
+                    final String err = ("ERRO: " + e.toString())
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
+
+                    runOnUiThread(() ->
+
+                            webView.loadUrl(
+                                    "javascript:receberErro('" + err + "')"
+                            )
+                    );
+                }
+
+            }).start();
+        }
+
+        @JavascriptInterface
+        public void httpPost(final String url, final String jsonBody) {
+
+            new Thread(() -> {
+
+                try {
+
+                    String response = requestPOST(url, jsonBody);
+
+                    final String safe = response
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
+
+                    runOnUiThread(() -> {
+
+                        webView.loadUrl(
+                                "javascript:receberStatusCode(" + lastStatusCode + ")"
+                        );
+
+                        webView.loadUrl(
+                                "javascript:receberResposta('" + safe + "')"
+                        );
+                    });
+
+                } catch (Exception e) {
+
+                    final String err = ("ERRO: " + e.toString())
+                            .replace("\\", "\\\\")
+                            .replace("'", "\\'")
+                            .replace("\n", "\\n")
+                            .replace("\r", "");
+
+                    runOnUiThread(() ->
+
+                            webView.loadUrl(
+                                    "javascript:receberErro('" + err + "')"
+                            )
+                    );
+                }
+
+            }).start();
+        }
+
+        @JavascriptInterface
+        public String fileExists(String filename) {
+
+            File file = getFileStreamPath(filename);
+
+            return String.valueOf(file.exists());
+        }
+
+        @JavascriptInterface
+        public void createEmptyFile(String filename) {
+
+            try {
+
+                FileOutputStream fos = openFileOutput(
+                        filename,
+                        MODE_PRIVATE
+                );
+
+                fos.close();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        @JavascriptInterface
+        public String saveCfg(String filename, String content) {
+
+            try {
+
+                OutputStreamWriter writer =
+                        new OutputStreamWriter(
+                                openFileOutput(
+                                        filename,
+                                        MODE_PRIVATE
+                                )
+                        );
+
+                writer.write(content);
+
+                writer.close();
+
+                return "successful!";
+
+            } catch (Exception e) {
+
+                e.printStackTrace();
+
+                return e.toString();
+            }
+        }
+
+        @JavascriptInterface
+        public String loadCfgAsJson(String filename) {
+
+            try {
+
+                BufferedReader br = new BufferedReader(
+                        new InputStreamReader(
+                                openFileInput(filename),
+                                "UTF-8"
+                        )
+                );
+
+                String line;
+
+                String section = "";
+
+                StringBuilder json = new StringBuilder();
+
+                json.append("{");
+
+                boolean firstSection = true;
+
+                while ((line = br.readLine()) != null) {
+
+                    line = line.trim();
+
+                    if (
+                            line.equals("") ||
+                            line.startsWith("#") ||
+                            line.startsWith(";")
+                    ) {
+
+                        continue;
+                    }
+
+                    if (
+                            line.startsWith("[") &&
+                            line.endsWith("]")
+                    ) {
+
+                        section = line.substring(
+                                1,
+                                line.length() - 1
+                        );
+
+                        if (!firstSection) {
+                            json.append("},");
+                        }
+
+                        json.append("\"")
+                                .append(section)
+                                .append("\":{");
+
+                        firstSection = false;
+
+                        continue;
+                    }
+
+                    int eq = line.indexOf("=");
+
+                    if (eq > 0 && section.length() > 0) {
+
+                        String key = line.substring(
+                                0,
+                                eq
+                        ).trim();
+
+                        String value = line.substring(
+                                eq + 1
+                        ).trim();
+
+                        value = value
+                                .replace("\\", "\\\\")
+                                .replace("\"", "\\\"");
+
+                        json.append("\"")
+                                .append(key)
+                                .append("\":\"")
+                                .append(value)
+                                .append("\",");
+                    }
+                }
+
+                br.close();
+
+                if (json.charAt(json.length() - 1) == ',') {
+                    json.deleteCharAt(json.length() - 1);
+                }
+
+                if (!firstSection) {
+                    json.append("}");
+                }
+
+                json.append("}");
+
+                return json.toString();
+
+            } catch (Exception e) {
+
+                return "{\"ERROR\":\"" + e.toString() + "\"}";
+            }
+        }
+    }
+}

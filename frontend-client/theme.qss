@@ -1,0 +1,167 @@
+/* ==========================
+   Linka Default Theme (.qss)
+   Clean, neutral, modern
+   ========================== */
+
+/* Base */
+QWidget {
+    background-color: #121212;
+    color: #E6E6E6;
+    font-family: "Segoe UI";
+    font-size: 14px;
+}
+
+/* Text */
+QLabel {
+    color: #E6E6E6;
+}
+
+/* Titles (use setObjectName("title") if you want) */
+QLabel#title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #1C1C1C;
+    color: #EAEAEA;
+    border: 1px solid #2A2A2A;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-weight: 600;
+}
+
+QPushButton:hover {
+    background-color: #222222;
+    border: 1px solid #3A3A3A;
+}
+
+QPushButton:pressed {
+    background-color: #171717;
+    border: 1px solid #444444;
+}
+
+/* Secondary buttons */
+QPushButton#secondary {
+    background-color: #191919;
+    border: 1px solid #252525;
+    font-weight: 500;
+}
+
+QPushButton#secondary:hover {
+    background-color: #202020;
+    border: 1px solid #343434;
+}
+
+/* Input */
+QLineEdit {
+    background-color: #181818;
+    color: #FFFFFF;
+    border: 1px solid #2A2A2A;
+    border-radius: 10px;
+    padding: 8px 10px;
+}
+
+QLineEdit:focus {
+    border: 1px solid #4A90E2;
+}
+
+/* Scroll area */
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+/* Scrollbar */
+QScrollBar:vertical {
+    background: transparent;
+    width: 10px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: #2A2A2A;
+    border-radius: 5px;
+    min-height: 30px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #3A3A3A;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: transparent;
+}
+
+/* Frames / Cards */
+QFrame {
+    background-color: #161616;
+    border: 1px solid #242424;
+    border-radius: 14px;
+}
+
+/* Tooltips */
+QToolTip {
+    background-color: #101010;
+    color: #FFFFFF;
+    border: 1px solid #333333;
+    border-radius: 8px;
+    padding: 6px;
+}
+
+/* Menus */
+QMenu {
+    background-color: #161616;
+    color: #EAEAEA;
+    border: 1px solid #2A2A2A;
+    border-radius: 10px;
+    padding: 6px;
+}
+
+QMenu::item {
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+QMenu::item:selected {
+    background-color: #232323;
+}
+
+/* MessageBox */
+QMessageBox {
+    background-color: #121212;
+}
+
+QMessageBox QLabel {
+    color: #EAEAEA;
+}
+
+/* Checkbox */
+QCheckBox {
+    color: #EAEAEA;
+}
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+}
+
+QCheckBox::indicator:unchecked {
+    background-color: #181818;
+    border: 1px solid #3A3A3A;
+    border-radius: 4px;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #4A90E2;
+    border: 1px solid #4A90E2;
+    border-radius: 4px;
+}
