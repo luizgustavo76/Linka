@@ -506,7 +506,7 @@ int main(int argc, char *argv[])
     std::function<void(QString)> sendEdit;
     std::function<void()> change_url;
     std::function<QString(QString, QString)> newSession;
-    std::function<void(QString post_id)> commentsPage;
+    
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -897,32 +897,6 @@ int main(int argc, char *argv[])
         });
         
     };
-    commentsPage = [&](QString post_id){
-        clearLayout(layout);
-        QList<QWidget*>() = comment_layout;
-        QJsonObject json_comments;
-        json_comments["post_id"] = post_id;
-        QString response = requestHTTP(
-            url + "/view-comments",
-            "POST",
-            json_comments
-        );
-        QJsonParseError error;
-        QJsonDocument doc = QJsonDocument::fromJson(jsonString.toUtf8(), &error);
-        QJsonObject comments = obj["comments"].toAray();
-
-        for (int i = 0; i < comments.size(); i++) {
-            QJsonObject comment = comments[i].toObject();
-
-            int comment_id = comment["comment_id"].toInt();
-            int post_id = comment["post_id"].toInt();
-            QString username = comment["username"].toString();
-            QString text = comment["text_comment"].toString();
-
-            qDebug() << comment_id << post_id << username << text;
-        }
-
-    };
     showfeed = [&]()
     {
         clearLayout(layout);
@@ -942,7 +916,7 @@ int main(int argc, char *argv[])
 
             if(!doc.isArray())
             {
-                QLabel *err = new QLabel("Resposta inválida do servidor!");
+                QLabel *err = new QLabel("Invalid response from server!");
                 layout->addWidget(err);
                 return;
             }

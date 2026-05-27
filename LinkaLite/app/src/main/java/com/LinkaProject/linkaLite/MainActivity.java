@@ -280,7 +280,33 @@ public class MainActivity extends Activity {
 
             }).start();
         }
+        @JavascriptInterface
+        public String deleteFileLinka(String filename) {
 
+            try {
+
+                File file = getFileStreamPath(filename);
+
+                if(file.exists()){
+
+                    boolean deleted = file.delete();
+
+                    if(deleted){
+                        return "DELETED";
+                    }else{
+                        return "FAILED";
+                    }
+
+                }else{
+
+                    return "NOT_FOUND";
+                }
+
+            } catch (Exception e) {
+
+                return "ERROR:" + e.toString();
+            }
+        }
         @JavascriptInterface
         public void httpPost(final String url, final String jsonBody) {
 
