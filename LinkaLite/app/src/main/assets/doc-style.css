@@ -49,6 +49,37 @@ h2 {
 p {
     line-height: 1.6;
 }
+body{
+    background:#111;
+    color:white;
+    font-family:Arial;
+    margin:0;
+    padding:0;
+}
+
+#chat{
+    padding:10px;
+}
+
+.msg{
+    padding:8px;
+    margin-top:8px;
+    border-radius:8px;
+    max-width:80%;
+    word-wrap:break-word;
+    clear:both;
+}
+
+.mine{
+    background:#2e7d32;
+    float:right;
+    text-align:right;
+}
+
+.other{
+    background:#333;
+    float:left;
+}
 html, body {
     margin: 0;
     padding: 0;
