@@ -62,7 +62,7 @@ function receberResposta(txt) {
             "<b>" + post.username + "</b><br>" +
             post.text_post + "<br>" +
             "<a onclick='requestStar(" + post.id + ", \"" + post.username + "\")'>Star</a>"
-            + "<a href='comments.html?post_id='" + post.post_id + ")>Comments</a>"
+            "<a href='comments.html?post_id=" + post.id + "'>Comments</a>" + 
             "<small>" + post.datetime + "</small>" +
             "</div><hr>";
     }
