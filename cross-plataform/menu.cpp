@@ -1398,6 +1398,19 @@ int main(int argc, char *argv[])
             loginPage();
             return;
         };
+        int status_code;
+        QString response_valide = requestHTTP(
+            url + "/valide-session",
+            "POST",
+            QJsonObject(),
+            5000,
+            &status_code
+        );
+        if (status_code == 200|| status_code == 201){}
+        else{
+            loginPage();
+            return;
+        };
         clearLayout(layout);
         fadeTransition(central);
         splash.finish(&window);

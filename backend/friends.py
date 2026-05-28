@@ -36,7 +36,7 @@ def create_notification(text, type, receiver, from_user):
 def friends():
     data = request.get_json()
     username = data.get("username")
-    if username == g.user:
+    if username == g.username:
         try:
             conn = get_db()
             cur = conn.cursor()
@@ -53,7 +53,7 @@ def friends():
 def inbox():
     data = request.get_json()
     username = data.get("username")
-    if username == g.user:
+    if username == g.username:
         conn = get_db()
         cur = conn.cursor()
         cur.execute("SELECT * FROM inbox WHERE receiver = ?", (username,))
