@@ -5,7 +5,7 @@ function receberStatusCode(code){
     statusCode = code;
 }
 
-function receberResposta(txt) {
+function receberRespostaProfile(txt) {
     let data = JSON.parse(txt);
 
     document.getElementById("usernameShow").innerText = data.username;
@@ -28,6 +28,9 @@ function loadProfile() {
     if (!user) {
         var cfg = JSON.parse(Linka.loadCfgAsJson("config-login.cfg"));
         user = cfg["FAST-LOGIN"]["username"];
+        html = ""
+        html + "<a onload=" + "logout()" + ">"
+        document.getElementById("userOptions").innerHTML = html;
     }
 
     document.getElementById("usernameShow").innerText = user;
@@ -35,3 +38,4 @@ function loadProfile() {
     var url = "http://linkaProject.pythonanywhere.com/view_profile?username=" + user;
     Linka.httpGet(url);
 }
+receberResposta = receberRespostaProfile;

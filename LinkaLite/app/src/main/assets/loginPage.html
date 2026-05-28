@@ -10,19 +10,13 @@
 <body>
     <div class="main-page">
         <input id="username" placeholder="Username"></input>
-        <input id="password" placeholder="Password"></input>
-        <a href="#" onclick="login_request(); return false;">Submmit</a>
+        <input type="password" id="password" placeholder="Password"></input>
+        <div>
+            <a href="#" onclick="login_request(); return false;">Submmit</a>
+        </div>
         <a href="login.html">Back</a>
     </div>
     <div id="saida"></div>
-    <script>
-        function receberResposta(txt) {
-            document.getElementById("saida").innerHTML = txt;
-        }
-
-        function receberErro(txt) {
-            document.getElementById("saida").innerHTML = "ERRO: " + txt;
-        }
-    </script>
+    
 </body>
 </html>
