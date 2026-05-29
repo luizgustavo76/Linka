@@ -7,6 +7,7 @@ from profiles import profile_bp
 from search import search_bp
 from community import community_bp
 from meta import meta_bp
+from chat_global import chat_global_bp
 from flask import Flask, Blueprint, request, jsonify, g
 import sqlite3
 import os
@@ -172,6 +173,6 @@ app.register_blueprint(post_bp)
 app.register_blueprint(chat_bp)
 app.register_blueprint(friends_bp)
 app.register_blueprint(meta_bp)
-
+app.register_blueprint(chat_global_bp)
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
