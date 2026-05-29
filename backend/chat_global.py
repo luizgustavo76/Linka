@@ -1,7 +1,7 @@
 from flask import Flask, Blueprint, request, jsonify
 import sqlite3
 import os
-chat_global_bp = Blueprint(__name__)
+chat_global_bp = Blueprint("chat_global", __name__)
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 db_file = db_dir + "/chat_global.db"
@@ -33,24 +33,60 @@ def send_global_message():
     return jsonify({"status":"the message has been sent"}),200
 @chat_global_bp.route("/view-global-message", methods=["POST"])
 def view_global_message():
+
     data = request.get_json()
-    last_id = data.get("id")
+
+    last_id = data.get("id", 0)
+
     conn = get_db()
     cur = conn.cursor()
-    if last_id == 0:
-        cur.execute(
-            "SELECT * FROM chat_global",
-            (last_id,)
-        )
-        response_query = cur.fetchall()
-        result = {
-            "sender":response_query[0],
-            "message":response_query[1]
-        }
+
+    if int(last_id) == 0:
+
+        cur.execute("""
+            SELECT sender, message, id
+            FROM chat_global
+            ORDER BY id DESC
+            LIMIT 20
+        """)
+
+        rows = cur.fetchall()
+
+        messages = []
+
+        for row in rows:
+
+            messages.append({
+                "sender": row[0],
+                "message": row[1],
+                "id": row[2]
+            })
+
+        conn.close()
+
+        return jsonify(messages)
+
     else:
-        cur.execute(
-            "SELECT * FROM chat_global WHERE id = ?",
-            (last_id,)
-        )
-        result = cur.fetchone()
-    return jsonify(result)
+
+        cur.execute("""
+            SELECT sender, message, id
+            FROM chat_global
+            WHERE id > ?
+            ORDER BY id ASC
+        """, (last_id,))
+
+        rows = cur.fetchall()
+
+        messages = []
+
+        for row in rows:
+
+            messages.append({
+                "sender": row[0],
+                "message": row[1],
+                "id": row[2]
+            })
+
+        conn.close()
+
+        return jsonify(messages)
