@@ -70,7 +70,11 @@ def view(username):
     cur.execute("SELECT * FROM profile WHERE username = ?",(username,))
     response = cur.fetchall()
     conn.close()
-    return jsonify(response), 200
+    row = {
+        "username":response[0],
+        "bio":response[1]
+    }
+    return jsonify(row), 200
 UPLOAD_FOLDER = "../profile-pictures"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 

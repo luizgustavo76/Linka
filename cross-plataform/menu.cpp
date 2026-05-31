@@ -229,90 +229,259 @@ void saveConfig() {
 
     file.close();
 }
+QString requestHTTP(
+    const QString &url,
+    const QString &method,
+    const QJsonObject &json,
+    int timeoutMs = 5000,
+    int *statusCode = nullptr
+);
+QString newSession(QString username, QString password)
+{
+    loadConfig();
+
+    QString url =
+        QString::fromStdString(
+            config["SERVER"]["url"]
+        );
+
+    QNetworkAccessManager manager;
+
+    QJsonObject json;
+    json["username"] = username;
+    json["password"] = password;
+
+    QNetworkRequest request;
+    request.setUrl(QUrl(url + "/new-session"));
+
+    request.setHeader(
+        QNetworkRequest::ContentTypeHeader,
+        "application/json"
+    );
+
+    QByteArray data =
+        QJsonDocument(json).toJson();
+
+    QNetworkReply *reply =
+        manager.post(request, data);
+
+    QEventLoop loop;
+
+    QObject::connect(
+        reply,
+        &QNetworkReply::finished,
+        &loop,
+        &QEventLoop::quit
+    );
+
+    loop.exec();
+
+    QString response =
+        reply->readAll();
+
+    reply->deleteLater();
+
+    QJsonDocument doc =
+        QJsonDocument::fromJson(
+            response.toUtf8()
+        );
+
+    if(!doc.isObject())
+    {
+        qDebug() << "Resposta inválida:" << response;
+        return "";
+    }
+
+    QJsonObject obj = doc.object();
+
+    QString token =
+        obj["token"].toString();
+
+    return token;
+}
 QString requestHTTP(const QString &url,
                     const QString &method,
                     const QJsonObject &json,
-                    int timeoutMs = 5000,
-                    int *statusCode = nullptr)
+                    int timeoutMs,
+                    int *statusCode)
 {
-    auto performRequest = [&](const QString &targetUrl) -> QString
+    auto performRequest = [&](const QString &targetUrl,
+                              const QString &token) -> QString
     {
         QNetworkAccessManager manager;
-        loadConfig();
-        QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
-        QString token_session = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-        json["username"] = username; 
-        QNetworkRequest request;
-        request.setRawHeader("Authorization", QString("Bearer %1").arg(token_session).toUtf8());
-        request.setUrl(QUrl(targetUrl));
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-        QByteArray jsonData = QJsonDocument(json).toJson();
+        QJsonObject jsonCopy = json;
+
+        loadConfig();
+
+        QString username =
+            QString::fromStdString(
+                config["FAST-LOGIN"]["username"]
+            );
+
+        jsonCopy["username"] = username;
+
+        QNetworkRequest request;
+
+        request.setRawHeader(
+            "Authorization",
+            QString("Bearer %1").arg(token).toUtf8()
+        );
+
+        request.setUrl(QUrl(targetUrl));
+
+        request.setHeader(
+            QNetworkRequest::ContentTypeHeader,
+            "application/json"
+        );
+
+        QByteArray jsonData =
+            QJsonDocument(jsonCopy).toJson();
+
         QString m = method.toUpper();
 
         QNetworkReply *reply = nullptr;
 
-        if (m == "GET")
-        {
+        if(m == "GET")
             reply = manager.get(request);
-        }
-        else if (m == "POST")
-        {
+
+        else if(m == "POST")
             reply = manager.post(request, jsonData);
-        }
-        else if (m == "PUT")
-        {
+
+        else if(m == "PUT")
             reply = manager.put(request, jsonData);
-        }
-        else if (m == "DELETE")
-        {
-            reply = manager.sendCustomRequest(request, "DELETE", jsonData);
-        }
+
+        else if(m == "DELETE")
+            reply = manager.sendCustomRequest(
+                request,
+                "DELETE",
+                jsonData
+            );
         else
         {
-            if (statusCode) *statusCode = -1;
-            return "ERRO: Método HTTP inválido (" + method + ")";
+            if(statusCode)
+                *statusCode = -1;
+
+            return "ERRO: Método inválido";
         }
 
         QEventLoop loop;
         QTimer timer;
+
         timer.setSingleShot(true);
 
-        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        QObject::connect(
+            &timer,
+            &QTimer::timeout,
+            &loop,
+            &QEventLoop::quit
+        );
+
+        QObject::connect(
+            reply,
+            &QNetworkReply::finished,
+            &loop,
+            &QEventLoop::quit
+        );
 
         timer.start(timeoutMs);
+
         loop.exec();
 
-        if (!timer.isActive())
+        if(!timer.isActive())
         {
             reply->abort();
-            if (statusCode) *statusCode = 408;
+
+            if(statusCode)
+                *statusCode = 408;
+
             reply->deleteLater();
-            return "ERRO: Timeout na requisição.";
+
+            return "ERRO: Timeout";
         }
 
-        int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (statusCode) *statusCode = code;
+        int code =
+            reply->attribute(
+                QNetworkRequest::HttpStatusCodeAttribute
+            ).toInt();
 
-        if (reply->error() != QNetworkReply::NoError)
-        {
-            QString err = "ERRO: " + reply->errorString();
-            reply->deleteLater();
-            return err;
-        }
+        if(statusCode)
+            *statusCode = code;
 
-        QString response = reply->readAll();
+        QString response =
+            reply->readAll();
+
         reply->deleteLater();
 
         return response;
     };
 
+    loadConfig();
 
-    
-    return performRequest(url);
-};
+    QString username =
+        QString::fromStdString(
+            config["FAST-LOGIN"]["username"]
+        );
 
+    QString password =
+        QString::fromStdString(
+            config["FAST-LOGIN"]["password"]
+        );
+
+    QString token =
+        QString::fromStdString(
+            config["FAST-LOGIN"]["token_session"]
+        );
+
+    // sem token
+    if(token.isEmpty())
+    {
+        token = newSession(
+            username,
+            password
+        );
+
+        config["FAST-LOGIN"]["token_session"] =
+            token.toStdString();
+
+        saveConfig();
+    }
+
+    QString response =
+        performRequest(
+            url,
+            token
+        );
+
+    int code = 0;
+
+    if(statusCode)
+        code = *statusCode;
+
+    // token expirou
+    if(code == 401 || code == 403)
+    {
+        qDebug() << "Token expirado. Renovando...";
+
+        token = newSession(
+            username,
+            password
+        );
+
+        config["FAST-LOGIN"]["token_session"] =
+            token.toStdString();
+
+        saveConfig();
+
+        response =
+            performRequest(
+                url,
+                token
+            );
+    }
+
+    return response;
+}
 void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
 {
     QScrollArea *scroll = new QScrollArea();
@@ -421,7 +590,7 @@ int main(int argc, char *argv[])
 
     if (url.isEmpty())
     {
-        config["SERVER"]["url"] = "http://127.0.0.1:5000";
+        config["SERVER"]["url"] = "http://linkaProject.pythonanywhere.com";
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }
@@ -505,7 +674,6 @@ int main(int argc, char *argv[])
     std::function<void()> editAccount;
     std::function<void(QString)> sendEdit;
     std::function<void()> change_url;
-    std::function<QString(QString, QString)> newSession;
     
     loginPage = [&](){
         clearLayout(layout);
@@ -881,6 +1049,19 @@ int main(int argc, char *argv[])
         fadeTransition(central);
         QLabel *label_username = new QLabel(username);
         layout->addWidget(label_username);
+        QJsonObject empty;
+        QString bio_response = requestHTTP(
+            url + "/view-profile" + "/?username=" + username,
+            "GET",
+            empty
+        );
+        QJsonDocument doc =
+            QJsonDocument::fromJson(bio_response.toUtf8());
+
+        QJsonObject json_bio = doc.object();
+        QString MyBio = json_bio["bio"].toString();
+        QLabel *label_bio = new QLabel(MyBio);
+        layout->addWidget(label_bio);
         QPushButton *button_edit = new QPushButton(edit_text);
         layout->addWidget(button_edit);
         QPushButton *buttonBack = new QPushButton(back_text);
@@ -1523,6 +1704,13 @@ int main(int argc, char *argv[])
             10000,
             &status_code
         );
+        QJsonObject json_create_profile;
+        json_create_profile["username"] = username;
+        requestHTTP(
+            url + "/create-profile",
+            "POST",
+            json_create_profile
+        );
         return status_code;
     };
     signinPage = [&](){
@@ -1564,20 +1752,7 @@ int main(int argc, char *argv[])
         layout->addWidget(back_button);
 
     };
-    newSession = [&](QString username, QString password){
-        QJsonObject json_session;
-        json_session["username"] = username;
-        json_session["password"] = password;
-        QString response_session = requestHTTP(
-            url + "/new-session",
-            "POST",
-            json_session
-        );
-        QJsonDocument doc = QJsonDocument::fromJson(response_session.toUtf8());
-        QJsonObject obj = doc.object();
-        QString token = obj["token"].toString();
-        return token;
-    };
+    
     signupRequest = [&](QString username, QString password){
         int status_code = 0;
         QJsonObject json_signup;
