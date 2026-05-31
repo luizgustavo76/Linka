@@ -29,13 +29,14 @@ def create_notification(text, type, receiver, from_user):
     conn = get_db_notifications()
     cur = conn.cursor()
     date = datetime.datetime.now()
-    cur.execute("INSERT INTO notifications (receiver, type, text, from_user, datetime) VALUES(?, ?, ?, ?, ?)",(receiver, type, text, from_user, date))
+    cur.execute("INSERT INTO notifications (receiver, type, content, from_user, datetime) VALUES(?, ?, ?, ?, ?)",(receiver, type, text, from_user, date))
     conn.commit()
     conn.close()
 @friends_bp.route("/friends", methods=["POST"])
 def friends():
     data = request.get_json()
-    username = data.get("username")
+    print(data)
+    username = data["username"]
     if username == g.username:
         try:
             conn = get_db()
@@ -93,7 +94,7 @@ def send():
     data = request.get_json()
     receiver = data.get("receiver")
     remittee = data.get("remittee")
-    if remittee == g.user:
+    if remittee == g.username:
         message = data.get("message")
         conn = get_db()
         cur = conn.cursor()
