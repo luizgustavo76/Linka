@@ -104,7 +104,8 @@ public_routes = [
     "login.login",
     "post.return_stars",
     "chat.send"
-    "None"
+    "None",
+    "profiles.create"
 ]
 @app.before_request
 def valide():

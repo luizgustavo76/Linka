@@ -97,7 +97,7 @@ def new_post():
         return jsonify({"status": "JSON inválido ou vazio"}), 400
 
     username = data.get("username")
-    if username == g.user:
+    if username == g.username:
         text_post = data.get("text_post")
         datetime = data.get("datetime")
 
@@ -152,7 +152,7 @@ def star():
 
     post_id = data.get("post_id")
     username = data.get("username")
-    if username == g.user:
+    if username == g.username:
         if not post_id or not username:
             return jsonify({"status": "post_id or username is missing"}), 400
 
@@ -204,7 +204,7 @@ def has_star():
 
     post_id = data.get("post_id")
     username = data.get("username")
-    if username == g.user:
+    if username == g.username:
         if not post_id or not username:
             return jsonify({"starred": False}), 200
 
