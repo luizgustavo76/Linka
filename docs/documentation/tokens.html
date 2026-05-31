@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokens? How you need this for own instance</title>
+    <link rel="stylesheet" href="doc-style.css">
+</head>
+<body>
+    <header>
+        <img src="header.png" alt="linka header logo">
+    </header>
+    <h2>Tokens? Why need this?</h2>
+    <p>For the security in the platform, tokens is a easy implementation for your instance</p>
+    <p>to make a request you need a token to identify you</p>
+    <h2>How to generate a token?</h2>
+    <p>To generate a token with the Sdk:</p>
+    <pre>
+        <code>
+            from Linka import LinkaSdk<br>
+            url = "https://example.com"<br>
+            data = {<br>
+                "username":"example",<br>
+                "password":"123456"<br>
+            }<br>
+            token = LinkaSdk.new_session(url, data)
+        </code>
+    </pre>
+    <p>See? this is very simple</p>
+    <h2>How to generate with http</h2>
+    <p>to create a token with a http request you need this</p>
+    <ul>
+        <li>
+            <p>Url of the server</p>
+            <p>JSON with your login credentials(username and password)</p>
+        </li>
+    </ul>
+    <p>this example use python and the lib requests</p>
+    <pre>
+        <code>
+            import requests<br>
+            url = "example.com"<br>
+            login = {<br>
+                "username":"example",<br>
+                "password":"123456"<br>
+            }<br>
+            token = request.post(url + "/new-session",json=login)<br>
+        </code>
+    </pre>
+    <p>The token like this:6bde5c9a6e16d2e7aadf7c0d1719aaaa</p>
+</body>
+</html>

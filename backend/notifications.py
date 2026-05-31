@@ -11,7 +11,7 @@ def get_db():
 def create_db():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS notifications(receiver TEXT, from_user TEXT, datetime TEXT, type TEXT, content TEXT, read BOOLEAN DEAFULT = FALSE), id INTEGER PRIMARY KEY AUTOINCREMENT ")
+    cur.execute("CREATE TABLE IF NOT EXISTS notifications(receiver TEXT, from_user TEXT, datetime TEXT, type TEXT, content TEXT, read BOOLEAN, id INTEGER PRIMARY KEY AUTOINCREMENT)")
     conn.commit()
     conn.close()
 create_db()

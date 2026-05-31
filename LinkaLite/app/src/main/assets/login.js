@@ -167,14 +167,7 @@ function register_request(){
 
         var code = statusCode;
 
-        if (!response){
-
-            document.getElementById("saida").innerHTML =
-                "error in the server side";
-
-            return;
-        }
-
+        
         if (
             code == 200 ||
             code == 201
@@ -204,5 +197,5 @@ function register_request(){
                 "<h3>The username or password is invalid</h3>";
         }
 
-    }, 600);
+    }, 1600);
 }

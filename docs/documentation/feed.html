@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed and Algorithms</title>
+    <link rel="stylesheet" href="doc-style.css">
+</head>
+<body>
+    <header>
+        <img src="header.png" alt="Linka header logo">
+    </header>
+    <h2>How works the feed?</h2>
+    <p>In the Linka has 2 types of Algorithms</p>
+    <ul>
+        <li>
+            <p>Cronologic(the last posted is the first)</p>
+            <p>Trending(trending posts in the last week)</p>
+        </li>
+    </ul>
+    <p>The trending has this Algorithms</p>
+    <pre><code>score = (stars * 2) + (comments * 3) / hours</code></pre>
+    <p>The post with most score is the first</p>
+    <h2>Examples</h2>
+    <p>The latested posts</p>
+    <pre>
+        <code>
+            luizsgustavo76
+            wow Linka is good!
+            stars 10 || comments 120
+            3 hours ago
+            
+            Luiz
+            hi everyone!
+            stars 58|| comments 70
+            1 hour ago
+            326 score
+            -----------
+            
+            Linka
+            feed test
+            stars 99|| comments 1
+            12 hours ago
+            ------------
+            
+            
+        </code>
+    </pre>
+    <p>Now with the trending</p>
+    <pre>
+        <code>
+            Luiz
+            hi everyone!
+            stars 58|| comments 70
+            1 hour ago
+            326 score
+            -----------
+            Linka
+            feed test
+            stars 99|| comments 1
+            12 hours ago
+            ------------
+            luizsgustavo76
+            wow Linka is good!
+            stars 10 || comments 120
+            3 hours ago
+            140 score
+
+        </code>
+    </pre>
+</body>
+</html>

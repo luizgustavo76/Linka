@@ -86,7 +86,7 @@
             Run the server:
         </p>
         <p>
-            <code>python main.py</code>
+            <pre><code>python main.py</code></pre>
         </p>
         <h2>How to use federations</h2>
         <p>
@@ -101,17 +101,17 @@
         </p>
         <p>
             1.2-to download the api, run:
-            <code>pip install LinkaFederations</code>
+            <pre><code>pip install LinkaFederations</code></pre>
         </p>
         <p>2-to use the api in your code:</p>
-        <code>
+        <pre><code>
             import LinkaFederations #import the api<br>
             LinkaFederations.connect_json("route.json") #-- your routes json<br>
             LinkaFederations.start()
-        </code>
+        </code></pre>
         <p>the route json in the method LinkaFederations This file is used to translate your server routes, identify servers you don't want to communicate with, and specify the domain your server is running on.</p>
         <p>how to make this file?</p>
-        <code>
+        <pre><code>
             {<br>
                 "domain":"your-domain.com",<br>
                 "blacklist":{},<br>
@@ -121,7 +121,7 @@
                     "sign-out":"/out"<br>
                 }<br>
             }
-        </code>
+        </code></pre>
         <p>the domain is your domain on the server is running</p>
         <p>blacklist is servers you dont want communicate</p>
         <p>and routes is a translator of your routes to universal routes</p>
@@ -129,61 +129,61 @@
         <h2>server routes and how to use</h2>
         <p> this topic explain how to use the routes of the server in your own client</p>
         <h3>login</h3>
-        <p>
+        <pre><p>
             /register<br>
             method:post<br>
             json="username", "password", "email"
-        </p>
-        <p>
+        </p></pre>
+        <pre><p>
             /login<br>
             method:post<br>
             json="username", "password"
-        </p>
+        </p></pre>
         <h3>friends</h3>
-        <p>
+        <pre><p>
            /inbox<br>
            methods:post<br> 
            json="username"<br>
            what is? is your inbox of friends requests and news 
-        </p>
-        <p>
+        </p></pre>
+        <pre><p>
             /accept<br>
             methods:post <br>
             json="receiver", "remittee",<br>
             what is? accept a friend requests
-        </p>
-        <p>
+        </p></pre>
+        <pre><p>
             /send-friend<br>
             methods:post<br>
             json="receiver", "remittee"<br>
             what is? is a route to send a friend request
-        </p>
+        </p></pre>
         <h3>Chat</h3>
-        <p>
+        <pre><p>
             /send<br>
             methods:post<br>
             json="receiver", "remittee", "message<br>
             what is? a route to send message Chat
-        </p>
-        <p>
+        </p></pre>
+        <pre><p>
             /view<br>
             methods:post<br>
             json="receiver", "remittee"<br>
             what is? a route of view Chat
-        </p>
+        </p></pre>
         <h3>Post</h3>
-        <p>
+        <pre><p>
             /new<br>
             methods:post<br>
             json="username, text_post, datetime"<br>
             what is?a route of creation of Post
-        </p>
-        <p>
+        </p></pre>
+        <pre><p>
             /view<br>
             methods:get<br>
             endpoint:id_of_post<br>
             what is? a route of view a post with post_id
-        </p>
+        </p></pre>
         <div class="warning">
             <b>Note: Successful requests return HTTP status codes 200 or 201. Failed requests return error codes such as 400, 401, 403, 404, or 500</b>
         </div>
