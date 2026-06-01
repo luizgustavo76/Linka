@@ -660,6 +660,7 @@ int main(int argc, char *argv[])
     std::function<void()> addFriendsPage;
     std::function<void()> inboxPage;
     std::function<void(const QString&)> chat;
+    std::function<void()> chatGlobal;
     std::function<void(const QString&, const QString&)> addFriendsRequest;
     std::function<void(const QString&, const QString&)> sendMessage;
     std::function<void()> optionsPage;
@@ -1265,6 +1266,194 @@ int main(int argc, char *argv[])
             chatJson
         );
     };
+    chatGlobal = [&](){
+
+        clearLayout(layout);
+
+        QScrollArea *scroll = new QScrollArea();
+        scroll->setWidgetResizable(true);
+
+        QWidget *containerScroll = new QWidget();
+        QVBoxLayout *containerLayout = new QVBoxLayout(containerScroll);
+
+        scroll->setWidget(containerScroll);
+
+        layout->addWidget(scroll);
+
+        int *lastId = new int(0);
+
+        QTimer *timer = new QTimer();
+
+        auto updateChat = [=]() mutable {
+
+            QJsonObject view_chat;
+            view_chat["id"] = *lastId;
+
+            QString chat_message = requestHTTP(
+                url + "/view-global-message",
+                "POST",
+                view_chat
+            );
+
+            QJsonDocument doc =
+                QJsonDocument::fromJson(
+                    chat_message.toUtf8()
+                );
+
+            if (!doc.isArray())
+                return;
+
+            QJsonArray msgs = doc.array();
+
+            for (int i = 0; i < msgs.size(); i++)
+            {
+                QJsonObject msg =
+                    msgs[i].toObject();
+
+                QString sender =
+                    msg["sender"].toString();
+
+                QString text =
+                    msg["message"].toString();
+
+                int id =
+                    msg["id"].toInt();
+
+                if (id > *lastId)
+                    *lastId = id;
+
+                bool isMe =
+                    (sender == username);
+
+                ChatBubble *bubble =
+                    new ChatBubble(
+                        text,
+                        isMe
+                    );
+
+                QHBoxLayout *line =
+                    new QHBoxLayout();
+
+                if (isMe)
+                {
+                    line->addStretch();
+                    line->addWidget(bubble);
+                }
+                else
+                {
+                    line->addWidget(bubble);
+                    line->addStretch();
+                }
+
+                QWidget *lineWidget =
+                    new QWidget();
+
+                lineWidget->setLayout(line);
+
+                containerLayout->addWidget(
+                    lineWidget
+                );
+            }
+
+            if (!msgs.isEmpty())
+            {
+                QTimer::singleShot(
+                    50,
+                    [=](){
+
+                        scroll->verticalScrollBar()->setValue(
+                            scroll->verticalScrollBar()->maximum()
+                        );
+
+                    }
+                );
+            }
+        };
+
+        QObject::connect(
+            timer,
+            &QTimer::timeout,
+            updateChat
+        );
+
+        updateChat();
+
+        timer->start(2000);
+
+        QLineEdit *message_box = new QLineEdit();
+        message_box->setPlaceholderText(type_text);
+
+        QPushButton *send_button =
+            new QPushButton(send_text);
+
+        QHBoxLayout *entryBox =
+            new QHBoxLayout();
+
+        entryBox->addWidget(message_box);
+        entryBox->addWidget(send_button);
+
+        QWidget *container =
+            new QWidget();
+
+        container->setLayout(entryBox);
+
+        QPushButton *back_button =
+            new QPushButton(back_text);
+
+        QObject::connect(
+            back_button,
+            &QPushButton::clicked,
+            [=]() mutable {
+
+                timer->stop();
+                timer->deleteLater();
+
+                delete lastId;
+
+                initialPage();
+
+            }
+        );
+
+        QObject::connect(
+            send_button,
+            &QPushButton::clicked,
+            [=]() mutable {
+
+                QString text =
+                    message_box->text();
+
+                if (text.isEmpty())
+                    return;
+
+                QJsonObject json;
+
+                json["sender"] = username;
+                json["message"] = text;
+
+                requestHTTP(
+                    url + "/send-global-message",
+                    "POST",
+                    json
+                );
+
+                message_box->clear();
+            }
+        );
+
+        QObject::connect(
+            message_box,
+            &QLineEdit::returnPressed,
+            [=]() mutable {
+
+                send_button->click();
+
+            }
+        );
+
+        layout->addWidget(container);
+        layout->addWidget(back_button);
+    };
     //tela quando você esta conversando com o usuario
     chat = [&](QString user){
         clearLayout(layout);
@@ -1393,6 +1582,11 @@ int main(int argc, char *argv[])
     chatPage = [&](){
         clearLayout(layout);
         QList<QWidget*> widgets;
+        QPushButton *ChatGlobalButton = new QPushButton("Chat Global");
+        QObject::connect(ChatGlobalButton, &QPushButton::clicked, [=]() mutable{
+            chatGlobal();
+        });
+        widgets.append(ChatGlobalButton);
         QJsonObject friends_json;
         friends_json["username"] = username;
         QString response_friends = requestHTTP(
@@ -1405,7 +1599,7 @@ int main(int argc, char *argv[])
         QJsonArray friends = obj["friends"].toArray();
         if (friends.isEmpty())
         {
-            QLabel *label_error = new QLabel("sem amigos ;)");
+            QLabel *label_error = new QLabel("No Friends....");
             widgets.append(label_error);
         }
         else
