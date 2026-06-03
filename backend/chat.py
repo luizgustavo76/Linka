@@ -76,7 +76,7 @@ def view():
 
     user1 = data.get("user1")
     user2 = data.get("user2")
-    if user1 or user2 == g.user:
+    if user1 == g.username or user2 == g.username:
         if not user1:
             return jsonify({"status": "user1 cannot be null"}), 400
 
