@@ -26,7 +26,8 @@ Unlike traditional social platforms, Linka allows anyone to host their own serve
 # Linka Ecosystem
 
 ## Linka
-Main decentralized social platform.
+Main decentralized social platform. 
+*(Backend built with: ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white) ![Flask](https://img.shields.io/badge/Flask-000000?style=flat&logo=flask&logoColor=white) ![SQLite](https://img.shields.io/badge/SQLite-07405E?style=flat&logo=sqlite&logoColor=white))*
 
 ## LinkaLite
 Ultra-light Android client focused on:
@@ -36,7 +37,8 @@ Ultra-light Android client focused on:
 - legacy compatibility
 
 ## Linka Qt
-Future desktop multi-platform client using Qt:
+Desktop multi-platform client using C++ and Qt:
+*(Built with: ![C++](https://img.shields.io/badge/C++-00599C?style=flat&logo=c%2B%2B&logoColor=white) ![Qt](https://img.shields.io/badge/Qt-41CD52?style=flat&logo=qt&logoColor=white))*
 - Windows
 - Linux
 - macOS
@@ -71,7 +73,7 @@ The project focuses on:
 ## Clone the repository
 
 ```bash
-git clone https://github.com/luizgustavo76/Linka.git
+git clone [https://github.com/luizgustavo76/Linka.git](https://github.com/luizgustavo76/Linka.git)
 cd Linka
 ```
 
@@ -81,12 +83,18 @@ cd Linka
 
 ```bash
 cd backend
+
+# Install the required dependencies
+pip install flask python-dotenv werkzeug flask-cors
+
+# Create your configuration file
+echo "token_gmail=your_smtp_app_password_here" > .env
+
+# Start the server
 python main.py
 ```
 
 ---
-
-
 
 # Project Status
 
@@ -144,4 +152,4 @@ Backend and desktop developer focused on lightweight and multi-platform systems.
 # License
 
 This project is open-source.
-If you make a instance, client or other product that uses the Linka services, please give me the credits
+If you create an instance, client or other product that uses the Linka services, please give me the credits.
