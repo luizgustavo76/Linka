@@ -47,6 +47,10 @@
   <context>
     <name>feed</name>
     <message>
+      <source>Comments</source>
+      <translation>Comments</translation>
+    <message>
+    <message>
       <source>new post</source>
       <translation>new post</translation>
     </message>
