@@ -634,6 +634,7 @@ int main(int argc, char *argv[])
     QString upload_text = QCoreApplication::translate("my account", "upload");
     QString bio_text = QCoreApplication::translate("my account", "biography");
     QString profile_picture_text = QCoreApplication::translate("my account", "profile picture");
+    QString comments_session_text = QCoreApplication::translate("feed", "comments");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -1078,6 +1079,16 @@ int main(int argc, char *argv[])
                 });
         });
         
+    };
+    commentPage = [&](){
+        clearLayout(layout);
+        QList<QWidget*> scroll;
+        QLabel *commentsSession = new QLabel(comments_text);
+        QPushButton *back_button = new QPushButton(back_text);
+        QObject::connect(back_button, &QPushButton::clicked,[=](){
+            initialPage();
+        });
+
     };
     showfeed = [&]()
     {

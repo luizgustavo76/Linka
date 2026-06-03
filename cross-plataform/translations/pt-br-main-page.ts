@@ -77,7 +77,10 @@
 
   <context>
     <name>feed</name>
-
+    <message>
+      <source>Comments</source>
+      <translation>Comentários</translation>
+    <message>
     <message>
       <source>new post</source>
       <translation>Novo post</translation>
