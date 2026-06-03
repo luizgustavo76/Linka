@@ -676,6 +676,8 @@ int main(int argc, char *argv[])
     std::function<void()> editAccount;
     std::function<void(QString)> sendEdit;
     std::function<void()> change_url;
+    std::function<void(QString)> commentPage;
+    std::function<void(QString)> commentRequest;
     
     loginPage = [&](){
         clearLayout(layout);
@@ -1080,10 +1082,22 @@ int main(int argc, char *argv[])
         });
         
     };
-    commentPage = [&](){
+    commentRequest = [&](QString post_id){
+        QJsonObject comments_json;
+        comments_json["post_id"] = post_id;
+        response = requestHTTP(
+            url + "/view-comments",
+            "POST",
+            comments_json
+        );
+        return response;
+    };
+    commentPage = [&](QString post_id){
         clearLayout(layout);
         QList<QWidget*> scroll;
         QLabel *commentsSession = new QLabel(comments_text);
+        QList comments_object = commentRequest(post_id)
+        for(int i = 0; i < comments_object.lenght(); i++)
         QPushButton *back_button = new QPushButton(back_text);
         QObject::connect(back_button, &QPushButton::clicked,[=](){
             initialPage();
