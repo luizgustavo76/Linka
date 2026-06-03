@@ -56,12 +56,12 @@ create_db()
 def new_comment():
     data = request.get_json()
     username = data.get("username")
-    if username == g.user:
+    if username == g.username:
         text_comment = data.get("text_comment")
         post_id = data.get("post_id")
         comment_id = data.get("comment_id")
-        if (username, text_comment, post_id, comment_id) is None:
-            return jsonify({"status":"as informações vieram vazias"}), 401
+        if None in (username, text_comment, post_id, comment_id):
+            return jsonify({"status":"the informations is empty"}), 401
         else:
             conn = get_db()
             cur = conn.cursor()

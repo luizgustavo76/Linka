@@ -47,7 +47,7 @@ def edit():
 def create():
     data = request.get_json()
     username = data.get("username")
-    if username == g.user:
+    if username == g.username:
         if isinstance(username, dict):
             username = username.get("username")
 
