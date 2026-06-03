@@ -231,8 +231,8 @@ def register():
             """
             enviar_email(destino=email, assunto="Linka Login", mensagem_html=html_register)
             return jsonify({"status":"account created with sucess!"}), 201
-    except:
-        return jsonify({"status":"a error as ocurred"})
+    except Exception as e:
+        return jsonify({"status": "an error has occurred", "error": str(e)})
 
 #route of the fast login
 @login_bp.route("/fast-login", methods=["POST"])
