@@ -279,46 +279,26 @@ def FastLogin():
 @login_bp.route("/login", methods=["POST"])
 def login():
     dados = request.get_json()
-    oauth = dados.get("oauth")
-    if not oauth:
-        username = dados.get("username")
-        password = dados.get("senha") or dados.get("password")
+    username = dados.get("username")
+    password = dados.get("senha") or dados.get("password")
+    conn = login_system.get_db_login()
+    cur = conn.cursor()
+    cur.execute("SELECT username FROM login WHERE username = ?", (username,))
+    #resultado de usernames, se existir aquele username ele retorna o nome se não retorna None
+    resultado_username = cur.fetchone()
+    conn.close()
+    if not resultado_username:
+        return jsonify({"status":"user not exists, please veriy the username"}), 401
+    if resultado_username:
         conn = login_system.get_db_login()
         cur = conn.cursor()
-        cur.execute("SELECT username FROM login WHERE username = ?", (username,))
-        #resultado de usernames, se existir aquele username ele retorna o nome se não retorna None
-        resultado_username = cur.fetchone()
+        cur.execute("SELECT senha FROM login WHERE username =?", (username,))
+        resultado_senha = cur.fetchone()
+        hash_salvo = resultado_senha[0]
+        senha_descodificada = login_system.verificar_hash(password, hash_salvo)
         conn.close()
-        if not resultado_username:
-            return jsonify({"status":"user not exists, please veriy the username"}), 401
-        if resultado_username:
-            conn = login_system.get_db_login()
-            cur = conn.cursor()
-            cur.execute("SELECT senha FROM login WHERE username =?", (username,))
-            resultado_senha = cur.fetchone()
-            hash_salvo = resultado_senha[0]
-            senha_descodificada = login_system.verificar_hash(password, hash_salvo)
-            conn.close()
-            if senha_descodificada:
-                return jsonify({"status":"login is sucessful"}), 200
-            else:
-                return jsonify({"status": "wrong password, check the password entry"}), 401
-    if oauth:
-        username = dados.get("username")
-        avatar_id = dados.get("avatar_id")
-        id = dados.get("id")
-        conn = login_system.get_db_login()
-        cur = conn.cursor()
-        cur.execute("SELECT username FROM login WHERE username = ?",(username,))
-        result_user = cur.fetchone()
-        conn.close()
-        if not result_user:
-            conn = login_system.get_db_login()
-            cur = conn.cursor()
-            cur.execute("INSERT INTO login (username, id) VALUES (?,?)",(username, id))
-            conn.commit()
-            conn.close()
-            return jsonify({"status":"account oauth is created"}),200
-        if result_user:
-            return jsonify({"status":"login is sucessful"}),200
+        if senha_descodificada:
+            return jsonify({"status":"login is sucessful"}), 200
+        else:
+            return jsonify({"status": "wrong password, check the password entry"}), 401
         
