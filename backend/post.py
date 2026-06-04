@@ -59,8 +59,7 @@ def new_comment():
     if username == g.username:
         text_comment = data.get("text_comment")
         post_id = data.get("post_id")
-        comment_id = data.get("comment_id")
-        if None in (username, text_comment, post_id, comment_id):
+        if None in (username, text_comment, post_id):
             return jsonify({"status":"the informations is empty"}), 401
         else:
             conn = get_db()

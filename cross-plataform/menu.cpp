@@ -635,6 +635,7 @@ int main(int argc, char *argv[])
     QString bio_text = QCoreApplication::translate("my account", "biography");
     QString profile_picture_text = QCoreApplication::translate("my account", "profile picture");
     QString comments_text = QCoreApplication::translate("feed", "comments");
+    QString new_comment_text = QCoreApplication::translate("feed", "new comment");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -1107,16 +1108,47 @@ int main(int argc, char *argv[])
 
         return comments;
     };
+    newCommentRequest = [&](QString post_id, QString text_comment){
+        QJsonObject json_new;
+        json_new["post_id"] = post_id;
+        json_new["username"] = config["FAST-LOGIN"]["username"];
+        json_new["text_comment"] = text_comment;
+        requestHTTP(
+            url + "/comments",
+            "POST",
+            json_new
+        );
+    };
+    newCommentPage = [&](QString post_id){
+        clearLayout(layout);
+        QLineEdit *commentInput = new QLineEdit();
+        commentInput->setPlaceholderText(comments_text);
+        QPushButton *sendButton = new QPushButton(send_text);
+        QPushButton *backButton = new QPushButton(back_text);
+        layout->addWidget(commentInput);
+        layout->addWidget(sendButton);
+        layout->addWidget(backButton);
+        QObject::connect(backButton, &QPushButton::clicked, [=](){
+            commentPage(post_id);
+        });
+        QObject::connect(sendButton, &QPushButton::clicked, [=](){
+            newCommentPage(QString::number(post_id), commentInput->text());
+        });
+    };
     commentPage = [&](QString post_id){
         clearLayout(layout);
         QList<QWidget*> scroll;
         QLabel *commentsSession = new QLabel(comments_text);
         QList comments_object = commentRequest(post_id);
         for(int i = 0; i < comments_object.length(); i++){};
+        QPushButton *new_comment = new QPushButton(new_comment_text);
         QPushButton *back_button = new QPushButton(back_text);
+        layout->addWidget(new_comment);
+        layout->addWidget(back_button);
         QObject::connect(back_button, &QPushButton::clicked,[=](){
             initialPage();
         });
+        scroll_area(layout, scroll);
 
     };
     showfeed = [&]()
@@ -1256,7 +1288,7 @@ int main(int argc, char *argv[])
 
                 });
                 QObject::connect(commentButton,&QPushButton::clicked, [=](){
-                    commentPage(postId);
+                    commentPage(QString::number(postId));
                 });
                 starLayout->addWidget(iconButton);
                 starLayout->addWidget(starLabel);
