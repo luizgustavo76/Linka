@@ -634,7 +634,7 @@ int main(int argc, char *argv[])
     QString upload_text = QCoreApplication::translate("my account", "upload");
     QString bio_text = QCoreApplication::translate("my account", "biography");
     QString profile_picture_text = QCoreApplication::translate("my account", "profile picture");
-    QString comments_session_text = QCoreApplication::translate("feed", "comments");
+    QString comments_text = QCoreApplication::translate("feed", "comments");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -677,7 +677,7 @@ int main(int argc, char *argv[])
     std::function<void(QString)> sendEdit;
     std::function<void()> change_url;
     std::function<void(QString)> commentPage;
-    std::function<void(QString)> commentRequest;
+    std::function<QList<QString>(QString)> commentRequest;
     
     loginPage = [&](){
         clearLayout(layout);
@@ -1083,21 +1083,36 @@ int main(int argc, char *argv[])
         
     };
     commentRequest = [&](QString post_id){
+
+        QList<QString> comments;
         QJsonObject comments_json;
         comments_json["post_id"] = post_id;
-        response = requestHTTP(
+        QString response = requestHTTP(
             url + "/view-comments",
             "POST",
             comments_json
         );
-        return response;
+
+        QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+
+        if(doc.isArray()){
+            QJsonArray arr = doc.array();
+
+            for(int i = 0; i < arr.size(); i++){
+                comments.append(
+                    arr[i].toObject()["comment"].toString()
+                );
+            }
+        }
+
+        return comments;
     };
     commentPage = [&](QString post_id){
         clearLayout(layout);
         QList<QWidget*> scroll;
         QLabel *commentsSession = new QLabel(comments_text);
-        QList comments_object = commentRequest(post_id)
-        for(int i = 0; i < comments_object.lenght(); i++)
+        QList comments_object = commentRequest(post_id);
+        for(int i = 0; i < comments_object.length(); i++){};
         QPushButton *back_button = new QPushButton(back_text);
         QObject::connect(back_button, &QPushButton::clicked,[=](){
             initialPage();
