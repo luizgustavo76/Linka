@@ -82,6 +82,10 @@
       <translation>Comentários</translation>
     </message>
     <message>
+        <source>new comment</source>
+        <translation>New comment</translation>
+    </message>
+    <message>
       <source>new post</source>
       <translation>Novo post</translation>
     </message>
