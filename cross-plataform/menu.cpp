@@ -1186,8 +1186,9 @@ int main(int argc, char *argv[])
 
                 // ===== BOTÃO STAR =====
                 QPushButton *iconButton = new QPushButton();
+                QPushButton *commentButton = new QPushButton("comments");
                 QLabel *starLabel = new QLabel("...");
-
+                frameLayout->addWidget(commentButton);
                 frameLayout->addWidget(iconButton);
                 frameLayout->addWidget(starLabel);
 
@@ -1197,6 +1198,9 @@ int main(int argc, char *argv[])
                 iconButton->setStyleSheet("border: none;");
 
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
+                commentButton->setIconSize(QSize(26, 48));
+                commentButton->setStyleSheet("border: none;");
+
 
                 // ponteiro seguro
                 QPointer<QLabel> safeStarLabel = starLabel;
@@ -1251,7 +1255,9 @@ int main(int argc, char *argv[])
                     };
 
                 });
-
+                QObject::connect(commentButton,&QPushButton::clicked, [=](){
+                    commentPage(postId);
+                });
                 starLayout->addWidget(iconButton);
                 starLayout->addWidget(starLabel);
                 starLayout->addStretch();
@@ -1278,7 +1284,6 @@ int main(int argc, char *argv[])
 
             QObject::connect(btnNewPost, &QPushButton::clicked, [=](){
                 new_post();
-                // new_post();
             });
 
         });
