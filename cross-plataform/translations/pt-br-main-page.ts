@@ -80,7 +80,7 @@
     <message>
       <source>Comments</source>
       <translation>Comentários</translation>
-    <message>
+    </message>
     <message>
       <source>new post</source>
       <translation>Novo post</translation>

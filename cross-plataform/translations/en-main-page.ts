@@ -49,7 +49,7 @@
     <message>
       <source>Comments</source>
       <translation>Comments</translation>
-    <message>
+    </message>
     <message>
       <source>new post</source>
       <translation>new post</translation>
