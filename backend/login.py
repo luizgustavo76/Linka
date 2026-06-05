@@ -49,11 +49,13 @@ class Login:
             conn.close()
         criar_db_login()
     def get_db_login(self):
-        conn = sqlite3.connect(self.login_dir)
+        conn = sqlite3.connect(self.login_dir, timeout=15)
+        conn.execute("PRAGMA journal_mode=WAL;")
         return conn
     def get_db_fastlogin(self):
-        conn = sqlite3.connect(self.fast_login)
-        return conn    
+        conn = sqlite3.connect(self.fast_login, timeout=15)
+        conn.execute("PRAGMA journal_mode=WAL;")
+        return conn
     #transformar senha em texto para hash
     def gerar_hash(self, senha):
         self.senha_hash = generate_password_hash(senha)
@@ -87,6 +89,8 @@ def enviar_email(destino, assunto, mensagem_html):
 def register():
     try:
         dados = request.get_json()
+        if dados == None:
+            return jsonify({"data is missing"}),401
         username = dados.get("username")
         password = dados.get("senha") or dados.get("password")
         email = dados.get("email")
@@ -231,8 +235,11 @@ def register():
             </body>
             </html>
             """
-            enviar_email(destino=email, assunto="Linka Login", mensagem_html=html_register)
-            return jsonify({"status":"account created with sucess!"}), 201
+            try:
+                enviar_email(destino=email, assunto="Linka Login", mensagem_html=html_register)
+                return jsonify({"status":"account created with sucess!"}), 201
+            except Exception:
+                return jsonify({"status":"account created with sucess but failed to sent email"})
     except Exception as e:
         return jsonify({"status": "an error has occurred", "error": str(e)}),500
 @login_bp.route("/create-fast-login", methods=["POST"])
@@ -242,13 +249,14 @@ def create_fast_login():
     password = data.get("password")
     conn = login_system.get_db_login()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM login WHERE username = ? AND password = ?", (username, password))
+    cur.execute("SELECT * FROM login WHERE username = ?", (username,))
     result = cur.fetchone()
     conn.close()
-    if result == None:
-        return jsonify({"status":"username or password is wrong"}),401
+    hash = result[1]
+    if not login_system.verificar_hash(password, hash):
+        return jsonify({"status":"the username or passowrd s incorret"}),401
     else:
-        conn = login_system.get_db_login()
+        conn = login_system.get_db_fastlogin()
         cur = conn.cursor()
         token = secrets.token_hex(32)
         cur.execute("INSERT INTO Fastlogin (username, token) VALUES (?, ?)", (username, token))
@@ -263,16 +271,19 @@ def fast_login():
     conn = login_system.get_db_fastlogin()
     cur = conn.cursor()
     cur.execute("SELECT * FROM Fastlogin WHERE username = ? AND token = ?", (username, token))
-    result = cur.fetchall()
+    result = cur.fetchone()
     conn.close()
-    row = {
-        "username":result[0],
-        "token":result[1]
-    }
-    if None in (row["username"], row["token"]):
+    try:
+        row = {
+            "username":result[0],
+            "token":result[1]
+        }
+        if None in (row["username"], row["token"]):
+            return jsonify({"status":"user dont have a session"}),401
+        else:
+            return jsonify({"status":"logged in with sucess"}),200
+    except:
         return jsonify({"status":"user dont have a session"}),401
-    else:
-        return jsonify({"status":"logged in with sucess"}),200
 #login route
 @login_bp.route("/login", methods=["POST"])
 def login():

@@ -76,10 +76,10 @@ def new_session():
         return jsonify({"status":"the json is empty or is missing data"}),401
     conn = get_db_login()
     cur = conn.cursor()
-    cur.execute("SELECT senha FROM login WHERE username = ?",(username,))
+    cur.execute("SELECT password FROM login WHERE username = ?",(username,))
     result = cur.fetchone()
     conn.close()
-    if verificar_hash(password, result["senha"]):
+    if verificar_hash(password, result["password"]):
         emission_date = datetime.now()
         expire_date = emission_date + timedelta(hours=2)
         token = gerar_token()
