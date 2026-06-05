@@ -1,0 +1,6 @@
+<rules><dependencies><lib name="Qt5Core_armeabi-v7a"><depends>
+<jar bundling="1" file="jar/QtAndroid.jar"  />
+<lib file="plugins/platforms/libplugins_platforms_qtforandroid_armeabi-v7a.so"  />
+<permission name="android.permission.INTERNET" />
+<permission name="android.permission.WRITE_EXTERNAL_STORAGE" />
+</depends></lib></dependencies></rules>

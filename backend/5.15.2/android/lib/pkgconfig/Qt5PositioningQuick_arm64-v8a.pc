@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 PositioningQuick
+Description: Qt PositioningQuick module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5PositioningQuick_arm64-v8a 
+Cflags: -DQT_POSITIONINGQUICK_LIB -I${includedir}/QtPositioningQuick -I${includedir}
+Requires: Qt5Quick_arm64-v8a Qt5Positioning_arm64-v8a Qt5Qml_arm64-v8a Qt5Core_arm64-v8a
+

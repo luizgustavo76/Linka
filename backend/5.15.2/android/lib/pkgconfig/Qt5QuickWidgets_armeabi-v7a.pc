@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 QuickWidgets
+Description: Qt QuickWidgets module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5QuickWidgets_armeabi-v7a 
+Cflags: -DQT_QUICKWIDGETS_LIB -I${includedir}/QtQuickWidgets -I${includedir}
+Requires: Qt5Core_armeabi-v7a Qt5Gui_armeabi-v7a Qt5Qml_armeabi-v7a Qt5Quick_armeabi-v7a Qt5Widgets_armeabi-v7a
+

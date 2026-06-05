@@ -1,0 +1,3 @@
+<rules><dependencies><lib name="Qt5PrintSupport_x86"><depends>
+<bundled file="plugins/printsupport" />
+</depends></lib></dependencies></rules>

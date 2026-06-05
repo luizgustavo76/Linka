@@ -1,0 +1,14 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 UiTools
+Description: Qt UiTools module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5UiTools_x86 
+Libs.private: /home/qt/work/install/lib/libQt5Widgets_x86.so /home/qt/work/install/lib/libQt5Gui_x86.so /home/qt/work/install/lib/libQt5Core_x86.so /home/qt/work/install/lib/libQt5Widgets_x86.so /home/qt/work/install/lib/libQt5Gui_x86.so /home/qt/work/install/lib/libQt5Core_x86.so -lGLESv2  -llog -lz -lm -ldl -lc 
+Cflags: -DQT_UITOOLS_LIB -I${includedir}/QtUiTools -I${includedir}
+Requires: Qt5Core_x86 Qt5Gui_x86 Qt5Widgets_x86
+

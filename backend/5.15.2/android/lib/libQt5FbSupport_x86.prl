@@ -1,0 +1,7 @@
+
+QMAKE_PRO_INPUT = fbconvenience.pro
+QMAKE_PRL_TARGET = libQt5FbSupport_x86.a
+QMAKE_PRL_CONFIG = lex yacc depend_includepath testcase_targets import_qpa_plugin prepare_docs qt_docs_targets qt_build_extra file_copies qmake_use qt warn_on release link_prl android_install unversioned_soname unversioned_libname plugin_with_soname android_deployment_settings clang_pch_style android-21 cross_compile release android linux unix posix gcc clang llvm cross_compile compile_examples enable_new_dtags neon precompile_header prefix_build force_independent force_bootstrap builtin_testdata utf8_source create_prl link_prl no_private_qt_headers_warning QTDIR_build qt_example_installs exceptions_off testcase_exceptions explicitlib warning_clean x86 X86Build X86 build_pass static internal_module relative_qt_rpath git_build target_qt c++11 strict_c++ c++14 c++1z c99 c11 hide_symbols qt_install_headers need_fwd_pri qt_install_module create_cmake compiler_supports_fpmath qt_android_deps no_linker_version_script create_libtool x86 X86Build X86 build_pass have_target staticlib armeabi-v7a_and_arm64-v8a_and_x86_and_x86_64 build_all exclusive_builds multi_android_abi no_autoqmake thread opengl moc resources
+QMAKE_PRL_VERSION = 5.15.2
+QMAKE_PRL_LIBS = $$[QT_INSTALL_LIBS]/libQt5Gui_x86.so $$[QT_INSTALL_LIBS]/libQt5Core_x86.so -lGLESv2 -llog -lz -lm -ldl -lc
+QMAKE_PRL_LIBS_FOR_CMAKE = $$[QT_INSTALL_LIBS]/libQt5Gui_x86.so;$$[QT_INSTALL_LIBS]/libQt5Core_x86.so;-lGLESv2;;-llog;-lz;-lm;-ldl;-lc

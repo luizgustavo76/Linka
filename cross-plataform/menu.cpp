@@ -793,7 +793,7 @@ int main(int argc, char *argv[])
         QJsonArray inbox_json = obj["inbox"].toArray();
         for(int i = 0; i < inbox_json.size(); i++){
             for(int b = 0; b < inbox_json[i].toArray().size(); b++){
-                QLabel *notification_inbox = new QLabel(inbox_json[i][b].toString());
+                QLabel *notification_inbox = new QLabel(inbox_json[i].toArray()[b].toString());
                 notifications.append(notification_inbox);
             };
             QPushButton *accept_button = new QPushButton(accept_text);
@@ -1138,22 +1138,22 @@ int main(int argc, char *argv[])
             newCommentRequest(post_id, commentInput->text());
         });
     };
-    commentPage = [&](QString post_id){
-        clearLayout(layout);
-        QList<QWidget*> scroll;
-        QLabel *commentsSession = new QLabel(comments_text);
-        QList comments_object = commentRequest(post_id);
-        for(int i = 0; i < comments_object.length(); i++){};
-        QPushButton *new_comment = new QPushButton(new_comment_text);
-        QPushButton *back_button = new QPushButton(back_text);
-        layout->addWidget(new_comment);
-        layout->addWidget(back_button);
-        QObject::connect(back_button, &QPushButton::clicked,[=](){
-            initialPage();
-        });
-        scroll_area(layout, scroll);
+    // commentPage = [&](QString post_id){
+    //     clearLayout(layout);
+    //     QList<QWidget*> scroll;
+    //     QLabel *commentsSession = new QLabel(comments_text);
+    //     QJsonArray comments_object = commentRequest(post_id);
+    //     for(int i = 0; i < comments_object.length(); i++){};
+    //     QPushButton *new_comment = new QPushButton(new_comment_text);
+    //     QPushButton *back_button = new QPushButton(back_text);
+    //     layout->addWidget(new_comment);
+    //     layout->addWidget(back_button);
+    //     QObject::connect(back_button, &QPushButton::clicked,[=](){
+    //         initialPage();
+    //     });
+    //     scroll_area(layout, scroll);
 
-    };
+    // };
     fast_login = [&]()
     {
         if (config["FAST-LOGIN"]["token_login"].empty()){

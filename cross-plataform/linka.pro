@@ -6,3 +6,4 @@ SOURCES += menu.cpp
 QT -= ssl
 INCLUDEPATH += $$PWD/third_party
 RC_ICONS = assets/icon.ico
+ANDROID_ABIS = armeabi-v7a arm64-v8a

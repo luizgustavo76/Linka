@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 PrintSupport
+Description: Qt PrintSupport module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5PrintSupport_arm64-v8a 
+Cflags: -DQT_PRINTSUPPORT_LIB -I${includedir}/QtPrintSupport -I${includedir}
+Requires: Qt5Core_arm64-v8a Qt5Gui_arm64-v8a Qt5Widgets_arm64-v8a
+

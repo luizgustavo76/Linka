@@ -1,0 +1,3 @@
+<rules><dependencies><lib name="Qt5Qml_x86"><depends>
+<bundled file="plugins/qmltooling" />
+</depends></lib></dependencies></rules>

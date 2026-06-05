@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 WebChannel
+Description: Qt WebChannel module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5WebChannel_x86_64 
+Cflags: -DQT_WEBCHANNEL_LIB -I${includedir}/QtWebChannel -I${includedir}
+Requires: Qt5Core_x86_64 Qt5Qml_x86_64
+

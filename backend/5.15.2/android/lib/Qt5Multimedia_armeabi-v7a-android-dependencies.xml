@@ -1,0 +1,18 @@
+<rules><dependencies><lib name="Qt5Multimedia_armeabi-v7a"><depends>
+<jar bundling="1" file="jar/QtMultimedia.jar" initClass="org.qtproject.qt5.android.multimedia.QtMultimediaUtils" />
+<lib file="plugins/mediaservice/libplugins_mediaservice_qtmedia_android_armeabi-v7a.so"  />
+<lib file="lib/libQt5MultimediaQuick_armeabi-v7a.so" extends="Qt5Quick" />
+<bundled file="lib/libQt5MultimediaQuick_armeabi-v7a.so" />
+<bundled file="plugins/mediaservice" />
+<bundled file="plugins/audio" />
+<bundled file="plugins/video/bufferpool" />
+<bundled file="plugins/video/gstvideorenderer" />
+<bundled file="plugins/video/videonode" />
+<bundled file="plugins/playlistformats" />
+<bundled file="plugins/resourcepolicy" />
+<permission name="android.permission.CAMERA" />
+<permission name="android.permission.RECORD_AUDIO" />
+<feature name="android.hardware.camera" />
+<feature name="android.hardware.camera.autofocus" />
+<feature name="android.hardware.microphone" />
+</depends></lib></dependencies></rules>

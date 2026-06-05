@@ -1,0 +1,3 @@
+<rules><dependencies><lib name="Qt5Widgets_armeabi-v7a"><depends>
+<bundled file="plugins/styles" />
+</depends></lib></dependencies></rules>

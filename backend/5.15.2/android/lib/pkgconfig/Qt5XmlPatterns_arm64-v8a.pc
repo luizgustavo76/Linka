@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 XmlPatterns
+Description: Qt XmlPatterns module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5XmlPatterns_arm64-v8a 
+Cflags: -DQT_XMLPATTERNS_LIB -I${includedir}/QtXmlPatterns -I${includedir}
+Requires: Qt5Core_arm64-v8a Qt5Network_arm64-v8a
+

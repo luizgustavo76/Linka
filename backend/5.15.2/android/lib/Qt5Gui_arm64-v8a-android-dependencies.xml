@@ -1,0 +1,12 @@
+<rules><dependencies><lib name="Qt5Gui_arm64-v8a"><depends>
+<bundled file="plugins/accessiblebridge" />
+<bundled file="plugins/platforms" />
+<bundled file="plugins/platforms/darwin" />
+<bundled file="plugins/xcbglintegrations" />
+<bundled file="plugins/platformthemes" />
+<bundled file="plugins/platforminputcontexts" />
+<bundled file="plugins/generic" />
+<bundled file="plugins/iconengines" />
+<bundled file="plugins/imageformats" />
+<bundled file="plugins/egldeviceintegrations" />
+</depends></lib></dependencies></rules>

@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 3DQuickScene2D
+Description: Qt 3DQuickScene2D module
+Version: 5.15.2
+Libs: -L${libdir} -lQt53DQuickScene2D_armeabi-v7a 
+Cflags: -DQT_3DQUICKSCENE2D_LIB -I${includedir}/Qt3DQuickScene2D -I${includedir}
+Requires: Qt5Core_armeabi-v7a Qt5Gui_armeabi-v7a Qt5Qml_armeabi-v7a Qt53DCore_armeabi-v7a Qt53DRender_armeabi-v7a Qt53DQuick_armeabi-v7a
+

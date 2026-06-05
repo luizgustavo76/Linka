@@ -1,0 +1,3 @@
+<rules><dependencies><lib name="Qt5Widgets_x86_64"><depends>
+<bundled file="plugins/styles" />
+</depends></lib></dependencies></rules>

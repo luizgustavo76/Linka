@@ -1,0 +1,6 @@
+<rules><dependencies><lib name="Qt5Gamepad_armeabi-v7a"><depends>
+<jar bundling="1" file="jar/QtAndroidGamepad.jar"  />
+<lib file="plugins/gamepads/libplugins_gamepads_androidgamepad_armeabi-v7a.so"  />
+<bundled file="plugins/gamepads" />
+<feature name="android.hardware.gamepad" />
+</depends></lib></dependencies></rules>

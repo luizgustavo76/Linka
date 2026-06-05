@@ -1,0 +1,5 @@
+<rules><dependencies><lib name="Qt5Sensors_arm64-v8a"><depends>
+<lib file="plugins/sensors/libplugins_sensors_qtsensors_android_arm64-v8a.so"  />
+<bundled file="plugins/sensors" />
+<bundled file="plugins/sensorgestures" />
+</depends></lib></dependencies></rules>
