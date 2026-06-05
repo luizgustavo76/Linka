@@ -679,7 +679,8 @@ int main(int argc, char *argv[])
     std::function<void()> change_url;
     std::function<void(QString)> commentPage;
     std::function<QList<QString>(QString)> commentRequest;
-    
+    std::function<void(QString, QString)> newCommentRequest;
+    std::function<void(QString)> newCommentPage;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1111,7 +1112,7 @@ int main(int argc, char *argv[])
     newCommentRequest = [&](QString post_id, QString text_comment){
         QJsonObject json_new;
         json_new["post_id"] = post_id;
-        json_new["username"] = config["FAST-LOGIN"]["username"];
+        json_new["username"] = QString::fromStdString(config["FAST-LOGIN"]["username"]);
         json_new["text_comment"] = text_comment;
         requestHTTP(
             url + "/comments",
@@ -1132,7 +1133,7 @@ int main(int argc, char *argv[])
             commentPage(post_id);
         });
         QObject::connect(sendButton, &QPushButton::clicked, [=](){
-            newCommentPage(QString::number(post_id), commentInput->text());
+            newCommentRequest(post_id, commentInput->text());
         });
     };
     commentPage = [&](QString post_id){
