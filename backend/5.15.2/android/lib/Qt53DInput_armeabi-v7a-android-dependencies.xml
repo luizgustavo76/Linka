@@ -1,3 +1,0 @@
-<rules><dependencies><lib name="Qt53DInput_armeabi-v7a"><depends>
-<bundled file="plugins/3dinputdevices" />
-</depends></lib></dependencies></rules>
