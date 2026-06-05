@@ -1,3 +1,0 @@
-<rules><dependencies><lib name="Qt5Location_x86"><depends>
-<bundled file="plugins/geoservices" />
-</depends></lib></dependencies></rules>

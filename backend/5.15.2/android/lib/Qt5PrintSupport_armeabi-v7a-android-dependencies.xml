@@ -1,3 +1,0 @@
-<rules><dependencies><lib name="Qt5PrintSupport_armeabi-v7a"><depends>
-<bundled file="plugins/printsupport" />
-</depends></lib></dependencies></rules>

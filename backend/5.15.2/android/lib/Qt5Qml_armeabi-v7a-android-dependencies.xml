@@ -1,3 +1,0 @@
-<rules><dependencies><lib name="Qt5Qml_armeabi-v7a"><depends>
-<bundled file="plugins/qmltooling" />
-</depends></lib></dependencies></rules>

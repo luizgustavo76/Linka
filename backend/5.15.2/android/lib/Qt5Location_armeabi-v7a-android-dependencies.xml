@@ -1,3 +1,0 @@
-<rules><dependencies><lib name="Qt5Location_armeabi-v7a"><depends>
-<bundled file="plugins/geoservices" />
-</depends></lib></dependencies></rules>
