@@ -482,6 +482,7 @@ QString requestHTTP(const QString &url,
 
     return response;
 }
+
 void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
 {
     QScrollArea *scroll = new QScrollArea();
@@ -681,6 +682,7 @@ int main(int argc, char *argv[])
     std::function<QList<QString>(QString)> commentRequest;
     std::function<void(QString, QString)> newCommentRequest;
     std::function<void(QString)> newCommentPage;
+    std::function<void()> fast_login;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1151,6 +1153,32 @@ int main(int argc, char *argv[])
         });
         scroll_area(layout, scroll);
 
+    };
+    fast_login = [&]()
+    {
+        if (config["FAST-LOGIN"]["token_login"].empty()){
+            loginPage();
+            return;
+        }else{
+            int status_code = 0;
+            QJsonObject json_fast;
+            json_fast["username"] = QString::fromStdString(config["FAST-LOGIN"]["username"]);
+            json_fast["token"] = QString::fromStdString(config["FAST-LOGIN"]["token_login"]);
+            requestHTTP(
+                QString::fromStdString(config["SERVER"]["url"]) + "/fast-login",
+                "POST",
+                json_fast,
+                5000,
+                &status_code
+            );
+            if (status_code == 200 || status_code == 201){
+                initialPage();
+                return;
+            }else{
+                loginPage();
+                return;
+            };
+        };
     };
     showfeed = [&]()
     {
@@ -1841,6 +1869,7 @@ int main(int argc, char *argv[])
 
         scroll_area(layout, content);
     };
+    fast_login();
     //pagina inicial para renderizar
     initialPage = [&]()
     {
