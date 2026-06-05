@@ -30,7 +30,7 @@ class Login:
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS login(
                         username TEXT UNIQUE,
-                        senha TEXT,
+                        password TEXT,
                         email TEXT UNIQUE,
                         id TEXT UNIQUE
                     )
@@ -102,7 +102,7 @@ def register():
             conn = login_system.get_db_login()
             cur = conn.cursor()
             cur.execute("""
-                INSERT INTO login (username, senha, email) VALUES (?, ?, ?)""",(username, senha_com_hash, email))
+                INSERT INTO login (username, password, email) VALUES (?, ?, ?)""",(username, senha_com_hash, email))
             conn.commit()
             conn.close()
             html_register = f"""
@@ -233,48 +233,44 @@ def register():
             return jsonify({"status":"account created with sucess!"}), 201
     except Exception as e:
         return jsonify({"status": "an error has occurred", "error": str(e)})
-
-#route of the fast login
+@login_bp.rouet("/create-fast-login", methods=["POST"])
+def create_fast_login():
+    data = request.get_json()
+    username = data.get("username")
+    password = data.get("password")
+    conn = login_system.get_db_login()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM login WHERE username = ? AND password = ?", (username, password))
+    result = cur.fetchone()
+    conn.close()
+    if result == None:
+        return jsonify({"status":"username or password is wrong"}),401
+    else:
+        conn = login_system.get_db_login()
+        cur = conn.cursor()
+        token = secrets.token_hex(32)
+        cur.execute("INSERT INTO Fastlogin (username, token) VALUES (?, ?)", (username, token))
+        conn.commit()
+        conn.close()
+        return jsonify({"status":"the session has been created", "token":token}),200
 @login_bp.route("/fast-login", methods=["POST"])
-def FastLogin():
+def fast_login():
     data = request.get_json()
     username = data.get("username")
     token = data.get("token")
-
-    def generate_token(length=32):
-        return secrets.token_hex(length)
-
-    if not token:
-        new_token = generate_token()
-        conn = login_system.get_db_fastlogin()
-        cur = conn.cursor()
-        cur.execute("INSERT INTO FastLogin (username, token) VALUES (?, ?)", (username, new_token))
-        conn.commit()
-        conn.close()
-        return jsonify({"status":"fastlogin created", "token": new_token}), 201
-
-    if token:
-        conn = login_system.get_db_fastlogin()
-        cur = conn.cursor()
-        cur.execute("SELECT token FROM FastLogin WHERE username = ?", (username,))
-        get_token = cur.fetchone()
-
-        if not get_token:
-            conn.close()
-            return jsonify({"status":"user not found"}), 404
-
-        saved_token = get_token[0]
-
-        if token == saved_token:
-            new_token = generate_token()
-            cur.execute("UPDATE FastLogin SET token = ? WHERE username = ?", (new_token, username))
-            conn.commit()
-            conn.close()
-            return jsonify({"status":"fastlogin success", "token": new_token}), 200
-        else:
-            conn.close()
-            return jsonify({"status":"the token is invalid"}), 401
-        
+    conn = login_system.get_db_fastlogin()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM Fastlogin WHERE username = ? AND token = ?", (username, token))
+    result = cur.fetchall()
+    conn.close()
+    row = {
+        "username":result[0],
+        "token":result[1]
+    }
+    if None in (row["username"], row["token"]):
+        return jsonify({"status":"user dont have a session"}),401
+    else:
+        return jsonify({"status":"logged in with sucess"}),200
 #login route
 @login_bp.route("/login", methods=["POST"])
 def login():
@@ -292,7 +288,7 @@ def login():
     if resultado_username:
         conn = login_system.get_db_login()
         cur = conn.cursor()
-        cur.execute("SELECT senha FROM login WHERE username =?", (username,))
+        cur.execute("SELECT password FROM login WHERE username =?", (username,))
         resultado_senha = cur.fetchone()
         hash_salvo = resultado_senha[0]
         senha_descodificada = login_system.verificar_hash(password, hash_salvo)
