@@ -1,0 +1,7 @@
+<rules><dependencies><lib name="Qt5Positioning_x86_64"><depends>
+<jar bundling="1" file="jar/QtPositioning.jar" initClass="org.qtproject.qt5.android.positioning.QtPositioning" />
+<lib file="plugins/position/libplugins_position_qtposition_android_x86_64.so"  />
+<bundled file="plugins/position" />
+<permission name="android.permission.ACCESS_FINE_LOCATION" />
+<feature name="android.hardware.location.gps" />
+</depends></lib></dependencies></rules>

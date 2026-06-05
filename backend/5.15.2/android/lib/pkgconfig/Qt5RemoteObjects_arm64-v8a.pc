@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 RemoteObjects
+Description: Qt RemoteObjects module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5RemoteObjects_arm64-v8a 
+Cflags: -DQT_REMOTEOBJECTS_LIB -I${includedir}/QtRemoteObjects -I${includedir}
+Requires: Qt5Core_arm64-v8a Qt5Network_arm64-v8a
+

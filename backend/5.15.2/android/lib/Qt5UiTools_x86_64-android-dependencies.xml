@@ -1,0 +1,3 @@
+<rules><dependencies><lib name="Qt5UiTools_x86_64"><depends>
+<bundled file="plugins/designer" />
+</depends></lib></dependencies></rules>

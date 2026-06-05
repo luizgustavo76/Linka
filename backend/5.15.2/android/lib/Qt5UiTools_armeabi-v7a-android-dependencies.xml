@@ -1,0 +1,3 @@
+<rules><dependencies><lib name="Qt5UiTools_armeabi-v7a"><depends>
+<bundled file="plugins/designer" />
+</depends></lib></dependencies></rules>

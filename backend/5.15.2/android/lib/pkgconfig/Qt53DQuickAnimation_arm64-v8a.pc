@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 3DQuickAnimation
+Description: Qt 3DQuickAnimation module
+Version: 5.15.2
+Libs: -L${libdir} -lQt53DQuickAnimation_arm64-v8a 
+Cflags: -DQT_3DQUICKANIMATION_LIB -I${includedir}/Qt3DQuickAnimation -I${includedir}
+Requires: Qt5Core_arm64-v8a Qt5Gui_arm64-v8a Qt5Qml_arm64-v8a Qt53DCore_arm64-v8a Qt53DRender_arm64-v8a Qt53DAnimation_arm64-v8a Qt53DQuick_arm64-v8a
+

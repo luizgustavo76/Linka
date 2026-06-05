@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 3DLogic
+Description: Qt 3DLogic module
+Version: 5.15.2
+Libs: -L${libdir} -lQt53DLogic_x86_64 
+Cflags: -DQT_3DLOGIC_LIB -I${includedir}/Qt3DLogic -I${includedir}
+Requires: Qt5Core_x86_64 Qt5Gui_x86_64 Qt53DCore_x86_64
+

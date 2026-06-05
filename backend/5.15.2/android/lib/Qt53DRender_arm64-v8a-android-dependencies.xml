@@ -1,0 +1,6 @@
+<rules><dependencies><lib name="Qt53DRender_arm64-v8a"><depends>
+<bundled file="plugins/sceneparsers" />
+<bundled file="plugins/geometryloaders" />
+<bundled file="plugins/renderplugins" />
+<bundled file="plugins/renderers" />
+</depends></lib></dependencies></rules>

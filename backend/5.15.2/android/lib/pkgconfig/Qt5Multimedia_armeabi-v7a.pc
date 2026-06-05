@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 Multimedia
+Description: Qt Multimedia module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5Multimedia_armeabi-v7a 
+Cflags: -DQT_MULTIMEDIA_LIB -I${includedir}/QtMultimedia -I${includedir}
+Requires: Qt5Core_armeabi-v7a Qt5Network_armeabi-v7a Qt5Gui_armeabi-v7a
+

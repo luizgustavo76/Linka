@@ -1,0 +1,14 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 OpenGLExtensions
+Description: Qt OpenGLExtensions module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5OpenGLExtensions_armeabi-v7a 
+Libs.private: /home/qt/work/install/lib/libQt5Gui_armeabi-v7a.so /home/qt/work/install/lib/libQt5Core_armeabi-v7a.so -lGLESv2  -llog -lz -lm -ldl -lc 
+Cflags: -DQT_OPENGLEXTENSIONS_LIB -I${includedir}/QtOpenGLExtensions -I${includedir}
+Requires: Qt5Core_armeabi-v7a Qt5Gui_armeabi-v7a
+

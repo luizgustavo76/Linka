@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 WebSockets
+Description: Qt WebSockets module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5WebSockets_x86 
+Cflags: -DQT_WEBSOCKETS_LIB -I${includedir}/QtWebSockets -I${includedir}
+Requires: Qt5Core_x86 Qt5Network_x86
+

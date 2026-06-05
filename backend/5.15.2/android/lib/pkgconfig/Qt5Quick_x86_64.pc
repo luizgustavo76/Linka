@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 Quick
+Description: Qt Quick module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5Quick_x86_64 
+Cflags: -DQT_QUICK_LIB -I${includedir}/QtQuick -I${includedir}
+Requires: Qt5Core_x86_64 Qt5Gui_x86_64 Qt5Qml_x86_64 Qt5QmlModels_x86_64
+

@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 QuickTest
+Description: Qt QuickTest module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5QuickTest_armeabi-v7a 
+Cflags: -DQT_QMLTEST_LIB -I${includedir}/QtQuickTest -I${includedir}
+Requires: Qt5Core_armeabi-v7a Qt5Test_armeabi-v7a Qt5Widgets_armeabi-v7a
+

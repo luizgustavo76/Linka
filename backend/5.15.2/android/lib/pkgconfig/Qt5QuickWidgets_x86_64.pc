@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 QuickWidgets
+Description: Qt QuickWidgets module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5QuickWidgets_x86_64 
+Cflags: -DQT_QUICKWIDGETS_LIB -I${includedir}/QtQuickWidgets -I${includedir}
+Requires: Qt5Core_x86_64 Qt5Gui_x86_64 Qt5Qml_x86_64 Qt5Quick_x86_64 Qt5Widgets_x86_64
+

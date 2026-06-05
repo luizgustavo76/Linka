@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 3DQuickInput
+Description: Qt 3DQuickInput module
+Version: 5.15.2
+Libs: -L${libdir} -lQt53DQuickInput_x86_64 
+Cflags: -DQT_3DQUICKINPUT_LIB -I${includedir}/Qt3DQuickInput -I${includedir}
+Requires: Qt5Core_x86_64 Qt5Gui_x86_64 Qt5Qml_x86_64 Qt53DCore_x86_64 Qt53DInput_x86_64 Qt53DQuick_x86_64
+

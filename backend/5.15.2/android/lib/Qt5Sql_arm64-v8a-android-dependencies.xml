@@ -1,0 +1,3 @@
+<rules><dependencies><lib name="Qt5Sql_arm64-v8a"><depends>
+<bundled file="plugins/sqldrivers" />
+</depends></lib></dependencies></rules>

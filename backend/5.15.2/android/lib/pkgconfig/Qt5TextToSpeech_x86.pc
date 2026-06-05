@@ -1,0 +1,13 @@
+prefix=/home/qt/work/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 TextToSpeech
+Description: Qt TextToSpeech module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5TextToSpeech_x86 
+Cflags: -DQT_TEXTTOSPEECH_LIB -I${includedir}/QtTextToSpeech -I${includedir}
+Requires: Qt5Core_x86
+

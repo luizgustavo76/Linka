@@ -1,0 +1,4 @@
+<rules><dependencies><lib name="Qt5Quick_x86"><depends>
+<bundled file="qml" />
+<bundled file="plugins/scenegraph" />
+</depends></lib></dependencies></rules>
