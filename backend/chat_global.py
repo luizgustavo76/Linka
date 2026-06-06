@@ -33,60 +33,39 @@ def send_global_message():
     return jsonify({"status":"the message has been sent"}),200
 @chat_global_bp.route("/view-global-message", methods=["POST"])
 def view_global_message():
-
     data = request.get_json()
-
     last_id = data.get("id", 0)
 
     conn = get_db()
     cur = conn.cursor()
 
     if int(last_id) == 0:
-
         cur.execute("""
-            SELECT sender, message, id
-            FROM chat_global
-            ORDER BY id DESC
-            LIMIT 20
+            SELECT sender, message, id FROM (
+                SELECT sender, message, id
+                FROM chat_global
+                ORDER BY id DESC
+                LIMIT 20
+            ) ORDER BY id ASC
         """)
-
         rows = cur.fetchall()
-
-        messages = []
-
-        for row in rows:
-
-            messages.append({
-                "sender": row[0],
-                "message": row[1],
-                "id": row[2]
-            })
-
-        conn.close()
-
-        return jsonify(messages)
-
     else:
-
+        
         cur.execute("""
             SELECT sender, message, id
             FROM chat_global
             WHERE id > ?
             ORDER BY id ASC
         """, (last_id,))
-
         rows = cur.fetchall()
 
-        messages = []
+    messages = []
+    for row in rows:
+        messages.append({
+            "sender": row[0],
+            "message": row[1],
+            "id": row[2]
+        })
 
-        for row in rows:
-
-            messages.append({
-                "sender": row[0],
-                "message": row[1],
-                "id": row[2]
-            })
-
-        conn.close()
-
-        return jsonify(messages)
+    conn.close()
+    return jsonify(messages)
