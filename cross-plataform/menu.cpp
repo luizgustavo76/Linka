@@ -313,11 +313,6 @@ QString requestHTTP(const QString &url,
         QNetworkAccessManager manager;
         QJsonObject jsonCopy = json;
         loadConfig();
-        QString username =
-            QString::fromStdString(
-                config["FAST-LOGIN"]["username"]
-            );
-        jsonCopy["username"] = username;
         QNetworkRequest request;
         request.setRawHeader(
             "Authorization",
@@ -387,11 +382,6 @@ QString requestHTTP(const QString &url,
         return response;
     };
 
-    if (!logged)
-    {
-        return performRequest(url, "");
-    }
-
     loadConfig();
     QString username =
         QString::fromStdString(
@@ -406,39 +396,13 @@ QString requestHTTP(const QString &url,
             config["FAST-LOGIN"]["token_session"]
         );
     
-    if(token.isEmpty() && logged == true)
-    {
-        token = newSession(
-            username,
-            password
-        );
-        config["FAST-LOGIN"]["token_session"] =
-            token.toStdString();
-        saveConfig();
-    }
     QString response =
         performRequest(
             url,
             token
         );
-    int code = 0;
-    if(statusCode)
-        code = *statusCode;
-    if(code == 401 || code == 403)
-    {
-        qDebug() << "Token expirado. Renovando...";
-        token = newSession(
-            username,
-            password
-        );
-        config["FAST-LOGIN"]["token_session"] =
-            token.toStdString();
-        saveConfig();
-        response =
-            performRequest(
-                url,
-                token
-            );
+    if (token.isEmpty()){
+        qDebug() << "token vazio";
     }
     return response;
 }
@@ -2053,10 +2017,7 @@ int main(int argc, char *argv[])
             QString userTxt = usernameEntry->text();
             QString passTxt = passwordEntry->text();
 
-            // Chamamos diretamente a geração de sessão para logar o usuário existente!
             QString token_gerado = newSession(userTxt, passTxt);
-            
-            // Se o token gerado não for vazio, o login deu sucesso!
             if (!token_gerado.isEmpty()){
                 loadConfig();
                 config["FAST-LOGIN"]["username"] = userTxt.toStdString();
@@ -2065,7 +2026,6 @@ int main(int argc, char *argv[])
                 saveConfig();
                 initialPage();
             } else {
-                // Se o newSession retornou vazio, significa que o usuário ou senha estão errados no Python
                 QLabel *error_label = new QLabel("Usuário ou senha incorretos!");
                 layout->addWidget(error_label);
             };
