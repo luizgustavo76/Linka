@@ -67,18 +67,27 @@ def gerar_token():
     return secrets.token_hex(16)
 
 
+
+
 @app.route("/new-session", methods=["POST"])
 def new_session():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
+    
     if None in (username, password):
         return jsonify({"status":"the json is empty or is missing data"}),401
+        
     conn = get_db_login()
     cur = conn.cursor()
     cur.execute("SELECT password FROM login WHERE username = ?",(username,))
     result = cur.fetchone()
     conn.close()
+    
+    # SE O USUÁRIO NÃO EXISTIR NO BANCO, PARA AQUI E NÃO CRASHA!
+    if not result:
+        return jsonify({"status": "user not found"}), 401
+        
     if verificar_hash(password, result["password"]):
         emission_date = datetime.now()
         expire_date = emission_date + timedelta(hours=2)
@@ -89,9 +98,8 @@ def new_session():
         conn.commit()
         conn.close()
         return jsonify({"status":"the session has created", "token":token}),200
-
-    else:
-        return jsonify({"status":"the password is incorret"}),401
+        
+    return jsonify({"status": "wrong password"}), 401
 public_routes = [
     "post.feed",
     "meta.return_version",

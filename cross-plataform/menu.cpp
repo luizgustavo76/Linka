@@ -234,7 +234,8 @@ QString requestHTTP(
     const QString &method,
     const QJsonObject &json,
     int timeoutMs = 5000,
-    int *statusCode = nullptr
+    int *statusCode = nullptr,
+    bool logged = true
 );
 QString newSession(QString username, QString password)
 {
@@ -303,54 +304,40 @@ QString requestHTTP(const QString &url,
                     const QString &method,
                     const QJsonObject &json,
                     int timeoutMs,
-                    int *statusCode)
+                    int *statusCode,
+                    bool logged)
 {
     auto performRequest = [&](const QString &targetUrl,
                               const QString &token) -> QString
     {
         QNetworkAccessManager manager;
-
         QJsonObject jsonCopy = json;
-
         loadConfig();
-
         QString username =
             QString::fromStdString(
                 config["FAST-LOGIN"]["username"]
             );
-
         jsonCopy["username"] = username;
-
         QNetworkRequest request;
-
         request.setRawHeader(
             "Authorization",
             QString("Bearer %1").arg(token).toUtf8()
         );
-
         request.setUrl(QUrl(targetUrl));
-
         request.setHeader(
             QNetworkRequest::ContentTypeHeader,
             "application/json"
         );
-
         QByteArray jsonData =
             QJsonDocument(jsonCopy).toJson();
-
         QString m = method.toUpper();
-
         QNetworkReply *reply = nullptr;
-
         if(m == "GET")
             reply = manager.get(request);
-
         else if(m == "POST")
             reply = manager.post(request, jsonData);
-
         else if(m == "PUT")
             reply = manager.put(request, jsonData);
-
         else if(m == "DELETE")
             reply = manager.sendCustomRequest(
                 request,
@@ -361,125 +348,98 @@ QString requestHTTP(const QString &url,
         {
             if(statusCode)
                 *statusCode = -1;
-
             return "ERRO: Método inválido";
         }
-
         QEventLoop loop;
         QTimer timer;
-
         timer.setSingleShot(true);
-
         QObject::connect(
             &timer,
             &QTimer::timeout,
             &loop,
             &QEventLoop::quit
         );
-
         QObject::connect(
             reply,
             &QNetworkReply::finished,
             &loop,
             &QEventLoop::quit
         );
-
         timer.start(timeoutMs);
-
         loop.exec();
-
         if(!timer.isActive())
         {
             reply->abort();
-
             if(statusCode)
                 *statusCode = 408;
-
             reply->deleteLater();
-
             return "ERRO: Timeout";
         }
-
         int code =
             reply->attribute(
                 QNetworkRequest::HttpStatusCodeAttribute
             ).toInt();
-
         if(statusCode)
             *statusCode = code;
-
         QString response =
             reply->readAll();
-
         reply->deleteLater();
-
         return response;
     };
 
-    loadConfig();
+    if (!logged)
+    {
+        return performRequest(url, "");
+    }
 
+    loadConfig();
     QString username =
         QString::fromStdString(
             config["FAST-LOGIN"]["username"]
         );
-
     QString password =
         QString::fromStdString(
             config["FAST-LOGIN"]["password"]
         );
-
     QString token =
         QString::fromStdString(
             config["FAST-LOGIN"]["token_session"]
         );
-
-    // sem token
-    if(token.isEmpty())
+    
+    if(token.isEmpty() && logged == true)
     {
         token = newSession(
             username,
             password
         );
-
         config["FAST-LOGIN"]["token_session"] =
             token.toStdString();
-
         saveConfig();
     }
-
     QString response =
         performRequest(
             url,
             token
         );
-
     int code = 0;
-
     if(statusCode)
         code = *statusCode;
-
-    // token expirou
     if(code == 401 || code == 403)
     {
         qDebug() << "Token expirado. Renovando...";
-
         token = newSession(
             username,
             password
         );
-
         config["FAST-LOGIN"]["token_session"] =
             token.toStdString();
-
         saveConfig();
-
         response =
             performRequest(
                 url,
                 token
             );
     }
-
     return response;
 }
 
@@ -559,20 +519,20 @@ int main(int argc, char *argv[])
     loadConfig();
     QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
     QString token_session = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-    if (token_session.isEmpty()){
-        QJsonObject json_token;
-        QString response = requestHTTP(
-            url + "/new-session",
-            "POST",
-            json_token
-        );
-        QByteArray byteArray = response.toUtf8();
-        QJsonDocument doc = QJsonDocument::fromJson(byteArray);
-        QJsonObject jsonObject = doc.object();
-        QString new_token = jsonObject["token"].toString();
-        config["FAST-LOGIN"]["token_session"] = new_token.toStdString();
-        saveConfig();
-    }
+    // if (token_session.isEmpty()){
+    //     QJsonObject json_token;
+    //     QString response = requestHTTP(
+    //         url + "/new-session",
+    //         "POST",
+    //         json_token
+    //     );
+    //     QByteArray byteArray = response.toUtf8();
+    //     QJsonDocument doc = QJsonDocument::fromJson(byteArray);
+    //     QJsonObject jsonObject = doc.object();
+    //     QString new_token = jsonObject["token"].toString();
+    //     config["FAST-LOGIN"]["token_session"] = new_token.toStdString();
+    //     saveConfig();
+    // }
     if (translator->load(":/translations/pt-br-main-page.qm")) {
         app.installTranslator(translator);
     }
@@ -713,7 +673,8 @@ int main(int argc, char *argv[])
         "POST",
         json_valide,
         5000,
-        &status_code
+        &status_code,
+        false
     );
     if (status_code == 200 || status_code == 201){
         qDebug() << "200";
@@ -1869,7 +1830,7 @@ int main(int argc, char *argv[])
 
         scroll_area(layout, content);
     };
-    fast_login();
+    
     //pagina inicial para renderizar
     initialPage = [&]()
     {
@@ -2003,17 +1964,18 @@ int main(int argc, char *argv[])
             "POST",
             json_signin,
             10000,
-            &status_code
+            &status_code,
+            false
         );
-        QJsonObject json_create_profile;
-        json_create_profile["username"] = username;
-        requestHTTP(
-            url + "/create-profile",
-            "POST",
-            json_create_profile
-        );
+        // QJsonObject json_create_profile;
+        // json_create_profile["username"] = username;
+        // requestHTTP(
+        //     url + "/create-profile",
+        //     "POST",
+        //     json_create_profile
+        // );
         return status_code;
-    };
+    };  
     signinPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -2040,7 +2002,8 @@ int main(int argc, char *argv[])
                     saveConfig();
                     initialPage();
                 }else{
-                    QLabel *error_label = new QLabel("ERROR!");
+                    QString msgErro = QString("ERROR! (Status: %1)").arg(status_code);
+                    QLabel *error_label = new QLabel(msgErro);
                     layout->addWidget(error_label);
                 };
             };
@@ -2064,7 +2027,8 @@ int main(int argc, char *argv[])
             "POST",
             json_signup,
             10000,
-            &status_code
+            &status_code,
+            false
         );
         
         return status_code;
@@ -2086,17 +2050,23 @@ int main(int argc, char *argv[])
             loginPage();
         });
         QObject::connect(send_button, &QPushButton::clicked, [=, &token_session]() mutable {
-            loadConfig();
-            int status_signup = signupRequest(usernameEntry->text(), passwordEntry->text());
-            if (status_signup == 200|| status_signup == 201){
-                QString token_session = newSession(usernameEntry->text(), passwordEntry->text());
-                config["FAST-LOGIN"]["username"] = usernameEntry->text().toStdString();
-                config["FAST-LOGIN"]["password"] = passwordEntry->text().toStdString();
-                config["FAST-LOGIN"]["token_session"] = token_session.toStdString();
+            QString userTxt = usernameEntry->text();
+            QString passTxt = passwordEntry->text();
+
+            // Chamamos diretamente a geração de sessão para logar o usuário existente!
+            QString token_gerado = newSession(userTxt, passTxt);
+            
+            // Se o token gerado não for vazio, o login deu sucesso!
+            if (!token_gerado.isEmpty()){
+                loadConfig();
+                config["FAST-LOGIN"]["username"] = userTxt.toStdString();
+                config["FAST-LOGIN"]["password"] = passTxt.toStdString();
+                config["FAST-LOGIN"]["token_session"] = token_gerado.toStdString();
                 saveConfig();
                 initialPage();
-            }else{
-                QLabel *error_label = new QLabel("ERROR!");
+            } else {
+                // Se o newSession retornou vazio, significa que o usuário ou senha estão errados no Python
+                QLabel *error_label = new QLabel("Usuário ou senha incorretos!");
                 layout->addWidget(error_label);
             };
         });
