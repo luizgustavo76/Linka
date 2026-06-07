@@ -376,6 +376,47 @@ QString requestHTTP(const QString &url,
             ).toInt();
         if(statusCode)
             *statusCode = code;
+        if (!logged)
+        {
+            return performRequest(url, "");
+        }
+
+        loadConfig();
+        QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
+        QString password = QString::fromStdString(config["FAST-LOGIN"]["password"]);
+        QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+
+        if (token.isEmpty())
+        {
+            token = newSession(username, password);
+            config["FAST-LOGIN"]["token_session"] = token.toStdString();
+            saveConfig();
+        }
+
+        QUrl urlCompleta(url);
+        QString urlValide = urlCompleta.scheme() + "://" + urlCompleta.host();
+        if (urlCompleta.port() != -1) urlValide += ":" + QString::number(urlCompleta.port());
+        urlValide += "/valide";
+
+        
+        QJsonObject jsonOriginal = json; 
+        const_cast<QJsonObject&>(json) = QJsonObject(); 
+        const_cast<QJsonObject&>(json)["username"] = username;
+        const_cast<QJsonObject&>(json)["token"] = token;
+
+        int status_validacao = 0;
+        int *backupStatusCode = statusCode; 
+        statusCode = &status_validacao;    
+
+        performRequest(urlValide, token); 
+
+        if (status_validacao == 401 || status_validacao == 403)
+        {
+            qDebug() << "Token expirado no /valide. Renovando...";
+            token = newSession(username, password);
+            config["FAST-LOGIN"]["token_session"] = token.toStdString();
+            saveConfig();
+        }
         QString response =
             reply->readAll();
         reply->deleteLater();
@@ -1931,13 +1972,16 @@ int main(int argc, char *argv[])
             &status_code,
             false
         );
-        // QJsonObject json_create_profile;
-        // json_create_profile["username"] = username;
-        // requestHTTP(
-        //     url + "/create-profile",
-        //     "POST",
-        //     json_create_profile
-        // );
+        QJsonObject json_create_profile;
+        json_create_profile["username"] = username;
+        requestHTTP(
+            url + "/create-profile",
+            "POST",
+            json_create_profile
+        );
+        QString token = newSession(username, password);
+        config["FAST-LOGIN"]["token_session"] = token.toStdString();
+        saveConfig();
         return status_code;
     };  
     signinPage = [&](){
