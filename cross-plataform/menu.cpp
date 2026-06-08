@@ -1,6 +1,7 @@
 #include <QFileDialog>
 #include <QTextStream>
 #include <QMessageBox>
+#include <QAction>
 #include <QPointer>
 #include <QApplication>
 #include <QWidget>
@@ -17,6 +18,7 @@
 #include <QSplashScreen>
 #include <QStandardPaths>
 #include <QJsonDocument>
+#include <QMenu>
 #include <iostream>
 #include <QJsonObject>
 #include <QLabel>
@@ -648,6 +650,7 @@ int main(int argc, char *argv[])
     std::function<void(QString, QString)> newCommentRequest;
     std::function<void(QString)> newCommentPage;
     std::function<void()> fast_login;
+    std::function<void()> changeLangPage;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -891,6 +894,28 @@ int main(int argc, char *argv[])
                 });
         });
     };
+    changeLangPage = [&](){
+        clearLayout();
+        QMenu *optionsMenu = new QMenu();
+        QAction *pt_br = optionsMenu->addAction("pt-br");
+        QAction *en = optionsMenu->addAction("en");
+        connect(pt_br, &QAction::triggered, [=](){
+            loadConfig();
+            config["LANG"]["lang"] = "pt_br";
+            saveConfig();
+        });
+        connect(en, &QAction::triggered, [=](){
+            loadConfig();
+            config["LANG"]["lang"] = "en";
+            saveConfig();
+        });
+        QPushButton *backButton = new QPushButton(back_text);
+        QObject::connect(backButton, &QPushButton::clicked, [=](){
+            initial_page();
+        });
+        layout->addWidget(optionsMenu);
+        layout->addWidget(backButton);
+    };
     //menu de opções extras
     optionsPage = [&](){
         QList<QWidget*> buttons;
@@ -899,6 +924,10 @@ int main(int argc, char *argv[])
         QPushButton *button_back = new QPushButton(back_text);
         QPushButton *button_add_theme = new QPushButton(add_theme_text);
         QPushButton *button_add_federation = new QPushButton(add_federations_text);
+        QPushButton *button_change_lang = new QPushButton();
+        QObject::connect(button_change_lang, &QPushButton::clicked, [=](){
+            changeLangPage();
+        });
         QObject::connect(button_back, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
                     initialPage();
@@ -914,9 +943,16 @@ int main(int argc, char *argv[])
                     addThemePage();
                 });
         });
+        QObject::connect(button_change_lang, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    changeLangPage();
+                });
+        });
+        
         buttons.append(button_back);
         buttons.append(button_add_theme);
         buttons.append(button_add_federation);
+        buttons.append(button_change_lang);
         scroll_area(layout, buttons);
     };
     change_url = [&](){
