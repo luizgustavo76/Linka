@@ -478,9 +478,7 @@ void loadStyle()
 }
 
 void clearLayout(QLayout *layout) {
-        qDebug() << "Aviso: Tentativa de limpar um layout nulo (nullptr)! Ignorando para evitar SIGSEGV.";
-        return;
-    }
+    if (!layout) return; // Trava de segurança contra o SIGSEGV anterior
 
     QLayoutItem *item;
     while ((item = layout->takeAt(0))) {
@@ -683,6 +681,7 @@ int main(int argc, char *argv[])
             "POST",
             post
         );
+        initialPage();
         
     };
     auto new_post = [&](){
@@ -700,6 +699,7 @@ int main(int argc, char *argv[])
             }
         );
         QLabel("post created with sucess!");
+        
     };
     
     friendsPage = [&](){
@@ -710,14 +710,10 @@ int main(int argc, char *argv[])
         QPushButton *back_button = new QPushButton(back_text);
         layout->addWidget(back_button);
         QObject::connect(back_button, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    initialPage();
-                });
+                initialPage();
         });
         QObject::connect(new_friend, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    addFriendsPage();
-                });
+                addFriendsPage();
         });
     };
     inboxPage = [&](){
@@ -773,9 +769,7 @@ int main(int argc, char *argv[])
         QPushButton *back_button = new QPushButton(back_text);
         layout->addWidget(back_button);
         QObject::connect(back_button, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    initialPage();
-                });
+                initialPage();
         });
     };
     addFederationsPage = [&](){
@@ -785,9 +779,7 @@ int main(int argc, char *argv[])
         QPushButton *buttonAdd = new QPushButton(send_text);
         QPushButton *button_back = new QPushButton(back_text);
         QObject::connect(button_back, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    initialPage();
-                });
+                initialPage();
         });
         layout->addWidget(urlEntry);
         layout->addWidget(buttonAdd);
@@ -832,9 +824,7 @@ int main(int argc, char *argv[])
         QPushButton *back_button = new QPushButton(back_text);
         layout->addWidget(back_button);
         QObject::connect(back_button, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    initialPage();
-                });
+                initialPage();
         });
         QObject::connect(button_add_theme, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
@@ -842,7 +832,7 @@ int main(int argc, char *argv[])
                         nullptr,
                         "Select a theme",
                         QDir::homePath(),
-                        "Todos os arquivos (*.*);;Texto (*.txt);;Imagens (*.png *.jpg)"
+                        "All the files (*.*);;Texto (*.txt);;Imagens (*.png *.jpg)"
                     );
 
                     if(filePath.isEmpty())
@@ -854,7 +844,7 @@ int main(int argc, char *argv[])
 
                     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
-                        QMessageBox::critical(nullptr, "Erro", "Não foi possível abrir o arquivo!");
+                        QMessageBox::critical(nullptr, "Error", "Cannot open the file!");
                         return;
                     }
 
@@ -869,7 +859,7 @@ int main(int argc, char *argv[])
         });
     };
     changeLangPage = [&](){
-        clearLayout();
+        clearLayout(layout);
         QMenu *optionsMenu = new QMenu();
         QAction *pt_br = optionsMenu->addAction("pt-br");
         QAction *en = optionsMenu->addAction("en");
@@ -891,36 +881,24 @@ int main(int argc, char *argv[])
         layout->addWidget(backButton);
     };
     //menu de opções extras
-    optionsPage = [&](){
+    optionsPage = [&, back_text](){
         QList<QWidget*> buttons;
         clearLayout(layout);
-        fadeTransition(central);
-        QPushButton *button_back = new QPushButton(back_text);
+        QPushButton *button_back = new QPushButton("back");
         QPushButton *button_add_theme = new QPushButton(add_theme_text);
         QPushButton *button_add_federation = new QPushButton(add_federations_text);
         QPushButton *button_change_lang = new QPushButton();
-        QObject::connect(button_change_lang, &QPushButton::clicked, [=](){
-            changeLangPage();
-        });
         QObject::connect(button_back, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    initialPage();
-                });
+                initialPage();
         });
         QObject::connect(button_add_federation, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    addFederationsPage();
-                });
+                addFederationsPage();
         });
         QObject::connect(button_add_theme, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    addThemePage();
-                });
+                addThemePage();
         });
         QObject::connect(button_change_lang, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    changeLangPage();
-                });
+                changeLangPage();
         });
         
         buttons.append(button_back);
@@ -945,11 +923,9 @@ int main(int argc, char *argv[])
                 });
         });
         QObject::connect(button_send, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    config["SERVER"]["url"] = urlEntry->text().toStdString();
-                    saveConfig();
-                    initialPage();
-                });
+                config["SERVER"]["url"] = urlEntry->text().toStdString();
+                saveConfig();
+                initialPage();
         });
     };
     options = [&]()
@@ -968,28 +944,28 @@ int main(int argc, char *argv[])
         buttons.append(back);
         buttons.append(button_change_url);
         QObject::connect(button_options, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    optionsPage();
+                QTimer::singleShot(0, [optionsPage](){ 
+                    if (optionsPage) optionsPage();
                 });
         });
         QObject::connect(inbox, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    inboxPage();
+                QTimer::singleShot(0, [inboxPage](){
+                    if (inboxPage) inboxPage();
                 });
         });
         QObject::connect(back, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    initialPage();
+                QTimer::singleShot(0, [initialPage](){ 
+                    if (initialPage) initialPage();
                 });
         });
         QObject::connect(friends, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    friendsPage();
+                QTimer::singleShot(0, [friendsPage](){
+                    if (friendsPage) friendsPage();
                 });
         });
         QObject::connect(button_change_url, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    change_url();
+                QTimer::singleShot(0, [change_url](){
+                    if (change_url) change_url();
                 });
         });
         scroll_area(layout, buttons);
@@ -1051,14 +1027,10 @@ int main(int argc, char *argv[])
         QPushButton *buttonBack = new QPushButton(back_text);
         layout->addWidget(buttonBack);
         QObject::connect(buttonBack, &QPushButton::clicked, [=](){
-            QTimer::singleShot(0, [&](){
-                    initialPage();
-                });
+                initialPage();
         });
         QObject::connect(button_edit, &QPushButton::clicked, [=](){
-            QTimer::singleShot(0, [&](){
-                    editAccount();
-                });
+                editAccount();
         });
         
     };
@@ -1310,9 +1282,7 @@ int main(int argc, char *argv[])
             QPushButton *btnBack = new QPushButton(back_text);
             QPushButton *btnNewPost = new QPushButton(new_post_text);
             QObject::connect(btnBack, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    initialPage();
-                });
+                initialPage();
             });
             layout->addWidget(btnBack);
             layout->addWidget(btnNewPost);
@@ -1847,7 +1817,7 @@ int main(int argc, char *argv[])
     };
     
     //pagina inicial para renderizar
-    initialPage = [=, &initialPage, &addFriendsPage]
+    initialPage = [&]()
     {
         if (config["FAST-LOGIN"]["token_session"].empty()){
             loginPage();
@@ -1914,8 +1884,8 @@ int main(int argc, char *argv[])
         QObject::connect(btnHome, &QPushButton::clicked, [=]() {
             showfeed();
         });
-        QObject::connect(btnOptions, &QPushButton::clicked, [=]() {
-            options();
+        QObject::connect(btnOptions, &QPushButton::clicked, [options]() {
+            if (options) options();
         });
         QObject::connect(btnSearch, &QPushButton::clicked, [=]() {
             searchPage();
@@ -1965,6 +1935,10 @@ int main(int argc, char *argv[])
         btnSearch->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
 
         // ======= MONTAGEM =======
+        if (!layout) {
+            qDebug() << "ERRO FATAL: O layout principal veio nulo na linha 1965!";
+            return; // Para a execução antes de estourar o SIGSEGV
+        }
         layout->addWidget(stack, 1);
         layout->addWidget(bottomBar, 0);
     };
@@ -2123,15 +2097,12 @@ int main(int argc, char *argv[])
         QPushButton *send_button = new QPushButton(send_text);
         layout->addWidget(send_button);
         QObject::connect(send_button, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    addFriendsRequest(usernameEntry->text(), messageEntry->text());
-                    initialPage();
-                });
+                addFriendsRequest(usernameEntry->text(), messageEntry->text());
+                initialPage();
+            
         });
         QObject::connect(back_button, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [&](){
-                    initialPage();
-                });
+                initialPage();
         });
     };
     //chamada da função
