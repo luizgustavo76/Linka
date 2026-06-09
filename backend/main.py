@@ -84,7 +84,6 @@ def new_session():
     result = cur.fetchone()
     conn.close()
     
-    # SE O USUÁRIO NÃO EXISTIR NO BANCO, PARA AQUI E NÃO CRASHA!
     if not result:
         return jsonify({"status": "user not found"}), 401
         
@@ -103,7 +102,6 @@ def new_session():
 public_routes = [
     "post.feed",
     "meta.return_version",
-    "post.new_post",
     "new_session",
     "search.search",
     "profile.view_profile",
@@ -111,7 +109,6 @@ public_routes = [
     "login.register",
     "login.login",
     "post.return_stars",
-    "chat.send"
     "None",
     "profiles.create"
 ]
