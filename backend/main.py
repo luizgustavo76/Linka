@@ -67,8 +67,31 @@ def gerar_token():
     return secrets.token_hex(16)
 
 
-
-
+public_username_requets = [
+    "login.register",
+    "login.login"
+]
+@app.before_request
+def valide_user():
+    data = request.get_json()
+    username_keys = ["username", "user1", "user2", "receiver", "remitte", "sender"]
+    actual_key = ""
+    if request.endpoint not in public_username_requets:
+        for key in username_keys:
+            if key in data:
+                actual_key = data[key]
+        if actual_key != "":
+            conn = get_db_login()
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM login WHERE username = ?", (actual_key,))
+            result = cur.fetchone()
+            conn.close()
+            if result != None:
+                pass
+            else:
+                return jsonify({"status":"username not exists"}),400
+    else:
+        pass
 @app.route("/new-session", methods=["POST"])
 def new_session():
     data = request.get_json()
