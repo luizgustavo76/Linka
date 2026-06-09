@@ -309,26 +309,27 @@ QString requestHTTP(const QString &url,
                     int *statusCode,
                     bool logged)
 {
-    auto performRequest = [&](const QString &targetUrl,
-                              const QString &token) -> QString
+    // Lambda modificado para aceitar o JSON correto e evitar recursão infinita
+    std::function<QString(QString, QString, QJsonObject)> performRequest = 
+        [&](QString targetUrl, QString currentToken, QJsonObject jsonParaEnviar) -> QString 
     {
         QNetworkAccessManager manager;
-        QJsonObject jsonCopy = json;
-        loadConfig();
         QNetworkRequest request;
+        
         request.setRawHeader(
             "Authorization",
-            QString("Bearer %1").arg(token).toUtf8()
+            QString("Bearer %1").arg(currentToken).toUtf8()
         );
         request.setUrl(QUrl(targetUrl));
         request.setHeader(
             QNetworkRequest::ContentTypeHeader,
             "application/json"
         );
-        QByteArray jsonData =
-            QJsonDocument(jsonCopy).toJson();
+        
+        QByteArray jsonData = QJsonDocument(jsonParaEnviar).toJson();
         QString m = method.toUpper();
         QNetworkReply *reply = nullptr;
+        
         if(m == "GET")
             reply = manager.get(request);
         else if(m == "POST")
@@ -336,120 +337,93 @@ QString requestHTTP(const QString &url,
         else if(m == "PUT")
             reply = manager.put(request, jsonData);
         else if(m == "DELETE")
-            reply = manager.sendCustomRequest(
-                request,
-                "DELETE",
-                jsonData
-            );
+            reply = manager.sendCustomRequest(request, "DELETE", jsonData);
         else
         {
-            if(statusCode)
-                *statusCode = -1;
+            if(statusCode) *statusCode = -1;
             return "ERRO: Método inválido";
         }
+        
         QEventLoop loop;
         QTimer timer;
         timer.setSingleShot(true);
-        QObject::connect(
-            &timer,
-            &QTimer::timeout,
-            &loop,
-            &QEventLoop::quit
-        );
-        QObject::connect(
-            reply,
-            &QNetworkReply::finished,
-            &loop,
-            &QEventLoop::quit
-        );
+        
+        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        
         timer.start(timeoutMs);
         loop.exec();
+        
         if(!timer.isActive())
         {
             reply->abort();
-            if(statusCode)
-                *statusCode = 408;
+            if(statusCode) *statusCode = 408;
             reply->deleteLater();
             return "ERRO: Timeout";
         }
-        int code =
-            reply->attribute(
-                QNetworkRequest::HttpStatusCodeAttribute
-            ).toInt();
-        if(statusCode)
-            *statusCode = code;
+        
+        int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if(statusCode) *statusCode = code;
+        
+        QString response = reply->readAll();
+        reply->deleteLater();
+        
+        // Se a requisição atual já era um bypass de login/validação, pare aqui
         if (!logged)
         {
-            return performRequest(url, "");
+            return response;
         }
 
-        loadConfig();
+        // NÃO chame loadConfig() aqui dentro. Use o que já está na memória.
         QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
         QString password = QString::fromStdString(config["FAST-LOGIN"]["password"]);
-        QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+        QString session_token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
 
-        if (token.isEmpty())
+        if (currentToken.isEmpty())
         {
-            token = newSession(username, password);
-            config["FAST-LOGIN"]["token_session"] = token.toStdString();
+            currentToken = newSession(username, password);
+            config["FAST-LOGIN"]["token_session"] = currentToken.toStdString();
             saveConfig();
         }
 
-        QUrl urlCompleta(url);
-        QString urlValide = urlCompleta.scheme() + "://" + urlCompleta.host();
-        if (urlCompleta.port() != -1) urlValide += ":" + QString::number(urlCompleta.port());
-        urlValide += "/valide";
+        // Evita validar o token se a própria URL já for a de validação (Previne loop infinito)
+        if (!targetUrl.contains("/valide")) 
+        {
+            QUrl urlCompleta(url);
+            QString urlValide = urlCompleta.scheme() + "://" + urlCompleta.host();
+            if (urlCompleta.port() != -1) urlValide += ":" + QString::number(urlCompleta.port());
+            urlValide += "/valide";
 
+            // CORREÇÃO: Criar um novo JSON em vez de quebrar a constante com const_cast
+            QJsonObject jsonValidacao; 
+            jsonValidacao["username"] = username;
+            jsonValidacao["token"] = currentToken;
+
+            int status_validacao = 0;
+            // Passamos logged=false para a validação NÃO entrar em loop
+            performRequest(urlValide, currentToken, jsonValidacao); 
+
+            if (status_validacao == 401 || status_validacao == 403)
+            {
+                qDebug() << "Token expirado no /valide. Renovando...";
+                currentToken = newSession(username, password);
+                config["FAST-LOGIN"]["token_session"] = currentToken.toStdString();
+                saveConfig();
+                
+                // Refaz a requisição original com o token novo
+                return performRequest(targetUrl, currentToken, jsonParaEnviar);
+            }
+        }
         
-        QJsonObject jsonOriginal = json; 
-        const_cast<QJsonObject&>(json) = QJsonObject(); 
-        const_cast<QJsonObject&>(json)["username"] = username;
-        const_cast<QJsonObject&>(json)["token"] = token;
-
-        int status_validacao = 0;
-        int *backupStatusCode = statusCode; 
-        statusCode = &status_validacao;    
-
-        performRequest(urlValide, token); 
-
-        if (status_validacao == 401 || status_validacao == 403)
-        {
-            qDebug() << "Token expirado no /valide. Renovando...";
-            token = newSession(username, password);
-            config["FAST-LOGIN"]["token_session"] = token.toStdString();
-            saveConfig();
-        }
-        QString response =
-            reply->readAll();
-        reply->deleteLater();
         return response;
     };
 
-    loadConfig();
-    QString username =
-        QString::fromStdString(
-            config["FAST-LOGIN"]["username"]
-        );
-    QString password =
-        QString::fromStdString(
-            config["FAST-LOGIN"]["password"]
-        );
-    QString token =
-        QString::fromStdString(
-            config["FAST-LOGIN"]["token_session"]
-        );
+    // Removeu-se o loadConfig() daqui de dentro para não destruir a performance nas threads
+    QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
     
-    QString response =
-        performRequest(
-            url,
-            token
-        );
-    if (token.isEmpty()){
-        qDebug() << "token vazio";
-    }
-    return response;
+    // Passa o JSON original com segurança
+    return performRequest(url, token, json);
 }
-
 void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
 {
     QScrollArea *scroll = new QScrollArea();
@@ -504,16 +478,16 @@ void loadStyle()
 }
 
 void clearLayout(QLayout *layout) {
-    if (!layout) return;
+        qDebug() << "Aviso: Tentativa de limpar um layout nulo (nullptr)! Ignorando para evitar SIGSEGV.";
+        return;
+    }
 
     QLayoutItem *item;
-    while ((item = layout->takeAt(0)) != nullptr) {
+    while ((item = layout->takeAt(0))) {
         if (item->layout()) {
             clearLayout(item->layout());
-            delete item->layout();
-        }
-        if (item->widget()) {
-            item->widget()->deleteLater();
+        } else if (item->widget()) {
+            delete item->widget();
         }
         delete item;
     }
@@ -899,19 +873,19 @@ int main(int argc, char *argv[])
         QMenu *optionsMenu = new QMenu();
         QAction *pt_br = optionsMenu->addAction("pt-br");
         QAction *en = optionsMenu->addAction("en");
-        connect(pt_br, &QAction::triggered, [=](){
+        QObject::connect(pt_br, &QAction::triggered, [=](){
             loadConfig();
             config["LANG"]["lang"] = "pt_br";
             saveConfig();
         });
-        connect(en, &QAction::triggered, [=](){
+        QObject::connect(en, &QAction::triggered, [=](){
             loadConfig();
             config["LANG"]["lang"] = "en";
             saveConfig();
         });
         QPushButton *backButton = new QPushButton(back_text);
         QObject::connect(backButton, &QPushButton::clicked, [=](){
-            initial_page();
+            initialPage();
         });
         layout->addWidget(optionsMenu);
         layout->addWidget(backButton);
@@ -1873,7 +1847,7 @@ int main(int argc, char *argv[])
     };
     
     //pagina inicial para renderizar
-    initialPage = [&]()
+    initialPage = [=, &initialPage, &addFriendsPage]
     {
         if (config["FAST-LOGIN"]["token_session"].empty()){
             loginPage();
@@ -2137,7 +2111,7 @@ int main(int argc, char *argv[])
             friend_json
         );
     };
-    addFriendsPage = [&](){
+    addFriendsPage = [=, &initialPage, &addFriendsPage]{
         clearLayout(layout);
         fadeTransition(central);
         QLineEdit *usernameEntry = entry(username_text);
