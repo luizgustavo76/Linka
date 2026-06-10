@@ -623,6 +623,7 @@ int main(int argc, char *argv[])
     std::function<void(QString)> newCommentPage;
     std::function<void()> fast_login;
     std::function<void()> changeLangPage;
+    std::function<void(QString)> bannedPage;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
