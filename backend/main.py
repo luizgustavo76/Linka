@@ -19,6 +19,7 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 tokens_file = os.path.join(db_dir, "tokens.db")
 login_file = os.path.join(db_dir, "login.db")
+banned_file = os.path.join(db_dir, "banned.db")
 app = Flask(__name__)
 # =========================
 # BANCO DE DADOS
@@ -32,7 +33,10 @@ def get_db_login():
     conn = sqlite3.connect(login_file)
     conn.row_factory = sqlite3.Row
     return conn
-
+def get_db_banned():
+    conn = sqlite3.connect(banned_file)
+    conn.row_factory = sqlite3.Row
+    return conn
 def create_db():
     if not os.path.exists(db_dir):
         os.makedirs(db_dir)
@@ -51,7 +55,17 @@ def create_db():
 
     conn.commit()
     conn.close()
-
+def create_db_banned():
+    conn = get_db_banned
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS banned
+                username TEXT,
+                time TEXT,
+                reason TEXT""")
+    conn.commit()
+    conn.close()
+create_db_banned()
 create_db()
 
 
@@ -137,6 +151,20 @@ public_routes = [
 ]
 @app.before_request
 def valide():
+    data = request.get_json()
+    username = data.get("username")
+    if username in data:
+        conn = get_db_banned()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM banned WHERE username = ?",(username))
+        result = cur.fetchone()
+        if result:
+            json_banned = {
+                "status":"BANNED",
+                "reason":result[2],
+                "time":result[1]
+            }
+            return jsonify(json_banned),403
     token = request.headers.get("Authorization")
     print(request.endpoint)
     if request.endpoint in public_routes:
@@ -154,6 +182,17 @@ def valide():
         return jsonify({"status": "invalid token"}), 401
     token_db = result["token"]
     g.username = username = result["username"]
+    conn = get_db_banned()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM banned WHERE username = ?",(result["username"]))
+    result = cur.fetchone()
+    if result:
+        json_banned = {
+            "status":"BANNED",
+            "reason":result[2],
+            "time":result[1]
+        }
+        return jsonify(json_banned),403
     expire_date = result["expire_date"]
     expire_date = datetime.fromisoformat(expire_date)
     if token_db == token:
