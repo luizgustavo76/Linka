@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TS version="2.1" language="pt_BR">
-
+<context>
+  <name>banned</name>
+  <message>
+      <source>banned</source>
+      <translation>banned</translation>
+  </message>
+  <message>
+      <source>exit</source>
+      <translation>exit</translation>
+  </message>
+</context>
   <context>
     <name>initial-page</name>
 

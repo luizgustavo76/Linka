@@ -57,6 +57,17 @@
     </message>
 </context>
 <context>
+    <name>banned</name>
+    <message>
+        <source>banned</source>
+        <translation>banned</translation>
+    </message>
+    <message>
+        <source>exit</source>
+        <translation>exit</translation>
+    </message>
+</context>
+<context>
     <name>feed</name>
     <message>
         <source>Comments</source>
