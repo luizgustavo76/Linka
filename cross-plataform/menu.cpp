@@ -590,7 +590,7 @@ int main(int argc, char *argv[])
         return input;
     };
 
-    // Declara antes
+    
     std::function<void()> showfeed;
     std::function<void()> initialPage;
     std::function<void()> showInitialPage;
@@ -1132,6 +1132,8 @@ int main(int argc, char *argv[])
     {
         clearLayout(layout);
         fadeTransition(central);
+        QLabel *loading = new QLabel("loading...");
+        layout->addWidget(loading);
         QString url_feed = url + "/feed";
         qDebug() << "url feed" << url_feed;
         QNetworkRequest request{QUrl(url_feed)};
@@ -1159,7 +1161,7 @@ int main(int argc, char *argv[])
             for(auto value : postsArray)
             {
                 if(!value.isObject()) continue;
-
+                clearLayout(layout);
                 QJsonObject post = value.toObject();
 
                 int postId = post["id"].toInt();
