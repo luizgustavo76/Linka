@@ -102,7 +102,7 @@ def register():
         if resultado:
             return jsonify({"status":"username exists"}),400
         if not username or not password or not email:
-            return jsonify({"data is missing"}),401
+            return jsonify({"status":"data is missing"}),401
         else:
             senha_com_hash = login_system.gerar_hash(password)
             conn = login_system.get_db_login()
