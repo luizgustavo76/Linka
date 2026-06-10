@@ -880,6 +880,19 @@ int main(int argc, char *argv[])
         layout->addWidget(optionsMenu);
         layout->addWidget(backButton);
     };
+    //banned page
+    bannedPage = [&](QString reason){
+        clearLayout(layout);
+        QLabel *banned = new QLabel(banned_text);
+        QFont font ("Arial", 32, QFont::Bold);
+        banned->setFont(font);
+        QString *reasonLabel = new QLabel(reason);
+        reasonLabel->setFont(font);
+        QPushButton *logoutButton = new QPushButton(exit_text);
+        layout->addWidget(banned);
+        layout->addWidget(reasonLabel);
+        layout->addWidget(logoutButton);
+    };
     //menu de opções extras
     optionsPage = [&, back_text](){
         QList<QWidget*> buttons;
