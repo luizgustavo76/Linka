@@ -80,35 +80,6 @@ def verificar_hash(senha, hash_salvo):
 def gerar_token():
     return secrets.token_hex(16)
 
-
-public_username_requets = [
-    "login.register",
-    "login.login"
-]
-@app.before_request
-def valide_user():
-    if request.method == "GET":
-        return None
-    else:
-        data = request.get_json()
-    username_keys = ["username", "user1", "user2", "receiver", "remitte", "sender"]
-    actual_key = ""
-    if request.endpoint not in public_username_requets:
-        for key in username_keys:
-            if key in data:
-                actual_key = data[key]
-        if actual_key != "":
-            conn = get_db_login()
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM login WHERE username = ?", (actual_key,))
-            result = cur.fetchone()
-            conn.close()
-            if result != None:
-                pass
-            else:
-                return jsonify({"status":"username not exists"}),400
-    else:
-        pass
 @app.route("/new-session", methods=["POST"])
 def new_session():
     data = request.get_json()
@@ -150,7 +121,7 @@ public_routes = [
     "login.login",
     "post.return_stars",
     "None",
-    "profiles.create"
+    "profile.create"
 ]
 @app.before_request
 def valide():
@@ -158,7 +129,7 @@ def valide():
         return None
     if request.endpoint in public_routes:
         return None
-
+    print(request.endpoint)
     data = request.get_json(silent=True) or {}
     username = data.get("username")
     
