@@ -59,7 +59,7 @@
 <context>
     <name>banned</name>
     <message>
-        <source>banned</source>
+        <source>bannedText</source>
         <translation>banned</translation>
     </message>
     <message>

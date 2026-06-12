@@ -321,18 +321,25 @@ QString requestHTTP(const QString &url,
             QString("Bearer %1").arg(currentToken).toUtf8()
         );
         request.setUrl(QUrl(targetUrl));
-        request.setHeader(
-            QNetworkRequest::ContentTypeHeader,
-            "application/json"
-        );
-        
-        QByteArray jsonData = QJsonDocument(jsonParaEnviar).toJson();
+
         QString m = method.toUpper();
+
+        if (m != "GET") {
+            request.setHeader(
+                QNetworkRequest::ContentTypeHeader,
+                "application/json"
+            );
+        }
+
         QNetworkReply *reply = nullptr;
-        
-        if(m == "GET")
+        QByteArray jsonData = QJsonDocument(jsonParaEnviar).toJson();
+
+        if(m == "GET") {
             reply = manager.get(request);
-        else if(m == "POST")
+        }
+        else if(m == "POST") {
+            reply = manager.post(request, jsonData);
+        }
             reply = manager.post(request, jsonData);
         else if(m == "PUT")
             reply = manager.put(request, jsonData);
@@ -414,7 +421,12 @@ QString requestHTTP(const QString &url,
                 return performRequest(targetUrl, currentToken, jsonParaEnviar);
             }
         }
-        
+        QByteArray byteArray = response.toUtf8();
+        QJsonDocument doc = QJsonDocument::fromJson(byteArray);
+        QJsonObject jsonObject = doc.object();
+        if (jsonObject["status"] == "banned"){
+            bannedPage();
+        };
         return response;
     };
 
@@ -576,6 +588,8 @@ int main(int argc, char *argv[])
     QString profile_picture_text = QCoreApplication::translate("my account", "profile picture");
     QString comments_text = QCoreApplication::translate("feed", "comments");
     QString new_comment_text = QCoreApplication::translate("feed", "new comment");
+    QString banned_text = QCoreApplication::translate("banned", "bannedText");
+    QString exit_text = QCoreApplication::translate("banned", "exit");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -887,7 +901,7 @@ int main(int argc, char *argv[])
         QLabel *banned = new QLabel(banned_text);
         QFont font ("Arial", 32, QFont::Bold);
         banned->setFont(font);
-        QString *reasonLabel = new QLabel(reason);
+        QLabel *reasonLabel = new QLabel(reason);
         reasonLabel->setFont(font);
         QPushButton *logoutButton = new QPushButton(exit_text);
         layout->addWidget(banned);
