@@ -59,10 +59,10 @@ def create_db_banned():
     conn = get_db_banned()
     cur = conn.cursor()
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS banned
+        CREATE TABLE IF NOT EXISTS banned(
                 username TEXT,
                 time TEXT,
-                reason TEXT""")
+                reason TEXT)""")
     conn.commit()
     conn.close()
 create_db_banned()
@@ -87,7 +87,10 @@ public_username_requets = [
 ]
 @app.before_request
 def valide_user():
-    data = request.get_json()
+    if request.method == "GET":
+        return None
+    else:
+        data = request.get_json()
     username_keys = ["username", "user1", "user2", "receiver", "remitte", "sender"]
     actual_key = ""
     if request.endpoint not in public_username_requets:
@@ -151,7 +154,10 @@ public_routes = [
 ]
 @app.before_request
 def valide():
-    data = request.get_json()
+    if request.method == "GET":
+        return None
+    else:
+        data = request.get_json()
     username = data.get("username")
     if username in data:
         conn = get_db_banned()

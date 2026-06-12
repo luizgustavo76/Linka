@@ -141,7 +141,15 @@ def feed():
         })
 
     return jsonify(lista_posts), 200
-
+@post_bp.errorhandler(415)
+def unsupported_media_type_debug(e):
+    print("====== MATEI A CHARADA ======")
+    print(f"Rota que deu erro: {request.path}")
+    print(f"Método usado: {request.method}")
+    print(f"Headers recebidos: {dict(request.headers)}")
+    print(f"Corpo (Data) bruto: {request.data}")
+    print("=============================")
+    return jsonify({"erro_debug": "Olhe o terminal do VS Code!"}), 415
 
 
 
