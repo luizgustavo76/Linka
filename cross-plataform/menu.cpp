@@ -237,7 +237,8 @@ QString requestHTTP(
     const QJsonObject &json,
     int timeoutMs = 5000,
     int *statusCode = nullptr,
-    bool logged = true
+    bool logged = true,
+    std::function<void(QString)> triggerBannedPage = nullptr
 );
 QString newSession(QString username, QString password)
 {
@@ -307,7 +308,8 @@ QString requestHTTP(const QString &url,
                     const QJsonObject &json,
                     int timeoutMs,
                     int *statusCode,
-                    bool logged)
+                    bool logged,
+                    std::function<void(QString)> triggerBannedPage)
 {
     // Lambda modificado para aceitar o JSON correto e evitar recursão infinita
     std::function<QString(QString, QString, QJsonObject)> performRequest = 
@@ -337,13 +339,13 @@ QString requestHTTP(const QString &url,
         if(m == "GET") {
             reply = manager.get(request);
         }
-        else if(m == "POST") {
+        if(m == "POST") {
             reply = manager.post(request, jsonData);
         }
             reply = manager.post(request, jsonData);
-        else if(m == "PUT")
+        if(m == "PUT")
             reply = manager.put(request, jsonData);
-        else if(m == "DELETE")
+        if(m == "DELETE")
             reply = manager.sendCustomRequest(request, "DELETE", jsonData);
         else
         {
@@ -425,7 +427,9 @@ QString requestHTTP(const QString &url,
         QJsonDocument doc = QJsonDocument::fromJson(byteArray);
         QJsonObject jsonObject = doc.object();
         if (jsonObject["status"] == "banned"){
-            bannedPage();
+            QString *reason = new QString(jsonObject["reason"].toString());
+            triggerBannedPage(*reason); 
+            return "BANNED";
         };
         return response;
     };

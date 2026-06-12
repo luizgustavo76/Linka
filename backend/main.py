@@ -56,7 +56,7 @@ def create_db():
     conn.commit()
     conn.close()
 def create_db_banned():
-    conn = get_db_banned
+    conn = get_db_banned()
     cur = conn.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS banned
