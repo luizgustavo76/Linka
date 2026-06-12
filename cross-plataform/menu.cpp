@@ -546,7 +546,7 @@ int main(int argc, char *argv[])
 
     if (url.isEmpty())
     {
-        config["SERVER"]["url"] = "http://linkaProject.pythonanywhere.com";
+        config["SERVER"]["url"] = "http://127.0.0.1:5000";
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }
