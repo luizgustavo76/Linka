@@ -54,7 +54,7 @@ create_db()
 
 @post_bp.route("/comments", methods=["POST"])
 def new_comment():
-    data = request.get_json()
+    data = request.get_json(force=True)
     username = data.get("username")
     if username == g.username:
         text_comment = data.get("text_comment")
@@ -72,7 +72,7 @@ def new_comment():
         return jsonify({"status":"forbidden"}),403
 @post_bp.route("/view-comments", methods=["POST"])
 def view_comments():
-    data = request.get_json()
+    data = request.get_json(force=True)
     post_id = data.get("post_id")
     conn = get_db()
     cur = conn.cursor()
@@ -147,7 +147,7 @@ def feed():
 
 @post_bp.route("/star", methods=["POST"])
 def star():
-    data = request.get_json()
+    data = request.get_json(force=True)
 
     post_id = data.get("post_id")
     username = data.get("username")
@@ -199,7 +199,7 @@ def return_stars(post_id):
 
 @post_bp.route("/has-star", methods=["POST"])
 def has_star():
-    data = request.get_json()
+    data = request.get_json(force=True)
 
     post_id = data.get("post_id")
     username = data.get("username")

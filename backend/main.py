@@ -160,7 +160,7 @@ def valide():
         result = cur.fetchone()
         if result:
             json_banned = {
-                "status":"BANNED",
+                "status":"banned",
                 "reason":result[2],
                 "time":result[1]
             }
