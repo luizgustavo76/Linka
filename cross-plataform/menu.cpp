@@ -1997,7 +1997,7 @@ int main(int argc, char *argv[])
         int status_create= 0;
         json_create_profile["username"] = username;
         requestHTTP(
-            url + "/create-profile",
+            url + "/create_profile",
             "POST",
             json_create_profile,
             1000,

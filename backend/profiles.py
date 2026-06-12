@@ -47,22 +47,15 @@ def edit():
 def create():
     data = request.get_json()
     username = data.get("username")
-    if username == g.username:
-        if isinstance(username, dict):
-            username = username.get("username")
+    bio_default = f"Hi! my name is {username} and im new in the Linka, let be friends?"
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO profile (username, bio) VALUES (?,?)", (username, bio_default))
+    conn.commit()
+    conn.close()
+    return jsonify({"status":"Ok"})
 
-        if not username or not isinstance(username, str):
-            return jsonify({"error": "username is invalid"}), 400
-
-        bio_default = f"Hi! my name is {username} and im new in the Linka, let be friends?"
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("INSERT INTO profile (username, bio) VALUES (?,?)", (username, bio_default))
-        conn.commit()
-        conn.close()
-        return jsonify({"status":"Ok"})
-    else:
-        return jsonify({"status":"forbidden"}),403
+        
 @profile_bp.route("/view_profile/<username>")
 def view(username):
     conn = get_db()
