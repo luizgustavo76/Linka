@@ -228,32 +228,38 @@ def valide():
         return jsonify({"status": "the token is invalid"}), 401
 @app.route("/valide-session", methods=["POST"])
 def valideManual():
+    public_paths = ["/login", "/register", "/new-session", "/create-profile"]
+    
+    if request.path in public_paths:
+        return None  
+
     token = request.headers.get("Authorization")
-    print(request.endpoint)
-    if request.endpoint in public_routes:
-        return None
+    
     if token == None:
-        return jsonify({"status":"the token is empty"}),401
+        return jsonify({"status": "the token is empty"}), 401
     else:
         token = token.replace("Bearer ", "")
+        
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT username, expire_date, token FROM tokens WHERE token = ?", (token,))
     result = cur.fetchone()
+    
     if not result:
         conn.close()
         return jsonify({"status": "invalid token"}), 401
+        
     token_db = result["token"]
-    g.username = username = result["username"]
-    expire_date = result["expire_date"]
-    expire_date = datetime.fromisoformat(expire_date)
+    g.username = result["username"]
+    expire_date = datetime.fromisoformat(result["expire_date"])
+    
     if token_db == token:
         if datetime.now() > expire_date:
-            return jsonify({"status":"the token has been expired"}),401
+            return jsonify({"status": "the token has been expired"}), 401
         else:
             return None
     else:
-        return jsonify({"status":"the token is invalid"}),401
+        return jsonify({"status": "the token is invalid"}), 401
 
 
 

@@ -335,7 +335,10 @@ QString requestHTTP(const QString &url,
 
         QNetworkReply *reply = nullptr;
         QByteArray jsonData = QJsonDocument(jsonParaEnviar).toJson();
-
+        qDebug() << "--- INICIANDO REQUEST ---";
+        qDebug() << "URL Alvo:" << targetUrl;
+        qDebug() << "Método:" << m;
+        qDebug() << "Logged flag:" << logged;
         if(m == "GET") {
             reply = manager.get(request);
         }
@@ -1991,11 +1994,15 @@ int main(int argc, char *argv[])
             false
         );
         QJsonObject json_create_profile;
+        int status_create= 0;
         json_create_profile["username"] = username;
         requestHTTP(
             url + "/create-profile",
             "POST",
-            json_create_profile
+            json_create_profile,
+            1000,
+            &status_create,
+            false
         );
         QString token = newSession(username, password);
         config["FAST-LOGIN"]["token_session"] = token.toStdString();
