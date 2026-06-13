@@ -605,6 +605,8 @@ int main(int argc, char *argv[])
         clearLayout(layout);
         QLabel *title = new QLabel(update_text);
         QPushButton *buttonUpdate = new QPushButton(update_now_text);
+        layout->addWidget(title);
+        layout->addWidget(buttonUpdate);
     };
     QString response_version = requestHTTP(
         url + "/meta",
@@ -614,10 +616,30 @@ int main(int argc, char *argv[])
     QByteArray byteArray = response_version.toUtf8();
     QJsonDocument doc = QJsonDocument::fromJson(byteArray);
     QJsonObject jsonObject = doc.object();
-    QString minimum_version = jsonObject["minimum_version"].toString();
-    if (minimum_version > current_version){
+    
+    // 1. Pegue as strings e use .trimmed() para limpar qualquer espaço ou \n invisível
+    QString min_ver_str = jsonObject["minim-version"].toString().trimmed();
+    QString cur_ver_str = current_version.trimmed();
+
+    // 2. Converta as duas para double (número quebrado)
+    double min_version_num = min_ver_str.toDouble();
+    double cur_version_num = cur_ver_str.toDouble();
+
+    // 🕵️‍♂️ Debug rápido no console para você ver os números reais que o C++ está lendo
+    qDebug() << "--- CHECAGEM DE VERSÃO ---";
+    qDebug() << "Do Servidor (string):" << min_ver_str << " -> (número):" << min_version_num;
+    qDebug() << "No App Local (string):" << cur_ver_str << " -> (número):" << cur_ver_str;
+
+    // 3. Faça a comparação numérica pura. Não tem como o C++ errar que 2.0 > 1.0!
+    if (min_version_num > cur_version_num){
+        qDebug() << "Bloqueando o app! Indo para a tela de atualização...";
         updatePage();
-    };
+        
+        // ⚠️ ADICIONE ISSO AQUI: Se entrar na atualização, force um 'return' para o main parar aqui 
+        // e não deixar nenhuma função de login rodar lá embaixo!
+        window.show();
+        return app.exec(); 
+    }
     // validation of token
     QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
     QJsonObject json_valide;
