@@ -68,6 +68,17 @@
     </message>
 </context>
 <context>
+    <name>update</name>
+    <message>
+        <source>update_text</source>
+        <translation>A update are avaible</translation>
+    </message>
+    <message>
+        <source>update_now</source>
+        <translation>Update Now!</translation>
+    </message>
+</context>
+<context>
     <name>feed</name>
     <message>
         <source>Comments</source>
