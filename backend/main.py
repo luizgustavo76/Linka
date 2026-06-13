@@ -228,7 +228,7 @@ def valideManual():
         if datetime.now() > expire_date:
             return jsonify({"status": "the token has been expired"}), 401
         else:
-            return None
+            return jsonify({"status":"the token is valid"}),200
     else:
         return jsonify({"status": "the token is invalid"}), 401
 
