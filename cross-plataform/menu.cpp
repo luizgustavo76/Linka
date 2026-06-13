@@ -1311,7 +1311,7 @@ int main(int argc, char *argv[])
 
             QJsonObject view_chat;
             view_chat["id"] = *lastId;
-
+            
             QString chat_message = requestHTTP(
                 url + "/view-global-message",
                 "POST",
@@ -1350,7 +1350,7 @@ int main(int argc, char *argv[])
 
                 ChatBubble *bubble =
                     new ChatBubble(
-                        text,
+                        sender + ":" + text,
                         isMe
                     );
 
@@ -1604,12 +1604,13 @@ int main(int argc, char *argv[])
     //pagina inicial de chat
     chatPage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QList<QWidget*> widgets;
         QPushButton *ChatGlobalButton = new QPushButton("Chat Global");
         QObject::connect(ChatGlobalButton, &QPushButton::clicked, [=]() mutable{
             chatGlobal();
         });
-        widgets.append(ChatGlobalButton);
+        
         QJsonObject friends_json;
         friends_json["username"] = username;
         QString response_friends = requestHTTP(
@@ -1651,6 +1652,7 @@ int main(int argc, char *argv[])
                 initialPage();
             });
         });
+        widgets.append(ChatGlobalButton);
         widgets.append(back_button);
         scroll_area(layout, widgets);
     };
@@ -1796,6 +1798,22 @@ int main(int argc, char *argv[])
         if (config["FAST-LOGIN"]["username"].empty() || config["FAST-LOGIN"]["password"].empty()){
             loginPage();
             return;
+        };
+        QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+        QJsonObject valideToken;
+        valideToken["username"] = QString::fromStdString(config["FAST-LOGIN"]["username"]);
+        int status_code = 0;
+        requestHTTP(
+            url + "/valide-session",
+            "POST",
+            valideToken,
+            10000,
+            &status_code
+        );
+        if (status_code == 200 || status_code == 201){}else{
+            QString token = newSession(QString::fromStdString(config["FAST-LOGIN"]["username"]), QString::fromStdString(config["FAST-LOGIN"]["password"]));
+            config["FAST-LOGIN"]["token_session"] = token.toStdString();
+            saveConfig();
         };
         clearLayout(layout);
         fadeTransition(central);
