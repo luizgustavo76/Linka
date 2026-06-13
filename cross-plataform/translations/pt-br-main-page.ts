@@ -84,7 +84,17 @@
 
   </context>
 
-
+<context>
+    <name>update</name>
+    <message>
+        <source>update_text</source>
+        <translation>Uma atualização está disponivel</translation>
+    </message>
+    <message>
+        <source>update_now</source>
+        <translation>Atualize agora!</translation>
+    </message>
+</context>
   <context>
     <name>feed</name>
     <message>

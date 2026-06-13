@@ -447,22 +447,23 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QTranslator *translator = new QTranslator(&app);
     loadConfig();
+    QString current_version = "1.0";
     QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
     QString token_session = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-    // if (token_session.isEmpty()){
-    //     QJsonObject json_token;
-    //     QString response = requestHTTP(
-    //         url + "/new-session",
-    //         "POST",
-    //         json_token
-    //     );
-    //     QByteArray byteArray = response.toUtf8();
-    //     QJsonDocument doc = QJsonDocument::fromJson(byteArray);
-    //     QJsonObject jsonObject = doc.object();
-    //     QString new_token = jsonObject["token"].toString();
-    //     config["FAST-LOGIN"]["token_session"] = new_token.toStdString();
-    //     saveConfig();
-    // }
+    if (token_session.isEmpty()){
+        QJsonObject json_token;
+        QString response = requestHTTP(
+            url + "/new-session",
+            "POST",
+            json_token
+        );
+        QByteArray byteArray = response.toUtf8();
+        QJsonDocument doc = QJsonDocument::fromJson(byteArray);
+        QJsonObject jsonObject = doc.object();
+        QString new_token = jsonObject["token"].toString();
+        config["FAST-LOGIN"]["token_session"] = new_token.toStdString();
+        saveConfig();
+    }
     if (translator->load(":/translations/pt-br-main-page.qm")) {
         app.installTranslator(translator);
     }
@@ -529,6 +530,8 @@ int main(int argc, char *argv[])
     QString new_comment_text = QCoreApplication::translate("feed", "new comment");
     QString banned_text = QCoreApplication::translate("banned", "bannedText");
     QString exit_text = QCoreApplication::translate("banned", "exit");
+    QString update_text = QCoreApplication::translate("update", "update_text");
+    QString update_now_text = QCoreApplication::translate("update", "update_now");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -577,6 +580,7 @@ int main(int argc, char *argv[])
     std::function<void()> fast_login;
     std::function<void()> changeLangPage;
     std::function<void(QString)> bannedPage;
+    std::function<void()> updatePage;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -596,6 +600,23 @@ int main(int argc, char *argv[])
             changeServerPage();
         });
 
+    };
+    updatePage = [&](){
+        clearLayout(layout);
+        QLabel *title = new QLabel(update_text);
+        QPushButton *buttonUpdate = new QPushButton(update_now_text);
+    };
+    QString response_version = requestHTTP(
+        url + "/meta",
+        "GET",
+        QJsonObject()
+    );
+    QByteArray byteArray = response_version.toUtf8();
+    QJsonDocument doc = QJsonDocument::fromJson(byteArray);
+    QJsonObject jsonObject = doc.object();
+    QString minimum_version = jsonObject["minimum_version"].toString();
+    if (minimum_version > current_version){
+        updatePage();
     };
     // validation of token
     QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
@@ -1483,7 +1504,7 @@ int main(int argc, char *argv[])
         QList<QWidget*> message;
         QHBoxLayout *lineMessage;
 
-        //scroll area pra mensagens
+
         QScrollArea *scroll = new QScrollArea();
         scroll->setWidgetResizable(true);
 
@@ -1493,10 +1514,13 @@ int main(int argc, char *argv[])
         scroll->setWidget(containerScroll);
         layout->addWidget(scroll);
 
-        //parte grafica
+
         QTimer *timer = new QTimer();
 
-        QObject::connect(timer, &QTimer::timeout, [=]() mutable{
+        
+        int *currentMessageCount = new int(0); 
+
+        QObject::connect(timer, &QTimer::timeout, [=]() mutable {
             QJsonObject view_chat;
             view_chat["user1"] = username;
             view_chat["user2"] = user;
@@ -1514,53 +1538,66 @@ int main(int argc, char *argv[])
             if (!obj.contains("messages")) return;
 
             QJsonArray msgs = obj["messages"].toArray();
-            QLayoutItem *child;
-            while ((child = containerLayout->takeAt(0)) != nullptr)
-            {
-                if (child->widget())
-                {
-                    delete child->widget();
-                }
-                delete child;
-            }
-
-            for (int i = 0; i < msgs.size(); i++)
-            {
-                QJsonObject msg = msgs[i].toObject();
-
-                QString sender = msg["sender"].toString();
-                QString receiver = msg["receiver"].toString();
-                QString text = msg["message"].toString();
-
-                bool isMe = (sender == username);
-
-                ChatBubble *bubble = new ChatBubble(text, isMe);
-
-                QHBoxLayout *line = new QHBoxLayout();
-
-                if (isMe)
-                {
-                    line->addStretch();
-                    line->addWidget(bubble);
-                }
-                else
-                {
-                    line->addWidget(bubble);
-                    line->addStretch();
-                }
-
-                QWidget *lineWidget = new QWidget();
-                lineWidget->setLayout(line);
-
-                containerLayout->addWidget(lineWidget);
-            }
 
             
+            if (msgs.size() != *currentMessageCount)
+            {
+                int oldSize = *currentMessageCount;
+                *currentMessageCount = msgs.size(); 
 
-            //auto scroll pra baixo
-            QTimer::singleShot(50, [=](){
-                scroll->verticalScrollBar()->setValue(scroll->verticalScrollBar()->maximum());
-            });
+                
+                QLayoutItem *child;
+                while ((child = containerLayout->takeAt(0)) != nullptr)
+                {
+                    if (child->widget())
+                    {
+                        delete child->widget();
+                    }
+                    delete child;
+                }
+
+                
+                for (int i = 0; i < msgs.size(); i++)
+                {
+                    QJsonObject msg = msgs[i].toObject();
+
+                    QString sender = msg["sender"].toString();
+                    QString text = msg["message"].toString();
+
+                    bool isMe = (sender == username);
+
+                    ChatBubble *bubble = new ChatBubble(text, isMe);
+                    QHBoxLayout *line = new QHBoxLayout();
+
+                    if (isMe)
+                    {
+                        line->addStretch();
+                        line->addWidget(bubble);
+                    }
+                    else
+                    {
+                        line->addWidget(bubble);
+                        line->addStretch();
+                    }
+
+                    QWidget *lineWidget = new QWidget();
+                    lineWidget->setLayout(line);
+                    containerLayout->addWidget(lineWidget);
+                }
+
+                
+                bool lastMsgIsMe = false;
+                if (msgs.size() > 0) {
+                    lastMsgIsMe = (msgs[msgs.size() - 1].toObject()["sender"].toString() == username);
+                }
+
+                if (oldSize == 0 || lastMsgIsMe)
+                {
+                    QTimer::singleShot(50, [=](){
+                        scroll->verticalScrollBar()->setValue(scroll->verticalScrollBar()->maximum());
+                    });
+                }
+            }
         });
 
         timer->start(2000);
@@ -1582,6 +1619,7 @@ int main(int argc, char *argv[])
         QObject::connect(back_button, &QPushButton::clicked, [=]() mutable{
             QTimer::singleShot(0, [=](){
                 timer->stop();
+                delete currentMessageCount; // Deleta o ponteiro para não dar Memory Leak
                 initialPage();
             });
         });
@@ -1599,7 +1637,6 @@ int main(int argc, char *argv[])
 
         layout->addWidget(container);
         layout->addWidget(back_button);
-
     };
     //pagina inicial de chat
     chatPage = [&](){
