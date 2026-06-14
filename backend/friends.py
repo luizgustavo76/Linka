@@ -78,6 +78,20 @@ def accept():
     conn.commit()
     conn.close()
     return jsonify({"status":"friend add"}),200
+@friends_bp.route("/unfriend", methods=["POST"])
+def unfriend():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        friend = data.get("friend")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("DELETE (receiver, remittee) FROM friends WHERE receiver = ? AND remittee = ?",(username, friend))
+        conn.commit()
+        conn.close()
+        return jsonify({"status":"you unfriend with sucess"}),200
+    else:
+        return jsonify({"status":"forbidden"}),403
 @friends_bp.route("/denied", methods=["POST"])
 def denied():
     data = request.get_json()

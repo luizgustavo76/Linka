@@ -95,6 +95,17 @@
         <translation>Atualize agora!</translation>
     </message>
 </context>
+<context>
+    <name>view profile</name>
+    <message>
+        <source>Sent a friend</source>
+        <translation>Enviar uma amizade!</translation>
+    </message>
+    <message>
+        <source>Unfriend</source>
+        <translation>Desfazer amizade</translation>
+    </message>
+</context>
   <context>
     <name>feed</name>
     <message>
@@ -109,7 +120,10 @@
       <source>new post</source>
       <translation>Novo post</translation>
     </message>
-
+    <message>
+        <source>view profile</source>
+        <translation>ver perfíl</translation>
+    </message>
     <message>
       <source>search</source>
       <translation>Pesquisar</translation>

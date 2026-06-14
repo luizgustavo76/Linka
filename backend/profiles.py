@@ -61,7 +61,7 @@ def view(username):
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM profile WHERE username = ?",(username,))
-    response = cur.fetchall()
+    response = cur.fetchone()
     conn.close()
     row = {
         "username":response[0],

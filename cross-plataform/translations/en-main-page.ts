@@ -79,6 +79,17 @@
     </message>
 </context>
 <context>
+    <name>view profile</name>
+    <message>
+        <source>Sent a friend</source>
+        <translation>Sent a friend</translation>
+    </message>
+    <message>
+        <source>Unfriend</source>
+        <translation>Unfriend</translation>
+    </message>
+</context>
+<context>
     <name>feed</name>
     <message>
         <source>Comments</source>
@@ -87,6 +98,10 @@
     <message>
         <source>new comment</source>
         <translation>New comment</translation>
+    </message>
+    <message>
+        <source>view profile</source>
+        <translation>view profile</translation>
     </message>
     <message>
         <source>new post</source>

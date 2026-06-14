@@ -533,6 +533,9 @@ int main(int argc, char *argv[])
     QString exit_text = QCoreApplication::translate("banned", "exit");
     QString update_text = QCoreApplication::translate("update", "update_text");
     QString update_now_text = QCoreApplication::translate("update", "update_now");
+    QString view_profile = QCoreApplication::translate("feed", "view_profile");
+    QString un_friend_text = QCoreApplication::translate("view profile", "Unfriend");
+    QString sent_friend_text = QCoreApplication::translate("view profile", "Sent a friend");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -582,6 +585,9 @@ int main(int argc, char *argv[])
     std::function<void()> changeLangPage;
     std::function<void(QString)> bannedPage;
     std::function<void()> updatePage;
+    std::function<void(QString)> sentUnFriendRequest;
+    std::function<void(QString)> sentFriendRequest;
+    std::function<void(QString)> otherProfilePage;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -857,6 +863,89 @@ int main(int argc, char *argv[])
                     saveConfig();
                 });
         });
+    };
+    sentFriendRequest = [&](QString receiver){
+        QJsonObject json_friends;
+        json_friends["receiver"] = receiver;
+        json_friends["remittee"] = username;
+        int status_code = 0;
+        requestHTTP(
+            url + "/send-friend",
+            "POST",
+            json_friends,
+            10000,
+            &status_code
+        );
+    };
+    sentUnFriendRequest = [&](QString receiver){
+        QJsonObject json_friends;
+        json_friends["friend"] = receiver;
+        json_friends["username"] = username;
+        int status_code = 0;
+        requestHTTP(
+            url + "/unfriend",
+            "POST",
+            json_friends,
+            10000,
+            &status_code
+        );
+    };
+    
+    otherProfilePage = [&](QString usernameProfile){
+        clearLayout(layout);
+        QLabel *titleUsername = new QLabel(usernameProfile);
+        titleUsername->setStyleSheet("font-size: 16px; font-weight: bold; color: #333333;");
+        QJsonObject isFriend;
+        isFriend["username"] = username;
+        QPushButton *sentAFriend = new QPushButton(sent_friend_text);
+        QPushButton *unFriend = new QPushButton(un_friend_text);
+        QString bio = "";
+        QLabel *biography = new QLabel(bio);
+        QString response_bio = requestHTTP(
+            url + "view_profile/" + usernameProfile,
+            "GET",
+            QJsonObject()
+        );
+        QJsonDocument doc_bio =
+            QJsonDocument::fromJson(response_bio.toUtf8());
+        QJsonObject json_response_bio = doc_bio.object();
+        bio = json_response_bio["bio"].toString();
+        QString response = requestHTTP(
+            url + "/friends",
+            "POST",
+            isFriend
+        );
+        QJsonDocument doc =
+            QJsonDocument::fromJson(response.toUtf8());
+        QJsonObject json_response = doc.object();
+        QJsonArray friendsArray = json_response["friends"].toArray();
+        for (int i = 0; i < friendsArray.size(); ++i) {
+            QJsonArray subArray = friendsArray[i].toArray();
+            
+            
+            if (subArray.size() >= 2) {
+                QString friendCheck1 = subArray[0].toString();
+                QString friendCheck2 = subArray[1].toString();
+                if (friendCheck1 == usernameProfile || friendCheck2 == usernameProfile){
+                    layout->addWidget(unFriend);
+                }else{
+                    layout->addWidget(sentAFriend);
+                };
+            };
+        };
+        QObject::connect(sentAFriend, &QPushButton::clicked, [=](){
+            sentFriendRequest(usernameProfile);
+        });
+        QObject::connect(unFriend, &QPushButton::clicked, [=](){
+            sentUnFriendRequest(usernameProfile);
+        });
+        QPushButton *back_button = new QPushButton(back_text);
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+            initialPage();
+        });
+        layout->addWidget(titleUsername);
+        layout->addWidget(biography);
+        layout->addWidget(back_button);    
     };
     changeLangPage = [&](){
         clearLayout(layout);
@@ -1195,7 +1284,11 @@ int main(int argc, char *argv[])
 
                 QVBoxLayout *frameLayout = new QVBoxLayout(frame);
                 QHBoxLayout *starLayout = new QHBoxLayout();
-
+                QHBoxLayout *usernameLayout = new QHBoxLayout();
+                QPushButton *viewProfile = new QPushButton(view_profile);
+                QObject::connect(viewProfile, &QPushButton::clicked, [=](){
+                    otherProfilePage(username);
+                });
                 QLabel *lblUser = new QLabel(username);
                 QLabel *lblText = new QLabel(textPost);
                 QLabel *lblDate = new QLabel(datetime);
@@ -1203,8 +1296,10 @@ int main(int argc, char *argv[])
                 lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
                 lblText->setStyleSheet("color: white; font-size: 14px;");
                 lblDate->setStyleSheet("color: gray; font-size: 12px;");
-
-                frameLayout->addWidget(lblUser);
+                usernameLayout->addWidget(lblUser);
+                usernameLayout->addWidget(viewProfile);
+                usernameLayout->addStretch();
+                frameLayout->addLayout(usernameLayout);
                 frameLayout->addWidget(lblText);
                 frameLayout->addWidget(lblDate);
 
