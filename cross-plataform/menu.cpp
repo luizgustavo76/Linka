@@ -301,6 +301,24 @@ QString newSession(QString username, QString password)
 
     return token;
 }
+QString renoveToken(){
+    loadConfig();
+    QJsonObject newTokenJson;
+    newTokenJson["username"] = QString::fromStdString(config["FAST-LOGIN"]["username"]);
+    newTokenJson["password"] = QString::fromStdString(config["FAST-LOGIN"]["password"]);
+    QString url = QString::fromStdString(config["SERVER"]["url"]);
+    QString response = requestHTTP(
+        url + "/new-session",
+        "POST",
+        newTokenJson
+    );
+    QJsonDocument doc =
+        QJsonDocument::fromJson(response.toUtf8());
+    QJsonObject json_response = doc.object();
+    QString newToken = json_response["token"].toString();
+    config["FAST-LOGIN"]["token_session"] = newToken.toStdString();
+    saveConfig();
+};
 QString requestHTTP(const QString &url,
                     const QString &method,
                     const QJsonObject &json,
@@ -365,10 +383,13 @@ QString requestHTTP(const QString &url,
         return "ERRO: Timeout";
     }
     
+    
     // Captura o Status Code real retornado pelo servidor (ex: 200, 404, 500)
     int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode) *statusCode = code;
-    
+    if (code != nullptr||code == 401){
+        renoveToken();
+    };
     // Lê a resposta bruta do servidor
     QString response = reply->readAll();
     reply->deleteLater();
