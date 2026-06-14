@@ -464,10 +464,11 @@ int main(int argc, char *argv[])
         config["FAST-LOGIN"]["token_session"] = new_token.toStdString();
         saveConfig();
     }
-    if (translator->load(":/translations/pt-br-main-page.qm")) {
-        app.installTranslator(translator);
-    }
-    
+    if (config["LANG"]["lang"] == "pt-br"){
+        if (translator->load(":/translations/pt-br-main-page.qm")) {
+            app.installTranslator(translator);
+        }
+    };    
     app.setStyle(QStyleFactory::create("breeze"));
     loadConfig();
     loadStyle();
@@ -504,8 +505,8 @@ int main(int argc, char *argv[])
     QString text_post = QCoreApplication::translate("feed", "text post");
     QString back_text = QCoreApplication::translate("global", "back");
     QString new_post_text = QCoreApplication::translate("feed", "new post");
-    QString friends_text = QCoreApplication::translate("add friends", "friends");
-    QString search_text = QCoreApplication::translate("initial-page", "search");
+    QString friends_text = QCoreApplication::translate("initial-page", "friends");
+    QString search_text = QCoreApplication::translate("initial-page", "Search");
     QString add_friends_text = QCoreApplication::translate("initial-page", "add friends");
     QString username_text = QCoreApplication::translate("global", "username");
     QString message_text = QCoreApplication::translate("add friends", "message");
@@ -515,8 +516,8 @@ int main(int argc, char *argv[])
     QString denied_text = QCoreApplication::translate("inbox", "denied");
     QString type_text = QCoreApplication::translate("chat", "type here");
     QString add_theme_text = QCoreApplication::translate("configurations", "add theme");
-    QString add_federations_text = QCoreApplication::translate("configurations", "add federations");
-    QString options_text = QCoreApplication::translate("main-page", "configurations");
+    QString add_federations_text = QCoreApplication::translate("configurations", "add-federations");
+    QString options_text = QCoreApplication::translate("initial-page", "configurations");
     QString signin_text = QCoreApplication::translate("initial-page", "sign-in");
     QString signup_text = QCoreApplication::translate("initial-page", "sign-up");
     QString password_text = QCoreApplication::translate("sign-up", "password");
