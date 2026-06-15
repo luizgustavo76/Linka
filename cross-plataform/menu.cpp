@@ -40,6 +40,7 @@
 #include <QTimer>
 #include <QFrame>
 #include <QIcon>
+#include <QDateTime>
 #include <QSize>
 #include <nlohmann/json.hpp>
 #include <QPainter>
@@ -702,7 +703,9 @@ int main(int argc, char *argv[])
         QJsonObject post;
         post["username"] = username;
         post["text_post"] = text;
-        post["datetime"] = "11/09/2001";
+        QDateTime actualHour = QDateTime::currentDateTime();
+        QString formatedHour = dataHoraAtual.toString("yyyy-MM-dd HH:mm:ss");
+        post["datetime"] = formatedHour;
         QString response = requestHTTP(
             url + "/new",
             "POST",
@@ -714,6 +717,7 @@ int main(int argc, char *argv[])
     auto new_post = [&](){
         clearLayout(layout);
         fadeTransition(central);
+        
         QLineEdit *text_input = entry(text_post);
         button(back_text, initialPage);
         button(
