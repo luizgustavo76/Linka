@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QWidget>
 #include <QPushButton>
+#include <QScroller>
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QDebug>
@@ -23,6 +24,7 @@
 #include <QJsonObject>
 #include <QLabel>
 #include <QUrl>
+#include <QtGlobal>
 #include <fstream>
 #include <QEventLoop>
 #include <string>
@@ -397,24 +399,36 @@ QString requestHTTP(const QString &url,
     
     return response;
 }
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+
+#endif
+
 void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
 {
     QScrollArea *scroll = new QScrollArea();
     scroll->setWidgetResizable(true);
+    scroll->setFrameShape(QFrame::NoFrame); 
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QScroller::grabGesture(scroll, QScroller::LeftMouseButtonGesture);
+    scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+#else
+    scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+#endif
     QWidget *container = new QWidget();
     QVBoxLayout *containerLayout = new QVBoxLayout(container);
-
-    for(QWidget *w : widgets)
+    containerLayout->setContentsMargins(0, 0, 0, 0); 
+    containerLayout->setSpacing(10);
+    for(int i = 0; i < widgets.size(); ++i)
     {
-        containerLayout->addWidget(w);
+        containerLayout->addWidget(widgets.at(i));
     }
-
     containerLayout->addStretch();
     scroll->setWidget(container);
-
     layout->addWidget(scroll);
-};
+}
 
 void loadStyle()
 {
