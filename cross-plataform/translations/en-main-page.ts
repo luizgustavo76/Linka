@@ -179,6 +179,10 @@
 <context>
     <name>configurations</name>
     <message>
+      <source>change lang</source>
+      <translation>change lang</translation>
+    </message>
+    <message>
         <source>sign-out</source>
         <translation>Sign-out</translation>
     </message>

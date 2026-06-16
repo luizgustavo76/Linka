@@ -223,7 +223,10 @@
 
   <context>
     <name>configurations</name>
-
+    <message>
+      <source>change lang</source>
+      <translation>Alterar linguagem</translation>
+    </message>
     <message>
       <source>sign-out</source>
       <translation>Sair da conta</translation>
