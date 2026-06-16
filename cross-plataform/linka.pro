@@ -7,3 +7,13 @@ QT -= ssl
 INCLUDEPATH += $$PWD/third_party
 RC_ICONS = assets/icon.ico
 ANDROID_ABIS = armeabi-v7a arm64-v8a
+ANDROID_MIN_SDK_VERSION = 21
+ANDROID_TARGET_SDK_VERSION = 21
+ANDROID_COMPILE_SDK_VERSION = 21
+
+DISTFILES += \
+    android/AndroidManifest.xml \
+    android/build.gradle \
+    android/res/values/libs.xml
+
+ANDROID_PACKAGE_SOURCE_DIR = $$PWD/android
