@@ -46,7 +46,6 @@
 #include <QIcon>
 #include <QDateTime>
 #include <QSize>
-#include <nlohmann/json.hpp>
 #include <QPainter>
 #include <QFontMetrics>
 #include <QTranslator>
@@ -54,7 +53,7 @@
 #include <QPropertyAnimation>
 #include <QDesktopWidget>
 
-using json = nlohmann::json;
+
 
 // Helper singleShot para Qt 5.1 (usa QTimer + lambda)
 static void singleShot(int msec, QObject *parent, const std::function<void()> &fn)
@@ -339,12 +338,15 @@ QString renoveToken() {
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
     // Montando o payload usando nlohmann::json (C++ antigo compatível)
-    json newTokenJson;
-    newTokenJson["username"] = config["FAST-LOGIN"]["username"];
-    newTokenJson["password"] = config["FAST-LOGIN"]["password"];
+    QJsonObject newTokenJson;
+    newTokenJson["username"] = QString::fromStdString(config["FAST-LOGIN"]["username"]);
+    newTokenJson["password"] = QString::fromStdString(config["FAST-LOGIN"]["password"]);
     
-    std::string s = newTokenJson.dump();
-    QByteArray data(s.c_str(), static_cast<int>(s.size()));
+    QJsonDocument doc(newTokenJson);
+    QString s = doc.toJson(QJsonDocument::Compact);
+    // Se o seu código precisar estritamente de std::string para os passos seguintes:
+    std::string s_std = s.toStdString();
+    QByteArray data = s.toUtf8();
     
     // Faz o POST direto pelas entranhas do Qt Network
     QNetworkReply *reply = isolatorManager.post(request, data);
@@ -367,14 +369,20 @@ QString renoveToken() {
     }
 
     try {
-        json doc = json::parse(response.toStdString());
-        std::string newToken = doc.value("token", "");
+        QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+
+        // 2. Transforma o documento em um objeto JSON para acessar as chaves
+        QJsonObject jsonObj = doc.object();
+
+        // 3. Pega o valor da chave "token" de forma segura
+        // (Se não existir, o QString() retorna uma string vazia por padrão)
+        QString newToken = jsonObj.value("token").toString();
         
-        if (!newToken.empty()) {
-            config["FAST-LOGIN"]["token_session"] = newToken;
+        if (!newToken.isEmpty()) {
+            config["FAST-LOGIN"]["token_session"] = newToken.toStdString();
             saveConfig();
             qDebug() << "Token renovado com sucesso via bypass!";
-            return QString::fromStdString(newToken);
+            return newToken;
         }
     } catch (...) {
         qDebug() << "Erro ao parsear JSON na renovacao de token.";
