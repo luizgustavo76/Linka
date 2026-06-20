@@ -685,6 +685,7 @@ int main(int argc, char *argv[])
     std::function<void(QString)> sentUnFriendRequest;
     std::function<void(QString)> sentFriendRequest;
     std::function<void(QString)> otherProfilePage;
+    std::function<void()> logout;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1206,6 +1207,14 @@ int main(int argc, char *argv[])
         scroll_area(layout, scroll_layout);
 
     };
+    logout = [&](){
+        loadConfig();
+        config["FAST-LOGIN"]["username"] = "";
+        config["FAST-LOGIN"]["password"] = "";
+        config["FAST-LOGIN"]["token_session"] = "";
+        saveConfig();
+        loginPage();
+    };
     account = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1219,7 +1228,7 @@ int main(int argc, char *argv[])
         );
         QJsonDocument doc =
             QJsonDocument::fromJson(bio_response.toUtf8());
-
+        QPushButton *logout_button = new QPushButton(exit_text);
         QJsonObject json_bio = doc.object();
         QString MyBio = json_bio["bio"].toString();
         QLabel *label_bio = new QLabel(MyBio);
@@ -1228,11 +1237,15 @@ int main(int argc, char *argv[])
         layout->addWidget(button_edit);
         QPushButton *buttonBack = new QPushButton(back_text);
         layout->addWidget(buttonBack);
+        layout->addWidget(logout_button);
         QObject::connect(buttonBack, &QPushButton::clicked, [=](){
                 initialPage();
         });
         QObject::connect(button_edit, &QPushButton::clicked, [=](){
                 editAccount();
+        });
+        QObject::connect(logout_button, &QPushButton::clicked, [=](){
+                logout();
         });
         
     };
@@ -1407,9 +1420,7 @@ int main(int argc, char *argv[])
 
                 // ===== BOTÃO STAR =====
                 QPushButton *iconButton = new QPushButton();
-                QPushButton *commentButton = new QPushButton("comments");
                 QLabel *starLabel = new QLabel("...");
-                frameLayout->addWidget(commentButton);
                 frameLayout->addWidget(iconButton);
                 frameLayout->addWidget(starLabel);
 
@@ -1419,8 +1430,6 @@ int main(int argc, char *argv[])
                 iconButton->setStyleSheet("border: none;");
 
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
-                commentButton->setIconSize(QSize(26, 48));
-                commentButton->setStyleSheet("border: none;");
 
 
                 // ponteiro seguro
@@ -1475,9 +1484,6 @@ int main(int argc, char *argv[])
                         iconButton->setIcon(QIcon(":/assets/default_star.png"));
                     };
 
-                });
-                QObject::connect(commentButton,&QPushButton::clicked, [=](){
-                    commentPage(QString::number(postId));
                 });
                 starLayout->addWidget(iconButton);
                 starLayout->addWidget(starLabel);
@@ -2226,6 +2232,13 @@ int main(int argc, char *argv[])
             if (passwordEntry->text() == retryPasswordEntry->text()) {
                 int status_code = signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
                 if (status_code == 200 || status_code == 201){
+                    QJsonObject create_json;
+                    create_json["username"] = username;
+                    requestHTTP(
+                        url + "/create_profile",
+                        "POST",
+                        create_json
+                    );
                     loadConfig();
                     config["FAST-LOGIN"]["username"] = usernameEntry->text().toStdString();
                     config["FAST-LOGIN"]["password"] = passwordEntry->text().toStdString();
