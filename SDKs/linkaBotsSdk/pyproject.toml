@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "linkabot-sdk"
+version = "0.1.0"
+authors = [
+    { name="Luiz Gustavo", email="luizsgustavo76@gmail.com" },
+]
+description = "SDK assíncrono para criação de bots locais na rede Linka"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/linkaBotsSdk"]
