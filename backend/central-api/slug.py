@@ -16,6 +16,8 @@ def create_db():
                 name_server TEXT,
                 url TEXT,
                 owner TEXT,
+                profile_linka TEXT,
+                email TEXT,
                 id TEXT)""")
     conn.commit()
     conn.close()
@@ -39,3 +41,17 @@ def consult():
     if result == None:
         return jsonify({"status":"server not exists"}),400
     return jsonify(row)
+@slug_bp.route("/register-instance", methods=["POST"])
+def register_instance():
+    data = request.get_json()
+    name_server = data.get("name_server")
+    url = data.get("url")
+    owner = data.get("owner")
+    profile_linka = data.get("profile_linka")
+    email = data.get("email")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO slug (name_server, url, owner, profile_linka) VALUES(?, ?, ?, ?)")
+    conn.commit()
+    conn.close()
+    return jsonify({"status":"instance register is sucessful"}),200
