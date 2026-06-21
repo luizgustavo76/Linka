@@ -7,12 +7,12 @@ db_dir = os.path.join(base_dir, "DB")
 if not os.path.exists(db_dir):
     os.makedirs(db_dir)
 def get_db():
-    conn = sqlite3.connect(db_dir + "slug.db")
+    conn = sqlite3.connect(db_dir + "/slug.db")
     return conn
 def create_db():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""CREATE IF NOT EXISTS slug (
+    cur.execute("""CREATE TABLE IF NOT EXISTS slug (
                 name_server TEXT,
                 url TEXT,
                 owner TEXT,
@@ -51,7 +51,7 @@ def register_instance():
     email = data.get("email")
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO slug (name_server, url, owner, profile_linka) VALUES(?, ?, ?, ?)",(name_server, url, owner, profile_linka))
+    cur.execute("INSERT INTO slug (name_server, url, owner, profile_linka, email) VALUES(?, ?, ?, ?)",(name_server, url, owner, profile_linka, email))
     conn.commit()
     conn.close()
     return jsonify({"status":"instance register is sucessful"}),200
