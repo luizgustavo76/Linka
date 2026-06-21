@@ -51,7 +51,7 @@ def register_instance():
     email = data.get("email")
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO slug (name_server, url, owner, profile_linka) VALUES(?, ?, ?, ?)")
+    cur.execute("INSERT INTO slug (name_server, url, owner, profile_linka) VALUES(?, ?, ?, ?)",(name_server, url, owner, profile_linka))
     conn.commit()
     conn.close()
     return jsonify({"status":"instance register is sucessful"}),200

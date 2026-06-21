@@ -1,0 +1,116 @@
+/* ==========================================================================
+   LINKA REGISTRATION - HOME CSS (CORRIGIDO & SEM ENCAVALAR)
+   ========================================================================== */
+
+:root {
+    --bg-main: #0d1117;
+    --bg-card: #161b22;
+    --border: #30363d;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --accent:#58a6ff;
+    --accent-hover: #3b62fd;
+    --focus-blue: #58a6ff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column; /* FORÇA OS ELEMENTOS A FICAREM UM EMBAIXO DO OUTRO */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* O container principal que vai abraçar todo o seu conteúdo */
+main {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    text-align: center; /* Centraliza os textos por padrão */
+}
+
+/* Título Principal */
+h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+}
+
+/* Frase de efeito (Whats in your mind today?) */
+p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 30px;
+}
+
+/* Subtítulos (register your:) */
+h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Estilização da sua lista (Instances, Bots, Themes, Clients) */
+ul {
+    list-style: none; /* Remove aquelas bolinhas feias da lista */
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Divide a lista em 2 colunas organizadas */
+    gap: 12px;
+    margin-bottom: 35px;
+}
+
+li {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+li:hover {
+    border-color: var(--focus-blue);
+    transform: translateY(-2px); /* Efeito sutil de flutuar ao passar o mouse */
+}
+
+/* Botão / Link de Registro (Click here to register) */
+a {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    background-color: var(--accent);
+    border: 1px solid rgba(240, 246, 252, 0.1);
+    border-radius: 6px;
+    text-decoration: none; /* Remove o sublinhado azul padrão de link */
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+a:hover {
+    background-color: var(--accent-hover);
+}
+
+a:active {
+    transform: scale(0.98); /* Efeito de clique físico */
+}
