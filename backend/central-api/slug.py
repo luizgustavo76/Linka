@@ -31,7 +31,7 @@ def consult():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM slug WHERE name_server = ?",(name_server,))
-    result = cur.fetchall()
+    result = cur.fetchone()
     row = {
         "name_server":result[0],
         "url":result[1],
@@ -51,7 +51,7 @@ def register_instance():
     email = data.get("email")
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO slug (name_server, url, owner, profile_linka, email) VALUES(?, ?, ?, ?)",(name_server, url, owner, profile_linka, email))
+    cur.execute("INSERT INTO slug (name_server, url, owner, profile_linka, email) VALUES(?, ?, ?, ?, ?)",(name_server, url, owner, profile_linka, email))
     conn.commit()
     conn.close()
     return jsonify({"status":"instance register is sucessful"}),200
