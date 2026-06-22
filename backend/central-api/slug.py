@@ -32,6 +32,8 @@ def consult():
     cur = conn.cursor()
     cur.execute("SELECT * FROM slug WHERE name_server = ?",(name_server,))
     result = cur.fetchone()
+    if result == None:
+        return jsonify({"status":"this instance not exists"}),400
     row = {
         "name_server":result[0],
         "url":result[1],
@@ -44,14 +46,17 @@ def consult():
 @slug_bp.route("/register-instance", methods=["POST"])
 def register_instance():
     data = request.get_json()
-    name_server = data.get("name_server")
-    url = data.get("url")
-    owner = data.get("owner")
-    profile_linka = data.get("profile_linka")
-    email = data.get("email")
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO slug (name_server, url, owner, profile_linka, email) VALUES(?, ?, ?, ?, ?)",(name_server, url, owner, profile_linka, email))
-    conn.commit()
-    conn.close()
-    return jsonify({"status":"instance register is sucessful"}),200
+    try:
+        name_server = data.get("name_server")
+        url = data.get("url")
+        owner = data.get("owner")
+        profile_linka = data.get("profile_linka")
+        email = data.get("email")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO slug (name_server, url, owner, profile_linka, email) VALUES(?, ?, ?, ?, ?)",(name_server, url, owner, profile_linka, email))
+        conn.commit()
+        conn.close()
+        return jsonify({"status":"instance register is sucessful"}),200
+    except Exception as e:
+        return jsonify({f"status":"a error as ocurred", "error":e}),400
