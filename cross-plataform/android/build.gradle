@@ -75,12 +75,3 @@ android {
         targetSdkVersion = qtTargetSdkVersion
     }
 }
-android {
-    compileSdkVersion 30
-    buildToolsVersion '30.0.3' // Ou mantenha a que funcionar se reclamar
-
-    defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 30
-    }
-}
