@@ -22,7 +22,7 @@ def create_db():
     conn.commit()
     conn.close()
 create_db()
-@slug_bp.route("/api/consult", methods=["post"])
+@slug_bp.route("/api/slug/consult", methods=["post"])
 def consult():
     data = request.get_json()
     name_server = data.get("name_server")
@@ -43,7 +43,7 @@ def consult():
     if result == None:
         return jsonify({"status":"server not exists"}),400
     return jsonify(row)
-@slug_bp.route("/api/register-instance", methods=["POST"])
+@slug_bp.route("/api/slug/register-instance", methods=["POST"])
 def register_instance():
     data = request.get_json()
     try:

@@ -1,0 +1,7 @@
+{
+    "url":{
+        "linkaGate":"https://linkaApi.pythonaywhere.com/api/Gate",
+        "linkaSlug":"https://linkaApi.pythonaywhere.com/api/slug"
+    },
+    "lph-version":"1.0"
+}
