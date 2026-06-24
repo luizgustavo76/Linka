@@ -14,10 +14,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
-#include <QScreen>
-#include <QStyleFactory>
 #include <QDesktopServices>
-#include <QUrl>
+#include <QStyleFactory>
 #include <QVector>
 #include <QSplashScreen>
 #include <QStandardPaths>
@@ -208,37 +206,32 @@ void loadConfig()
     qDebug() << "Config carregada com sucesso!";
 }
 void saveConfig() {
+
     QString dirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QDir().mkpath(dirPath);
 
     QString filePath = dirPath + "/config-login.cfg";
+
     qDebug() << "Salvando config em:" << filePath;
 
-    QFile file(filePath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qDebug() << "ERRO: Não foi possível abrir o arquivo para salvar as configurações no Android.";
-        return;
-    }
+    std::ofstream file(filePath.toStdString());
 
-    QTextStream out(&file);
+    file << "[SERVER]\n";
+    file << "url = " << config["SERVER"]["url"] << "\n\n";
 
-    out << "[SERVER]\n";
-    out << "url = " << QString::fromStdString(config["SERVER"]["url"]) << "\n\n";
+    file << "[LANG]\n";
+    file << "lang = " << config["LANG"]["lang"] << "\n\n";
 
-    out << "[LANG]\n";
-    out << "lang = " << QString::fromStdString(config["LANG"]["lang"]) << "\n\n";
+    file << "[FAST-LOGIN]\n";
+    file << "username = " << config["FAST-LOGIN"]["username"] << "\n";
+    file << "token = " << config["FAST-LOGIN"]["token"] << "\n";
+    file << "password = " << config["FAST-LOGIN"]["password"] << "\n\n";
+    file << "token_session = " << config["FAST-LOGIN"]["token_session"] << "\n\n";
+    file << "[FEDERATIONS]\n";
+    file << "url = " << config["FEDERATIONS"]["url"] << "\n\n";
 
-    out << "[FAST-LOGIN]\n";
-    out << "username = " << QString::fromStdString(config["FAST-LOGIN"]["username"]) << "\n";
-    out << "token = " << QString::fromStdString(config["FAST-LOGIN"]["token"]) << "\n";
-    out << "password = " << QString::fromStdString(config["FAST-LOGIN"]["password"]) << "\n\n";
-    out << "token_session = " << QString::fromStdString(config["FAST-LOGIN"]["token_session"]) << "\n\n";
-    
-    out << "[FEDERATIONS]\n";
-    out << "url = " << QString::fromStdString(config["FEDERATIONS"]["url"]) << "\n\n";
-
-    out << "[THEMES]\n";
-    out << "theme = " << QString::fromStdString(config["THEMES"]["theme"]) << "\n";
+    file << "[THEMES]\n";
+    file << "theme = " << config["THEMES"]["theme"] << "\n";
 
     file.close();
 }
@@ -312,60 +305,41 @@ QString newSession(QString username, QString password)
 
     return token;
 }
-QString renoveToken() {
+QString renoveToken(){
     loadConfig();
-    
+    QJsonObject newTokenJson;
+    newTokenJson["username"] = QString::fromStdString(config["FAST-LOGIN"]["username"]);
+    newTokenJson["password"] = QString::fromStdString(config["FAST-LOGIN"]["password"]);
     QString url = QString::fromStdString(config["SERVER"]["url"]);
     
-    // Criamos um manager exclusivo e isolado para esta renovação
-    QNetworkAccessManager isolatorManager;
+    // --- SUBSTITUÍDO PARA EVITAR LOOP INFINITO ---
+    QNetworkAccessManager manager;
     QNetworkRequest request;
     request.setUrl(QUrl(url + "/new-session"));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    // Montando o payload usando nlohmann::json (C++ antigo compatível)
-    json newTokenJson;
-    newTokenJson["username"] = config["FAST-LOGIN"]["username"];
-    newTokenJson["password"] = config["FAST-LOGIN"]["password"];
-    
-    QByteArray data = QByteArray::fromStdString(newTokenJson.dump());
-    
-    // Faz o POST direto pelas entranhas do Qt Network
-    QNetworkReply *reply = isolatorManager.post(request, data);
+    QByteArray data = QJsonDocument(newTokenJson).toJson();
+    QNetworkReply *reply = manager.post(request, data);
 
-    // EventLoop local para travar a execução até responder (Síncrono)
     QEventLoop loop;
-    QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     loop.exec();
 
-    // Lê a resposta bruta do servidor
     QString response = reply->readAll();
-    int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     reply->deleteLater();
+    // ----------------------------------------------
 
-    // Se a renovação de token falhar ou der erro de credenciais (ex: 401 ou 400)
-    // nós paramos aqui para evitar loops com o servidor
-    if (code != 200 && code != 201) {
-        qDebug() << "Falha critica ao renovar token. Status:" << code;
-        return "";
+    QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+    QJsonObject json_response = doc.object();
+    QString newToken = json_response["token"].toString();
+    
+    if(!newToken.isEmpty()) {
+        config["FAST-LOGIN"]["token_session"] = newToken.toStdString();
+        saveConfig();
     }
-
-    try {
-        json doc = json::parse(response.toStdString());
-        std::string newToken = doc.value("token", "");
-        
-        if (!newToken.empty()) {
-            config["FAST-LOGIN"]["token_session"] = newToken;
-            saveConfig();
-            qDebug() << "Token renovado com sucesso via bypass!";
-            return QString::fromStdString(newToken);
-        }
-    } catch (...) {
-        qDebug() << "Erro ao parsear JSON na renovacao de token.";
-    }
-
-    return "";
-}
+    
+    return newToken;
+};
 QString requestHTTP(const QString &url,
                     const QString &method,
                     const QJsonObject &json,
@@ -434,10 +408,10 @@ QString requestHTTP(const QString &url,
     // Captura o Status Code real retornado pelo servidor (ex: 200, 404, 500)
     int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode) *statusCode = code;
-    if (code == 403 ||code == 401){
+    if (code == 403||code == 401){
         renoveToken();
     };
-    // Lê a resposta bruta do srvidor
+    // Lê a resposta bruta do servidor
     QString response = reply->readAll();
     reply->deleteLater();
     
@@ -509,26 +483,24 @@ void loadStyle()
 }
 
 void clearLayout(QLayout *layout) {
-    if (!layout) return; 
+    if (!layout) return; // Trava de segurança contra o SIGSEGV anterior
 
     QLayoutItem *item;
     while ((item = layout->takeAt(0))) {
         if (item->layout()) {
             clearLayout(item->layout());
         } else if (item->widget()) {
-            QWidget *widget = item->widget();
-            widget->setParent(NULL); 
-            widget->deleteLater(); 
+            delete item->widget();
         }
-        delete item; 
+        delete item;
     }
 }
 int main(int argc, char *argv[])
 {
-    #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    
+    // Faz com que os ícones e imagens usem resoluções maiores se o ecrã for retina/4K
     QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-    #endif
     QString url = QString::fromStdString(config["SERVER"]["url"]);
     QApplication app(argc, argv);
     QTranslator *translator = new QTranslator(&app);
@@ -536,32 +508,15 @@ int main(int argc, char *argv[])
     QString current_version = "1.0";
     QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
     QString token_session = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-    QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-    if (token_session.isEmpty()){
-        QJsonObject json_token;
-        QString response = requestHTTP(
-            url + "/new-session",
-            "POST",
-            json_token
-        );
-        QByteArray byteArray = response.toUtf8();
-        QJsonDocument doc = QJsonDocument::fromJson(byteArray);
-        QJsonObject jsonObject = doc.object();
-        QString new_token = jsonObject["token"].toString();
-        config["FAST-LOGIN"]["token_session"] = new_token.toStdString();
-        saveConfig();
-    }
-    
     if (config["LANG"]["lang"] == "pt-br"){
         if (translator->load(":/translations/pt-br-main-page.qm")) {
             app.installTranslator(translator);
         }
     };    
-    
     app.setStyle(QStyleFactory::create("breeze"));
     loadConfig();
     loadStyle();
-    
+    //url do servidor
     for (auto &sec : config) {
         std::cout << "[" << sec.first << "]\n";
         for (auto &kv : sec.second) {
@@ -569,6 +524,7 @@ int main(int argc, char *argv[])
         }
     }
     
+
     if (url.isEmpty())
     {
         config["SERVER"]["url"] = "http://linkaProject.pythonanywhere.com";
@@ -576,32 +532,19 @@ int main(int argc, char *argv[])
         saveConfig();
     }
     qDebug() << "url" << url;   
-    QScreen *tela = QApplication::primaryScreen();
-    int larguraTela = tela->geometry().width();
-    int alturaTela = tela->geometry().height();
-
-    
-    QFont fonteGlobal = app.font();
-    if (larguraTela >= 1080) {
-        fonteGlobal.setPointSize(16); 
-    } else if (larguraTela >= 720) {
-        fonteGlobal.setPointSize(13); 
-    } else {
-        fonteGlobal.setPointSize(11);
-    }
-    app.setFont(fonteGlobal);
+    //janela principal
     QMainWindow window;
     app.setWindowIcon(QIcon(":/assets/icon.png"));
     QPixmap pixmap(":/assets/icon.png");
+
     QSplashScreen splash(pixmap);
     splash.show();
     window.setWindowTitle("Linka Mobile");
-    window.setGeometry(0, 0, larguraTela, alturaTela);
+    window.resize(400, 600);
+
+    // CENTRAL WIDGET
     QWidget *central = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout(central);
-    int margemCalculada = larguraTela * 0.05;
-    layout->setContentsMargins(margemCalculada, margemCalculada, margemCalculada, margemCalculada);
-    layout->setSpacing(alturaTela * 0.03);
     //strings traduzidas
     QString text_post = QCoreApplication::translate("feed", "text post");
     QString back_text = QCoreApplication::translate("global", "back");
@@ -637,7 +580,6 @@ int main(int argc, char *argv[])
     QString view_profile = QCoreApplication::translate("feed", "view_profile");
     QString un_friend_text = QCoreApplication::translate("view profile", "Unfriend");
     QString sent_friend_text = QCoreApplication::translate("view profile", "Sent a friend");
-    QString change_lang_page = QCoreApplication::translate("configurations", "change lang");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -690,7 +632,6 @@ int main(int argc, char *argv[])
     std::function<void(QString)> sentUnFriendRequest;
     std::function<void(QString)> sentFriendRequest;
     std::function<void(QString)> otherProfilePage;
-    std::function<void()> logout;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -710,6 +651,78 @@ int main(int argc, char *argv[])
             changeServerPage();
         });
 
+    };
+    if (config["FAST-LOGIN"]["username"].empty() || config["FAST-LOGIN"]["password"].empty()){
+        loginPage();
+    }
+    if (token_session.isEmpty()){
+        QJsonObject json_token;
+        QString response = requestHTTP(
+            url + "/new-session",
+            "POST",
+            json_token
+        );
+        QByteArray byteArray = response.toUtf8();
+        QJsonDocument doc = QJsonDocument::fromJson(byteArray);
+        QJsonObject jsonObject = doc.object();
+        QString new_token = jsonObject["token"].toString();
+        config["FAST-LOGIN"]["token_session"] = new_token.toStdString();
+        saveConfig();
+    }
+    updatePage = [&](QString url){
+        clearLayout(layout);
+        QLabel *title = new QLabel("Update now");
+        QPushButton *buttonUpdate = new QPushButton("Click here to update");
+        layout->addWidget(title);
+        layout->addWidget(buttonUpdate);
+        QUrl url_update(url);
+        QObject::connect(buttonUpdate, &QPushButton::clicked, [=](){
+            QDesktopServices::openUrl(url);
+        });
+    };
+    QString response_version = requestHTTP(
+        url + "/meta",
+        "GET",
+        QJsonObject()
+    );
+    QByteArray byteArray = response_version.toUtf8();
+    QJsonDocument doc = QJsonDocument::fromJson(byteArray);
+    QJsonObject jsonObject = doc.object();
+    
+    // 1. Pegue as strings e use .trimmed() para limpar qualquer espaço ou \n invisível
+    QString min_ver_str = jsonObject["minim-version"].toString().trimmed();
+    QString cur_ver_str = current_version.trimmed();
+    QString url_text = jsonObject["url"].toString();
+
+    // 2. Converta as duas para double (número quebrado)
+    double min_version_num = min_ver_str.toDouble();
+    double cur_version_num = cur_ver_str.toDouble();
+
+    qDebug() << "--- CHECAGEM DE VERSÃO ---";
+    if (min_version_num > cur_version_num){
+        qDebug() << "Bloqueando o app! Indo para a tela de atualização...";
+        updatePage(url_text);
+        window.show();
+        return app.exec(); 
+    }
+    QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+    QJsonObject json_valide;
+    json_valide["token"] = token;
+    int status_code;
+    requestHTTP(
+        url + "/valide",
+        "POST",
+        json_valide,
+        5000,
+        &status_code
+    );
+    if (token.isEmpty()){
+        loginPage();
+    };
+    if (status_code == 200 || status_code == 201){
+        qDebug() << "200";
+    }else{
+        loginPage();
     };
     auto button = [&](QString text, std::function<void()> func)
     {
@@ -1003,13 +1016,11 @@ int main(int argc, char *argv[])
             loadConfig();
             config["LANG"]["lang"] = "pt_br";
             saveConfig();
-            initialPage();
         });
         QObject::connect(en, &QAction::triggered, [=](){
             loadConfig();
             config["LANG"]["lang"] = "en";
             saveConfig();
-            initialPage();
         });
         QPushButton *backButton = new QPushButton(back_text);
         QObject::connect(backButton, &QPushButton::clicked, [=](){
@@ -1035,10 +1046,10 @@ int main(int argc, char *argv[])
     optionsPage = [&, back_text](){
         QList<QWidget*> buttons;
         clearLayout(layout);
-        QPushButton *button_back = new QPushButton(back_text);
+        QPushButton *button_back = new QPushButton("back");
         QPushButton *button_add_theme = new QPushButton(add_theme_text);
         QPushButton *button_add_federation = new QPushButton(add_federations_text);
-        QPushButton *button_change_lang = new QPushButton(change_lang_page);
+        QPushButton *button_change_lang = new QPushButton();
         QObject::connect(button_back, &QPushButton::clicked, [=](){
                 initialPage();
         });
@@ -1155,14 +1166,6 @@ int main(int argc, char *argv[])
         scroll_area(layout, scroll_layout);
 
     };
-    logout = [&](){
-        loadConfig();
-        config["FAST-LOGIN"]["username"] = "";
-        config["FAST-LOGIN"]["password"] = "";
-        config["FAST-LOGIN"]["token_session"] = "";
-        saveConfig();
-        loginPage();
-    };
     account = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1176,7 +1179,7 @@ int main(int argc, char *argv[])
         );
         QJsonDocument doc =
             QJsonDocument::fromJson(bio_response.toUtf8());
-        QPushButton *logout_button = new QPushButton(exit_text);
+
         QJsonObject json_bio = doc.object();
         QString MyBio = json_bio["bio"].toString();
         QLabel *label_bio = new QLabel(MyBio);
@@ -1185,15 +1188,11 @@ int main(int argc, char *argv[])
         layout->addWidget(button_edit);
         QPushButton *buttonBack = new QPushButton(back_text);
         layout->addWidget(buttonBack);
-        layout->addWidget(logout_button);
         QObject::connect(buttonBack, &QPushButton::clicked, [=](){
                 initialPage();
         });
         QObject::connect(button_edit, &QPushButton::clicked, [=](){
                 editAccount();
-        });
-        QObject::connect(logout_button, &QPushButton::clicked, [=](){
-                logout();
         });
         
     };
@@ -1357,8 +1356,6 @@ int main(int argc, char *argv[])
                 lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
                 lblText->setStyleSheet("color: white; font-size: 14px;");
                 lblDate->setStyleSheet("color: gray; font-size: 12px;");
-                lblText->setWordWrap(true); 
-                lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
                 usernameLayout->addWidget(lblUser);
                 usernameLayout->addWidget(viewProfile);
                 usernameLayout->addStretch();
@@ -1368,7 +1365,9 @@ int main(int argc, char *argv[])
 
                 // ===== BOTÃO STAR =====
                 QPushButton *iconButton = new QPushButton();
+                QPushButton *commentButton = new QPushButton("comments");
                 QLabel *starLabel = new QLabel("...");
+                frameLayout->addWidget(commentButton);
                 frameLayout->addWidget(iconButton);
                 frameLayout->addWidget(starLabel);
 
@@ -1378,6 +1377,8 @@ int main(int argc, char *argv[])
                 iconButton->setStyleSheet("border: none;");
 
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
+                commentButton->setIconSize(QSize(26, 48));
+                commentButton->setStyleSheet("border: none;");
 
 
                 // ponteiro seguro
@@ -1432,6 +1433,9 @@ int main(int argc, char *argv[])
                         iconButton->setIcon(QIcon(":/assets/default_star.png"));
                     };
 
+                });
+                QObject::connect(commentButton,&QPushButton::clicked, [=](){
+                    commentPage(QString::number(postId));
                 });
                 starLayout->addWidget(iconButton);
                 starLayout->addWidget(starLabel);
@@ -2155,6 +2159,13 @@ int main(int argc, char *argv[])
             10000,
             &status_code
         );
+        QJsonObject json_new_account;
+        json_new_account["username"] = username;
+        requestHTTP(
+            url + "create_account",
+            "POST",
+            json_new_account
+        );
         QString token = newSession(username, password);
         config["FAST-LOGIN"]["token_session"] = token.toStdString();
         saveConfig();
@@ -2180,13 +2191,6 @@ int main(int argc, char *argv[])
             if (passwordEntry->text() == retryPasswordEntry->text()) {
                 int status_code = signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
                 if (status_code == 200 || status_code == 201){
-                    QJsonObject create_json;
-                    create_json["username"] = username;
-                    requestHTTP(
-                        url + "/create_profile",
-                        "POST",
-                        create_json
-                    );
                     loadConfig();
                     config["FAST-LOGIN"]["username"] = usernameEntry->text().toStdString();
                     config["FAST-LOGIN"]["password"] = passwordEntry->text().toStdString();
@@ -2307,38 +2311,6 @@ int main(int argc, char *argv[])
         });
     };
     //chamada da função
-    QTimer::singleShot(100, [&]() {
-        QString response_version = requestHTTP(url + "/meta", "GET", QJsonObject());
-        QByteArray byteArray = response_version.toUtf8();
-        QJsonDocument doc = QJsonDocument::fromJson(byteArray);
-        QJsonObject jsonObject = doc.object();
-        
-        QString min_ver_str = jsonObject["minim-version"].toString().trimmed();
-        QString linkUpdate = jsonObject["url"].toString();
-        QString cur_ver_str = current_version.trimmed();
-
-        double min_version_num = min_ver_str.toDouble();
-        double cur_version_num = cur_ver_str.toDouble();
-
-        if (min_version_num > cur_version_num){
-            updatePage(linkUpdate);
-            return; 
-        }
-
-        // Validação de token
-        QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-        QJsonObject json_valide;
-        json_valide["token"] = token;
-        int status_code = 0;
-        
-        requestHTTP(url + "/valide", "POST", json_valide, 5000, &status_code);
-        
-        if (token.isEmpty() || (status_code != 200 && status_code != 201)){
-            loginPage();
-        } else {
-            initialPage();
-        }
-    });
     initialPage();
     //função para exibir o feed
     window.show();

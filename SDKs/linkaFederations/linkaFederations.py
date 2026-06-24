@@ -1,6 +1,6 @@
 import requests
 import sqlite3
-slugs_pre_loaded = []
+slugs_pre_loaded = {}
 def get_db():
     conn = sqlite3.connect("slug-cache.db")
     return conn
@@ -15,11 +15,16 @@ CREATE TABLE IF NOT EXISTS slug-cache(
     conn.close()
 create_db()
 def load_slugs():
+    global slugs_pre_loaded 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM slug-cache")
-    result = cur.fetchone()
-    for i in len(result):
-        slugs_pre_loaded.append(result[i])
+    cur.execute("SELECT slug, url FROM slug_cache")
+    result = cur.fetchall() 
+    conn.close()
+    for slug, url in result:
+        slugs_pre_loaded[slug] = url
 load_slugs()
 class LinkaFederations:
+    def sendPayload(payload, instance):
+        if slugs_pre_loaded[instance]:
+            url_instance = slugs_pre_loaded[instance]["url"]
