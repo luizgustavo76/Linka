@@ -4,6 +4,12 @@ ANDROID_MIN_SDK_VERSION = 21
 RESOURCES += resources.qrc
 SOURCES += menu.cpp
 QT -= ssl
+# Remove de todas as variáveis possíveis de plugins
+QTPLUGIN.bearer -= qandroidbearer
+QTPLUGIN -= qandroidbearer
+
+# Força o compilador a não ligar o plugin de monitorização de redes do Android
+DEFINES += QT_NO_BEARERMANAGEMENT
 INCLUDEPATH += $$PWD/third_party
 RC_ICONS = assets/icon.ico
 ANDROID_ABIS = armeabi-v7a arm64-v8a
