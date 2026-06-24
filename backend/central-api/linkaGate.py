@@ -36,7 +36,7 @@ def create_db():
     conn.commit()
     conn.close()
 create_db()
-@linkaGate_bp.route("/api/register-gate",methods=["POST"])
+@linkaGate_bp.route("/api/Gate/register-gate",methods=["POST"])
 def register_gate():
     data = request.get_json()
     username = data.get("username")
@@ -55,7 +55,7 @@ def register_gate():
         conn.commit()
         conn.close()
         return jsonify({"status":"account created with sucess on the LinkaGate!"}),200
-@linkaGate_bp.route("/login-gate",methods=["POST"])
+@linkaGate_bp.route("/api/Gate/login-gate",methods=["POST"])
 def login():
     data = request.get_json()
     username = data.get("username")
