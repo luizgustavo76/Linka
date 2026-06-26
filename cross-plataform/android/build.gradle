@@ -5,8 +5,7 @@ buildscript {
     }
 
     dependencies {
-        // Versão 4.1.0 corrige o bug de reflection de diretórios no Java 11
-        classpath 'com.android.tools.build:gradle:4.1.0'
+        classpath 'com.android.tools.build:gradle:3.6.0'
     }
 }
 
@@ -27,22 +26,17 @@ android {
      * - androidBuildToolsVersion,
      * - androidCompileSdkVersion
      * - qt5AndroidDir - holds the path to qt android files
-     * needed to build any Qt application
-     * on Android.
+     *                   needed to build any Qt application
+     *                   on Android.
      *
      * are defined in gradle.properties file. This file is
      * updated by QtCreator and androiddeployqt tools.
      * Changing them manually might break the compilation!
      *******************************************************/
 
-    compileSdkVersion 30
-    buildToolsVersion '28.0.3'
+    compileSdkVersion androidCompileSdkVersion.toInteger()
 
-    // Juntamos os parâmetros do AAPT em um bloco único e limpo
-    aaptOptions {
-        additionalParameters "--no-version-vectors"
-        noCompress 'rcc'
-    }
+    buildToolsVersion '28.0.3'
 
     sourceSets {
         main {
@@ -58,7 +52,7 @@ android {
     }
 
     tasks.withType(JavaCompile) {
-        options.incremental = false
+        options.incremental = true
     }
 
     compileOptions {
@@ -70,9 +64,14 @@ android {
         abortOnError false
     }
 
+    // Do not compress Qt binary resources file
+    aaptOptions {
+        noCompress 'rcc'
+    }
+
     defaultConfig {
-        resConfig "en"
-        minSdkVersion = qtMinSdkVersion
-        targetSdkVersion = qtTargetSdkVersion
+        minSdkVersion 21        // <-- Se tiver alguma variável aqui, apague e digite 21
+        targetSdkVersion 30     // <-- Apague a variável e digite 30
+        // ... resto do código igual
     }
 }
