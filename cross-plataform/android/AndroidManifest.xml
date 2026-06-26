@@ -7,8 +7,10 @@
 
     <application android:icon="@mipmap/ic_launcher" android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="-- %%INSERT_APP_NAME%% --">
 
-        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:name="org.qtproject.qt5.android.bindings.QtActivity" android:label="-- %%INSERT_APP_NAME%% --" android:screenOrientation="unspecified" android:launchMode="singleTop">
-
+    <activity android:name="org.qtproject.qt5.android.bindings.QtActivity"
+                  android:label="-- %%INSERT_APP_NAME%% --"
+                  android:screenOrientation="portrait" android:launchMode="singleTop"
+                  android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|locale|fontScale|keyboard|keyboardHidden|navigation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
