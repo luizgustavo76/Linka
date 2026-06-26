@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, request, jsonify
+from flask import Flask, Blueprint, request, jsonify, g
 import sqlite3
 import os
 chat_group_bp = Blueprint("chat_group", __name__)
@@ -40,6 +40,12 @@ def create_db():
     conn.commit()
     conn.close()
 create_db()
+@chat_group_bp.route("/create-group", methods=["POST"])
+def create_group():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        name_group = data.get("name_group")
 @chat_group_bp.route("/send-group-message", methods=["POST"])
 def send_group_message():
     data = request.get_json()
@@ -61,7 +67,7 @@ def send_group_message():
 def view_group_message():
     data = request.get_json()
     last_id = data.get("id", 0)
-
+    group_id = data.get("group_id")
     conn = get_db()
     cur = conn.cursor()
 
@@ -72,17 +78,18 @@ def view_group_message():
                 FROM chat_group
                 ORDER BY id DESC
                 LIMIT 20
+                WHERE group_id = ?
             ) ORDER BY id ASC
-        """)
+        """,(group_id,))
         rows = cur.fetchall()
     else:
         
         cur.execute("""
             SELECT sender, message, id
             FROM chat_group
-            WHERE id > ?
+            WHERE id > ? AND group_id = ?
             ORDER BY id ASC
-        """, (last_id,))
+        """, (last_id,group_id))
         rows = cur.fetchall()
 
     messages = []
