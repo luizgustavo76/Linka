@@ -3,7 +3,6 @@ buildscript {
         google()
         jcenter()
     }
-
     dependencies {
         classpath 'com.android.tools.build:gradle:3.6.0'
     }
@@ -21,22 +20,27 @@ dependencies {
 }
 
 android {
-    /*******************************************************
-     * The following variables:
-     * - androidBuildToolsVersion,
-     * - androidCompileSdkVersion
-     * - qt5AndroidDir - holds the path to qt android files
-     *                   needed to build any Qt application
-     *                   on Android.
-     *
-     * are defined in gradle.properties file. This file is
-     * updated by QtCreator and androiddeployqt tools.
-     * Changing them manually might break the compilation!
-     *******************************************************/
-
     compileSdkVersion androidCompileSdkVersion.toInteger()
-
     buildToolsVersion '28.0.3'
+
+    defaultConfig {
+        applicationId "com.linkaProject.linka"
+        minSdkVersion 21
+        targetSdkVersion 30
+    }
+
+    buildTypes {
+        debug {
+            // Padrão de compilação para testes locais
+        }
+        release {
+            // Deixamos sem nenhuma configuração de chave aqui.
+            // O Gradle vai gerar o APK puro (unsigned) sem travar em validações.
+            ndk {
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86'
+            }
+        }
+    }
 
     sourceSets {
         main {
@@ -48,7 +52,7 @@ android {
             renderscript.srcDirs = ['src']
             assets.srcDirs = ['assets']
             jniLibs.srcDirs = ['libs']
-       }
+        }
     }
 
     tasks.withType(JavaCompile) {
@@ -64,14 +68,7 @@ android {
         abortOnError false
     }
 
-    // Do not compress Qt binary resources file
     aaptOptions {
         noCompress 'rcc'
-    }
-
-    defaultConfig {
-        minSdkVersion 21        // <-- Se tiver alguma variável aqui, apague e digite 21
-        targetSdkVersion 30     // <-- Apague a variável e digite 30
-        // ... resto do código igual
     }
 }
