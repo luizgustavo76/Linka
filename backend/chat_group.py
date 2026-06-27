@@ -88,15 +88,17 @@ def view_posts_group():
         cur.execute("SELECT username FROM users_in_group WHERE group_id = ? AND username = ?", (group_id, sender))
         result = cur.fetchone()
         if result:
-            cur.execute("SELECT * FROM post_group WHERE group_id = ?",(group_id,))
+            cur.execute("SELECT * FROM post_group WHERE group_id = ? ORDER BY id DESC",(group_id,))
             posts = cur.fetchall()
             list_posts = []
             for post in posts:
                 list_posts.append({
                     "id": post[0],
                     "username": post[1],
-                    "text_post": post[2],
-                    "datetime": post[3]
+                    "group_id":post[2],
+                    "stars":post[3],
+                    "text_post": post[4],
+                    "datetime": post[5]
                 })
             return jsonify({list_posts}),200
 
