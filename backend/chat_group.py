@@ -72,9 +72,13 @@ def create_group():
         cur = conn.cursor()
         cur.execute("INSERT INTO meta (username_owner, name, description, create_date) VALUES(?,?,?,?)",
                     (username, name_group, description, create_date))
+        cur.execute("SELECT id FROM meta WHERE username_owner = ?",(username,))
+        group_id = cur.lastrowid
+        permission = "admin"
+        cur.execute("INSERT INTO users_in_group (group_id, username, entrance_date, permissions) VALUES (?,?,?,?)", (group_id,username,create_date, permission))
         conn.commit()
         conn.close()
-        return jsonify({"status": "thegroup has created!"}), 200
+        return jsonify({"status": "the group has created!"}), 200
         
     return jsonify({"status": "Unauthorized context or user mismatch"}), 403
 
