@@ -58,6 +58,47 @@ def create_db():
     conn.close()
 
 create_db()
+@chat_group_bp.route("/new-post-group",methods=["POST"])
+def create_post_group():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        text_post = data.get("text_post")
+        date = datetime.datetime.now()
+        group_id = data.get("group_id")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE group_id = ? AND username = ?", (group_id, sender))
+        result = cur.fetchone()
+        if result:
+            cur.execute("INSERT INTO post_group (group_id, username, text_post, stars, create_data) VALUES(?,?,?,?,?)",(group_id, username, text_post, "0", date))
+            return jsonify({"status":"the post has created"}),200
+        conn.commit()
+        conn.close()
+        if not result:
+            return jsonify({"status":"you arent in this group"}),403
+@chat_group_bp.route("/view-posts-group",methods=["POST"])
+def view_posts_group():
+    data = request.get_json()
+    username = data.get("username")
+    group_id = data.get("group_id")
+    if username == g.username:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE group_id = ? AND username = ?", (group_id, sender))
+        result = cur.fetchone()
+        if result:
+            cur.execute("SELECT * FROM post_group WHERE group_id = ?",(group_id,))
+            posts = cur.fetchall()
+            list_posts = []
+            for post in posts:
+                list_posts.append({
+                    "id": post[0],
+                    "username": post[1],
+                    "text_post": post[2],
+                    "datetime": post[3]
+                })
+            return jsonify({list_posts}),200
 
 @chat_group_bp.route("/create-group", methods=["POST"])
 def create_group():
