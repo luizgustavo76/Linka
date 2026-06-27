@@ -15,6 +15,7 @@ import os
 from datetime import datetime, timedelta
 from werkzeug.security import check_password_hash
 import secrets
+from chat_group import chat_group_bp
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 tokens_file = os.path.join(db_dir, "tokens.db")
@@ -246,5 +247,6 @@ app.register_blueprint(friends_bp)
 app.register_blueprint(meta_bp)
 app.register_blueprint(chat_global_bp)
 app.register_blueprint(notifications_blueprint)
+app.register_blueprint(chat_group_bp)
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
