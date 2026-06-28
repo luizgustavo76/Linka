@@ -165,3 +165,24 @@ QCheckBox::indicator:checked {
     border: 1px solid #4A90E2;
     border-radius: 4px;
 }
+
+QPushButton[class="tab-button"] {
+    background-color: transparent; 
+    border: none;                  
+    color: #888888;                
+    font-size: 16px;
+    font-weight: bold;
+    padding-bottom: 8px;           
+    border-bottom: 2px solid transparent; 
+}
+
+
+QPushButton[class="tab-button"]:hover {
+    color: #ffffff;                
+}
+
+
+QPushButton[class="tab-button"][active="true"] {
+    color: #ffffff;                
+    border-bottom: 3px solid #00eaff; 
+}

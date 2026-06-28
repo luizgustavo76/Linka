@@ -689,22 +689,66 @@ int main(int argc, char *argv[])
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
+        QHBoxLayout *loginButtons = new QHBoxLayout();
         QPushButton *signinPage_button = new QPushButton(signup_text);
         QPushButton *signupPage_button = new QPushButton(signin_text);
         QPushButton *change_server_button = new QPushButton();
-        layout->addWidget(signinPage_button);
-        layout->addWidget(signupPage_button);
-        layout->addWidget(change_server_button);
-        QObject::connect(signinPage_button, &QPushButton::clicked, [&](){
-            signinPage();
-        });
-        QObject::connect(signupPage_button, &QPushButton::clicked, [&](){
+        signinPage_button->setProperty("class", "tab-button");
+        signupPage_button->setProperty("class", "tab-button");
+        signinPage_button->setProperty("active", true);
+        signupPage_button->setProperty("active", false);
+        loginButtons->addWidget(signinPage_button);
+        loginButtons->addWidget(signupPage_button);
+        layout->addLayout(loginButtons);
+        QLineEdit *usernameEntry = new QLineEdit();
+        QLineEdit *passwordEntry = new QLineEdit();
+        usernameEntry->setPlaceholderText(username_text);
+        passwordEntry->setPlaceholderText(password_text);
+        QPushButton *send_button = new QPushButton(send_text);
+        layout->addWidget(usernameEntry);
+        layout->addWidget(passwordEntry);
+        layout->addWidget(send_button);
+        QObject::connect(signinPage_button, &QPushButton::clicked, [=](){
             signupPage();
         });
-        QObject::connect(change_server_button, &QPushButton::clicked, [&](){
-            changeServerPage();
+        QObject::connect(signupPage_button, &QPushButton::clicked, [=](){
+            signinPage();
         });
+        QObject::connect(send_button, &QPushButton::clicked, [=, &token_session]() mutable {
+            QString userTxt = usernameEntry->text();
+            QString passTxt = passwordEntry->text();
 
+            QString token_gerado = newSession(userTxt, passTxt);
+            if (!token_gerado.isEmpty()){
+                loadConfig();
+                config["FAST-LOGIN"]["username"] = userTxt.toStdString();
+                config["FAST-LOGIN"]["password"] = passTxt.toStdString();
+                config["FAST-LOGIN"]["token_session"] = token_gerado.toStdString();
+                saveConfig();
+                initialPage();
+            } else {
+                QLabel *error_label = new QLabel("Username or password incorrect!");
+                layout->addWidget(error_label);
+            };
+        });
+        QPushButton *discordButton = new QPushButton();
+        discordButton->setIcon(QIcon(":/assets/discord.png"));
+        QPushButton *redditButton = new QPushButton();
+        redditButton->setIcon(QIcon(":/assets/reddit.png"));
+        redditButton->setIconSize(QSize(200, 50)); // Chute um tamanho parecido com o do Discord
+        discordButton->setIconSize(QSize(200, 50));
+        QHBoxLayout *layoutHorizontal = new QHBoxLayout();
+        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+        layoutHorizontal->addWidget(discordButton);
+        layoutHorizontal->addWidget(redditButton);
+        layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+        layout->addLayout(layoutHorizontal);
+        QObject::connect(discordButton, &QPushButton::clicked, [=](){
+            QDesktopServices::openUrl(QUrl("https://discord.gg/bhru6SWcvC"));
+        });
+        QObject::connect(redditButton, &QPushButton::clicked, [=](){
+            QDesktopServices::openUrl(QUrl("https://www.reddit.com/r/LinkaProject/"));
+        });
     };
     updatePage = [&](QString link){
         clearLayout(layout);
@@ -2215,6 +2259,17 @@ int main(int argc, char *argv[])
     signinPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
+        QHBoxLayout *loginButtons = new QHBoxLayout();
+        QPushButton *signinPage_button = new QPushButton(signup_text);
+        QPushButton *signupPage_button = new QPushButton(signin_text);
+        QPushButton *change_server_button = new QPushButton();
+        signinPage_button->setProperty("class", "tab-button");
+        signupPage_button->setProperty("class", "tab-button");
+        signinPage_button->setProperty("active", false);
+        signupPage_button->setProperty("active", true);
+        loginButtons->addWidget(signinPage_button);
+        loginButtons->addWidget(signupPage_button);
+        layout->addLayout(loginButtons);
         QLineEdit *usernameEntry = new QLineEdit();
         QLineEdit *passwordEntry = new QLineEdit();
         QLineEdit *retryPasswordEntry = new QLineEdit();
@@ -2224,9 +2279,11 @@ int main(int argc, char *argv[])
         retryPasswordEntry->setPlaceholderText(retry_password_text);
         emailEntry->setPlaceholderText(email_text);
         QPushButton *send_button = new QPushButton(send_text);
-        QPushButton *back_button = new QPushButton(back_text);
-        QObject::connect(back_button, &QPushButton::clicked, [=](){
-            loginPage();
+        QObject::connect(signinPage_button, &QPushButton::clicked, [=](){
+            signupPage();
+        });
+        QObject::connect(signupPage_button, &QPushButton::clicked, [=](){
+            signinPage();
         });
         QObject::connect(send_button, &QPushButton::clicked, [=](){
             if (passwordEntry->text() == retryPasswordEntry->text()) {
@@ -2256,7 +2313,6 @@ int main(int argc, char *argv[])
         layout->addWidget(retryPasswordEntry);
         layout->addWidget(emailEntry);
         layout->addWidget(send_button);
-        layout->addWidget(back_button);
 
     };
     
@@ -2281,18 +2337,30 @@ int main(int argc, char *argv[])
     signupPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
+        QHBoxLayout *loginButtons = new QHBoxLayout();
+        QPushButton *signinPage_button = new QPushButton(signup_text);
+        QPushButton *signupPage_button = new QPushButton(signin_text);
+        QPushButton *change_server_button = new QPushButton();
+        signinPage_button->setProperty("class", "tab-button");
+        signupPage_button->setProperty("class", "tab-button");
+        signinPage_button->setProperty("active", true);
+        signupPage_button->setProperty("active", false);
+        loginButtons->addWidget(signinPage_button);
+        loginButtons->addWidget(signupPage_button);
+        layout->addLayout(loginButtons);
         QLineEdit *usernameEntry = new QLineEdit();
         QLineEdit *passwordEntry = new QLineEdit();
         usernameEntry->setPlaceholderText(username_text);
         passwordEntry->setPlaceholderText(password_text);
         QPushButton *send_button = new QPushButton(send_text);
-        QPushButton *back_button = new QPushButton(back_text);
         layout->addWidget(usernameEntry);
         layout->addWidget(passwordEntry);
         layout->addWidget(send_button);
-        layout->addWidget(back_button);
-        QObject::connect(back_button, &QPushButton::clicked, [=](){
-            loginPage();
+        QObject::connect(signinPage_button, &QPushButton::clicked, [=](){
+            signupPage();
+        });
+        QObject::connect(signupPage_button, &QPushButton::clicked, [=](){
+            signinPage();
         });
         QObject::connect(send_button, &QPushButton::clicked, [=, &token_session]() mutable {
             QString userTxt = usernameEntry->text();
@@ -2363,4 +2431,5 @@ int main(int argc, char *argv[])
     //função para exibir o feed
     window.show();
     return app.exec();
+    
 }
