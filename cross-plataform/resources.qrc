@@ -23,5 +23,7 @@
         <file>assets/search.png</file>
         <file>assets/icon.png</file>
         <file>assets/comments.png</file>
+        <file>assets/reddit.png</file>
+        <file>assets/discord.png</file>
     </qresource>
 </RCC>
