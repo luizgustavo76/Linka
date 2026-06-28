@@ -156,6 +156,10 @@
         <source>type here</source>
         <translation>Type here</translation>
     </message>
+    <message>
+        <source>New group</source>
+        <translation>New group</translation>
+    </message>
 </context>
 <context>
     <name>inbox</name>

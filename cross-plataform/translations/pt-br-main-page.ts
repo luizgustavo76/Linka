@@ -186,6 +186,10 @@
       <source>type here</source>
       <translation>Digite aqui</translation>
     </message>
+    <message>
+        <source>New group</source>
+        <translation>novo grupo</translation>
+    </message>
 
   </context>
 

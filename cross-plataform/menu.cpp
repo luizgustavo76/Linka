@@ -571,19 +571,8 @@ int main(int argc, char *argv[])
         saveConfig();
     }
     qDebug() << "url" << url;   
-    QScreen *tela = QApplication::primaryScreen();
-    int larguraTela = tela->geometry().width();
-    int alturaTela = tela->geometry().height();
-
     
     QFont fonteGlobal = app.font();
-    if (larguraTela >= 1080) {
-        fonteGlobal.setPointSize(16); 
-    } else if (larguraTela >= 720) {
-        fonteGlobal.setPointSize(13); 
-    } else {
-        fonteGlobal.setPointSize(11);
-    }
     app.setFont(fonteGlobal);
     QMainWindow window;
     app.setWindowIcon(QIcon(":/assets/icon.png"));
@@ -591,12 +580,10 @@ int main(int argc, char *argv[])
     QSplashScreen splash(pixmap);
     splash.show();
     window.setWindowTitle("Linka Mobile");
-    window.setGeometry(0, 0, larguraTela, alturaTela);
     QWidget *central = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout(central);
-    int margemCalculada = larguraTela * 0.05;
-    layout->setContentsMargins(margemCalculada, margemCalculada, margemCalculada, margemCalculada);
-    layout->setSpacing(alturaTela * 0.03);
+    
+    layout->setContentsMargins(30, 30, 30, 30);
     //strings traduzidas
     QString text_post = QCoreApplication::translate("feed", "text post");
     QString back_text = QCoreApplication::translate("global", "back");
@@ -686,6 +673,9 @@ int main(int argc, char *argv[])
     std::function<void(QString)> sentFriendRequest;
     std::function<void(QString)> otherProfilePage;
     std::function<void()> logout;
+    std::function<void()> newGroupPage;
+    std::function<void(QString, QString)> newGroupRequest;
+    std::function<void()> new_chat;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -733,22 +723,29 @@ int main(int argc, char *argv[])
         });
         QPushButton *discordButton = new QPushButton();
         discordButton->setIcon(QIcon(":/assets/discord.png"));
+        
         QPushButton *redditButton = new QPushButton();
         redditButton->setIcon(QIcon(":/assets/reddit.png"));
-        redditButton->setIconSize(QSize(200, 50)); // Chute um tamanho parecido com o do Discord
-        discordButton->setIconSize(QSize(200, 50));
+        
+        // 1. Reduza o tamanho dos ícones para algo realista em telas de celular
+        // Em vez de 200 de largura, use tamanhos quadrados ou mais compactos para não estourar
+        discordButton->setIconSize(QSize(120, 40)); 
+        redditButton->setIconSize(QSize(120, 40));
+
+        // 2. O SEGREDO: Trave a largura máxima do BOTÃO para ele não crescer além disso
+        discordButton->setMaximumWidth(130);
+        redditButton->setMaximumWidth(130);
+        
         QHBoxLayout *layoutHorizontal = new QHBoxLayout();
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
         layoutHorizontal->addWidget(discordButton);
         layoutHorizontal->addWidget(redditButton);
+        
+        // Adiciona um spacer na direita também para centralizar os dois botões bonitinho no meio da tela
+        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+        
         layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
         layout->addLayout(layoutHorizontal);
-        QObject::connect(discordButton, &QPushButton::clicked, [=](){
-            QDesktopServices::openUrl(QUrl("https://discord.gg/bhru6SWcvC"));
-        });
-        QObject::connect(redditButton, &QPushButton::clicked, [=](){
-            QDesktopServices::openUrl(QUrl("https://www.reddit.com/r/LinkaProject/"));
-        });
     };
     updatePage = [&](QString link){
         clearLayout(layout);
@@ -784,7 +781,7 @@ int main(int argc, char *argv[])
     if (min_version_num > cur_version_num){
         qDebug() << "Bloqueando o app! Indo para a tela de atualização...";
         updatePage(linkUpdate);
-        window.show();
+        window.showMaximized();
         return app.exec(); 
     }
     // validation of token
@@ -2278,6 +2275,10 @@ int main(int argc, char *argv[])
         passwordEntry->setPlaceholderText(password_text);
         retryPasswordEntry->setPlaceholderText(retry_password_text);
         emailEntry->setPlaceholderText(email_text);
+        usernameEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        passwordEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        retryPasswordEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        emailEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         QPushButton *send_button = new QPushButton(send_text);
         QObject::connect(signinPage_button, &QPushButton::clicked, [=](){
             signupPage();
@@ -2313,6 +2314,31 @@ int main(int argc, char *argv[])
         layout->addWidget(retryPasswordEntry);
         layout->addWidget(emailEntry);
         layout->addWidget(send_button);
+        QPushButton *discordButton = new QPushButton();
+        discordButton->setIcon(QIcon(":/assets/discord.png"));
+        
+        QPushButton *redditButton = new QPushButton();
+        redditButton->setIcon(QIcon(":/assets/reddit.png"));
+        
+        // 1. Reduza o tamanho dos ícones para algo realista em telas de celular
+        // Em vez de 200 de largura, use tamanhos quadrados ou mais compactos para não estourar
+        discordButton->setIconSize(QSize(120, 40)); 
+        redditButton->setIconSize(QSize(120, 40));
+
+        // 2. O SEGREDO: Trave a largura máxima do BOTÃO para ele não crescer além disso
+        discordButton->setMaximumWidth(130);
+        redditButton->setMaximumWidth(130);
+        
+        QHBoxLayout *layoutHorizontal = new QHBoxLayout();
+        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+        layoutHorizontal->addWidget(discordButton);
+        layoutHorizontal->addWidget(redditButton);
+        
+        // Adiciona um spacer na direita também para centralizar os dois botões bonitinho no meio da tela
+        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+        
+        layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+        layout->addLayout(layoutHorizontal);
 
     };
     
@@ -2352,6 +2378,8 @@ int main(int argc, char *argv[])
         QLineEdit *passwordEntry = new QLineEdit();
         usernameEntry->setPlaceholderText(username_text);
         passwordEntry->setPlaceholderText(password_text);
+        usernameEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        passwordEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         QPushButton *send_button = new QPushButton(send_text);
         layout->addWidget(usernameEntry);
         layout->addWidget(passwordEntry);
@@ -2379,7 +2407,97 @@ int main(int argc, char *argv[])
                 layout->addWidget(error_label);
             };
         });
+        QPushButton *discordButton = new QPushButton();
+        discordButton->setIcon(QIcon(":/assets/discord.png"));
+        
+        QPushButton *redditButton = new QPushButton();
+        redditButton->setIcon(QIcon(":/assets/reddit.png"));
+        
+        // 1. Reduza o tamanho dos ícones para algo realista em telas de celular
+        // Em vez de 200 de largura, use tamanhos quadrados ou mais compactos para não estourar
+        discordButton->setIconSize(QSize(120, 40)); 
+        redditButton->setIconSize(QSize(120, 40));
+
+        // 2. O SEGREDO: Trave a largura máxima do BOTÃO para ele não crescer além disso
+        discordButton->setMaximumWidth(130);
+        redditButton->setMaximumWidth(130);
+        
+        QHBoxLayout *layoutHorizontal = new QHBoxLayout();
+        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+        layoutHorizontal->addWidget(discordButton);
+        layoutHorizontal->addWidget(redditButton);
+        
+        // Adiciona um spacer na direita também para centralizar os dois botões bonitinho no meio da tela
+        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+        
+        layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
+        layout->addLayout(layoutHorizontal);
     };
+    newGroupRequest = [&](QString name_group, QString description){
+        QJsonObject json_group;
+        json_group["username"] = username;
+        json_group["name_group"] = name_group;
+        json_group["description"] = description;
+        requestHTTP(
+            url + "/create-group",
+            "POST",
+            json_group
+        );
+    };
+    newGroupPage = [&](){
+        clearLayout(layout);
+        fadeTransition(central);
+        QLineEdit *name_group = new QLineEdit()
+        QLineEdit *description = new QLineEdit();
+        layout->addWidget(name_group);
+        layout->addWidget(description);
+    };
+    new_chat = [&](){
+        clearLayout(layout);
+        QPushButton *newGroupButton = new QPushButton(new_group_text);
+        layout->addWidget(newGroupButton);
+        QList<QWidget*> button_area;
+        QJsonObject friends_json;
+        json_friends["username"] = username;
+        QString response_friends = requestHTTP(
+            url + "/friends",
+            "POST",
+            friends_json
+        );
+        QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
+        QJsonObject obj = doc.object();
+        QJsonArray friends = obj["friends"].toArray();
+        if (friends.isEmpty())
+        {
+            QLabel *label_error = new QLabel("No Friends....");
+            button_area.append(label_error);
+        }
+        else
+        {
+            for(int i = 0; i < friends.size(); i++){
+                QJsonArray row = friends[i].toArray();
+                QString receiver = row[0].toString();
+                QString remittee = row[1].toString();
+                QString friendName;
+                if(receiver == username)
+                    friendName = remittee;
+                else
+                    friendName = receiver;
+                QPushButton *user = new QPushButton(friendName);
+                QObject::connect(user, &QPushButton::clicked, [=]() mutable{
+                    QTimer::singleShot(0, [=](){
+                        chat(friendName);
+                    });
+                });
+                button_area.append(user);
+            };
+        };
+        QObject::connect(newGroupButton, QPushButton::clicked, [=](){
+            newGroupRequest();
+        });
+        scroll_area(layout, button_area);
+        
+    }
     changeServerPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -2429,7 +2547,7 @@ int main(int argc, char *argv[])
     //chamada da função
     initialPage();
     //função para exibir o feed
-    window.show();
+    window.showMaximized();
     return app.exec();
     
 }

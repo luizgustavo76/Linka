@@ -180,9 +180,25 @@ QPushButton[class="tab-button"] {
 QPushButton[class="tab-button"]:hover {
     color: #ffffff;                
 }
-
+/* No seu arquivo theme.qss, adicione isso para domar os botões */
+QPushButton {
+    /* Força uma largura máxima padrão que caiba em qualquer celular Android retrato */
+    max-width: 300px; 
+}
 
 QPushButton[class="tab-button"][active="true"] {
-    color: #ffffff;                
-    border-bottom: 3px solid #00eaff; 
+    /* O texto fica com a cor do neon (ou #ffffff se você preferir o texto branco puro) */
+    color: #00e5ff;
+
+    /* A linha inferior brilhante e sólida */
+    border-bottom: 3px solid #00e5ff;
+
+    /* O EFEITO NEON: Um gradiente que começa embaixo e some em direção ao topo */
+    background-color: qlineargradient(x1:0, y1:1, x2:0, y2:0,
+                                      stop:0 rgba(0, 229, 255, 0.25), /* Luz perto da borda */
+                                      stop:1 rgba(0, 0, 0, 0));       /* Escuro/Transparente no topo */
+
+    /* Para a linha não ficar estranha caso o botão tenha bordas arredondadas */
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
 }
