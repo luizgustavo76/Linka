@@ -620,6 +620,9 @@ int main(int argc, char *argv[])
     QString un_friend_text = QCoreApplication::translate("view profile", "Unfriend");
     QString sent_friend_text = QCoreApplication::translate("view profile", "Sent a friend");
     QString change_lang_page = QCoreApplication::translate("configurations", "change lang");
+    QString new_group_text = QCoreApplication::translate("chat", "New group");
+    QString name_group_text = QCoreApplication::translate("chat", "name group");
+    QString description_text = QCoreApplication::translate("chat", "description");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -1911,6 +1914,11 @@ int main(int argc, char *argv[])
         fadeTransition(central);
         QList<QWidget*> widgets;
         QPushButton *ChatGlobalButton = new QPushButton("Chat Global");
+        QPushButton *newChatButton = new QPushButton("new chat");
+        QObject::connect(newChatButton, &QPushButton::clicked, [=](){
+            new_chat();
+        });
+        layout->addWidget(newChatButton);
         QObject::connect(ChatGlobalButton, &QPushButton::clicked, [=]() mutable{
             chatGlobal();
         });
@@ -2443,14 +2451,27 @@ int main(int argc, char *argv[])
             "POST",
             json_group
         );
+        chatPage();
     };
     newGroupPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
-        QLineEdit *name_group = new QLineEdit()
+        QLineEdit *name_group = new QLineEdit();
         QLineEdit *description = new QLineEdit();
+        name_group->setPlaceholderText(name_group_text);
+        description->setPlaceholderText(description_text);
         layout->addWidget(name_group);
         layout->addWidget(description);
+        QPushButton *sendButton = new QPushButton(send_text);
+        QPushButton *backButton = new QPushButton(back_text);
+        QObject::connect(backButton, &QPushButton::clicked, [=](){
+            chatPage();
+        });
+        QObject::connect(sendButton, &QPushButton::clicked, [=](){
+            newGroupRequest(name_group->text(), description->text());
+        });
+        layout->addWidget(sendButton);
+        layout->addWidget(backButton);
     };
     new_chat = [&](){
         clearLayout(layout);
@@ -2458,7 +2479,7 @@ int main(int argc, char *argv[])
         layout->addWidget(newGroupButton);
         QList<QWidget*> button_area;
         QJsonObject friends_json;
-        json_friends["username"] = username;
+        friends_json["username"] = username;
         QString response_friends = requestHTTP(
             url + "/friends",
             "POST",
@@ -2492,12 +2513,12 @@ int main(int argc, char *argv[])
                 button_area.append(user);
             };
         };
-        QObject::connect(newGroupButton, QPushButton::clicked, [=](){
-            newGroupRequest();
+        QObject::connect(newGroupButton, &QPushButton::clicked, [=](){
+            newGroupPage();
         });
         scroll_area(layout, button_area);
         
-    }
+    };
     changeServerPage = [&](){
         clearLayout(layout);
         fadeTransition(central);

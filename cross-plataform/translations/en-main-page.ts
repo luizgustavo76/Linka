@@ -160,6 +160,14 @@
         <source>New group</source>
         <translation>New group</translation>
     </message>
+    <message>
+      <source>name group</source>
+      <translation>Nome do grupo</translation>
+    </message>
+    <message>
+      <source>description</source>
+      <translation>Descrição do grupo</translation>
+    </message>
 </context>
 <context>
     <name>inbox</name>
