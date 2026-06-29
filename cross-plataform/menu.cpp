@@ -749,6 +749,12 @@ int main(int argc, char *argv[])
         
         layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
         layout->addLayout(layoutHorizontal);
+        QObject::connect(discordButton, &QPushButton::clicked, [=](){
+            QDesktopServices::openUrl(QUrl("https://discord.gg/bhru6SWcvC"));
+        });
+        QObject::connect(redditButton, &QPushButton::clicked, [=](){
+            QDesktopServices::openUrl(QUrl("https://www.reddit.com/r/LinkaProject/"));
+        });
     };
     updatePage = [&](QString link){
         clearLayout(layout);
@@ -1909,6 +1915,19 @@ int main(int argc, char *argv[])
         layout->addWidget(back_button);
     };
     //pagina inicial de chat
+    viewGroupsRequest = [&](){
+        QJsonObject group_request;
+        group_request["username"] = username;
+        requestHTTP(
+            url + "/my-group",
+            "POST",
+            group_request
+        );
+        QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
+        QJsonObject obj = doc.object();
+        QString group_id = obj["group_id"];
+        //terminar amanhã
+    }
     chatPage = [&](){
         clearLayout(layout);
         fadeTransition(central);

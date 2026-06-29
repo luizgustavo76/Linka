@@ -5,7 +5,7 @@ from friends import friends_bp
 from login import login_bp
 from profiles import profile_bp
 from search import search_bp
-from community import community_bp
+from status import status_bp
 from meta import meta_bp
 from chat_global import chat_global_bp
 from notifications import notifications_blueprint
@@ -237,7 +237,7 @@ def valideManual():
 
 
 CORS(app, resources={r"/*": {"origins": "*"}})
-app.register_blueprint(community_bp)
+app.register_blueprint(status_bp)
 app.register_blueprint(search_bp)
 app.register_blueprint(profile_bp)
 app.register_blueprint(login_bp)

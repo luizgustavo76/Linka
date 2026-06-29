@@ -13,9 +13,9 @@ db_file = os.path.join(db_dir, "chat_group.db")
 def get_db():
     conn = sqlite3.connect(db_file)
     cursor = conn.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("PRAGMA synchronous=NORMAL;")
-    cursor.execute("PRAGMA cache_size=-10000;")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA cache_size=-10000;")
     return conn
 
 def create_db():
@@ -153,7 +153,12 @@ def send_group_message():
     else:
         conn.close()
         return jsonify({"status": "User is not a member of this group"}), 403
-
+@chat_group_bp.route("/in-group",methods=["POST"])
+def in_group():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        group_id = data.get("group_id")
 @chat_group_bp.route("/view-group-message", methods=["POST"])
 def view_group_message():
     data = request.get_json() or {}
@@ -200,3 +205,16 @@ def view_group_message():
 
     conn.close()
     return jsonify(messages)
+@chat_group_bp.route("/my-groups",methods=["POST"])
+def my_groups():
+    data = request.get_json()
+    username = data.get("username")
+    if g.username == username:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users_in_group WHERE username = ?",(username,))
+        result = cur.fetchall()
+        conn.close()
+        return jsonify(result)
+    else:
+        return jsonify({"status":"forbidden"}),403
