@@ -7,6 +7,9 @@ db_dir = os.path.join(base_dir, "DB")
 db_file = db_dir + "/chat_global.db"
 def get_db():
     conn = sqlite3.connect(db_file)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA cache_size=-10000;")
     return conn
 def create_db():
     conn = get_db()
@@ -50,7 +53,6 @@ def view_global_message():
         """)
         rows = cur.fetchall()
     else:
-        
         cur.execute("""
             SELECT sender, message, id
             FROM chat_global

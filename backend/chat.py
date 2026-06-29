@@ -13,6 +13,9 @@ if not os.path.exists(db_dir):
 
 def get_db():
     conn = sqlite3.connect(os.path.join(db_dir, "chat.db"))
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA cache_size=-10000;")
     return conn
 
 def create_db():

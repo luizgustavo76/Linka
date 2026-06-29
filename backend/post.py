@@ -15,8 +15,11 @@ if not os.path.exists(db_dir):
 def get_db():
     conn = sqlite3.connect(post_dir, timeout=10)
     conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA synchronous=NORMAL;")
+    cursor.execute("PRAGMA cache_size=-10000;")
     return conn
-
 def create_db():
     conn = get_db()
     cur = conn.cursor()
