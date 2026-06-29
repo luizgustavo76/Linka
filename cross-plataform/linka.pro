@@ -6,7 +6,10 @@ TARGET = Linka
 # Fontes e Recursos do Projeto
 SOURCES += menu.cpp
 RESOURCES += resources.qrc
-
+# As flags do Asyncify só serão aplicadas se você estiver compilando para a Web
+contains(QT_ARCH, wasm) {
+    QMAKE_LFLAGS += -sASYNCIFY -sASYNCIFY_STACK_SIZE=65536
+}
 # Configurações de Arquitetura e Plataforma
 CONFIG += c++11
 QMAKE_CXXFLAGS += -fpermissive
