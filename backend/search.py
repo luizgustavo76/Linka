@@ -11,10 +11,19 @@ post_db = os.path.join(db_dir, "post.db")
 search_bp = Blueprint("search", __name__)
 
 def get_db_profile():
-    return sqlite3.connect(profile_db)
-
+    conn = sqlite3.connect(profile_db)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA synchronous=NORMAL;")
+    cursor.execute("PRAGMA cache_size=-10000;")
+    return conn
 def get_db_post():
-    return sqlite3.connect(post_db)
+    conn = sqlite3.connect(post_db)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA synchronous=NORMAL;")
+    cursor.execute("PRAGMA cache_size=-10000;")
+    return conn
 
 @search_bp.route("/search", methods=["POST"])
 def search():

@@ -12,6 +12,10 @@ db_file = os.path.join(db_dir, "chat_group.db")
 
 def get_db():
     conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL;")
+    cursor.execute("PRAGMA synchronous=NORMAL;")
+    cursor.execute("PRAGMA cache_size=-10000;")
     return conn
 
 def create_db():

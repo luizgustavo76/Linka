@@ -51,6 +51,11 @@ class Login:
     def get_db_login(self):
         conn = sqlite3.connect(self.login_dir, timeout=15)
         conn.execute("PRAGMA journal_mode=WAL;")
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
+        cursor.execute("PRAGMA cache_size=-10000;")
+
         return conn
     def get_db_fastlogin(self):
         conn = sqlite3.connect(self.fast_login, timeout=15)
