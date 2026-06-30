@@ -1403,7 +1403,7 @@ int main(int argc, char *argv[])
         qDebug() << "url feed" << url_feed;
         QNetworkRequest request{QUrl(url_feed)};
         QNetworkReply *reply = manager->get(request);
-
+        QHBoxLayout search_layout = new QHBoxLayout();
         QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
 
 
@@ -1427,6 +1427,7 @@ int main(int argc, char *argv[])
             {
                 if(!value.isObject()) continue;
                 clearLayout(layout);
+
                 QJsonObject post = value.toObject();
 
                 int postId = post["id"].toInt();
@@ -1552,6 +1553,12 @@ int main(int argc, char *argv[])
             QObject::connect(btnBack, &QPushButton::clicked, [=](){
                 initialPage();
             });
+            QLineEdit searchEntry = new QLineEdit();
+            searchEntry->setPlaceholderText(search_text);
+            QPushButton *sendButton = new QPushButton(send_text);
+            search_layout->addWidget(searchEntry);
+            search_layout->addWidget(sendButton);
+            layout->setLayout(search_layout);
             layout->addWidget(btnBack);
             layout->addWidget(btnNewPost);
 
@@ -2177,16 +2184,12 @@ int main(int argc, char *argv[])
         QWidget *bottomBar = new QWidget(central);
         bottomBar->setFixedHeight(90);
         QPushButton *btnHome = new QPushButton(bottomBar);
-        QPushButton *btnSearch = new QPushButton(bottomBar);
         QPushButton *btnChat = new QPushButton(bottomBar);
         QPushButton *btnProfile = new QPushButton(bottomBar);
         QPushButton *btnOptions = new QPushButton(bottomBar);
         QIcon options_icon(":/assets/options.png");
         btnOptions->setIcon(options_icon);
         btnOptions->setIconSize(QSize(64, 64));
-        QIcon search_icon(":/assets/search.png");
-        btnSearch->setIcon(search_icon);
-        btnSearch->setIconSize(QSize(64, 64));
         QIcon icon_home(":/assets/home.png");
         btnHome->setIcon(icon_home);
         btnHome->setIconSize(QSize(64, 64));
