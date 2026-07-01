@@ -566,7 +566,7 @@ int main(int argc, char *argv[])
     
     if (url.isEmpty())
     {
-        config["SERVER"]["url"] = "http://linkaProject.pythonanywhere.com";
+        config["SERVER"]["url"] = "http://127.0.0.1:5000";
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }
@@ -679,6 +679,7 @@ int main(int argc, char *argv[])
     std::function<void()> newGroupPage;
     std::function<void(QString, QString)> newGroupRequest;
     std::function<void()> new_chat;
+    std::function<QJsonObject()> viewGroupsRequest;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1272,7 +1273,7 @@ int main(int argc, char *argv[])
         layout->addWidget(label_username);
         QJsonObject empty;
         QString bio_response = requestHTTP(
-            url + "/view-profile" + "/?username=" + username,
+            url + "/view_profile/" + username,
             "GET",
             empty
         );
@@ -1403,7 +1404,7 @@ int main(int argc, char *argv[])
         qDebug() << "url feed" << url_feed;
         QNetworkRequest request{QUrl(url_feed)};
         QNetworkReply *reply = manager->get(request);
-        QHBoxLayout search_layout = new QHBoxLayout();
+        QHBoxLayout *search_layout = new QHBoxLayout();
         QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
 
 
@@ -1553,12 +1554,12 @@ int main(int argc, char *argv[])
             QObject::connect(btnBack, &QPushButton::clicked, [=](){
                 initialPage();
             });
-            QLineEdit searchEntry = new QLineEdit();
+            QLineEdit *searchEntry = new QLineEdit();
             searchEntry->setPlaceholderText(search_text);
             QPushButton *sendButton = new QPushButton(send_text);
             search_layout->addWidget(searchEntry);
             search_layout->addWidget(sendButton);
-            layout->setLayout(search_layout);
+            layout->addLayout(search_layout);
             layout->addWidget(btnBack);
             layout->addWidget(btnNewPost);
 
@@ -1925,16 +1926,20 @@ int main(int argc, char *argv[])
     viewGroupsRequest = [&](){
         QJsonObject group_request;
         group_request["username"] = username;
-        requestHTTP(
+        QString response = requestHTTP(
             url + "/my-group",
             "POST",
             group_request
         );
-        QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
+        QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
         QJsonObject obj = doc.object();
-        QString group_id = obj["group_id"];
-        //terminar amanhã
-    }
+        QString group_id = obj["group_id"].toString();
+        QString name_group = obj["name_group"].toString();
+        QJsonObject response_json;
+        response_json["group_id"] = group_id;
+        response_json["name_group"] = name_group;
+        return response_json;
+    };
     chatPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1956,6 +1961,11 @@ int main(int argc, char *argv[])
             "POST",
             friends_json
         );
+        QJsonObject json_response_groups = viewGroupsRequest();
+        if (json_response_groups.isEmpty()){}else{
+            QPushButton *buttonGroup = new QPushButton(json_response_groups["name_group"].toString());
+            layout->addWidget(buttonGroup);
+        };
         QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
         QJsonObject obj = doc.object();
         QJsonArray friends = obj["friends"].toArray();
@@ -2202,16 +2212,12 @@ int main(int argc, char *argv[])
         btnHome->setFixedSize(64, 64);
         btnChat->setFixedSize(64, 64);
         btnProfile->setFixedSize(64, 64);
-        btnSearch->setFixedSize(64, 64);
         btnOptions->setFixedSize(64, 64);
         QObject::connect(btnHome, &QPushButton::clicked, [=]() {
             showfeed();
         });
         QObject::connect(btnOptions, &QPushButton::clicked, [options]() {
             if (options) options();
-        });
-        QObject::connect(btnSearch, &QPushButton::clicked, [=]() {
-            searchPage();
         });
         QObject::connect(btnProfile, &QPushButton::clicked, [=]() {
             account();
@@ -2223,7 +2229,6 @@ int main(int argc, char *argv[])
         btnChat->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnProfile->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnOptions->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        btnSearch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         QHBoxLayout *barLayout = new QHBoxLayout(bottomBar);
         barLayout->setContentsMargins(10, 10, 10, 10);
         barLayout->setSpacing(10);
@@ -2231,22 +2236,18 @@ int main(int argc, char *argv[])
         barLayout->addWidget(btnChat);
         barLayout->addWidget(btnProfile);
         barLayout->addWidget(btnOptions);
-        barLayout->addWidget(btnSearch);
         QObject::connect(btnHome, &QPushButton::clicked, [=](){
             stack->setCurrentIndex(0);
         });
-        QObject::connect(btnSearch, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(1);
-        });
         QObject::connect(btnChat, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(2);
+            stack->setCurrentIndex(1);
         });
 
         QObject::connect(btnProfile, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(3);
+            stack->setCurrentIndex(2);
         });
         QObject::connect(btnOptions, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(4);
+            stack->setCurrentIndex(3);
         });
         
         // ======= ESTILO =======
@@ -2255,11 +2256,8 @@ int main(int argc, char *argv[])
         btnHome->setStyleSheet("font-size: 32px; border: none; color: #00ffea; background: transparent;");
         btnChat->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
         btnProfile->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
-        btnSearch->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
-
-        // ======= MONTAGEM =======
+            // ======= MONTAGEM =======
         if (!layout) {
-            qDebug() << "ERRO FATAL: O layout principal veio nulo na linha 1965!";
             return; // Para a execução antes de estourar o SIGSEGV
         }
         layout->addWidget(stack, 1);
