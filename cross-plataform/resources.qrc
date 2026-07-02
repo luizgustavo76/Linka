@@ -25,5 +25,7 @@
         <file>assets/comments.png</file>
         <file>assets/reddit.png</file>
         <file>assets/discord.png</file>
+        <file>assets/linka_app_login_banner.png</file>
+        <file>assets/gradient_login.png</file>
     </qresource>
 </RCC>
