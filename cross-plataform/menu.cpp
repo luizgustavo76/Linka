@@ -683,6 +683,10 @@ int main(int argc, char *argv[])
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
+        QIcon *banner_image = new QIcon(":/assets/linka_app_login_banner.png");
+        QLabel *banner_login = new QLabel();
+        banner_login->setPixmap(banner_image->pixmap(QSize(400, 200)));
+        banner_login->setAlignment(Qt::AlignCenter);
         QHBoxLayout *loginButtons = new QHBoxLayout();
         QPushButton *signinPage_button = new QPushButton(signup_text);
         QPushButton *signupPage_button = new QPushButton(signin_text);
@@ -2284,6 +2288,20 @@ int main(int argc, char *argv[])
     signinPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
+        QHBoxLayout *bannerLayout = new QHBoxLayout();
+        QWidget *container = new QWidget();
+        QIcon *banner_image = new QIcon(":/assets/linka_app_login_banner.png");
+        QLabel *banner_login = new QLabel();
+        container->setStyleSheet("background-image: url(':/assets/gradient_login.png'); background-position: center; background-repeat: no-repeat;");
+        banner_login->setPixmap(banner_image->pixmap(QSize(400, 200)));
+        banner_login->setAlignment(Qt::AlignCenter);
+        bannerLayout->addWidget(banner_login);
+        bannerLayout->setContentsMargins(0, 0, 0, 0);
+        bannerLayout->setSpacing(0);
+        container->setLayout(bannerLayout);
+        int larguraDaTela = QGuiApplication::primaryScreen()->geometry().width();
+        container->setMaximumWidth(larguraDaTela);
+        layout->addWidget(container);
         QHBoxLayout *loginButtons = new QHBoxLayout();
         QPushButton *signinPage_button = new QPushButton(signup_text);
         QPushButton *signupPage_button = new QPushButton(signin_text);
@@ -2391,6 +2409,19 @@ int main(int argc, char *argv[])
     signupPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
+        QHBoxLayout *bannerLayout = new QHBoxLayout();
+        QWidget *container = new QWidget();
+        container->setStyleSheet("background-image: url(':/assets/gradient_login.png'); background-position: center; background-repeat: no-repeat;");
+        QIcon *banner_image = new QIcon(":/assets/linka_app_login_banner.png");
+        QLabel *banner_login = new QLabel();
+        banner_login->setPixmap(banner_image->pixmap(QSize(400, 200)));
+        banner_login->setAlignment(Qt::AlignCenter);
+        bannerLayout->setContentsMargins(0, 0, 0, 0);
+        bannerLayout->setSpacing(0);
+        bannerLayout->addWidget(banner_login);
+        container->setLayout(bannerLayout);
+        layout->addWidget(container);
+        layout->addLayout(bannerLayout);
         QHBoxLayout *loginButtons = new QHBoxLayout();
         QPushButton *signinPage_button = new QPushButton(signup_text);
         QPushButton *signupPage_button = new QPushButton(signin_text);
