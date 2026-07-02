@@ -1340,38 +1340,28 @@ int main(int argc, char *argv[])
             json_new
         );
     };
-    newCommentPage = [&](QString post_id){
+    commentPage = [&](QString post_id){
         clearLayout(layout);
-        QLineEdit *commentInput = new QLineEdit();
-        commentInput->setPlaceholderText(comments_text);
-        QPushButton *sendButton = new QPushButton(send_text);
-        QPushButton *backButton = new QPushButton(back_text);
-        layout->addWidget(commentInput);
-        layout->addWidget(sendButton);
-        layout->addWidget(backButton);
-        QObject::connect(backButton, &QPushButton::clicked, [=](){
-            commentPage(post_id);
+        QList<QWidget*> scroll;
+        QLabel *commentsSession = new QLabel(comments_text);
+        QHBoxLayout *layoutNewComment = new QHBoxLayout();
+        QLineEdit *commentsInput = new QLineEdit();
+        commentsInput->setPlaceholderText(comments_text);
+        QPushButton *sendCommentButton = new QPushButton(send_text);
+        layoutNewComment->addWidget(commentsInput);
+        layoutNewComment->addWidget(sendCommentButton);
+        layout-addLayout(layoutNewComment);
+        QJsonArray comments_object = commentRequest(post_id);
+        for(int i = 0; i < comments_object.length(); i++){};
+        QPushButton *new_comment = new QPushButton(new_comment_text);
+        QPushButton *back_button = new QPushButton(back_text);
+        layout->addWidget(new_comment);
+        layout->addWidget(back_button);
+        QObject::connect(back_button, &QPushButton::clicked,[=](){
+            initialPage();
         });
-        QObject::connect(sendButton, &QPushButton::clicked, [=](){
-            newCommentRequest(post_id, commentInput->text());
-        });
+        scroll_area(layout, scroll);
     };
-    // commentPage = [&](QString post_id){
-    //     clearLayout(layout);
-    //     QList<QWidget*> scroll;
-    //     QLabel *commentsSession = new QLabel(comments_text);
-    //     QJsonArray comments_object = commentRequest(post_id);
-    //     for(int i = 0; i < comments_object.length(); i++){};
-    //     QPushButton *new_comment = new QPushButton(new_comment_text);
-    //     QPushButton *back_button = new QPushButton(back_text);
-    //     layout->addWidget(new_comment);
-    //     layout->addWidget(back_button);
-    //     QObject::connect(back_button, &QPushButton::clicked,[=](){
-    //         initialPage();
-    //     });
-    //     scroll_area(layout, scroll);
-
-    // };
     fast_login = [&]()
     {
         if (config["FAST-LOGIN"]["token_login"].empty()){
@@ -1398,6 +1388,7 @@ int main(int argc, char *argv[])
             };
         };
     };
+
     showfeed = [&]()
     {
         clearLayout(layout);
