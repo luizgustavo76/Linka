@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "linkaFederations"
-version = "0.1.0"
+version = "0.1.1"  # Atualizado para você subir uma nova versão no PyPI
 authors = [
     { name="Luiz Gustavo", email="luizsgustavo76@gmail.com" },
 ]
@@ -17,7 +17,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
+    "requests",    # Se a sua lib usa o requests para disparar os JSONs, coloque aqui!
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/linkaFederations"]
+packages = ["src/linkafederations"]  # Aponta exatamente para a pasta dentro de src

@@ -8,6 +8,7 @@ from search import search_bp
 from status import status_bp
 from meta import meta_bp
 from chat_global import chat_global_bp
+from federations import federations_bp
 from notifications import notifications_blueprint
 from flask import Flask, Blueprint, request, jsonify, g
 import sqlite3
@@ -248,5 +249,6 @@ app.register_blueprint(meta_bp)
 app.register_blueprint(chat_global_bp)
 app.register_blueprint(notifications_blueprint)
 app.register_blueprint(chat_group_bp)
+app.register_blueprint(federations_bp)
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

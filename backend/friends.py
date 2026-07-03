@@ -8,10 +8,9 @@ db_dir = (base_dir + "/DB")
 friends_file = (db_dir + "/friends.db")
 def get_db():
     conn = sqlite3.connect(friends_file)
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("PRAGMA synchronous=NORMAL;")
-    cursor.execute("PRAGMA cache_size=-10000;")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA cache_size=-10000;")
     return conn
 def get_db_notifications():
     conn = sqlite3.connect(db_dir + "/notifications.db")

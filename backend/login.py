@@ -52,9 +52,9 @@ class Login:
         conn = sqlite3.connect(self.login_dir, timeout=15)
         conn.execute("PRAGMA journal_mode=WAL;")
         cursor = conn.cursor()
-        cursor.execute("PRAGMA journal_mode=WAL;")
-        cursor.execute("PRAGMA synchronous=NORMAL;")
-        cursor.execute("PRAGMA cache_size=-10000;")
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        conn.execute("PRAGMA cache_size=-10000;")
 
         return conn
     def get_db_fastlogin(self):

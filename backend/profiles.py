@@ -12,9 +12,9 @@ profile_bp = Blueprint("profile", __name__)
 def get_db():
     conn = sqlite3.connect(profile_dir)
     cursor = conn.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("PRAGMA synchronous=NORMAL;")
-    cursor.execute("PRAGMA cache_size=-10000;")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA cache_size=-10000;")
     return conn
 def create_table():
     conn = get_db()

@@ -20,8 +20,3 @@ resposta = linka.receiveConnection("http://127.0.0.1:5000/feed")
 
 # ...ou passar a URL direta da outra instância se o cache falhar
 # resposta = linka.sendPayload(dados_da_mensagem, "https://instancia2.linka.net/api/receive")
-
-if resposta:
-    print("Sucesso! Mensagem federada com sucesso.")
-else:
-    print("A instância destino recusou ou está offline.")

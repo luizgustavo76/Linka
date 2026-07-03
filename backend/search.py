@@ -13,16 +13,16 @@ search_bp = Blueprint("search", __name__)
 def get_db_profile():
     conn = sqlite3.connect(profile_db)
     cursor = conn.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("PRAGMA synchronous=NORMAL;")
-    cursor.execute("PRAGMA cache_size=-10000;")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA cache_size=-10000;")
     return conn
 def get_db_post():
     conn = sqlite3.connect(post_db)
     cursor = conn.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("PRAGMA synchronous=NORMAL;")
-    cursor.execute("PRAGMA cache_size=-10000;")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA cache_size=-10000;")
     return conn
 
 @search_bp.route("/search", methods=["POST"])
@@ -48,14 +48,14 @@ def search():
     conn = get_db_profile()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    conn.execute("""
         SELECT username
         FROM profile
         WHERE username LIKE ?
         LIMIT 20
     """, (f"%{content}%",))
 
-    usernames = cursor.fetchall()
+    usernames = conn.fetchall()
 
     for u in usernames:
         result["usernames"].append(u[0])
@@ -66,14 +66,14 @@ def search():
     conn = get_db_post()
     cursor = conn.cursor()
 
-    cursor.execute("""
+    conn.execute("""
         SELECT text_post
         FROM posts
         WHERE text_post LIKE ?
         LIMIT 20
     """, (f"%{content}%",))
 
-    posts = cursor.fetchall()
+    posts = conn.fetchall()
 
     for p in posts:
         result["posts"].append(p[0])
