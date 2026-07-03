@@ -32,30 +32,42 @@ class LinkaFederations:
         
         for slug, url in result:
             self.slugs_pre_loaded[slug] = url
-
-    def sendPayload(self, payload, slug_ou_url):
-        # 1. Verifica se o que foi passado é um slug conhecido no cache
-        if slug_ou_url in self.slugs_pre_loaded:
-            target_url = self.slugs_pre_loaded[slug_ou_url]
+    def receiveConnection(self, slug_or_url):
+        if slug_or_url in self.slugs_pre_loaded:
+            target_url = self.slugs_pre_loaded[slug_or_url]
         else:
-            # Se não estiver no cache, assume que já é a URL direta da instância
-            target_url = slug_ou_url
+            target_url = slug_or_url
+        try:
+            response = requests.get(target_url, timeout=10)
+            print(response.json())
+        except Exception as e:
+            print(f"fatal error {e}")
+    def sendPayload(self, payload, slug_or_url, headers):
+        if slug_or_url in self.slugs_pre_loaded:
+            target_url = self.slugs_pre_loaded[slug_or_url]
+        else:
+            target_url = slug_or_url
 
         try:
-            # Faz a requisição P2P para a outra instância do Linka
-            response = requests.post(
-                target_url,
-                json=payload,
-                timeout=10
-            )
-            
-            # No requests, status_code retorna um INT, e não string
+            if headers:
+                response = requests.post(
+                    target_url,
+                    json=payload,
+                    headers=headers,
+                    timeout=10
+                )
+            else:    
+                response = requests.post(
+                    target_url,
+                    json=payload,
+                    timeout=10
+                )
             if response.status_code in [200, 201]:
                 return response
             else:
-                print(f"[Linka] Erro na resposta da instância: {response.status_code}")
+                print(f"[Linka] Error in instance response: {response.status_code}")
                 return None
                 
         except requests.exceptions.RequestException as e:
-            print(f"[Linka] Falha catastrófica ao conectar na instância: {e}")
+            print(f"[Linka] Fatal error to connect: {e}")
             return None

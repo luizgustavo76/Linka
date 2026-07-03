@@ -7,13 +7,16 @@ linka = LinkaFederations()
 
 # 2. Prepara o payload do Linka Protocol que vai trafegar na rede
 dados_da_mensagem = {
-    "username":"opa",
+    "username":"jailson_mendes2s",
     "text_post":"hhddiddihdh"
 }
 
 # 3. Dispara o payload usando o LinkaFederations!
 # Você pode passar o slug que está no cache...
-resposta = linka.sendPayload(dados_da_mensagem, "http://127.0.0.1:5000/new")
+headers = {
+    "Authorization":"Bearer 4090c2359b9784ed2de0cb742f57dd94"
+}
+resposta = linka.receiveConnection("http://127.0.0.1:5000/feed")
 
 # ...ou passar a URL direta da outra instância se o cache falhar
 # resposta = linka.sendPayload(dados_da_mensagem, "https://instancia2.linka.net/api/receive")

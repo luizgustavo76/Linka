@@ -1345,28 +1345,28 @@ int main(int argc, char *argv[])
             json_new
         );
     };
-    commentPage = [&](QString post_id){
-        clearLayout(layout);
-        QList<QWidget*> scroll;
-        QLabel *commentsSession = new QLabel(comments_text);
-        QHBoxLayout *layoutNewComment = new QHBoxLayout();
-        QLineEdit *commentsInput = new QLineEdit();
-        commentsInput->setPlaceholderText(comments_text);
-        QPushButton *sendCommentButton = new QPushButton(send_text);
-        layoutNewComment->addWidget(commentsInput);
-        layoutNewComment->addWidget(sendCommentButton);
-        layout-addLayout(layoutNewComment);
-        QJsonArray comments_object = commentRequest(post_id);
-        for(int i = 0; i < comments_object.length(); i++){};
-        QPushButton *new_comment = new QPushButton(new_comment_text);
-        QPushButton *back_button = new QPushButton(back_text);
-        layout->addWidget(new_comment);
-        layout->addWidget(back_button);
-        QObject::connect(back_button, &QPushButton::clicked,[=](){
-            initialPage();
-        });
-        scroll_area(layout, scroll);
-    };
+    // commentPage = [&](QString post_id){
+    //     clearLayout(layout);
+    //     QList<QWidget*> scroll;
+    //     QLabel *commentsSession = new QLabel(comments_text);
+    //     QHBoxLayout *layoutNewComment = new QHBoxLayout();
+    //     QLineEdit *commentsInput = new QLineEdit();
+    //     commentsInput->setPlaceholderText(comments_text);
+    //     QPushButton *sendCommentButton = new QPushButton(send_text);
+    //     layoutNewComment->addWidget(commentsInput);
+    //     layoutNewComment->addWidget(sendCommentButton);
+    //     layout->addLayout(layoutNewComment);
+    //     QJsonArray comments_object = commentRequest(post_id);
+    //     for(int i = 0; i < comments_object.length(); i++){};
+    //     QPushButton *new_comment = new QPushButton(new_comment_text);
+    //     QPushButton *back_button = new QPushButton(back_text);
+    //     layout->addWidget(new_comment);
+    //     layout->addWidget(back_button);
+    //     QObject::connect(back_button, &QPushButton::clicked,[=](){
+    //         initialPage();
+    //     });
+    //     scroll_area(layout, scroll);
+    // };
     fast_login = [&]()
     {
         if (config["FAST-LOGIN"]["token_login"].empty()){
