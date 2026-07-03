@@ -580,9 +580,14 @@ int main(int argc, char *argv[])
     QSplashScreen splash(pixmap);
     splash.show();
     window.setWindowTitle("Linka Mobile");
-    QWidget *central = new QWidget();
+    QWidget *central = new QWidget(&window);
     QVBoxLayout *layout = new QVBoxLayout(central);
-    
+    QLabel *header_linka = new QLabel();
+    QPixmap banner(":/assets/linka_app_login_banner.png");
+    header_linka->setPixmap(banner.scaled(400, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    header_linka->setMinimumSize(400, 200); 
+    header_linka->setAlignment(Qt::AlignCenter);
+    layout->addWidget(header_linka);
     layout->setContentsMargins(30, 30, 30, 30);
     //strings traduzidas
     QString text_post = QCoreApplication::translate("feed", "text post");
