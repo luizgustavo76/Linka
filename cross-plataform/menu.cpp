@@ -628,6 +628,9 @@ int main(int argc, char *argv[])
     QString new_group_text = QCoreApplication::translate("chat", "New group");
     QString name_group_text = QCoreApplication::translate("chat", "name group");
     QString description_text = QCoreApplication::translate("chat", "description");
+    QString newer_text = QCoreApplication::translate("feed", "newer");
+    QString trending_text = QCoreApplication::translate("feed", "trending");
+    QString federations_text = QCoreApplication::translate("feed", "federations");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -1309,64 +1312,6 @@ int main(int argc, char *argv[])
         });
         
     };
-    commentRequest = [&](QString post_id){
-
-        QList<QString> comments;
-        QJsonObject comments_json;
-        comments_json["post_id"] = post_id;
-        QString response = requestHTTP(
-            url + "/view-comments",
-            "POST",
-            comments_json
-        );
-
-        QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
-
-        if(doc.isArray()){
-            QJsonArray arr = doc.array();
-
-            for(int i = 0; i < arr.size(); i++){
-                comments.append(
-                    arr[i].toObject()["comment"].toString()
-                );
-            }
-        }
-
-        return comments;
-    };
-    newCommentRequest = [&](QString post_id, QString text_comment){
-        QJsonObject json_new;
-        json_new["post_id"] = post_id;
-        json_new["username"] = QString::fromStdString(config["FAST-LOGIN"]["username"]);
-        json_new["text_comment"] = text_comment;
-        requestHTTP(
-            url + "/comments",
-            "POST",
-            json_new
-        );
-    };
-    // commentPage = [&](QString post_id){
-    //     clearLayout(layout);
-    //     QList<QWidget*> scroll;
-    //     QLabel *commentsSession = new QLabel(comments_text);
-    //     QHBoxLayout *layoutNewComment = new QHBoxLayout();
-    //     QLineEdit *commentsInput = new QLineEdit();
-    //     commentsInput->setPlaceholderText(comments_text);
-    //     QPushButton *sendCommentButton = new QPushButton(send_text);
-    //     layoutNewComment->addWidget(commentsInput);
-    //     layoutNewComment->addWidget(sendCommentButton);
-    //     layout->addLayout(layoutNewComment);
-    //     QJsonArray comments_object = commentRequest(post_id);
-    //     for(int i = 0; i < comments_object.length(); i++){};
-    //     QPushButton *new_comment = new QPushButton(new_comment_text);
-    //     QPushButton *back_button = new QPushButton(back_text);
-    //     layout->addWidget(new_comment);
-    //     layout->addWidget(back_button);
-    //     QObject::connect(back_button, &QPushButton::clicked,[=](){
-    //         initialPage();
-    //     });
-    //     scroll_area(layout, scroll);
-    // };
     fast_login = [&]()
     {
         if (config["FAST-LOGIN"]["token_login"].empty()){
@@ -1393,11 +1338,24 @@ int main(int argc, char *argv[])
             };
         };
     };
-
     showfeed = [&]()
     {
         clearLayout(layout);
         fadeTransition(central);
+        QHBoxLayout *tabPages = new QHBoxLayout();
+        QPushButton *newer = new QPushButton(newer_text);
+        QPushButton *trending = new QPushButton(trending_text);
+        QPushButton *federations = new QPushButton(federations_text);
+        newer->setProperty("class", "tab-button");
+        trending->setProperty("class", "tab-button");
+        federations->setProperty("class", "tab-button");
+        newer->setProperty("active", true);
+        trending->setProperty("active", false);
+        federations->setProperty("active", false);
+        tabPages->addWidget(newer);
+        tabPages->addWidget(trending);
+        tabPages->addWidget(federations);
+        layout->addLayout(tabPages);
         QLabel *loading = new QLabel("loading...");
         layout->addWidget(loading);
         QString url_feed = url + "/feed";

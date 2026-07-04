@@ -92,6 +92,18 @@
 <context>
     <name>feed</name>
     <message>
+        <source>newer</source>
+        <translation>Newer</translation>
+    </message>
+    <message>
+        <source>trending</source>
+        <translation>Trending</translation>
+    </message>
+    <message>
+        <source>federations</source>
+        <translation>Federations</translation>
+    </message>
+    <message>
         <source>Comments</source>
         <translation>Comments</translation>
     </message>
