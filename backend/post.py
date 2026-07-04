@@ -123,7 +123,31 @@ def new_post():
         return jsonify({"status": "post created with sucess"}), 200
     else:
         return jsonify({"status":"forbidden"}),403 
-
+@post_bp.route("/trending-feed", methods=["GET"])
+def trending_feed():
+    posts_id = []
+    posts = []
+    conn = get_db()
+    cur = conn.cursor()    
+    cur.execute("""SELECT post_id, COUNT(id) as total_stars 
+FROM stars 
+GROUP BY post_id 
+ORDER BY total_stars DESC;""")
+    result = cur.fetchall()
+    for row in result:
+        posts_id.append(row[0])
+    for i in posts_id:
+        cur.execute("SELECT * FROM posts WHERE id = ?",(i,))
+        result = cur.fetchall()
+        for row in result:
+            posts.append({
+                "id":row[0],
+                "username":row[1],
+                "text_post":row[2],
+                "datetime":row[3]
+            })
+    conn.close()    
+    return jsonify(posts)
 @post_bp.route("/feed", methods=["GET"])
 def feed():
     conn = get_db()

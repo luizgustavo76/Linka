@@ -566,7 +566,7 @@ int main(int argc, char *argv[])
     
     if (url.isEmpty())
     {
-        config["SERVER"]["url"] = "http://127.0.0.1:5000";
+        config["SERVER"]["url"] = "http://linkaProject.pythonanywhere.com";
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }
@@ -688,6 +688,7 @@ int main(int argc, char *argv[])
     std::function<void(QString, QString)> newGroupRequest;
     std::function<void()> new_chat;
     std::function<QJsonObject()> viewGroupsRequest;
+    std::function<void()> trendingFeed;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1338,6 +1339,193 @@ int main(int argc, char *argv[])
             };
         };
     };
+    trendingFeed = [&](){
+        clearLayout(layout);
+        fadeTransition(central);
+        QHBoxLayout *tabPages = new QHBoxLayout();
+        QPushButton *newer = new QPushButton(newer_text);
+        QPushButton *trending = new QPushButton(trending_text);
+        QPushButton *federations = new QPushButton(federations_text);
+        newer->setProperty("class", "tab-button");
+        trending->setProperty("class", "tab-button");
+        federations->setProperty("class", "tab-button");
+        newer->setProperty("active", false);
+        trending->setProperty("active", true);
+        federations->setProperty("active", false);
+        tabPages->addWidget(newer);
+        tabPages->addWidget(trending);
+        tabPages->addWidget(federations);
+        layout->addLayout(tabPages);
+        QString url_feed = url + "/trending-feed";
+        qDebug() << "url feed" << url_feed;
+        QNetworkRequest request{QUrl(url_feed)};
+        QNetworkReply *reply = manager->get(request);
+        QHBoxLayout *search_layout = new QHBoxLayout();
+        QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
+
+
+            QByteArray responseData = reply->readAll();
+            reply->deleteLater();
+
+            QJsonDocument doc = QJsonDocument::fromJson(responseData);
+
+            if(!doc.isArray())
+            {
+                QLabel *err = new QLabel("Invalid response from server!");
+                layout->addWidget(err);
+                return;
+            }
+
+            QJsonArray postsArray = doc.array();
+
+            QList<QWidget*> labels;
+
+            for(auto value : postsArray)
+            {
+                if(!value.isObject()) continue;
+
+                QJsonObject post = value.toObject();
+
+                int postId = post["id"].toInt();
+                QString username = post["username"].toString();
+                QString textPost = post["text_post"].toString();
+                QString datetime = post["datetime"].toString();
+
+                // ===== FRAME =====
+                QFrame *frame = new QFrame();
+                frame->setStyleSheet(R"(
+                    QFrame {
+                        background-color: #1A1A1A;
+                        border: 1px solid #2F2F2F;
+                        border-radius: 14px;
+                        padding: 10px;
+                    }
+                )");
+
+                QVBoxLayout *frameLayout = new QVBoxLayout(frame);
+                QHBoxLayout *starLayout = new QHBoxLayout();
+                QHBoxLayout *usernameLayout = new QHBoxLayout();
+                QPushButton *viewProfile = new QPushButton(view_profile);
+                QObject::connect(viewProfile, &QPushButton::clicked, [=](){
+                    otherProfilePage(username);
+                });
+                QLabel *lblUser = new QLabel(username);
+                QLabel *lblText = new QLabel(textPost);
+                QLabel *lblDate = new QLabel(datetime);
+
+                lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
+                lblText->setStyleSheet("color: white; font-size: 14px;");
+                lblDate->setStyleSheet("color: gray; font-size: 12px;");
+                lblText->setWordWrap(true); 
+                lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+                usernameLayout->addWidget(lblUser);
+                usernameLayout->addWidget(viewProfile);
+                usernameLayout->addStretch();
+                frameLayout->addLayout(usernameLayout);
+                frameLayout->addWidget(lblText);
+                frameLayout->addWidget(lblDate);
+
+                // ===== BOTÃO STAR =====
+                QPushButton *iconButton = new QPushButton();
+                QLabel *starLabel = new QLabel("...");
+                frameLayout->addWidget(iconButton);
+                frameLayout->addWidget(starLabel);
+
+                iconButton->setIcon(QIcon(":/assets/default_star.png"));
+                iconButton->setIconSize(QSize(24, 24));
+                iconButton->setFixedSize(30, 30);
+                iconButton->setStyleSheet("border: none;");
+
+                starLabel->setStyleSheet("color: white; font-size: 14px;");
+
+
+                // ponteiro seguro
+                QPointer<QLabel> safeStarLabel = starLabel;
+
+                // buscar quantidade de estrelas
+                QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
+                QNetworkReply *starsReply = manager->get(starsReq);
+
+                QObject::connect(starsReply, &QNetworkReply::finished, [=]() mutable {
+
+                    if (!safeStarLabel) {
+                        starsReply->deleteLater();
+                        return;
+                    }
+
+                    if(starsReply->error() == QNetworkReply::NoError)
+                    {
+                        QString starsText = QString(starsReply->readAll()).trimmed();
+                        if(starsText.isEmpty()) starsText = "0";
+                        safeStarLabel->setText(starsText);
+                    }
+                    else
+                    {
+                        safeStarLabel->setText("0");
+                    }
+
+                    starsReply->deleteLater();
+                });
+
+                // clique da estrela (toggle)
+                QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
+                    QJsonObject star_json;
+                    star_json["username"] = username;
+                    star_json["post_id"] = postId;
+                    requestHTTP(
+                        url + "/star",
+                        "POST",
+                        star_json
+                    );
+                    QString has_starred = requestHTTP(
+                        url + "/has-star",
+                        "POST",
+                        star_json
+                    );
+                    QJsonDocument doc = QJsonDocument::fromJson(has_starred.toUtf8());
+                    QJsonObject obj = doc.object();
+                    bool starred = obj["starred"].toBool();
+                    if (starred == true){
+                        iconButton->setIcon(QIcon(":/assets/star.png"));
+                    }else{
+                        iconButton->setIcon(QIcon(":/assets/default_star.png"));
+                    };
+
+                });
+                starLayout->addWidget(iconButton);
+                starLayout->addWidget(starLabel);
+                starLayout->addStretch();
+
+                frameLayout->addLayout(starLayout);
+
+                labels.append(frame);
+            }
+
+            scroll_area(layout, labels);
+
+            // botões de baixo
+            QPushButton *btnBack = new QPushButton(back_text);
+            QPushButton *btnNewPost = new QPushButton(new_post_text);
+            QObject::connect(btnBack, &QPushButton::clicked, [=](){
+                initialPage();
+            });
+            QLineEdit *searchEntry = new QLineEdit();
+            searchEntry->setPlaceholderText(search_text);
+            QPushButton *sendButton = new QPushButton(send_text);
+            search_layout->addWidget(searchEntry);
+            search_layout->addWidget(sendButton);
+            layout->addLayout(search_layout);
+            layout->addWidget(btnBack);
+            layout->addWidget(btnNewPost);
+
+           
+
+            QObject::connect(btnNewPost, &QPushButton::clicked, [=](){
+                new_post();
+            });
+
+        });
+    };
     showfeed = [&]()
     {
         clearLayout(layout);
@@ -1356,8 +1544,9 @@ int main(int argc, char *argv[])
         tabPages->addWidget(trending);
         tabPages->addWidget(federations);
         layout->addLayout(tabPages);
-        QLabel *loading = new QLabel("loading...");
-        layout->addWidget(loading);
+        QObject::connect(trending, &QPushButton::clicked, [=](){
+            trendingFeed();
+        });
         QString url_feed = url + "/feed";
         qDebug() << "url feed" << url_feed;
         QNetworkRequest request{QUrl(url_feed)};
@@ -1385,7 +1574,6 @@ int main(int argc, char *argv[])
             for(auto value : postsArray)
             {
                 if(!value.isObject()) continue;
-                clearLayout(layout);
 
                 QJsonObject post = value.toObject();
 
