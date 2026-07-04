@@ -13,6 +13,7 @@ from notifications import notifications_blueprint
 from flask import Flask, Blueprint, request, jsonify, g
 import sqlite3
 import os
+from sincronizer import sincronizer_bp
 from datetime import datetime, timedelta
 from werkzeug.security import check_password_hash
 import secrets
@@ -244,6 +245,7 @@ app.register_blueprint(profile_bp)
 app.register_blueprint(login_bp)
 app.register_blueprint(post_bp)
 app.register_blueprint(chat_bp)
+app.register_blueprint(sincronizer_bp)
 app.register_blueprint(friends_bp)
 app.register_blueprint(meta_bp)
 app.register_blueprint(chat_global_bp)
