@@ -1,10 +1,10 @@
 import requests
 import sqlite3
-
 class LinkaFederations:
     def __init__(self, db_path="slug-cache.db"):
         self.db_path = db_path
         self.slugs_pre_loaded = {}
+        self.actual_server = ""
         self.create_db()
         self.load_slugs()
 
@@ -42,23 +42,36 @@ class LinkaFederations:
             print(response.json())
         except Exception as e:
             print(f"fatal error {e}")
-    def sendPayload(self, payload, slug_or_url, headers):
+    def sendPayload(self, payload, slug_or_url, route, headers):
         if slug_or_url in self.slugs_pre_loaded:
             target_url = self.slugs_pre_loaded[slug_or_url]
         else:
             target_url = slug_or_url
 
         try:
+            if headers["authorization"]:
+                response_sincronizer = requests.post(
+                    self.actual_server + "/sendToken",
+                    json={
+                        "token":headers["authorization"],
+                        "destiny":target_url
+                    },
+                    timeout=10
+                )
+                if response.status_code in [200, 201]:
+                    print("[Linka] handshake tokes was sucessful")
+                else:
+                    print("[Linka] handshake was failed", response.status_code)
             if headers:
                 response = requests.post(
-                    target_url,
+                    target_url + route,
                     json=payload,
                     headers=headers,
                     timeout=10
                 )
             else:    
                 response = requests.post(
-                    target_url,
+                    target_url + route,
                     json=payload,
                     timeout=10
                 )

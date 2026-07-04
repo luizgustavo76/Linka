@@ -6,19 +6,22 @@ import time
 import dotenv
 import os
 import sqlite3
+
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 env_path = os.path.join(base_dir, "backend.env")
+
 sincronizer_bp = Blueprint("sincronizer_bp", __name__)
 dotenv.load_dotenv(env_path)
-SECRET_KEY = os.getenv("SECRET_KEY").encode()
-
+SECRET_KEY = os.getenv("SECRET_KEY", "CHAVE_RESERVA_DE_EMERGENCIA").encode()
 
 def get_db():
-    conn = sqlite3.connect(db_dir + "/tokenSincronizer.db")
+    conn = sqlite3.connect(os.path.join(db_dir, "tokenSincronizer.db"))
     return conn
 
 def create_db():
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""CREATE TABLE IF NOT EXISTS sincronizer(
@@ -31,58 +34,62 @@ def create_db():
 
 create_db()
 
-@sincronizer_bp.route("/send-request", methods=["POST"])
-def send_request():
+@sincronizer_bp.route("/sendToken", methods=["POST"])
+def send_token():
     data = request.get_json()
     if not data:
         return jsonify({"status": "error", "message": "Missing JSON payload"}), 400
         
     destiny = data.get("destiny")
-    payload = data.get("payload") 
-    username = data.get("username") 
+    token = data.get("token")
     
+    if not destiny or not token:
+        return jsonify({"status": "error", "message": "Missing destiny or token"}), 400
+
+    token_hash = hmac.new(SECRET_KEY, token.encode(), hashlib.sha256).hexdigest()
     timestamp = str(int(time.time()))
-    message = f"{timestamp}-{username}-{str(payload)}".encode()
-    signature = hmac.new(SECRET_KEY, message, hashlib.sha256).hexdigest()
-    
+
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO sincronizer (token_hash, timestamp, status) VALUES (?, ?, 'PENDING')",
+            (token_hash, timestamp)
+        )
+        conn.commit()
+        conn.close()
+    except sqlite3.IntegrityError:
+        return jsonify({"status": "error", "message": "Token already exists or processing"}), 409
+
     federation_packet = {
-        "username": username,
-        "payload": payload,
-        "timestamp": timestamp,
-        "signature": signature
+        "token": token,
+        "timestamp": timestamp
     }
 
     try:
-        response = requests.post(url=f"{destiny}/receive-federation", json=federation_packet, timeout=5)
+        response = requests.post(url=f"{destiny}/receiveToken", json=federation_packet, timeout=5)
         
         if response.status_code == 200:
-            remote_data = response.json()
-            token_recebido = remote_data.get("confirmation_token")
-            
-            if not token_recebido:
-                return jsonify({"status": "error", "message": "Destiny did not return a confirmation token"}), 500
-            
-            token_hash = hmac.new(SECRET_KEY, token_recebido.encode(), hashlib.sha256).hexdigest()
-            
-            conn = get_db()
-            cur = conn.cursor()
-            cur.execute(
-                "INSERT INTO sincronizer (token_hash, timestamp, status) VALUES (?, ?, 'PENDING')",
-                (token_hash, timestamp)
-            )
-            conn.commit()
-            conn.close()
-            
             return jsonify({
-                "status": "awaiting_confirmation", 
-                "message": "Payload sent. Token saved locally, awaiting callback.",
-                "remote_response": remote_data
+                "status": "sent", 
+                "message": "Token sent and registered locally as PENDING.",
+                "remote_response": response.json() if response.headers.get('Content-Type') == 'application/json' else response.text
             }), 200
         else:
-            return jsonify({"status": "error", "message": "Remote instance rejected the sync"}), response.status_code
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("DELETE FROM sincronizer WHERE token_hash = ?", (token_hash,))
+            conn.commit()
+            conn.close()
+            return jsonify({"status": "error", "message": "Remote federation rejected the token"}), response.status_code
             
     except requests.exceptions.RequestException as e:
-        return jsonify({"status": "error", "message": f"Could not reach destiny: {str(e)}"}), 502
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM sincronizer WHERE token_hash = ?", (token_hash,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "error", "message": f"Could not reach destiny federation: {str(e)}"}), 502
 
 @sincronizer_bp.route("/receiveToken", methods=["POST"])
 def receive_token():
@@ -99,19 +106,27 @@ def receive_token():
     conn = get_db()
     cur = conn.cursor()
     
-    cur.execute("SELECT id FROM sincronizer WHERE token_hash = ? AND status = 'PENDING'", (token_hash_recebido,))
+    cur.execute("SELECT id, status FROM sincronizer WHERE token_hash = ?", (token_hash_recebido,))
     row = cur.fetchone()
     
     if not row:
+        timestamp = str(int(time.time()))
+        cur.execute(
+            "INSERT INTO sincronizer (token_hash, timestamp, status) VALUES (?, ?, 'CONFIRMED')",
+            (token_hash_recebido, timestamp)
+        )
+        conn.commit()
         conn.close()
-        return jsonify({"status": "unauthorized", "message": "Invalid, altered or expired token"}), 401
+        return jsonify({"status": "success", "message": "Token received and saved as CONFIRMED"}), 200
         
     record_id = row[0]
-    cur.execute("UPDATE sincronizer SET status = 'CONFIRMED' WHERE id = ?", (record_id,))
-    conn.commit()
-    conn.close()
+    status_atual = row[1]
     
-    return jsonify({
-        "status": "success", 
-        "message": "Token matched and validated! Synchronization complete."
-    }), 200
+    if status_atual == 'PENDING':
+        cur.execute("UPDATE sincronizer SET status = 'CONFIRMED' WHERE id = ?", (record_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "message": "Local PENDING token matched and updated to CONFIRMED"}), 200
+        
+    conn.close()
+    return jsonify({"status": "already_confirmed", "message": "Token was already confirmed previously"}), 200

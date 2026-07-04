@@ -255,4 +255,4 @@ app.register_blueprint(notifications_blueprint)
 app.register_blueprint(chat_group_bp)
 app.register_blueprint(federations_bp)
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
