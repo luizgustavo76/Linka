@@ -1,5 +1,6 @@
 import requests
 import sqlite3
+
 class LinkaFederations:
     def __init__(self, db_path="slug-cache.db"):
         self.db_path = db_path
@@ -32,16 +33,18 @@ class LinkaFederations:
         
         for slug, url in result:
             self.slugs_pre_loaded[slug] = url
-    def receiveConnection(self, slug_or_url):
+
+    def receiveConnection(self, slug_or_url, route, headers=None):
         if slug_or_url in self.slugs_pre_loaded:
             target_url = self.slugs_pre_loaded[slug_or_url]
         else:
             target_url = slug_or_url
         try:
-            response = requests.get(target_url, timeout=10)
-            print(response.json())
+            response = requests.get(target_url + route, timeout=10)
+            return response.json()
         except Exception as e:
             print(f"fatal error {e}")
+
     def sendPayload(self, payload, slug_or_url, route, headers):
         if slug_or_url in self.slugs_pre_loaded:
             target_url = self.slugs_pre_loaded[slug_or_url]
@@ -49,19 +52,20 @@ class LinkaFederations:
             target_url = slug_or_url
 
         try:
-            if headers["authorization"]:
+            if headers and headers.get("authorization"):
                 response_sincronizer = requests.post(
                     self.actual_server + "/sendToken",
                     json={
-                        "token":headers["authorization"],
-                        "destiny":target_url
+                        "token": headers["authorization"],
+                        "destiny": target_url
                     },
                     timeout=10
                 )
-                if response.status_code in [200, 201]:
-                    print("[Linka] handshake tokes was sucessful")
+                if response_sincronizer.status_code in [200, 201]:
+                    print("[Linka] handshake token was successful")
                 else:
-                    print("[Linka] handshake was failed", response.status_code)
+                    print("[Linka] handshake has failed", response_sincronizer.status_code)
+
             if headers:
                 response = requests.post(
                     target_url + route,
@@ -75,8 +79,9 @@ class LinkaFederations:
                     json=payload,
                     timeout=10
                 )
+
             if response.status_code in [200, 201]:
-                return response
+                return response.json() if response.headers.get('Content-Type') == 'application/json' else response.text
             else:
                 print(f"[Linka] Error in instance response: {response.status_code}")
                 return None

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "linkaFederations"
-version = "0.1.1"  # Atualizado para você subir uma nova versão no PyPI
+version = "0.1.2"  # Atualizado para você subir uma nova versão no PyPI
 authors = [
     { name="Luiz Gustavo", email="luizsgustavo76@gmail.com" },
 ]
