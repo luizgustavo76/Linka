@@ -566,7 +566,7 @@ int main(int argc, char *argv[])
     
     if (url.isEmpty())
     {
-        config["SERVER"]["url"] = "http://linkaProject.pythonanywhere.com";
+        config["SERVER"]["url"] = "https://linkaProject.pythonanywhere.com";
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }
