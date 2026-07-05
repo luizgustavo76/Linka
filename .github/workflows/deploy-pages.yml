@@ -26,9 +26,9 @@ jobs:
         uses: actions/configure-pages@v4
         
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: 'docs' # <--- Confirme se seus arquivos HTML/WASM estão na pasta docs/
+          path: 'docs'
           
       - name: Deploy to GitHub Pages
         id: deployment
