@@ -1,0 +1,85 @@
+{
+    "window": {
+        "base": {
+            "background-color": "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1a1e24, stop:1 #0c0f12)",
+            "color": "#ffffff"
+        }
+    },
+    "card": {
+        "base": {
+            "background-color": "rgba(30, 35, 45, 140)",
+            "border": "1px solid rgba(255, 255, 255, 30)",
+            "border-top": "1px solid rgba(255, 255, 255, 60)",
+            "border-radius": "8px"
+        }
+    },
+    "scroll": {
+        "base": {
+            "background-color": "transparent",
+            "border": "none"
+        }
+    },
+    "button": {
+        "base": {
+            "background-color": "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 255, 255, 60), stop:0.45 rgba(255, 255, 255, 20), stop:0.5 rgba(0, 0, 0, 40), stop:1 rgba(0, 0, 0, 80))",
+            "color": "#ffffff",
+            "border": "1px solid rgba(0, 0, 0, 150)",
+            "border-top": "1px solid rgba(255, 255, 255, 80)",
+            "border-radius": "6px",
+            "padding": "6px 14px",
+            "font-weight": "bold"
+        },
+        "states": {
+            "hover": {
+                "background-color": "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(100, 200, 255, 80), stop:0.45 rgba(50, 150, 255, 40), stop:0.5 rgba(0, 100, 200, 60), stop:1 rgba(0, 50, 150, 90))",
+                "border": "1px solid #00aaff",
+                "border-top": "1px solid rgba(255, 255, 255, 150)"
+            },
+            "pressed": {
+                "background-color": "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(0, 0, 0, 150), stop:0.5 rgba(0, 0, 0, 100), stop:1 rgba(50, 150, 255, 50))",
+                "border": "1px solid rgba(0, 0, 0, 200)",
+                "padding-top": "8px",
+                "padding-bottom": "4px"
+            }
+        }
+    },
+    "input": {
+        "base": {
+            "background-color": "rgba(0, 0, 0, 100)",
+            "color": "#ffffff",
+            "border": "1px solid rgba(255, 255, 255, 20)",
+            "border-top": "2px solid rgba(0, 0, 0, 150)",
+            "border-radius": "6px",
+            "padding": "8px 12px"
+        },
+        "states": {
+            "focus": {
+                "background-color": "rgba(10, 20, 30, 150)",
+                "border": "1px solid #00aaff",
+                "border-top": "2px solid rgba(0, 50, 100, 200)"
+            }
+        }
+    },
+    "scrollbar": {
+        "base": {
+            "background-color": "transparent",
+            "width": "16px",
+            "margin": "0px"
+        },
+        "subcontrols": {
+            "handle": {
+                "background-color": "qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 rgba(255, 255, 255, 40), stop:0.5 rgba(255, 255, 255, 10), stop:1 rgba(0, 0, 0, 50))",
+                "border": "1px solid rgba(255, 255, 255, 30)",
+                "border-radius": "8px",
+                "min-height": "30px",
+                "margin": "2px"
+            },
+            "handle:hover": {
+                "background-color": "qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 rgba(100, 200, 255, 80), stop:0.5 rgba(50, 150, 255, 30), stop:1 rgba(0, 0, 0, 80))",
+                "border": "1px solid #00aaff"
+            },
+            "add-line": { "height": "0px" },
+            "sub-line": { "height": "0px" }
+        }
+    }
+}

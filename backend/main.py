@@ -14,6 +14,7 @@ from flask import Flask, Blueprint, request, jsonify, g
 import sqlite3
 import os
 from sincronizer import sincronizer_bp
+from themes import theme_bp
 from datetime import datetime, timedelta
 from werkzeug.security import check_password_hash
 import secrets
@@ -253,6 +254,7 @@ app.register_blueprint(meta_bp)
 app.register_blueprint(chat_global_bp)
 app.register_blueprint(notifications_blueprint)
 app.register_blueprint(chat_group_bp)
+app.register_blueprint(theme_bp)
 app.register_blueprint(federations_bp)
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

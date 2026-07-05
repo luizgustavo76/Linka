@@ -1,0 +1,77 @@
+{
+    "widgets": {
+        "window": "QMainWindow",
+        "widget": "QWidget",
+        "frame": "QFrame",
+        "dialog": "QDialog",
+        "message_box": "QMessageBox",
+        "scroll_area": "QScrollArea",
+        
+        "button": "QPushButton",
+        "tool_button": "QToolButton",
+        "radio_button": "QRadioButton",
+        "checkbox": "QCheckBox",
+        
+        "input": "QLineEdit",
+        "text_area": "QTextEdit",
+        "plain_text": "QPlainTextEdit",
+        "spin_box": "QSpinBox",
+        "double_spin_box": "QDoubleSpinBox",
+        "date_edit": "QDateEdit",
+        "time_edit": "QTimeEdit",
+        "datetime_edit": "QDateTimeEdit",
+        
+        "label": "QLabel",
+        "tooltip": "QToolTip",
+        
+        "dropdown": "QComboBox",
+        
+        "list_view": "QListView",
+        "list_widget": "QListWidget",
+        "tree_view": "QTreeView",
+        "tree_widget": "QTreeWidget",
+        "table_view": "QTableView",
+        "table_widget": "QTableWidget",
+        "header_view": "QHeaderView",
+        
+        "scrollbar": "QScrollBar",
+        "slider": "QSlider",
+        "dial": "QDial",
+        
+        "progress_bar": "QProgressBar",
+        
+        "tab_widget": "QTabWidget",
+        "tab_bar": "QTabBar",
+        
+        "menu": "QMenu",
+        "menu_bar": "QMenuBar",
+        "toolbar": "QToolBar",
+        "status_bar": "QStatusBar",
+        
+        "group_box": "QGroupBox",
+        "dock_widget": "QDockWidget",
+        "toolbox": "QToolBox",
+        "splitter": "QSplitter",
+        "size_grip": "QSizeGrip"
+    },
+    "colors": {
+        "bg_dark": "#0D0E12",
+        "bg_surface": "#161A22",
+        "bg_panel": "#1E222B",
+        "bg_input": "#2A303C",
+        "primary": "#00B4D8",
+        "primary_hover": "#90E0EF",
+        "primary_pressed": "#0077B6",
+        "secondary": "#6C757D",
+        "text_main": "#FFFFFF",
+        "text_muted": "#8A92A6",
+        "text_disabled": "#4A4D54",
+        "border_light": "#3A4256",
+        "border_dark": "#1F232D",
+        "success": "#2ECC71",
+        "warning": "#F1C40F",
+        "error": "#E74C3C",
+        "transparent": "transparent",
+        "shadow": "rgba(0, 0, 0, 0.5)"
+    }
+}
