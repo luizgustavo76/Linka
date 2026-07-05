@@ -16,7 +16,7 @@ dotenv.load_dotenv(env_path)
 SECRET_KEY = os.getenv("SECRET_KEY", "CHAVE_RESERVA_DE_EMERGENCIA").encode()
 
 def get_db():
-    conn = sqlite3.connect(os.path.join(db_dir, "tokenSincronizer.db"))
+    conn = sqlite3.connect(os.path.join(db_dir, "tokenSincronizer.db"), timeout=10)
     return conn
 
 def create_db():

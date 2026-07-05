@@ -41,7 +41,9 @@ class LinkaFederations:
             target_url = slug_or_url
         try:
             response = requests.get(target_url + route, timeout=10)
-            return response.json()
+            return {
+                "remote_response": response.json() if (response.status_code == 200 and "application/json" in response.headers.get('Content-Type', '') and response.text.strip()) else f"Raw response ({response.status_code}): {response.text}"
+            }
         except Exception as e:
             print(f"fatal error {e}")
 

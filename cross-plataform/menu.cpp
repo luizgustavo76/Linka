@@ -71,9 +71,10 @@ public:
     ChatBubble(QString text, bool isMe, QWidget *parent = nullptr)
         : QWidget(parent), message(text), mine(isMe)
     {
-        setMaximumWidth(400);
+        // Aumentado o limite máximo para o balão ocupar mais espaço horizontal
+        setMaximumWidth(550);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    }
+    };
 
 protected:
     void paintEvent(QPaintEvent *event) override {
@@ -83,31 +84,41 @@ protected:
         QRect bubbleRect = rect().adjusted(10, 5, -10, -5);
 
         QColor bubbleColor;
-        if (mine)
-            bubbleColor = QColor(0, 200, 120); // verde tipo "mensagem enviada"
-        else
-            bubbleColor = QColor(60, 60, 60);  // cinza tipo "mensagem recebida"
+        QColor textColor;
+
+        if (mine) {
+            bubbleColor = QColor(173, 216, 230); // Azul-bebê (Light Blue)
+            textColor = QColor(30, 30, 30);      // Texto escuro para contrastar no azul claro
+        } else {
+            bubbleColor = QColor(255, 255, 255); // Branco puro
+            textColor = QColor(30, 30, 30);      // Texto escuro para contrastar no branco
+        }
 
         painter.setBrush(bubbleColor);
         painter.setPen(Qt::NoPen);
 
-        painter.drawRoundedRect(bubbleRect, 18, 18);
+        // Raio reduzido de 18 para 6 para deixar o balão bem mais retangular
+        painter.drawRoundedRect(bubbleRect, 6, 6);
 
-        painter.setPen(Qt::white);
+        painter.setPen(textColor);
         painter.setFont(QFont("Arial", 11));
 
+        // Ajuste do texto acompanhando o novo padding
         painter.drawText(
-            bubbleRect.adjusted(15, 10, -15, -10),
+            bubbleRect.adjusted(18, 12, -18, -12),
             Qt::TextWordWrap,
             message
         );
-    }
+    };
 
     QSize sizeHint() const override {
         QFontMetrics fm(QFont("Arial", 11));
-        QRect r = fm.boundingRect(0, 0, 300, 1000, Qt::TextWordWrap, message);
-        return QSize(r.width() + 60, r.height() + 30);
-    }
+        // Largura base do texto aumentada para 450 para o retângulo espalhar mais na tela
+        QRect r = fm.boundingRect(0, 0, 450, 1000, Qt::TextWordWrap, message);
+        
+        // Adicionado mais padding (+80 na largura, +40 na altura) para o balão parecer maior e mais robusto
+        return QSize(r.width() + 80, r.height() + 40);
+    };
 
 private:
     QString message;
@@ -689,6 +700,7 @@ int main(int argc, char *argv[])
     std::function<void()> new_chat;
     std::function<QJsonObject()> viewGroupsRequest;
     std::function<void()> trendingFeed;
+    std::function<void()> federationsFeed;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1338,6 +1350,10 @@ int main(int argc, char *argv[])
                 return;
             };
         };
+    };
+    federationsFeed = [&](){
+        clearLayout(layout);
+        fadeTransition(central);
     };
     trendingFeed = [&](){
         clearLayout(layout);
