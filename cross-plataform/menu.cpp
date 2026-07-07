@@ -577,7 +577,7 @@ int main(int argc, char *argv[])
     
     if (url.isEmpty())
     {
-        config["SERVER"]["url"] = "http://linkaProject.pythonanywhere.com";
+        config["SERVER"]["url"] = "http://127.0.0.1:5000";
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }
@@ -700,7 +700,6 @@ int main(int argc, char *argv[])
     std::function<void()> new_chat;
     std::function<QJsonObject()> viewGroupsRequest;
     std::function<void()> trendingFeed;
-    std::function<void()> federationsFeed;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1007,79 +1006,38 @@ int main(int argc, char *argv[])
         QObject::connect(back_button, &QPushButton::clicked, [=](){
                 initialPage();
         });
-       QObject::connect(button_add_theme, &QPushButton::clicked, [=](){
-            QTimer::singleShot(0, [&](){
-                
-                QString filePath = QFileDialog::getOpenFileName(
-                    nullptr,
-                    "Select a theme",
-                    QDir::homePath(),
-                    "All the files (*.*)"
-                );
+        QObject::connect(button_add_theme, &QPushButton::clicked, [=](){
+                QTimer::singleShot(0, [&](){
+                    QString filePath = QFileDialog::getOpenFileName(
+                        nullptr,
+                        "Select a theme",
+                        QDir::homePath(),
+                        "All the files (*.*);;Texto (*.txt);;Imagens (*.png *.jpg)"
+                    );
 
-                // 1. Se o usuário fechou a janela sem escolher nada, aborta aqui.
-                if (filePath.isEmpty()) {
-                    return; 
-                }
-
-                // 2. Se for o nosso tema JSON (Motor Avançado)
-                if (filePath.endsWith(".json", Qt::CaseInsensitive)) {
-                    QFile file(filePath);
-                    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                        QTextStream in(&file);
-                        QString content = in.readAll();
-                        file.close();
-                        
-                        QJsonObject json_theme;
-                        json_theme["input"] = content; 
-                        json_theme["output"] = "qss";
-
-                        // Faz o request para o backend
-                        QString response = requestHTTP(
-                            url + "convert-theme",
-                            "POST",
-                            json_theme
-                        );
-
-                        // Processa o retorno
-                        QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
-                        QJsonObject json_response = doc.object();
-                        
-                        qDebug() << "Resposta da API:" << json_response;
-                        
-                        // Aplica o QSS gerado
-                        qApp->setStyleSheet(json_response.value("qss").toString());
-                        
-                        // Salva nas configurações
-                        config["THEMES"]["theme"] = filePath.toStdString();
-                        saveConfig();
-                        
-                    } else {
-                        QMessageBox::critical(nullptr, "Error", "Cannot open the JSON file!");
+                    if(filePath.isEmpty())
+                    {
+                        return; 
                     }
-                } 
-                // 3. Se for um arquivo QSS/CSS antigo (Motor Padrão)
-                else {
-                    QFile file(filePath);
-                    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                        QTextStream in(&file);
-                        QString content = in.readAll();
-                        file.close();
 
-                        // Aplica o QSS direto do arquivo
-                        qApp->setStyleSheet(content);
-                        
-                        // Salva nas configurações
-                        config["THEMES"]["theme"] = filePath.toStdString();
-                        saveConfig();
-                        
-                    } else {
+                    QFile file(filePath);
+
+                    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                    {
                         QMessageBox::critical(nullptr, "Error", "Cannot open the file!");
+                        return;
                     }
-                }
 
-            }); // <-- Fim do QTimer::singleShot
-            }); // <-- Fim do QObject::connect
+                    QTextStream in(&file);
+                    QString content = in.readAll();
+                    file.close();
+
+                    config["THEMES"]["theme"] = filePath.toStdString();
+                    qApp->setStyleSheet(content);
+                    saveConfig();
+                });
+        });
+    };
     sentFriendRequest = [&](QString receiver){
         QJsonObject json_friends;
         json_friends["receiver"] = receiver;
@@ -1391,10 +1349,6 @@ int main(int argc, char *argv[])
                 return;
             };
         };
-    };
-    federationsFeed = [&](){
-        clearLayout(layout);
-        fadeTransition(central);
     };
     trendingFeed = [&](){
         clearLayout(layout);
@@ -2820,5 +2774,5 @@ int main(int argc, char *argv[])
     //função para exibir o feed
     window.showMaximized();
     return app.exec();
-};
-};
+    
+}
