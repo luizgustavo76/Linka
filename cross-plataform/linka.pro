@@ -4,7 +4,11 @@ TEMPLATE = app
 TARGET = Linka
 
 # Fontes e Recursos do Projeto
+<<<<<<< HEAD
 SOURCES += menu.cpp
+=======
+SOURCES += linka1.0.cpp
+>>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
 RESOURCES += resources.qrc
 # As flags do Asyncify só serão aplicadas se você estiver compilando para a Web
 contains(QT_ARCH, wasm) {

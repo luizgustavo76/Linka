@@ -71,16 +71,9 @@ public:
     ChatBubble(QString text, bool isMe, QWidget *parent = nullptr)
         : QWidget(parent), message(text), mine(isMe)
     {
-<<<<<<< HEAD
         setMaximumWidth(400);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     }
-=======
-        // Aumentado o limite máximo para o balão ocupar mais espaço horizontal
-        setMaximumWidth(550);
-        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    };
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
 
 protected:
     void paintEvent(QPaintEvent *event) override {
@@ -90,27 +83,14 @@ protected:
         QRect bubbleRect = rect().adjusted(10, 5, -10, -5);
 
         QColor bubbleColor;
-<<<<<<< HEAD
         if (mine)
             bubbleColor = QColor(0, 200, 120); // verde tipo "mensagem enviada"
         else
             bubbleColor = QColor(60, 60, 60);  // cinza tipo "mensagem recebida"
-=======
-        QColor textColor;
-
-        if (mine) {
-            bubbleColor = QColor(173, 216, 230); // Azul-bebê (Light Blue)
-            textColor = QColor(30, 30, 30);      // Texto escuro para contrastar no azul claro
-        } else {
-            bubbleColor = QColor(255, 255, 255); // Branco puro
-            textColor = QColor(30, 30, 30);      // Texto escuro para contrastar no branco
-        }
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
 
         painter.setBrush(bubbleColor);
         painter.setPen(Qt::NoPen);
 
-<<<<<<< HEAD
         painter.drawRoundedRect(bubbleRect, 18, 18);
 
         painter.setPen(Qt::white);
@@ -128,30 +108,6 @@ protected:
         QRect r = fm.boundingRect(0, 0, 300, 1000, Qt::TextWordWrap, message);
         return QSize(r.width() + 60, r.height() + 30);
     }
-=======
-        // Raio reduzido de 18 para 6 para deixar o balão bem mais retangular
-        painter.drawRoundedRect(bubbleRect, 6, 6);
-
-        painter.setPen(textColor);
-        painter.setFont(QFont("Arial", 11));
-
-        // Ajuste do texto acompanhando o novo padding
-        painter.drawText(
-            bubbleRect.adjusted(18, 12, -18, -12),
-            Qt::TextWordWrap,
-            message
-        );
-    };
-
-    QSize sizeHint() const override {
-        QFontMetrics fm(QFont("Arial", 11));
-        // Largura base do texto aumentada para 450 para o retângulo espalhar mais na tela
-        QRect r = fm.boundingRect(0, 0, 450, 1000, Qt::TextWordWrap, message);
-        
-        // Adicionado mais padding (+80 na largura, +40 na altura) para o balão parecer maior e mais robusto
-        return QSize(r.width() + 80, r.height() + 40);
-    };
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
 
 private:
     QString message;
@@ -610,17 +566,24 @@ int main(int argc, char *argv[])
     
     if (url.isEmpty())
     {
-<<<<<<< HEAD
-        config["SERVER"]["url"] = "http://127.0.0.1:5000";
-=======
         config["SERVER"]["url"] = "http://linkaProject.pythonanywhere.com";
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }
     qDebug() << "url" << url;   
+    QScreen *tela = QApplication::primaryScreen();
+    int larguraTela = tela->geometry().width();
+    int alturaTela = tela->geometry().height();
+
     
     QFont fonteGlobal = app.font();
+    if (larguraTela >= 1080) {
+        fonteGlobal.setPointSize(16); 
+    } else if (larguraTela >= 720) {
+        fonteGlobal.setPointSize(13); 
+    } else {
+        fonteGlobal.setPointSize(11);
+    }
     app.setFont(fonteGlobal);
     QMainWindow window;
     app.setWindowIcon(QIcon(":/assets/icon.png"));
@@ -628,21 +591,12 @@ int main(int argc, char *argv[])
     QSplashScreen splash(pixmap);
     splash.show();
     window.setWindowTitle("Linka Mobile");
-<<<<<<< HEAD
+    window.setGeometry(0, 0, larguraTela, alturaTela);
     QWidget *central = new QWidget();
     QVBoxLayout *layout = new QVBoxLayout(central);
-    
-=======
-    QWidget *central = new QWidget(&window);
-    QVBoxLayout *layout = new QVBoxLayout(central);
-    QLabel *header_linka = new QLabel();
-    QPixmap banner(":/assets/linka_app_login_banner.png");
-    header_linka->setPixmap(banner.scaled(400, 200, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-    header_linka->setMinimumSize(400, 200); 
-    header_linka->setAlignment(Qt::AlignCenter);
-    layout->addWidget(header_linka);
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
-    layout->setContentsMargins(30, 30, 30, 30);
+    int margemCalculada = larguraTela * 0.05;
+    layout->setContentsMargins(margemCalculada, margemCalculada, margemCalculada, margemCalculada);
+    layout->setSpacing(alturaTela * 0.03);
     //strings traduzidas
     QString text_post = QCoreApplication::translate("feed", "text post");
     QString back_text = QCoreApplication::translate("global", "back");
@@ -679,15 +633,6 @@ int main(int argc, char *argv[])
     QString un_friend_text = QCoreApplication::translate("view profile", "Unfriend");
     QString sent_friend_text = QCoreApplication::translate("view profile", "Sent a friend");
     QString change_lang_page = QCoreApplication::translate("configurations", "change lang");
-    QString new_group_text = QCoreApplication::translate("chat", "New group");
-    QString name_group_text = QCoreApplication::translate("chat", "name group");
-    QString description_text = QCoreApplication::translate("chat", "description");
-<<<<<<< HEAD
-=======
-    QString newer_text = QCoreApplication::translate("feed", "newer");
-    QString trending_text = QCoreApplication::translate("feed", "trending");
-    QString federations_text = QCoreApplication::translate("feed", "federations");
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -741,95 +686,25 @@ int main(int argc, char *argv[])
     std::function<void(QString)> sentFriendRequest;
     std::function<void(QString)> otherProfilePage;
     std::function<void()> logout;
-    std::function<void()> newGroupPage;
-    std::function<void(QString, QString)> newGroupRequest;
-    std::function<void()> new_chat;
-    std::function<QJsonObject()> viewGroupsRequest;
-<<<<<<< HEAD
-=======
-    std::function<void()> trendingFeed;
-    std::function<void()> federationsFeed;
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
-        QIcon *banner_image = new QIcon(":/assets/linka_app_login_banner.png");
-        QLabel *banner_login = new QLabel();
-        banner_login->setPixmap(banner_image->pixmap(QSize(400, 200)));
-        banner_login->setAlignment(Qt::AlignCenter);
-        QHBoxLayout *loginButtons = new QHBoxLayout();
         QPushButton *signinPage_button = new QPushButton(signup_text);
         QPushButton *signupPage_button = new QPushButton(signin_text);
         QPushButton *change_server_button = new QPushButton();
-        signinPage_button->setProperty("class", "tab-button");
-        signupPage_button->setProperty("class", "tab-button");
-        signinPage_button->setProperty("active", true);
-        signupPage_button->setProperty("active", false);
-        loginButtons->addWidget(signinPage_button);
-        loginButtons->addWidget(signupPage_button);
-        layout->addLayout(loginButtons);
-        QLineEdit *usernameEntry = new QLineEdit();
-        QLineEdit *passwordEntry = new QLineEdit();
-        usernameEntry->setPlaceholderText(username_text);
-        passwordEntry->setPlaceholderText(password_text);
-        QPushButton *send_button = new QPushButton(send_text);
-        layout->addWidget(usernameEntry);
-        layout->addWidget(passwordEntry);
-        layout->addWidget(send_button);
-        QObject::connect(signinPage_button, &QPushButton::clicked, [=](){
-            signupPage();
-        });
-        QObject::connect(signupPage_button, &QPushButton::clicked, [=](){
+        layout->addWidget(signinPage_button);
+        layout->addWidget(signupPage_button);
+        layout->addWidget(change_server_button);
+        QObject::connect(signinPage_button, &QPushButton::clicked, [&](){
             signinPage();
         });
-        QObject::connect(send_button, &QPushButton::clicked, [=, &token_session]() mutable {
-            QString userTxt = usernameEntry->text();
-            QString passTxt = passwordEntry->text();
+        QObject::connect(signupPage_button, &QPushButton::clicked, [&](){
+            signupPage();
+        });
+        QObject::connect(change_server_button, &QPushButton::clicked, [&](){
+            changeServerPage();
+        });
 
-            QString token_gerado = newSession(userTxt, passTxt);
-            if (!token_gerado.isEmpty()){
-                loadConfig();
-                config["FAST-LOGIN"]["username"] = userTxt.toStdString();
-                config["FAST-LOGIN"]["password"] = passTxt.toStdString();
-                config["FAST-LOGIN"]["token_session"] = token_gerado.toStdString();
-                saveConfig();
-                initialPage();
-            } else {
-                QLabel *error_label = new QLabel("Username or password incorrect!");
-                layout->addWidget(error_label);
-            };
-        });
-        QPushButton *discordButton = new QPushButton();
-        discordButton->setIcon(QIcon(":/assets/discord.png"));
-        
-        QPushButton *redditButton = new QPushButton();
-        redditButton->setIcon(QIcon(":/assets/reddit.png"));
-        
-        // 1. Reduza o tamanho dos ícones para algo realista em telas de celular
-        // Em vez de 200 de largura, use tamanhos quadrados ou mais compactos para não estourar
-        discordButton->setIconSize(QSize(120, 40)); 
-        redditButton->setIconSize(QSize(120, 40));
-
-        // 2. O SEGREDO: Trave a largura máxima do BOTÃO para ele não crescer além disso
-        discordButton->setMaximumWidth(130);
-        redditButton->setMaximumWidth(130);
-        
-        QHBoxLayout *layoutHorizontal = new QHBoxLayout();
-        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-        layoutHorizontal->addWidget(discordButton);
-        layoutHorizontal->addWidget(redditButton);
-        
-        // Adiciona um spacer na direita também para centralizar os dois botões bonitinho no meio da tela
-        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-        
-        layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-        layout->addLayout(layoutHorizontal);
-        QObject::connect(discordButton, &QPushButton::clicked, [=](){
-            QDesktopServices::openUrl(QUrl("https://discord.gg/bhru6SWcvC"));
-        });
-        QObject::connect(redditButton, &QPushButton::clicked, [=](){
-            QDesktopServices::openUrl(QUrl("https://www.reddit.com/r/LinkaProject/"));
-        });
     };
     updatePage = [&](QString link){
         clearLayout(layout);
@@ -865,7 +740,7 @@ int main(int argc, char *argv[])
     if (min_version_num > cur_version_num){
         qDebug() << "Bloqueando o app! Indo para a tela de atualização...";
         updatePage(linkUpdate);
-        window.showMaximized();
+        window.show();
         return app.exec(); 
     }
     // validation of token
@@ -1056,7 +931,6 @@ int main(int argc, char *argv[])
         QObject::connect(back_button, &QPushButton::clicked, [=](){
                 initialPage();
         });
-<<<<<<< HEAD
         QObject::connect(button_add_theme, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
                     QString filePath = QFileDialog::getOpenFileName(
@@ -1089,81 +963,6 @@ int main(int argc, char *argv[])
                 });
         });
     };
-=======
-       QObject::connect(button_add_theme, &QPushButton::clicked, [=](){
-            QTimer::singleShot(0, [&](){
-                
-                QString filePath = QFileDialog::getOpenFileName(
-                    nullptr,
-                    "Select a theme",
-                    QDir::homePath(),
-                    "All the files (*.*)"
-                );
-
-                // 1. Se o usuário fechou a janela sem escolher nada, aborta aqui.
-                if (filePath.isEmpty()) {
-                    return; 
-                }
-
-                // 2. Se for o nosso tema JSON (Motor Avançado)
-                if (filePath.endsWith(".json", Qt::CaseInsensitive)) {
-                    QFile file(filePath);
-                    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                        QTextStream in(&file);
-                        QString content = in.readAll();
-                        file.close();
-                        
-                        QJsonObject json_theme;
-                        json_theme["input"] = content; 
-                        json_theme["output"] = "qss";
-
-                        // Faz o request para o backend
-                        QString response = requestHTTP(
-                            url + "convert-theme",
-                            "POST",
-                            json_theme
-                        );
-
-                        // Processa o retorno
-                        QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
-                        QJsonObject json_response = doc.object();
-                        
-                        qDebug() << "Resposta da API:" << json_response;
-                        
-                        // Aplica o QSS gerado
-                        qApp->setStyleSheet(json_response.value("qss").toString());
-                        
-                        // Salva nas configurações
-                        config["THEMES"]["theme"] = filePath.toStdString();
-                        saveConfig();
-                        
-                    } else {
-                        QMessageBox::critical(nullptr, "Error", "Cannot open the JSON file!");
-                    }
-                } 
-                // 3. Se for um arquivo QSS/CSS antigo (Motor Padrão)
-                else {
-                    QFile file(filePath);
-                    if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-                        QTextStream in(&file);
-                        QString content = in.readAll();
-                        file.close();
-
-                        // Aplica o QSS direto do arquivo
-                        qApp->setStyleSheet(content);
-                        
-                        // Salva nas configurações
-                        config["THEMES"]["theme"] = filePath.toStdString();
-                        saveConfig();
-                        
-                    } else {
-                        QMessageBox::critical(nullptr, "Error", "Cannot open the file!");
-                    }
-                }
-
-            }); // <-- Fim do QTimer::singleShot
-            }); // <-- Fim do QObject::connect
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
     sentFriendRequest = [&](QString receiver){
         QJsonObject json_friends;
         json_friends["receiver"] = receiver;
@@ -1423,7 +1222,7 @@ int main(int argc, char *argv[])
         layout->addWidget(label_username);
         QJsonObject empty;
         QString bio_response = requestHTTP(
-            url + "/view_profile/" + username,
+            url + "/view-profile" + "/?username=" + username,
             "GET",
             empty
         );
@@ -1450,7 +1249,6 @@ int main(int argc, char *argv[])
         });
         
     };
-<<<<<<< HEAD
     commentRequest = [&](QString post_id){
 
         QList<QString> comments;
@@ -1487,30 +1285,38 @@ int main(int argc, char *argv[])
             json_new
         );
     };
-    commentPage = [&](QString post_id){
+    newCommentPage = [&](QString post_id){
         clearLayout(layout);
-        QList<QWidget*> scroll;
-        QLabel *commentsSession = new QLabel(comments_text);
-        QHBoxLayout *layoutNewComment = new QHBoxLayout();
-        QLineEdit *commentsInput = new QLineEdit();
-        commentsInput->setPlaceholderText(comments_text);
-        QPushButton *sendCommentButton = new QPushButton(send_text);
-        layoutNewComment->addWidget(commentsInput);
-        layoutNewComment->addWidget(sendCommentButton);
-        layout-addLayout(layoutNewComment);
-        QJsonArray comments_object = commentRequest(post_id);
-        for(int i = 0; i < comments_object.length(); i++){};
-        QPushButton *new_comment = new QPushButton(new_comment_text);
-        QPushButton *back_button = new QPushButton(back_text);
-        layout->addWidget(new_comment);
-        layout->addWidget(back_button);
-        QObject::connect(back_button, &QPushButton::clicked,[=](){
-            initialPage();
+        QLineEdit *commentInput = new QLineEdit();
+        commentInput->setPlaceholderText(comments_text);
+        QPushButton *sendButton = new QPushButton(send_text);
+        QPushButton *backButton = new QPushButton(back_text);
+        layout->addWidget(commentInput);
+        layout->addWidget(sendButton);
+        layout->addWidget(backButton);
+        QObject::connect(backButton, &QPushButton::clicked, [=](){
+            commentPage(post_id);
         });
-        scroll_area(layout, scroll);
+        QObject::connect(sendButton, &QPushButton::clicked, [=](){
+            newCommentRequest(post_id, commentInput->text());
+        });
     };
-=======
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
+    // commentPage = [&](QString post_id){
+    //     clearLayout(layout);
+    //     QList<QWidget*> scroll;
+    //     QLabel *commentsSession = new QLabel(comments_text);
+    //     QJsonArray comments_object = commentRequest(post_id);
+    //     for(int i = 0; i < comments_object.length(); i++){};
+    //     QPushButton *new_comment = new QPushButton(new_comment_text);
+    //     QPushButton *back_button = new QPushButton(back_text);
+    //     layout->addWidget(new_comment);
+    //     layout->addWidget(back_button);
+    //     QObject::connect(back_button, &QPushButton::clicked,[=](){
+    //         initialPage();
+    //     });
+    //     scroll_area(layout, scroll);
+
+    // };
     fast_login = [&]()
     {
         if (config["FAST-LOGIN"]["token_login"].empty()){
@@ -1537,232 +1343,17 @@ int main(int argc, char *argv[])
             };
         };
     };
-<<<<<<< HEAD
-
-=======
-    federationsFeed = [&](){
-        clearLayout(layout);
-        fadeTransition(central);
-    };
-    trendingFeed = [&](){
-        clearLayout(layout);
-        fadeTransition(central);
-        QHBoxLayout *tabPages = new QHBoxLayout();
-        QPushButton *newer = new QPushButton(newer_text);
-        QPushButton *trending = new QPushButton(trending_text);
-        QPushButton *federations = new QPushButton(federations_text);
-        newer->setProperty("class", "tab-button");
-        trending->setProperty("class", "tab-button");
-        federations->setProperty("class", "tab-button");
-        newer->setProperty("active", false);
-        trending->setProperty("active", true);
-        federations->setProperty("active", false);
-        tabPages->addWidget(newer);
-        tabPages->addWidget(trending);
-        tabPages->addWidget(federations);
-        layout->addLayout(tabPages);
-        QString url_feed = url + "/trending-feed";
-        qDebug() << "url feed" << url_feed;
-        QNetworkRequest request{QUrl(url_feed)};
-        QNetworkReply *reply = manager->get(request);
-        QHBoxLayout *search_layout = new QHBoxLayout();
-        QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
-
-
-            QByteArray responseData = reply->readAll();
-            reply->deleteLater();
-
-            QJsonDocument doc = QJsonDocument::fromJson(responseData);
-
-            if(!doc.isArray())
-            {
-                QLabel *err = new QLabel("Invalid response from server!");
-                layout->addWidget(err);
-                return;
-            }
-
-            QJsonArray postsArray = doc.array();
-
-            QList<QWidget*> labels;
-
-            for(auto value : postsArray)
-            {
-                if(!value.isObject()) continue;
-
-                QJsonObject post = value.toObject();
-
-                int postId = post["id"].toInt();
-                QString username = post["username"].toString();
-                QString textPost = post["text_post"].toString();
-                QString datetime = post["datetime"].toString();
-
-                // ===== FRAME =====
-                QFrame *frame = new QFrame();
-                frame->setStyleSheet(R"(
-                    QFrame {
-                        background-color: #1A1A1A;
-                        border: 1px solid #2F2F2F;
-                        border-radius: 14px;
-                        padding: 10px;
-                    }
-                )");
-
-                QVBoxLayout *frameLayout = new QVBoxLayout(frame);
-                QHBoxLayout *starLayout = new QHBoxLayout();
-                QHBoxLayout *usernameLayout = new QHBoxLayout();
-                QPushButton *viewProfile = new QPushButton(view_profile);
-                QObject::connect(viewProfile, &QPushButton::clicked, [=](){
-                    otherProfilePage(username);
-                });
-                QLabel *lblUser = new QLabel(username);
-                QLabel *lblText = new QLabel(textPost);
-                QLabel *lblDate = new QLabel(datetime);
-
-                lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
-                lblText->setStyleSheet("color: white; font-size: 14px;");
-                lblDate->setStyleSheet("color: gray; font-size: 12px;");
-                lblText->setWordWrap(true); 
-                lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
-                usernameLayout->addWidget(lblUser);
-                usernameLayout->addWidget(viewProfile);
-                usernameLayout->addStretch();
-                frameLayout->addLayout(usernameLayout);
-                frameLayout->addWidget(lblText);
-                frameLayout->addWidget(lblDate);
-
-                // ===== BOTÃO STAR =====
-                QPushButton *iconButton = new QPushButton();
-                QLabel *starLabel = new QLabel("...");
-                frameLayout->addWidget(iconButton);
-                frameLayout->addWidget(starLabel);
-
-                iconButton->setIcon(QIcon(":/assets/default_star.png"));
-                iconButton->setIconSize(QSize(24, 24));
-                iconButton->setFixedSize(30, 30);
-                iconButton->setStyleSheet("border: none;");
-
-                starLabel->setStyleSheet("color: white; font-size: 14px;");
-
-
-                // ponteiro seguro
-                QPointer<QLabel> safeStarLabel = starLabel;
-
-                // buscar quantidade de estrelas
-                QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
-                QNetworkReply *starsReply = manager->get(starsReq);
-
-                QObject::connect(starsReply, &QNetworkReply::finished, [=]() mutable {
-
-                    if (!safeStarLabel) {
-                        starsReply->deleteLater();
-                        return;
-                    }
-
-                    if(starsReply->error() == QNetworkReply::NoError)
-                    {
-                        QString starsText = QString(starsReply->readAll()).trimmed();
-                        if(starsText.isEmpty()) starsText = "0";
-                        safeStarLabel->setText(starsText);
-                    }
-                    else
-                    {
-                        safeStarLabel->setText("0");
-                    }
-
-                    starsReply->deleteLater();
-                });
-
-                // clique da estrela (toggle)
-                QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
-                    QJsonObject star_json;
-                    star_json["username"] = username;
-                    star_json["post_id"] = postId;
-                    requestHTTP(
-                        url + "/star",
-                        "POST",
-                        star_json
-                    );
-                    QString has_starred = requestHTTP(
-                        url + "/has-star",
-                        "POST",
-                        star_json
-                    );
-                    QJsonDocument doc = QJsonDocument::fromJson(has_starred.toUtf8());
-                    QJsonObject obj = doc.object();
-                    bool starred = obj["starred"].toBool();
-                    if (starred == true){
-                        iconButton->setIcon(QIcon(":/assets/star.png"));
-                    }else{
-                        iconButton->setIcon(QIcon(":/assets/default_star.png"));
-                    };
-
-                });
-                starLayout->addWidget(iconButton);
-                starLayout->addWidget(starLabel);
-                starLayout->addStretch();
-
-                frameLayout->addLayout(starLayout);
-
-                labels.append(frame);
-            }
-
-            scroll_area(layout, labels);
-
-            // botões de baixo
-            QPushButton *btnBack = new QPushButton(back_text);
-            QPushButton *btnNewPost = new QPushButton(new_post_text);
-            QObject::connect(btnBack, &QPushButton::clicked, [=](){
-                initialPage();
-            });
-            QLineEdit *searchEntry = new QLineEdit();
-            searchEntry->setPlaceholderText(search_text);
-            QPushButton *sendButton = new QPushButton(send_text);
-            search_layout->addWidget(searchEntry);
-            search_layout->addWidget(sendButton);
-            layout->addLayout(search_layout);
-            layout->addWidget(btnBack);
-            layout->addWidget(btnNewPost);
-
-           
-
-            QObject::connect(btnNewPost, &QPushButton::clicked, [=](){
-                new_post();
-            });
-
-        });
-    };
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
     showfeed = [&]()
     {
         clearLayout(layout);
         fadeTransition(central);
-<<<<<<< HEAD
         QLabel *loading = new QLabel("loading...");
         layout->addWidget(loading);
-=======
-        QHBoxLayout *tabPages = new QHBoxLayout();
-        QPushButton *newer = new QPushButton(newer_text);
-        QPushButton *trending = new QPushButton(trending_text);
-        QPushButton *federations = new QPushButton(federations_text);
-        newer->setProperty("class", "tab-button");
-        trending->setProperty("class", "tab-button");
-        federations->setProperty("class", "tab-button");
-        newer->setProperty("active", true);
-        trending->setProperty("active", false);
-        federations->setProperty("active", false);
-        tabPages->addWidget(newer);
-        tabPages->addWidget(trending);
-        tabPages->addWidget(federations);
-        layout->addLayout(tabPages);
-        QObject::connect(trending, &QPushButton::clicked, [=](){
-            trendingFeed();
-        });
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
         QString url_feed = url + "/feed";
         qDebug() << "url feed" << url_feed;
         QNetworkRequest request{QUrl(url_feed)};
         QNetworkReply *reply = manager->get(request);
-        QHBoxLayout *search_layout = new QHBoxLayout();
+
         QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
 
 
@@ -1785,11 +1376,7 @@ int main(int argc, char *argv[])
             for(auto value : postsArray)
             {
                 if(!value.isObject()) continue;
-<<<<<<< HEAD
                 clearLayout(layout);
-=======
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
-
                 QJsonObject post = value.toObject();
 
                 int postId = post["id"].toInt();
@@ -1915,12 +1502,6 @@ int main(int argc, char *argv[])
             QObject::connect(btnBack, &QPushButton::clicked, [=](){
                 initialPage();
             });
-            QLineEdit *searchEntry = new QLineEdit();
-            searchEntry->setPlaceholderText(search_text);
-            QPushButton *sendButton = new QPushButton(send_text);
-            search_layout->addWidget(searchEntry);
-            search_layout->addWidget(sendButton);
-            layout->addLayout(search_layout);
             layout->addWidget(btnBack);
             layout->addWidget(btnNewPost);
 
@@ -2284,33 +1865,11 @@ int main(int argc, char *argv[])
         layout->addWidget(back_button);
     };
     //pagina inicial de chat
-    viewGroupsRequest = [&](){
-        QJsonObject group_request;
-        group_request["username"] = username;
-        QString response = requestHTTP(
-            url + "/my-group",
-            "POST",
-            group_request
-        );
-        QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
-        QJsonObject obj = doc.object();
-        QString group_id = obj["group_id"].toString();
-        QString name_group = obj["name_group"].toString();
-        QJsonObject response_json;
-        response_json["group_id"] = group_id;
-        response_json["name_group"] = name_group;
-        return response_json;
-    };
     chatPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
         QList<QWidget*> widgets;
         QPushButton *ChatGlobalButton = new QPushButton("Chat Global");
-        QPushButton *newChatButton = new QPushButton("new chat");
-        QObject::connect(newChatButton, &QPushButton::clicked, [=](){
-            new_chat();
-        });
-        layout->addWidget(newChatButton);
         QObject::connect(ChatGlobalButton, &QPushButton::clicked, [=]() mutable{
             chatGlobal();
         });
@@ -2322,11 +1881,6 @@ int main(int argc, char *argv[])
             "POST",
             friends_json
         );
-        QJsonObject json_response_groups = viewGroupsRequest();
-        if (json_response_groups.isEmpty()){}else{
-            QPushButton *buttonGroup = new QPushButton(json_response_groups["name_group"].toString());
-            layout->addWidget(buttonGroup);
-        };
         QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
         QJsonObject obj = doc.object();
         QJsonArray friends = obj["friends"].toArray();
@@ -2555,12 +2109,16 @@ int main(int argc, char *argv[])
         QWidget *bottomBar = new QWidget(central);
         bottomBar->setFixedHeight(90);
         QPushButton *btnHome = new QPushButton(bottomBar);
+        QPushButton *btnSearch = new QPushButton(bottomBar);
         QPushButton *btnChat = new QPushButton(bottomBar);
         QPushButton *btnProfile = new QPushButton(bottomBar);
         QPushButton *btnOptions = new QPushButton(bottomBar);
         QIcon options_icon(":/assets/options.png");
         btnOptions->setIcon(options_icon);
         btnOptions->setIconSize(QSize(64, 64));
+        QIcon search_icon(":/assets/search.png");
+        btnSearch->setIcon(search_icon);
+        btnSearch->setIconSize(QSize(64, 64));
         QIcon icon_home(":/assets/home.png");
         btnHome->setIcon(icon_home);
         btnHome->setIconSize(QSize(64, 64));
@@ -2573,12 +2131,16 @@ int main(int argc, char *argv[])
         btnHome->setFixedSize(64, 64);
         btnChat->setFixedSize(64, 64);
         btnProfile->setFixedSize(64, 64);
+        btnSearch->setFixedSize(64, 64);
         btnOptions->setFixedSize(64, 64);
         QObject::connect(btnHome, &QPushButton::clicked, [=]() {
             showfeed();
         });
         QObject::connect(btnOptions, &QPushButton::clicked, [options]() {
             if (options) options();
+        });
+        QObject::connect(btnSearch, &QPushButton::clicked, [=]() {
+            searchPage();
         });
         QObject::connect(btnProfile, &QPushButton::clicked, [=]() {
             account();
@@ -2590,6 +2152,7 @@ int main(int argc, char *argv[])
         btnChat->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnProfile->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         btnOptions->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        btnSearch->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         QHBoxLayout *barLayout = new QHBoxLayout(bottomBar);
         barLayout->setContentsMargins(10, 10, 10, 10);
         barLayout->setSpacing(10);
@@ -2597,18 +2160,22 @@ int main(int argc, char *argv[])
         barLayout->addWidget(btnChat);
         barLayout->addWidget(btnProfile);
         barLayout->addWidget(btnOptions);
+        barLayout->addWidget(btnSearch);
         QObject::connect(btnHome, &QPushButton::clicked, [=](){
             stack->setCurrentIndex(0);
         });
-        QObject::connect(btnChat, &QPushButton::clicked, [=](){
+        QObject::connect(btnSearch, &QPushButton::clicked, [=](){
             stack->setCurrentIndex(1);
+        });
+        QObject::connect(btnChat, &QPushButton::clicked, [=](){
+            stack->setCurrentIndex(2);
         });
 
         QObject::connect(btnProfile, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(2);
+            stack->setCurrentIndex(3);
         });
         QObject::connect(btnOptions, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(3);
+            stack->setCurrentIndex(4);
         });
         
         // ======= ESTILO =======
@@ -2617,8 +2184,11 @@ int main(int argc, char *argv[])
         btnHome->setStyleSheet("font-size: 32px; border: none; color: #00ffea; background: transparent;");
         btnChat->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
         btnProfile->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
-            // ======= MONTAGEM =======
+        btnSearch->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
+
+        // ======= MONTAGEM =======
         if (!layout) {
+            qDebug() << "ERRO FATAL: O layout principal veio nulo na linha 1965!";
             return; // Para a execução antes de estourar o SIGSEGV
         }
         layout->addWidget(stack, 1);
@@ -2645,31 +2215,6 @@ int main(int argc, char *argv[])
     signinPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
-        QHBoxLayout *bannerLayout = new QHBoxLayout();
-        QWidget *container = new QWidget();
-        QIcon *banner_image = new QIcon(":/assets/linka_app_login_banner.png");
-        QLabel *banner_login = new QLabel();
-        container->setStyleSheet("background-image: url(':/assets/gradient_login.png'); background-position: center; background-repeat: no-repeat;");
-        banner_login->setPixmap(banner_image->pixmap(QSize(400, 200)));
-        banner_login->setAlignment(Qt::AlignCenter);
-        bannerLayout->addWidget(banner_login);
-        bannerLayout->setContentsMargins(0, 0, 0, 0);
-        bannerLayout->setSpacing(0);
-        container->setLayout(bannerLayout);
-        int larguraDaTela = QGuiApplication::primaryScreen()->geometry().width();
-        container->setMaximumWidth(larguraDaTela);
-        layout->addWidget(container);
-        QHBoxLayout *loginButtons = new QHBoxLayout();
-        QPushButton *signinPage_button = new QPushButton(signup_text);
-        QPushButton *signupPage_button = new QPushButton(signin_text);
-        QPushButton *change_server_button = new QPushButton();
-        signinPage_button->setProperty("class", "tab-button");
-        signupPage_button->setProperty("class", "tab-button");
-        signinPage_button->setProperty("active", false);
-        signupPage_button->setProperty("active", true);
-        loginButtons->addWidget(signinPage_button);
-        loginButtons->addWidget(signupPage_button);
-        layout->addLayout(loginButtons);
         QLineEdit *usernameEntry = new QLineEdit();
         QLineEdit *passwordEntry = new QLineEdit();
         QLineEdit *retryPasswordEntry = new QLineEdit();
@@ -2678,16 +2223,10 @@ int main(int argc, char *argv[])
         passwordEntry->setPlaceholderText(password_text);
         retryPasswordEntry->setPlaceholderText(retry_password_text);
         emailEntry->setPlaceholderText(email_text);
-        usernameEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        passwordEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        retryPasswordEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        emailEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         QPushButton *send_button = new QPushButton(send_text);
-        QObject::connect(signinPage_button, &QPushButton::clicked, [=](){
-            signupPage();
-        });
-        QObject::connect(signupPage_button, &QPushButton::clicked, [=](){
-            signinPage();
+        QPushButton *back_button = new QPushButton(back_text);
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+            loginPage();
         });
         QObject::connect(send_button, &QPushButton::clicked, [=](){
             if (passwordEntry->text() == retryPasswordEntry->text()) {
@@ -2717,31 +2256,7 @@ int main(int argc, char *argv[])
         layout->addWidget(retryPasswordEntry);
         layout->addWidget(emailEntry);
         layout->addWidget(send_button);
-        QPushButton *discordButton = new QPushButton();
-        discordButton->setIcon(QIcon(":/assets/discord.png"));
-        
-        QPushButton *redditButton = new QPushButton();
-        redditButton->setIcon(QIcon(":/assets/reddit.png"));
-        
-        // 1. Reduza o tamanho dos ícones para algo realista em telas de celular
-        // Em vez de 200 de largura, use tamanhos quadrados ou mais compactos para não estourar
-        discordButton->setIconSize(QSize(120, 40)); 
-        redditButton->setIconSize(QSize(120, 40));
-
-        // 2. O SEGREDO: Trave a largura máxima do BOTÃO para ele não crescer além disso
-        discordButton->setMaximumWidth(130);
-        redditButton->setMaximumWidth(130);
-        
-        QHBoxLayout *layoutHorizontal = new QHBoxLayout();
-        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-        layoutHorizontal->addWidget(discordButton);
-        layoutHorizontal->addWidget(redditButton);
-        
-        // Adiciona um spacer na direita também para centralizar os dois botões bonitinho no meio da tela
-        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-        
-        layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-        layout->addLayout(layoutHorizontal);
+        layout->addWidget(back_button);
 
     };
     
@@ -2766,45 +2281,18 @@ int main(int argc, char *argv[])
     signupPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
-        QHBoxLayout *bannerLayout = new QHBoxLayout();
-        QWidget *container = new QWidget();
-        container->setStyleSheet("background-image: url(':/assets/gradient_login.png'); background-position: center; background-repeat: no-repeat;");
-        QIcon *banner_image = new QIcon(":/assets/linka_app_login_banner.png");
-        QLabel *banner_login = new QLabel();
-        banner_login->setPixmap(banner_image->pixmap(QSize(400, 200)));
-        banner_login->setAlignment(Qt::AlignCenter);
-        bannerLayout->setContentsMargins(0, 0, 0, 0);
-        bannerLayout->setSpacing(0);
-        bannerLayout->addWidget(banner_login);
-        container->setLayout(bannerLayout);
-        layout->addWidget(container);
-        layout->addLayout(bannerLayout);
-        QHBoxLayout *loginButtons = new QHBoxLayout();
-        QPushButton *signinPage_button = new QPushButton(signup_text);
-        QPushButton *signupPage_button = new QPushButton(signin_text);
-        QPushButton *change_server_button = new QPushButton();
-        signinPage_button->setProperty("class", "tab-button");
-        signupPage_button->setProperty("class", "tab-button");
-        signinPage_button->setProperty("active", true);
-        signupPage_button->setProperty("active", false);
-        loginButtons->addWidget(signinPage_button);
-        loginButtons->addWidget(signupPage_button);
-        layout->addLayout(loginButtons);
         QLineEdit *usernameEntry = new QLineEdit();
         QLineEdit *passwordEntry = new QLineEdit();
         usernameEntry->setPlaceholderText(username_text);
         passwordEntry->setPlaceholderText(password_text);
-        usernameEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        passwordEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         QPushButton *send_button = new QPushButton(send_text);
+        QPushButton *back_button = new QPushButton(back_text);
         layout->addWidget(usernameEntry);
         layout->addWidget(passwordEntry);
         layout->addWidget(send_button);
-        QObject::connect(signinPage_button, &QPushButton::clicked, [=](){
-            signupPage();
-        });
-        QObject::connect(signupPage_button, &QPushButton::clicked, [=](){
-            signinPage();
+        layout->addWidget(back_button);
+        QObject::connect(back_button, &QPushButton::clicked, [=](){
+            loginPage();
         });
         QObject::connect(send_button, &QPushButton::clicked, [=, &token_session]() mutable {
             QString userTxt = usernameEntry->text();
@@ -2823,109 +2311,6 @@ int main(int argc, char *argv[])
                 layout->addWidget(error_label);
             };
         });
-        QPushButton *discordButton = new QPushButton();
-        discordButton->setIcon(QIcon(":/assets/discord.png"));
-        
-        QPushButton *redditButton = new QPushButton();
-        redditButton->setIcon(QIcon(":/assets/reddit.png"));
-        
-        // 1. Reduza o tamanho dos ícones para algo realista em telas de celular
-        // Em vez de 200 de largura, use tamanhos quadrados ou mais compactos para não estourar
-        discordButton->setIconSize(QSize(120, 40)); 
-        redditButton->setIconSize(QSize(120, 40));
-
-        // 2. O SEGREDO: Trave a largura máxima do BOTÃO para ele não crescer além disso
-        discordButton->setMaximumWidth(130);
-        redditButton->setMaximumWidth(130);
-        
-        QHBoxLayout *layoutHorizontal = new QHBoxLayout();
-        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-        layoutHorizontal->addWidget(discordButton);
-        layoutHorizontal->addWidget(redditButton);
-        
-        // Adiciona um spacer na direita também para centralizar os dois botões bonitinho no meio da tela
-        layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-        
-        layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
-        layout->addLayout(layoutHorizontal);
-    };
-    newGroupRequest = [&](QString name_group, QString description){
-        QJsonObject json_group;
-        json_group["username"] = username;
-        json_group["name_group"] = name_group;
-        json_group["description"] = description;
-        requestHTTP(
-            url + "/create-group",
-            "POST",
-            json_group
-        );
-        chatPage();
-    };
-    newGroupPage = [&](){
-        clearLayout(layout);
-        fadeTransition(central);
-        QLineEdit *name_group = new QLineEdit();
-        QLineEdit *description = new QLineEdit();
-        name_group->setPlaceholderText(name_group_text);
-        description->setPlaceholderText(description_text);
-        layout->addWidget(name_group);
-        layout->addWidget(description);
-        QPushButton *sendButton = new QPushButton(send_text);
-        QPushButton *backButton = new QPushButton(back_text);
-        QObject::connect(backButton, &QPushButton::clicked, [=](){
-            chatPage();
-        });
-        QObject::connect(sendButton, &QPushButton::clicked, [=](){
-            newGroupRequest(name_group->text(), description->text());
-        });
-        layout->addWidget(sendButton);
-        layout->addWidget(backButton);
-    };
-    new_chat = [&](){
-        clearLayout(layout);
-        QPushButton *newGroupButton = new QPushButton(new_group_text);
-        layout->addWidget(newGroupButton);
-        QList<QWidget*> button_area;
-        QJsonObject friends_json;
-        friends_json["username"] = username;
-        QString response_friends = requestHTTP(
-            url + "/friends",
-            "POST",
-            friends_json
-        );
-        QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
-        QJsonObject obj = doc.object();
-        QJsonArray friends = obj["friends"].toArray();
-        if (friends.isEmpty())
-        {
-            QLabel *label_error = new QLabel("No Friends....");
-            button_area.append(label_error);
-        }
-        else
-        {
-            for(int i = 0; i < friends.size(); i++){
-                QJsonArray row = friends[i].toArray();
-                QString receiver = row[0].toString();
-                QString remittee = row[1].toString();
-                QString friendName;
-                if(receiver == username)
-                    friendName = remittee;
-                else
-                    friendName = receiver;
-                QPushButton *user = new QPushButton(friendName);
-                QObject::connect(user, &QPushButton::clicked, [=]() mutable{
-                    QTimer::singleShot(0, [=](){
-                        chat(friendName);
-                    });
-                });
-                button_area.append(user);
-            };
-        };
-        QObject::connect(newGroupButton, &QPushButton::clicked, [=](){
-            newGroupPage();
-        });
-        scroll_area(layout, button_area);
-        
     };
     changeServerPage = [&](){
         clearLayout(layout);
@@ -2976,12 +2361,6 @@ int main(int argc, char *argv[])
     //chamada da função
     initialPage();
     //função para exibir o feed
-    window.showMaximized();
+    window.show();
     return app.exec();
-<<<<<<< HEAD
-    
 }
-=======
-};
-};
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426

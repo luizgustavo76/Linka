@@ -1,3 +1,9 @@
 docs/**/*.html linguist-language=HTML
 docs/**/*.css linguist-language=CSS
+<<<<<<< HEAD
 docs/**/*.js linguist-language=JavaScripts
+=======
+docs/**/*.js linguist-language=JavaScripts
+*.wasm filter=lfs diff=lfs merge=lfs -text
+qdoc filter=lfs diff=lfs merge=lfs -text
+>>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426

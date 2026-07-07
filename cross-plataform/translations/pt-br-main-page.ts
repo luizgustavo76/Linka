@@ -109,6 +109,21 @@
   <context>
     <name>feed</name>
     <message>
+<<<<<<< HEAD
+=======
+        <source>newer</source>
+        <translation>Novos</translation>
+    </message>
+    <message>
+        <source>trending</source>
+        <translation>Populares</translation>
+    </message>
+    <message>
+        <source>federations</source>
+        <translation>Federações</translation>
+    </message>
+    <message>
+>>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
       <source>Comments</source>
       <translation>Comentários</translation>
     </message>

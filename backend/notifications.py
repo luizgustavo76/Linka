@@ -8,9 +8,15 @@ notifications_dir = db_dir + "/notifications.db"
 def get_db():
     conn = sqlite3.connect(notifications_dir)
     cursor = conn.cursor()
+<<<<<<< HEAD
     cursor.execute("PRAGMA journal_mode=WAL;")
     cursor.execute("PRAGMA synchronous=NORMAL;")
     cursor.execute("PRAGMA cache_size=-10000;")
+=======
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA cache_size=-10000;")
+>>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
     return conn
 def create_db():
     conn = get_db()

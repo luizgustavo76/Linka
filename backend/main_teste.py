@@ -8,19 +8,12 @@ from search import search_bp
 from status import status_bp
 from meta import meta_bp
 from chat_global import chat_global_bp
-<<<<<<< HEAD
-=======
 from federations import federations_bp
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
 from notifications import notifications_blueprint
 from flask import Flask, Blueprint, request, jsonify, g
 import sqlite3
 import os
-<<<<<<< HEAD
-=======
 from sincronizer import sincronizer_bp
-from themes import theme_bp
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
 from datetime import datetime, timedelta
 from werkzeug.security import check_password_hash
 import secrets
@@ -135,11 +128,8 @@ public_routes = [
 ]
 @app.before_request
 def valide():
-<<<<<<< HEAD
-=======
     if request.path in ["/receiveToken", "/sendToken"]:
         return None
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
     if request.method == "GET":
         return None
     if request.endpoint in public_routes:
@@ -257,19 +247,12 @@ app.register_blueprint(profile_bp)
 app.register_blueprint(login_bp)
 app.register_blueprint(post_bp)
 app.register_blueprint(chat_bp)
-<<<<<<< HEAD
-=======
 app.register_blueprint(sincronizer_bp)
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
 app.register_blueprint(friends_bp)
 app.register_blueprint(meta_bp)
 app.register_blueprint(chat_global_bp)
 app.register_blueprint(notifications_blueprint)
 app.register_blueprint(chat_group_bp)
-<<<<<<< HEAD
-=======
-app.register_blueprint(theme_bp)
 app.register_blueprint(federations_bp)
->>>>>>> 525a9a047e0c512bfcb84d412c38b80df3387426
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
