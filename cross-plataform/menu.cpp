@@ -1367,6 +1367,9 @@ int main(int argc, char *argv[])
         tabPages->addWidget(trending);
         tabPages->addWidget(federations);
         layout->addLayout(tabPages);
+        QObject::connect(newer, &QPushButton::clicked, [=](){
+            showfeed();
+        });
         QString url_feed = url + "/trending-feed";
         qDebug() << "url feed" << url_feed;
         QNetworkRequest request{QUrl(url_feed)};
