@@ -27,5 +27,6 @@
         <file>assets/discord.png</file>
         <file>assets/linka_app_login_banner.png</file>
         <file>assets/gradient_login.png</file>
+        <file>assets/image_icon.png</file>
     </qresource>
 </RCC>

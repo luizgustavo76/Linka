@@ -10,6 +10,7 @@ from meta import meta_bp
 from chat_global import chat_global_bp
 from federations import federations_bp
 from notifications import notifications_blueprint
+from images import image_bp
 from flask import Flask, Blueprint, request, jsonify, g
 import sqlite3
 import os
@@ -125,11 +126,12 @@ public_routes = [
     "login.login",
     "post.return_stars",
     "None",
-    "profile.create"
+    "profile.create",
+    "images.upload_image"
 ]
 @app.before_request
 def valide():
-    if request.path in ["/receiveToken", "/sendToken"]:
+    if request.path in ["/receiveToken", "/sendToken", "/upload-image"]:
         return None
     if request.method == "GET":
         return None
@@ -254,6 +256,7 @@ app.register_blueprint(meta_bp)
 app.register_blueprint(chat_global_bp)
 app.register_blueprint(notifications_blueprint)
 app.register_blueprint(chat_group_bp)
+app.register_blueprint(image_bp)
 app.register_blueprint(theme_bp)
 app.register_blueprint(federations_bp)
 if __name__ == "__main__":

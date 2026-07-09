@@ -27,7 +27,7 @@ def upload_image():
         
         file_data = file.read()
         
-        bucket_name = "linka-database"
+        bucket_name = "linka-media"
         supabase.storage.from_(bucket_name).upload(
             path=unique_file_name,
             file=file_data,

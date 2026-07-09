@@ -14,6 +14,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QHttpMultiPart>
+#include <QHttpPart>
 #include <QScreen>
 #include <QStyleFactory>
 #include <QDesktopServices>
@@ -23,6 +25,7 @@
 #include <QStandardPaths>
 #include <QJsonDocument>
 #include <QMenu>
+#include <QPlainTextEdit>
 #include <iostream>
 #include <QJsonObject>
 #include <QLabel>
@@ -450,6 +453,80 @@ QString requestHTTP(const QString &url,
     return response;
 }
 
+
+QString requestMultipart(const QString &url,
+                         const QString &filePath,
+                         int timeoutMs,
+                         int *statusCode)
+{
+    QNetworkAccessManager manager;
+    QNetworkRequest request;
+    request.setUrl(QUrl(url));
+
+    // Carrega o token de sessão idêntico à sua função original
+    loadConfig();
+    QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+    if (!token.isEmpty()) {
+        request.setRawHeader(
+            "Authorization", 
+            QString("Bearer %1").arg(token).toUtf8()
+        );
+    }
+
+    // Prepara o arquivo binário
+    QFile *file = new QFile(filePath);
+    if (!file->open(QIODevice::ReadOnly)) {
+        if (statusCode) *statusCode = -1;
+        delete file;
+        return "ERROR: Could not open file";
+    }
+
+    // Cria o esqueleto do formulário multipart
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    QHttpPart imagePart;
+    QFileInfo fileInfo(filePath);
+    
+    // Define a chave exatamente como "image" para o seu Flask receber
+    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, 
+        QVariant(QString("form-data; name=\"image\"; filename=\"%1\"").arg(fileInfo.fileName())));
+    imagePart.setBodyDevice(file);
+    file->setParent(multiPart); 
+    multiPart->append(imagePart);
+
+    // Dispara o POST com o arquivo
+    QNetworkReply *reply = manager.post(request, multiPart);
+    multiPart->setParent(reply); 
+
+    // O mesmo loop de eventos síncrono que você já usa e confia
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    
+    timer.start(timeoutMs);
+    loop.exec();
+    
+    if (!timer.isActive()) {
+        reply->abort();
+        if (statusCode) *statusCode = 408;
+        reply->deleteLater();
+        return "ERRO: Timeout";
+    }
+    
+    int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode) *statusCode = code;
+    if (statusCode == nullptr || code == 401){
+        renoveToken(); // Mantive sua lógica de renovar token
+    }
+    
+    QString response = reply->readAll();
+    reply->deleteLater();
+    
+    return response;
+}
+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 
 #endif
@@ -866,20 +943,44 @@ int main(int argc, char *argv[])
     auto new_post = [&](){
         clearLayout(layout);
         fadeTransition(central);
-        
-        QLineEdit *text_input = entry(text_post);
-        button(back_text, initialPage);
-        button(
-            new_post_text,
-            [=]() {
-                new_post_request(
-                    text_input->text(),
-                    QString::fromStdString(config["FAST-LOGIN"]["username"])
+        QPlainTextEdit *textPost = new QPlainTextEdit(); 
+        textPost->setPlaceholderText(text_post);
+        textPost->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        textPost->setMinimumHeight(50);
+        QPushButton *imageButton = new QPushButton();
+        QIcon *imageIcon = new QIcon(":/assets/image_icon.png");
+        imageButton->setIcon(*imageIcon);
+        QPushButton *sendButton = new QPushButton(send_text);
+        QPushButton *backButton = new QPushButton(back_text);
+        layout->addWidget(textPost);
+        layout->addWidget(imageButton);
+        layout->addWidget(sendButton);
+        layout->addWidget(backButton);
+        QObject::connect(imageButton, &QPushButton::clicked, [=](){
+            QString filePath = QFileDialog::getOpenFileName(
+                nullptr, 
+                "Select a image", 
+                "", 
+                "Images (*.png *.jpg *.jpeg *.webp)"
+            );
+            
+            if (!filePath.isEmpty()) {
+                int statusCode = 0;
+                QString respostaFlask = requestMultipart(
+                    url + "/upload-image", 
+                    filePath, 
+                    10000,
+                    &statusCode
                 );
             }
-        );
-        QLabel("post created with sucess!");
+        });
+        QObject::connect(sendButton, &QPushButton::clicked, [=](){
+            new_post_request(textPost->toPlainText(), username); 
+        });
         
+        QObject::connect(backButton, &QPushButton::clicked, [=](){
+            initialPage();
+        });
     };
     
     friendsPage = [&](){
