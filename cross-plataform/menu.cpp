@@ -952,6 +952,7 @@ int main(int argc, char *argv[])
         imageButton->setIcon(*imageIcon);
         QPushButton *sendButton = new QPushButton(send_text);
         QPushButton *backButton = new QPushButton(back_text);
+        QString *urlImage = new QString("");
         layout->addWidget(textPost);
         layout->addWidget(imageButton);
         layout->addWidget(sendButton);
@@ -966,16 +967,29 @@ int main(int argc, char *argv[])
             
             if (!filePath.isEmpty()) {
                 int statusCode = 0;
-                QString respostaFlask = requestMultipart(
+                QString response = requestMultipart(
                     url + "/upload-image", 
                     filePath, 
                     10000,
                     &statusCode
                 );
+                QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+                QJsonObject obj = doc.object();
+                
+                *urlImage = obj["image_url"].toString();
+                
+                qDebug() << response;
+                qDebug() << *urlImage; 
             }
         });
+
         QObject::connect(sendButton, &QPushButton::clicked, [=](){
-            new_post_request(textPost->toPlainText(), username); 
+            if (!urlImage->isEmpty()){
+                new_post_request(textPost->toPlainText() + "[IMAGE]" + *urlImage, username);
+            } else {
+                new_post_request(textPost->toPlainText(), username); 
+            }
+            delete urlImage; 
         });
         
         QObject::connect(backButton, &QPushButton::clicked, [=](){
