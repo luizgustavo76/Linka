@@ -809,7 +809,7 @@ int main(int argc, char *argv[])
     std::function<void()> new_chat;
     std::function<QJsonObject()> viewGroupsRequest;
     std::function<void()> trendingFeed;
-    std::function<void()> renderBottomBar;
+    std::function<void(QString)> renderBottomBar;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1099,6 +1099,7 @@ int main(int argc, char *argv[])
         QObject::connect(back_button, &QPushButton::clicked, [=](){
                 initialPage();
         });
+        renderBottomBar("options");
     };
     addFederationsPage = [&](){
         clearLayout(layout);
@@ -1139,6 +1140,7 @@ int main(int argc, char *argv[])
 
             qDebug() << "Depois de salvar:" << QString::fromStdString(config["FEDERATIONS"]["url"]);
         });
+        renderBottomBar("options");
     };
     //menu de adicionar tema
     addThemePage = [&](){
@@ -1207,6 +1209,7 @@ int main(int argc, char *argv[])
                     saveConfig();
                 });
         });
+        renderBottomBar("options");
     };
     sentFriendRequest = [&](QString receiver){
         QJsonObject json_friends;
@@ -1289,7 +1292,8 @@ int main(int argc, char *argv[])
         });
         layout->addWidget(titleUsername);
         layout->addWidget(biography);
-        layout->addWidget(back_button);    
+        layout->addWidget(back_button);
+        renderBottomBar("profile"); 
     };
     changeLangPage = [&](){
         clearLayout(layout);
@@ -1314,6 +1318,7 @@ int main(int argc, char *argv[])
         });
         layout->addWidget(optionsMenu);
         layout->addWidget(backButton);
+        renderBottomBar("options");
     };
     //banned page
     bannedPage = [&](QString reason){
@@ -1354,6 +1359,7 @@ int main(int argc, char *argv[])
         buttons.append(button_add_federation);
         buttons.append(button_change_lang);
         scroll_area(layout, buttons);
+        renderBottomBar("options");
     };
     change_url = [&](){
         clearLayout(layout);
@@ -1375,6 +1381,7 @@ int main(int argc, char *argv[])
                 saveConfig();
                 initialPage();
         });
+        renderBottomBar("options");
     };
     options = [&]()
     {
@@ -1417,6 +1424,7 @@ int main(int argc, char *argv[])
                 });
         });
         scroll_area(layout, buttons);
+        renderBottomBar("options");
     };
     sendEdit = [&](QString content){
         QJsonObject edit;
@@ -1450,7 +1458,7 @@ int main(int argc, char *argv[])
             sendEdit(bioEntry->text());
         });
         scroll_area(layout, scroll_layout);
-
+        renderBottomBar("profile");
     };
     logout = [&](){
         loadConfig();
@@ -1492,6 +1500,7 @@ int main(int argc, char *argv[])
         QObject::connect(logout_button, &QPushButton::clicked, [=](){
                 logout();
         });
+        renderBottomBar("profile");
         
     };
     fast_login = [&]()
@@ -1709,6 +1718,7 @@ int main(int argc, char *argv[])
             });
 
         });
+        renderBottomBar("home");
     };
     showfeed = [&]()
     {
@@ -1911,7 +1921,7 @@ int main(int argc, char *argv[])
             search_layout->addWidget(sendButton);
             layout->addLayout(search_layout);
             layout->addWidget(btnNewPost);
-            renderBottomBar();
+            renderBottomBar("home");
 
            
 
@@ -2131,6 +2141,7 @@ int main(int argc, char *argv[])
 
         layout->addWidget(container);
         layout->addWidget(back_button);
+        renderBottomBar("chat");
     };
     //tela quando você esta conversando com o usuario
     chat = [&](QString user){
@@ -2271,6 +2282,7 @@ int main(int argc, char *argv[])
 
         layout->addWidget(container);
         layout->addWidget(back_button);
+        renderBottomBar("chat");
     };
     //pagina inicial de chat
     viewGroupsRequest = [&](){
@@ -2353,6 +2365,7 @@ int main(int argc, char *argv[])
         widgets.append(ChatGlobalButton);
         widgets.append(back_button);
         scroll_area(layout, widgets);
+        renderBottomBar("chat");
     };
     searchPage = [&](){
         clearLayout(layout);
@@ -2486,96 +2499,66 @@ int main(int argc, char *argv[])
 
         scroll_area(layout, content);
     };
-    renderBottomBar = [&](){
+    renderBottomBar = [&](QString actual_window){
         splash.finish(&window);
-        QStackedWidget *stack = new QStackedWidget(central);
-        // ======= PÁGINAS =======
-        QWidget *pageHome = new QWidget();
-        QVBoxLayout *homeLayout = new QVBoxLayout(pageHome);
-        QLabel *homeLabel = new QLabel("🏠 HOME");
-        homeLabel->setAlignment(Qt::AlignCenter);
-        homeLayout->addWidget(homeLabel);
-        QWidget *pageSearch = new QWidget();
-        QVBoxLayout *searchLayout = new QVBoxLayout(pageSearch);
-        QLabel *searchLabel = new QLabel("🔍 BUSCA");
-        searchLabel->setAlignment(Qt::AlignCenter);
-        searchLayout->addWidget(searchLabel);
-        QWidget *pageProfile = new QWidget();
-        QVBoxLayout *profileLayout = new QVBoxLayout(pageProfile);
-        QLabel *profileLabel = new QLabel("👤 PERFIL");
-        profileLabel->setAlignment(Qt::AlignCenter);
-        profileLayout->addWidget(profileLabel);
-        QWidget *pageChat = new QWidget();
-        QWidget *pageOptions = new QWidget();
-        stack->addWidget(pageChat);    // index 3
-        stack->addWidget(pageOptions); // index 4
-        stack->addWidget(pageHome);
-        stack->addWidget(pageSearch);
-        stack->addWidget(pageProfile);
-        // ======= BARRA INFERIOR =======
+
         QWidget *bottomBar = new QWidget(central);
-        bottomBar->setFixedHeight(84); // Reajustado para casar perfeitamente 64px + margens
+        bottomBar->setFixedHeight(74);
+
         QPushButton *btnHome = new QPushButton(bottomBar);
         QPushButton *btnChat = new QPushButton(bottomBar);
         QPushButton *btnProfile = new QPushButton(bottomBar);
         QPushButton *btnOptions = new QPushButton(bottomBar);
-        QIcon options_icon(":/assets/options.png");
-        btnOptions->setIcon(options_icon);
-        btnOptions->setIconSize(QSize(64, 64));
-        QIcon icon_home(":/assets/home.png");
-        btnHome->setIcon(icon_home);
-        btnHome->setIconSize(QSize(64, 64));
-        QIcon icon_chat(":/assets/chat.png");
-        btnChat->setIcon(icon_chat);
-        btnChat->setIconSize(QSize(64, 64));
-        QIcon icon_account(":/assets/account.png");
-        btnProfile->setIcon(icon_account);
-        btnProfile->setIconSize(QSize(64, 64));
-        btnHome->setFixedSize(64, 64);
-        btnChat->setFixedSize(64, 64);
-        btnProfile->setFixedSize(64, 64);
-        btnOptions->setFixedSize(64, 64);
-        QObject::connect(btnHome, &QPushButton::clicked, [=]() {
+        btnHome->setProperty("class", "tab-button");
+        btnChat->setProperty("class", "tab-button");
+        btnProfile->setProperty("class", "tab-button");
+        btnOptions->setProperty("class", "tab-button");
+        btnHome->setIcon(QIcon(":/assets/home.png"));
+        btnChat->setIcon(QIcon(":/assets/chat.png"));
+        btnProfile->setIcon(QIcon(":/assets/account.png"));
+        btnOptions->setIcon(QIcon(":/assets/options.png"));
+        if (actual_window == "home"){
+            btnHome->setProperty("active", true);
+        }
+        if (actual_window == "chat"){
+            btnChat->setProperty("active", true);
+        }
+        if (actual_window == "profile"){
+            btnProfile->setProperty("active", true);
+        }
+        if (actual_window == "options"){
+            btnOptions->setProperty("active", true);
+        }
+        QSize iconSize(64, 64);
+        btnHome->setIconSize(iconSize);
+        btnChat->setIconSize(iconSize);
+        btnProfile->setIconSize(iconSize);
+        btnOptions->setIconSize(iconSize);
+
+        btnHome->setFixedSize(iconSize);
+        btnChat->setFixedSize(iconSize);
+        btnProfile->setFixedSize(iconSize);
+        btnOptions->setFixedSize(iconSize);
+
+        QObject::connect(btnHome, &QPushButton::clicked, [=]() { 
             showfeed();
         });
-        QObject::connect(btnOptions, &QPushButton::clicked, [options]() {
-            if (options) options();
-        });
-        QObject::connect(btnProfile, &QPushButton::clicked, [=]() {
-            account();
-        });
-        QObject::connect(btnChat, &QPushButton::clicked, [=]() {
-            chatPage();
-        });
+        QObject::connect(btnChat, &QPushButton::clicked, [=]() { chatPage(); });
+        QObject::connect(btnProfile, &QPushButton::clicked, [=]() { account(); });
+        QObject::connect(btnOptions, &QPushButton::clicked, [options]() { if (options) options(); });
+
         QHBoxLayout *barLayout = new QHBoxLayout(bottomBar);
-        barLayout->setContentsMargins(10, 10, 10, 10);
+        barLayout->setContentsMargins(10, 5, 10, 5);
         barLayout->setSpacing(10);
+        
         barLayout->addWidget(btnHome);
         barLayout->addWidget(btnChat);
         barLayout->addWidget(btnProfile);
         barLayout->addWidget(btnOptions);
-        QObject::connect(btnHome, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(0);
-        });
-        QObject::connect(btnChat, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(1);
-        });
 
-        QObject::connect(btnProfile, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(2);
-        });
-        QObject::connect(btnOptions, &QPushButton::clicked, [=](){
-            stack->setCurrentIndex(3);
-        });
-        
-        // ======= ESTILO =======
-        if (!layout) {
-            return; // Para a execução antes de estourar o SIGSEGV
+        if (layout) {
+            layout->addWidget(bottomBar, 0);
         }
-        layout->setContentsMargins(0, 0, 0, 0); // Zera o vão externo morto nas bordas do app
-        layout->setSpacing(0);                 // Zera o espaço oco entre o stack e a barra
-        layout->addWidget(stack, 1);
-        layout->addWidget(bottomBar, 0);
     };
     //pagina inicial para renderizar
     initialPage = [&]()
@@ -2605,7 +2588,7 @@ int main(int argc, char *argv[])
         };
         clearLayout(layout);
         fadeTransition(central);
-        renderBottomBar();
+        showfeed();
     };
     signinRequest = [&](QString username, QString password, QString email){
         QJsonObject json_signin;
@@ -2863,6 +2846,7 @@ int main(int argc, char *argv[])
         });
         layout->addWidget(sendButton);
         layout->addWidget(backButton);
+        renderBottomBar("chat");
     };
     new_chat = [&](){
         clearLayout(layout);
@@ -2908,6 +2892,7 @@ int main(int argc, char *argv[])
             newGroupPage();
         });
         scroll_area(layout, button_area);
+        renderBottomBar("chat");
         
     };
     changeServerPage = [&](){
@@ -2923,6 +2908,7 @@ int main(int argc, char *argv[])
         layout->addWidget(urlEntry);
         layout->addWidget(ok_button);
         layout->addWidget(back_button);
+        renderBottomBar("options");
     };
     
     addFriendsRequest = [&](QString receiver, QString message){
@@ -2955,6 +2941,7 @@ int main(int argc, char *argv[])
         QObject::connect(back_button, &QPushButton::clicked, [=](){
                 initialPage();
         });
+        renderBottomBar("options");
     };
     //chamada da função
     initialPage();
