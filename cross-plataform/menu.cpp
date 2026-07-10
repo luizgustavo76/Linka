@@ -56,7 +56,40 @@
 #include <QTranslator>
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
+void renderPostImage(QString urlImage, QVBoxLayout *postLayout) {
+    QLabel *imageLabel = new QLabel();
+    imageLabel->setAlignment(Qt::AlignCenter);
+    
+    imageLabel->setContextMenuPolicy(Qt::NoContextMenu);
+    imageLabel->setStyleSheet("border: 1px solid #ccc; background-color: #f0f0f0;"); // Opcional: um fundinho cinza enquanto baixa
+    imageLabel->setText("Loadin image...");
+    postLayout->addWidget(imageLabel);
 
+    QNetworkAccessManager *manager = new QNetworkAccessManager();
+    QNetworkRequest request((QUrl(urlImage)));
+    QNetworkReply *reply = manager->get(request);
+
+    QObject::connect(reply, &QNetworkReply::finished, [=]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray dataImage = reply->readAll();
+            QPixmap pixmap;
+            pixmap.loadFromData(dataImage);
+
+            if (!pixmap.isNull()) {
+                QPixmap imagemRedimension = pixmap.scaledToWidth(400, Qt::SmoothTransformation);
+                
+                imageLabel->setText("");
+                imageLabel->setPixmap(imagemRedimension);
+            } else {
+                imageLabel->setText("Error: invalid format");
+            }
+        } else {
+            imageLabel->setText("Error in image download");
+        }
+        reply->deleteLater();
+        manager->deleteLater();
+    });
+}
 void fadeTransition(QWidget *widget)
 {
     QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(widget);
@@ -985,7 +1018,7 @@ int main(int argc, char *argv[])
 
         QObject::connect(sendButton, &QPushButton::clicked, [=](){
             if (!urlImage->isEmpty()){
-                new_post_request(textPost->toPlainText() + "[IMAGE]" + *urlImage, username);
+                new_post_request(textPost->toPlainText() + "\n" + "[IMAGE]" + *urlImage + "\n", username);
             } else {
                 new_post_request(textPost->toPlainText(), username); 
             }
@@ -1710,7 +1743,15 @@ int main(int argc, char *argv[])
                 QString username = post["username"].toString();
                 QString textPost = post["text_post"].toString();
                 QString datetime = post["datetime"].toString();
-
+                QStringList lines = textPost.split('\n');
+                QString urlImage;
+                for (const QString &line : lines) {
+                    if (line.isEmpty()) continue;
+                    if (line.contains("[IMAGE]")){
+                        urlImage = line;
+                        urlImage.remove("[IMAGE]");
+                    }
+                }
                 // ===== FRAME =====
                 QFrame *frame = new QFrame();
                 frame->setStyleSheet(R"(
@@ -1723,6 +1764,7 @@ int main(int argc, char *argv[])
                 )");
 
                 QVBoxLayout *frameLayout = new QVBoxLayout(frame);
+                renderPostImage(urlImage, frameLayout);
                 QHBoxLayout *starLayout = new QHBoxLayout();
                 QHBoxLayout *usernameLayout = new QHBoxLayout();
                 QPushButton *viewProfile = new QPushButton(view_profile);
