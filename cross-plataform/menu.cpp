@@ -61,8 +61,7 @@ void renderPostImage(QString urlImage, QVBoxLayout *postLayout) {
     imageLabel->setAlignment(Qt::AlignCenter);
     
     imageLabel->setContextMenuPolicy(Qt::NoContextMenu);
-    imageLabel->setStyleSheet("border: 1px solid #ccc; background-color: #f0f0f0;"); // Opcional: um fundinho cinza enquanto baixa
-    imageLabel->setText("Loadin image...");
+    imageLabel->setText("Loading image...");
     postLayout->addWidget(imageLabel);
 
     QNetworkAccessManager *manager = new QNetworkAccessManager();
@@ -1745,12 +1744,25 @@ int main(int argc, char *argv[])
                 QString datetime = post["datetime"].toString();
                 QStringList lines = textPost.split('\n');
                 QString urlImage;
+                QVBoxLayout *textLayout = new QVBoxLayout();
                 for (const QString &line : lines) {
                     if (line.isEmpty()) continue;
                     if (line.contains("[IMAGE]")){
                         urlImage = line;
                         urlImage.remove("[IMAGE]");
+                        break;
                     }
+                }
+                for (const QString &line : lines) {
+                    if (line.isEmpty()) continue;                    
+                    if (line.contains("[IMAGE]")) {
+                        continue; 
+                    }
+                    QLabel *textLabel = new QLabel(line);
+                    textLayout->addWidget(textLabel);
+                }
+                if (!urlImage.isEmpty()) {
+                    renderPostImage(urlImage, textLayout);
                 }
                 // ===== FRAME =====
                 QFrame *frame = new QFrame();
@@ -1764,7 +1776,6 @@ int main(int argc, char *argv[])
                 )");
 
                 QVBoxLayout *frameLayout = new QVBoxLayout(frame);
-                renderPostImage(urlImage, frameLayout);
                 QHBoxLayout *starLayout = new QHBoxLayout();
                 QHBoxLayout *usernameLayout = new QHBoxLayout();
                 QPushButton *viewProfile = new QPushButton(view_profile);
@@ -1784,7 +1795,7 @@ int main(int argc, char *argv[])
                 usernameLayout->addWidget(viewProfile);
                 usernameLayout->addStretch();
                 frameLayout->addLayout(usernameLayout);
-                frameLayout->addWidget(lblText);
+                frameLayout->addLayout(textLayout);
                 frameLayout->addWidget(lblDate);
 
                 // ===== BOTÃO STAR =====
