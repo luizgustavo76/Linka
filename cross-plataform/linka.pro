@@ -1,4 +1,4 @@
-QT += widgets network
+QT += widgets network svg
 
 TEMPLATE = app
 TARGET = Linka

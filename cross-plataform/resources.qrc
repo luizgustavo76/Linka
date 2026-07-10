@@ -28,5 +28,9 @@
         <file>assets/linka_app_login_banner.png</file>
         <file>assets/gradient_login.png</file>
         <file>assets/image_icon.png</file>
+        <file>assets/options.svg</file>
+        <file>assets/account.svg</file>
+        <file>assets/home.svg</file>
+        <file>assets/chat.svg</file>
     </qresource>
 </RCC>

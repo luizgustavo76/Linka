@@ -809,6 +809,7 @@ int main(int argc, char *argv[])
     std::function<void()> new_chat;
     std::function<QJsonObject()> viewGroupsRequest;
     std::function<void()> trendingFeed;
+    std::function<void()> renderBottomBar;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1159,14 +1160,13 @@ int main(int argc, char *argv[])
                         nullptr,
                         "Select a theme",
                         QDir::homePath(),
-                        "All the files (*.*);;Texto (*.txt);;Imagens (*.png *.jpg)"
+                        "All the files (*.*)"
                     );
 
                     if(filePath.isEmpty())
                     {
                         return; 
                     }
-
                     QFile file(filePath);
 
                     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -1178,9 +1178,32 @@ int main(int argc, char *argv[])
                     QTextStream in(&file);
                     QString content = in.readAll();
                     file.close();
+                    if (filePath.contains(".json") || filePath.contains(".jsn")) {
+                        QJsonDocument inputDoc = QJsonDocument::fromJson(content.toUtf8());
+                        if (inputDoc.isNull()) {
+                            qDebug() << "Erro: O conteúdo do arquivo de tema não é um JSON válido!";
+                            return;
+                        }
+                        QJsonObject inputJsonObj = inputDoc.object();
 
+                        QJsonObject theme_payload;
+                        theme_payload["input"] = inputJsonObj; 
+                        theme_payload["output"] = "qss";
+
+                        QString response_theme = requestHTTP(
+                            url + "/convert-theme",
+                            "POST",
+                            theme_payload
+                        );
+
+                        if (!response_theme.isEmpty() && !response_theme.contains("Error")) {
+                            
+                            qApp->setStyleSheet(response_theme);
+                        }
+                    }else{
+                        qApp->setStyleSheet(content);
+                    }
                     config["THEMES"]["theme"] = filePath.toStdString();
-                    qApp->setStyleSheet(content);
                     saveConfig();
                 });
         });
@@ -1873,7 +1896,6 @@ int main(int argc, char *argv[])
 
                 labels.append(frame);
             }
-
             scroll_area(layout, labels);
 
             // botões de baixo
@@ -1888,8 +1910,8 @@ int main(int argc, char *argv[])
             search_layout->addWidget(searchEntry);
             search_layout->addWidget(sendButton);
             layout->addLayout(search_layout);
-            layout->addWidget(btnBack);
             layout->addWidget(btnNewPost);
+            renderBottomBar();
 
            
 
@@ -2464,35 +2486,7 @@ int main(int argc, char *argv[])
 
         scroll_area(layout, content);
     };
-    
-    //pagina inicial para renderizar
-    initialPage = [&]()
-    {
-        if (config["FAST-LOGIN"]["token_session"].empty()){
-            loginPage();
-        };
-        if (config["FAST-LOGIN"]["username"].empty() || config["FAST-LOGIN"]["password"].empty()){
-            loginPage();
-            return;
-        };
-        QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-        QJsonObject valideToken;
-        valideToken["username"] = QString::fromStdString(config["FAST-LOGIN"]["username"]);
-        int status_code = 0;
-        requestHTTP(
-            url + "/valide-session",
-            "POST",
-            valideToken,
-            10000,
-            &status_code
-        );
-        if (status_code == 200 || status_code == 201){}else{
-            QString token = newSession(QString::fromStdString(config["FAST-LOGIN"]["username"]), QString::fromStdString(config["FAST-LOGIN"]["password"]));
-            config["FAST-LOGIN"]["token_session"] = token.toStdString();
-            saveConfig();
-        };
-        clearLayout(layout);
-        fadeTransition(central);
+    renderBottomBar = [&](){
         splash.finish(&window);
         QStackedWidget *stack = new QStackedWidget(central);
         // ======= PÁGINAS =======
@@ -2520,7 +2514,7 @@ int main(int argc, char *argv[])
         stack->addWidget(pageProfile);
         // ======= BARRA INFERIOR =======
         QWidget *bottomBar = new QWidget(central);
-        bottomBar->setFixedHeight(90);
+        bottomBar->setFixedHeight(84); // Reajustado para casar perfeitamente 64px + margens
         QPushButton *btnHome = new QPushButton(bottomBar);
         QPushButton *btnChat = new QPushButton(bottomBar);
         QPushButton *btnProfile = new QPushButton(bottomBar);
@@ -2553,10 +2547,6 @@ int main(int argc, char *argv[])
         QObject::connect(btnChat, &QPushButton::clicked, [=]() {
             chatPage();
         });
-        btnHome->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        btnChat->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        btnProfile->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        btnOptions->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         QHBoxLayout *barLayout = new QHBoxLayout(bottomBar);
         barLayout->setContentsMargins(10, 10, 10, 10);
         barLayout->setSpacing(10);
@@ -2579,17 +2569,43 @@ int main(int argc, char *argv[])
         });
         
         // ======= ESTILO =======
-        bottomBar->setStyleSheet("background: #111;");
-        btnOptions->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
-        btnHome->setStyleSheet("font-size: 32px; border: none; color: #00ffea; background: transparent;");
-        btnChat->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
-        btnProfile->setStyleSheet("font-size: 32px; border: none; color: white; background: transparent;");
-            // ======= MONTAGEM =======
         if (!layout) {
             return; // Para a execução antes de estourar o SIGSEGV
         }
+        layout->setContentsMargins(0, 0, 0, 0); // Zera o vão externo morto nas bordas do app
+        layout->setSpacing(0);                 // Zera o espaço oco entre o stack e a barra
         layout->addWidget(stack, 1);
         layout->addWidget(bottomBar, 0);
+    };
+    //pagina inicial para renderizar
+    initialPage = [&]()
+    {
+        if (config["FAST-LOGIN"]["token_session"].empty()){
+            loginPage();
+        };
+        if (config["FAST-LOGIN"]["username"].empty() || config["FAST-LOGIN"]["password"].empty()){
+            loginPage();
+            return;
+        };
+        QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+        QJsonObject valideToken;
+        valideToken["username"] = QString::fromStdString(config["FAST-LOGIN"]["username"]);
+        int status_code = 0;
+        requestHTTP(
+            url + "/valide-session",
+            "POST",
+            valideToken,
+            10000,
+            &status_code
+        );
+        if (status_code == 200 || status_code == 201){}else{
+            QString token = newSession(QString::fromStdString(config["FAST-LOGIN"]["username"]), QString::fromStdString(config["FAST-LOGIN"]["password"]));
+            config["FAST-LOGIN"]["token_session"] = token.toStdString();
+            saveConfig();
+        };
+        clearLayout(layout);
+        fadeTransition(central);
+        renderBottomBar();
     };
     signinRequest = [&](QString username, QString password, QString email){
         QJsonObject json_signin;

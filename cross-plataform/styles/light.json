@@ -1,0 +1,617 @@
+{
+  "window": {
+    "base": {
+      "background-color": "rgba(248, 249, 250, 0.75)",
+      "color": "light_text",
+      "font-family": "'Segoe UI', 'Helvetica Neue', Arial",
+      "font-size": "13px"
+    }
+  },
+  "dialog": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.85)",
+      "border": "1px solid rgba(255, 255, 255, 0.4)",
+      "color": "light_text"
+    }
+  },
+  "message_box": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.9)",
+      "color": "light_text"
+    }
+  },
+  "widget": {
+    "base": {
+      "color": "light_text",
+      "background-color": "transparent"
+    }
+  },
+  "frame": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.45)",
+      "border": "1px solid rgba(255, 255, 255, 0.5)",
+      "border-radius": "8px"
+    }
+  },
+  "group_box": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.2)",
+      "border": "1px solid light_border",
+      "border-radius": "6px",
+      "margin-top": "16px",
+      "padding-top": "12px",
+      "font-weight": "bold",
+      "color": "light_text_muted"
+    },
+    "subcontrols": {
+      "title": {
+        "subcontrol-origin": "margin",
+        "subcontrol-position": "top left",
+        "left": "8px",
+        "padding": "0px 4px"
+      }
+    }
+  },
+  "scroll_area": {
+    "base": {
+      "background-color": "transparent",
+      "border": "none"
+    }
+  },
+  "label": {
+    "base": {
+      "color": "light_text",
+      "background-color": "transparent",
+      "padding": "2px"
+    },
+    "states": {
+      "disabled": {
+        "color": "text_disabled"
+      }
+    }
+  },
+  "tooltip": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.95)",
+      "color": "light_text",
+      "border": "1px solid light_border",
+      "border-radius": "4px",
+      "padding": "4px 8px"
+    }
+  },
+  "button": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.6)",
+      "color": "light_text",
+      "border": "1px solid rgba(0, 0, 0, 0.08)",
+      "border-bottom": "1px solid rgba(0, 0, 0, 0.15)",
+      "border-radius": "6px",
+      "padding": "6px 14px",
+      "font-weight": "600"
+    },
+    "states": {
+      "hover": {
+        "background-color": "rgba(255, 255, 255, 0.85)",
+        "border": "1px solid rgba(0, 0, 0, 0.15)"
+      },
+      "pressed": {
+        "background-color": "rgba(240, 240, 240, 0.8)",
+        "border": "1px solid rgba(0, 0, 0, 0.2)"
+      },
+      "disabled": {
+        "background-color": "rgba(255, 255, 255, 0.2)",
+        "color": "text_disabled",
+        "border": "1px solid light_border"
+      }
+    }
+  },
+  "tool_button": {
+    "base": {
+      "background-color": "transparent",
+      "border": "1px solid transparent",
+      "border-radius": "4px",
+      "padding": "4px"
+    },
+    "states": {
+      "hover": {
+        "background-color": "rgba(255, 255, 255, 0.5)",
+        "border": "1px solid light_border"
+      },
+      "pressed": {
+        "background-color": "light_border"
+      }
+    }
+  },
+  "checkbox": {
+    "base": {
+      "color": "light_text",
+      "spacing": "6px"
+    },
+    "states": {
+      "disabled": {
+        "color": "text_disabled"
+      }
+    },
+    "subcontrols": {
+      "indicator": {
+        "width": "16px",
+        "height": "16px",
+        "background-color": "light_surface",
+        "border": "1px solid light_border",
+        "border-radius": "4px"
+      },
+      "indicator:hover": {
+        "border": "1px solid primary",
+        "background-color": "light_bg"
+      },
+      "indicator:checked": {
+        "background-color": "primary",
+        "border": "1px solid primary"
+      }
+    }
+  },
+  "radio_button": {
+    "base": {
+      "color": "light_text",
+      "spacing": "6px"
+    },
+    "subcontrols": {
+      "indicator": {
+        "width": "16px",
+        "height": "16px",
+        "background-color": "light_surface",
+        "border": "1px solid light_border",
+        "border-radius": "8px"
+      },
+      "indicator:hover": {
+        "border": "1px solid primary"
+      },
+      "indicator:checked": {
+        "background-color": "primary",
+        "border": "1px solid primary"
+      }
+    }
+  },
+  "input": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.5)",
+      "color": "light_text",
+      "border": "1px solid rgba(0, 0, 0, 0.1)",
+      "border-radius": "6px",
+      "padding": "4px 8px"
+    },
+    "states": {
+      "focus": {
+        "background-color": "light_surface",
+        "border": "1px solid primary"
+      },
+      "disabled": {
+        "background-color": "rgba(0, 0, 0, 0.02)",
+        "color": "text_disabled"
+      }
+    }
+  },
+  "text_area": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.5)",
+      "color": "light_text",
+      "border": "1px solid rgba(0, 0, 0, 0.1)",
+      "border-radius": "6px"
+    },
+    "states": {
+      "focus": {
+        "background-color": "light_surface",
+        "border": "1px solid primary"
+      }
+    }
+  },
+  "plain_text": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.5)",
+      "color": "light_text",
+      "border": "1px solid rgba(0, 0, 0, 0.1)",
+      "border-radius": "6px",
+      "padding": "4px"
+    },
+    "states": {
+      "focus": {
+        "background-color": "light_surface",
+        "border": "1px solid primary"
+      }
+    }
+  },
+  "spin_box": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.5)",
+      "border": "1px solid rgba(0, 0, 0, 0.1)",
+      "border-radius": "6px",
+      "padding-right": "15px"
+    },
+    "subcontrols": {
+      "up-button": {
+        "subcontrol-origin": "border",
+        "subcontrol-position": "top right",
+        "width": "16px",
+        "border-left": "1px solid light_border",
+        "border-top-right-radius": "6px"
+      },
+      "up-button:hover": {
+        "background-color": "light_bg"
+      },
+      "down-button": {
+        "subcontrol-origin": "border",
+        "subcontrol-position": "bottom right",
+        "width": "16px",
+        "border-left": "1px solid light_border",
+        "border-bottom-right-radius": "6px"
+      },
+      "down-button:hover": {
+        "background-color": "light_bg"
+      }
+    }
+  },
+  "double_spin_box": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.5)",
+      "border": "1px solid rgba(0, 0, 0, 0.1)",
+      "border-radius": "6px"
+    }
+  },
+  "date_edit": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.5)",
+      "border": "1px solid rgba(0, 0, 0, 0.1)",
+      "border-radius": "6px"
+    }
+  },
+  "time_edit": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.5)",
+      "border": "1px solid rgba(0, 0, 0, 0.1)",
+      "border-radius": "6px"
+    }
+  },
+  "datetime_edit": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.5)",
+      "border": "1px solid rgba(0, 0, 0, 0.1)",
+      "border-radius": "6px"
+    }
+  },
+  "dropdown": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.6)",
+      "border": "1px solid rgba(0, 0, 0, 0.1)",
+      "border-radius": "6px",
+      "padding": "4px 24px 4px 8px",
+      "color": "light_text"
+    },
+    "states": {
+      "editable": {
+        "background-color": "light_surface"
+      }
+    },
+    "subcontrols": {
+      "drop-down": {
+        "subcontrol-origin": "padding",
+        "subcontrol-position": "top right",
+        "width": "20px",
+        "border-left-width": "0px"
+      },
+      "combobox:pop-up": {
+        "border": "1px solid light_border",
+        "background-color": "light_surface",
+        "selection-background-color": "primary"
+      }
+    }
+  },
+  "list_view": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.4)",
+      "border": "1px solid light_border",
+      "border-radius": "6px",
+      "show-decoration-selected": "1"
+    },
+    "subcontrols": {
+      "item": {
+        "padding": "6px",
+        "border-radius": "4px",
+        "color": "light_text"
+      },
+      "item:hover": {
+        "background-color": "rgba(0, 0, 0, 0.04)"
+      },
+      "item:selected": {
+        "background-color": "primary",
+        "color": "white"
+      }
+    }
+  },
+  "list_widget": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.4)",
+      "border": "1px solid light_border"
+    }
+  },
+  "tree_view": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.4)",
+      "border": "1px solid light_border"
+    },
+    "subcontrols": {
+      "branch:has-children:closed": {
+        "image": "none"
+      },
+      "branch:has-children:open": {
+        "image": "none"
+      }
+    }
+  },
+  "tree_widget": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.4)",
+      "border": "1px solid light_border"
+    }
+  },
+  "table_view": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.4)",
+      "border": "1px solid light_border",
+      "gridline-color": "light_border",
+      "selection-background-color": "primary"
+    }
+  },
+  "table_widget": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.4)"
+    }
+  },
+  "header_view": {
+    "base": {
+      "background-color": "light_bg",
+      "border": "none",
+      "border-bottom": "1px solid light_border"
+    },
+    "subcontrols": {
+      "section": {
+        "background-color": "rgba(0, 0, 0, 0.02)",
+        "color": "light_text_muted",
+        "padding": "6px",
+        "border": "none",
+        "border-right": "1px solid light_border"
+      },
+      "section:hover": {
+        "background-color": "rgba(0, 0, 0, 0.06)"
+      }
+    }
+  },
+  "scrollbar": {
+    "base": {
+      "background-color": "transparent",
+      "width": "10px",
+      "height": "10px",
+      "margin": "0px"
+    },
+    "subcontrols": {
+      "handle:vertical": {
+        "background-color": "rgba(0, 0, 0, 0.12)",
+        "border-radius": "5px",
+        "min-height": "24px"
+      },
+      "handle:vertical:hover": {
+        "background-color": "rgba(0, 0, 0, 0.25)"
+      },
+      "handle:horizontal": {
+        "background-color": "rgba(0, 0, 0, 0.12)",
+        "border-radius": "5px",
+        "min-width": "24px"
+      },
+      "handle:horizontal:hover": {
+        "background-color": "rgba(0, 0, 0, 0.25)"
+      },
+      "add-line": {
+        "border": "none",
+        "background": "none",
+        "width": "0px",
+        "height": "0px"
+      },
+      "sub-line": {
+        "border": "none",
+        "background": "none",
+        "width": "0px",
+        "height": "0px"
+      }
+    }
+  },
+  "slider": {
+    "base": {
+      "background": "transparent"
+    },
+    "subcontrols": {
+      "groove:horizontal": {
+        "border": "none",
+        "background-color": "rgba(0, 0, 0, 0.1)",
+        "height": "4px",
+        "border-radius": "2px"
+      },
+      "handle:horizontal": {
+        "background-color": "light_surface",
+        "border": "1px solid rgba(0, 0, 0, 0.2)",
+        "width": "14px",
+        "height": "14px",
+        "margin": "-5px 0px",
+        "border-radius": "7px"
+      },
+      "handle:horizontal:hover": {
+        "background-color": "primary",
+        "border": "1px solid primary"
+      }
+    }
+  },
+  "dial": {
+    "base": {
+      "background-color": "light_surface"
+    }
+  },
+  "progress_bar": {
+    "base": {
+      "border": "1px solid light_border",
+      "border-radius": "4px",
+      "text-align": "center",
+      "background-color": "rgba(0, 0, 0, 0.05)",
+      "color": "light_text",
+      "font-weight": "bold"
+    },
+    "subcontrols": {
+      "chunk": {
+        "background-color": "primary",
+        "border-radius": "3px",
+        "width": "4px",
+        "margin": "0.5px"
+      }
+    }
+  },
+  "tab_widget": {
+    "base": {
+      "background-color": "transparent"
+    },
+    "subcontrols": {
+      "pane": {
+        "border": "1px solid light_border",
+        "background-color": "rgba(255, 255, 255, 0.4)",
+        "border-radius": "8px",
+        "top": "-1px"
+      }
+    }
+  },
+  "tab_bar": {
+    "base": {
+      "background": "transparent"
+    },
+    "subcontrols": {
+      "tab": {
+        "background-color": "transparent",
+        "color": "light_text_muted",
+        "border": "1px solid transparent",
+        "border-bottom": "1px solid light_border",
+        "padding": "6px 16px",
+        "margin-right": "2px",
+        "border-top-left-radius": "6px",
+        "border-top-right-radius": "6px"
+      },
+      "tab:hover": {
+        "background-color": "rgba(255, 255, 255, 0.3)",
+        "color": "light_text"
+      },
+      "tab:selected": {
+        "background-color": "rgba(255, 255, 255, 0.4)",
+        "border": "1px solid light_border",
+        "border-bottom-color": "transparent",
+        "color": "primary",
+        "font-weight": "bold"
+      }
+    }
+  },
+  "menu": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.92)",
+      "border": "1px solid rgba(0, 0, 0, 0.15)",
+      "padding": "4px 0px"
+    },
+    "subcontrols": {
+      "item": {
+        "padding": "6px 24px 6px 20px",
+        "color": "light_text"
+      },
+      "item:selected": {
+        "background-color": "primary",
+        "color": "white"
+      },
+      "separator": {
+        "height": "1px",
+        "background-color": "light_border",
+        "margin": "4px 0px"
+      }
+    }
+  },
+  "menu_bar": {
+    "base": {
+      "background-color": "transparent",
+      "border-bottom": "1px solid rgba(0, 0, 0, 0.05)"
+    },
+    "subcontrols": {
+      "item": {
+        "background": "transparent",
+        "padding": "6px 10px",
+        "color": "light_text_muted"
+      },
+      "item:selected": {
+        "background-color": "rgba(0, 0, 0, 0.05)",
+        "color": "light_text",
+        "border-radius": "4px"
+      }
+    }
+  },
+  "toolbar": {
+    "base": {
+      "background-color": "rgba(255, 255, 255, 0.3)",
+      "border-bottom": "1px solid rgba(0, 0, 0, 0.05)",
+      "spacing": "4px",
+      "padding": "4px"
+    }
+  },
+  "status_bar": {
+    "base": {
+      "background-color": "rgba(0, 0, 0, 0.02)",
+      "border-top": "1px solid rgba(0, 0, 0, 0.05)",
+      "color": "light_text_muted"
+    }
+  },
+  "dock_widget": {
+    "base": {
+      "title-vertical-title-bar": "1"
+    },
+    "subcontrols": {
+      "title": {
+        "background-color": "light_bg",
+        "padding-left": "10px",
+        "text-align": "center"
+      }
+    }
+  },
+  "toolbox": {
+    "base": {
+      "background-color": "transparent"
+    },
+    "subcontrols": {
+      "tab": {
+        "background-color": "light_bg",
+        "border": "1px solid light_border",
+        "color": "light_text",
+        "font-weight": "bold"
+      },
+      "tab:selected": {
+        "background-color": "light_surface",
+        "color": "primary"
+      }
+    }
+  },
+  "splitter": {
+    "subcontrols": {
+      "handle:horizontal": {
+        "width": "4px",
+        "background-color": "transparent"
+      },
+      "handle:vertical": {
+        "height": "4px",
+        "background-color": "transparent"
+      }
+    }
+  },
+  "size_grip": {
+    "base": {
+      "width": "12px",
+      "height": "12px"
+    }
+  }
+}
