@@ -2,6 +2,14 @@ from flask import Flask, request, jsonify, Blueprint, send_from_directory, g
 import os
 import uuid
 import sqlite3
+from supabase import create_client, Client
+import dotenv
+
+dotenv.load_dotenv("backend.env")
+url = os.getenv("SUPABASE_URL")
+key = os.getenv("SUPABASE_KEY")
+
+supabase: Client = create_client(url, key)
 #pasta atual
 base_dir = os.path.dirname(os.path.abspath(__file__))
 #pasta dos bancos de dados
@@ -75,48 +83,54 @@ def view(username):
 UPLOAD_FOLDER = "../profile-pictures"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@profile_bp.route("/upload_profile_pic", methods=["POST"])
+@profile_bp.route("/upload-profile", methods=["POST"])
 def upload_profile_pic():
-
-    username = request.form.get("username")
-    if username == g.username:
-        if not username:
-            return jsonify({"error": "Username is missing"}), 400
-
-        if "file" not in request.files:
-            return jsonify({"error": "nothing image is sent"}), 400
-
-        file = request.files["file"]
-
+    if g.username:
+        username = g.username
+        if "image" not in request.files:
+            return jsonify({"error": "No image uploaded"}), 400
+            
+        file = request.files["image"]
+        
         if file.filename == "":
-            return jsonify({"error": "Archive empty"}), 400
+            return jsonify({"error": "File with no name"}), 400
 
-        ext = file.filename.split(".")[-1].lower()
+        try:
+            extension = os.path.splitext(file.filename)[1]
+            unique_file_name = f"post_{uuid.uuid4().hex}{extension}"
+            
+            file_data = file.read()
+            
+            bucket_name = "linka-media"
+            supabase.storage.from_(bucket_name).upload(
+                path=unique_file_name,
+                file=file_data,
+                file_options={"content-type": file.content_type}
+            )
+            
+            public_url = supabase.storage.from_(bucket_name).get_public_url(unique_file_name)
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("UPDATE profile SET ProfilePicture = ? WHERE username = ?", (public_url, username))
+            conn.commit()
+            conn.close()
+            return jsonify({
+                "status": "success",
+                "image_url": public_url
+            }), 200
 
-        if ext not in ["png", "jpg", "jpeg", "webp"]:
-            return jsonify({"error": "Formato inválido"}), 400
-
-        filename = f"{uuid.uuid4()}.{ext}"
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
-
-        file.save(file_path)
-
-        conn = get_db()
-        cur = conn.cursor()
-
-        cur.execute(
-            "UPDATE profile SET ProfilePicture = ? WHERE username = ?",
-            (filename, username)
-        )
-
-        conn.commit()
-        conn.close()
-        return jsonify({"success": True, "filename": filename}), 200
-    else:
-        return jsonify({"status":"forbidden"}),403
+        except Exception as e:
+            print(e)
+            return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@profile_bp.route("/profile_pics/<filename>")
-def get_profile_pic(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
-    
+@profile_bp.route("/view-profile-picture",methods=["POST"])
+def get_profile_pic():
+    data = request.get_json()
+    username = data.get("username")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT ProfilePicture FROM profile WHERE username = ?", (username,))
+    result = cur.fetchone()
+    print(result)
+    return jsonify({"profile-picture":result[0]}),200

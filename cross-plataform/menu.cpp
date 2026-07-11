@@ -56,7 +56,7 @@
 #include <QTranslator>
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
-void renderPostImage(QString urlImage, QVBoxLayout *postLayout) {
+void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
     QLabel *imageLabel = new QLabel();
     imageLabel->setAlignment(Qt::AlignCenter);
     
@@ -84,6 +84,7 @@ void renderPostImage(QString urlImage, QVBoxLayout *postLayout) {
             }
         } else {
             imageLabel->setText("Error in image download");
+            qDebug() << urlImage;
         }
         reply->deleteLater();
         manager->deleteLater();
@@ -789,7 +790,7 @@ int main(int argc, char *argv[])
     std::function<int(const QString&, const QString&)> signupRequest;
     std::function<void()> changeServerPage;
     std::function<void()> addThemePage;
-    std::function<void()> editAccount;
+    std::function<void(QString)> editAccount;
     std::function<void(QString)> sendEdit;
     std::function<void()> change_url;
     std::function<void(QString)> commentPage;
@@ -810,6 +811,8 @@ int main(int argc, char *argv[])
     std::function<QJsonObject()> viewGroupsRequest;
     std::function<void()> trendingFeed;
     std::function<void(QString)> renderBottomBar;
+    std::function<void(QString, QString)> profilePicturePage;
+    std::function<void(QBoxLayout*)> viewProfilePicture;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1438,11 +1441,72 @@ int main(int argc, char *argv[])
         );
         initialPage();
     };
-    editAccount = [&](){
+    sendEdit = [&](QString content){
+        QJsonObject edit;
+        edit["edit-mode"] = "bio";
+        edit["content"] = content;
+        edit["username"] = username;
+        QString edit_response = requestHTTP(
+            url + "/edit",
+            "POST",
+            edit
+        );
+        initialPage();
+    };
+    profilePicturePage = [&](QString actualImage, QString biography){
+        clearLayout(layout);
+        fadeTransition(central);
+        renderPostImage(actualImage, layout);
+        
+        QPushButton *newPicture = new QPushButton(profile_picture_text);
+        
+        // Capturamos apenas por valor [=], garantindo total segurança de memória
+        QObject::connect(newPicture, &QPushButton::clicked, [=]() mutable {
+            QString filePath = QFileDialog::getOpenFileName(
+                nullptr, 
+                "Select a image", 
+                "", 
+                "Images (*.png *.jpg *.jpeg *.webp)"
+            );
+            
+            if (!filePath.isEmpty()) {
+                int statusCode = 0;
+                QString response = requestMultipart(
+                    url + "/upload-profile", 
+                    filePath,
+                    10000,
+                    &statusCode
+                );
+                QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+                QJsonObject obj = doc.object();
+                
+                // 1. Pegamos a string real da URL vinda do JSON
+                QString linkUrl = obj["image_url"].toString();
+                
+                qDebug() << "Resposta do servidor:" << response;
+                qDebug() << "Link da URL obtido:" << linkUrl;
+                
+                // 2. Guardamos o texto com segurança dentro do próprio botão
+                newPicture->setProperty("saved_url", linkUrl);
+                
+                clearLayout(layout);
+                
+                // 3. Recuperamos a string guardada e passamos para a função renderizar
+                QString urlParaRenderizar = newPicture->property("saved_url").toString();
+                renderPostImage(urlParaRenderizar, layout); 
+                
+                renderBottomBar("profile");
+            }
+        });
+        
+        layout->addWidget(newPicture);
+        renderBottomBar("profile");
+    };
+    editAccount = [&](QString biography){
         clearLayout(layout);
         fadeTransition(central);
         QList<QWidget*> scroll_layout;
-        QLineEdit *bioEntry = new QLineEdit();
+        QLineEdit *bioEntry = new QLineEdit(biography);
         bioEntry->setPlaceholderText(bio_text);
         QPushButton *loadPhoto = new QPushButton(profile_picture_text);
         QPushButton *sendButton = new QPushButton(send_text);
@@ -1451,11 +1515,30 @@ int main(int argc, char *argv[])
         scroll_layout.append(loadPhoto);
         scroll_layout.append(sendButton);
         scroll_layout.append(backButton);
+        QStringList lines = biography.split('\n');
+        QString urlImage;
+        for (const QString &line : lines) {
+            if (line.isEmpty()) continue;
+            if (line.contains("[PROFILE]")){
+                urlImage = line;
+                urlImage.remove("[PROFILE]");
+                break;
+            }
+        }
+        for (const QString &line : lines) {
+            if (line.isEmpty()) continue;                    
+            if (line.contains("[PROFILE]")) {
+                continue; 
+            }
+        };
         QObject::connect(backButton, &QPushButton::clicked, [=](){
             initialPage();
         });
         QObject::connect(sendButton, &QPushButton::clicked, [=](){
             sendEdit(bioEntry->text());
+        });
+        QObject::connect(loadPhoto, &QPushButton::clicked, [=](){
+            profilePicturePage(urlImage, biography);
         });
         scroll_area(layout, scroll_layout);
         renderBottomBar("profile");
@@ -1468,9 +1551,29 @@ int main(int argc, char *argv[])
         saveConfig();
         loginPage();
     };
+    viewProfilePicture = [&](QBoxLayout *picLayout){
+        QJsonObject json_profile;
+        json_profile["username"] = username;
+        
+        QString response_profile = requestHTTP(
+            url + "/view-profile-picture",
+            "POST",
+            json_profile
+        );
+        
+        QJsonDocument doc = QJsonDocument::fromJson(response_profile.toUtf8());
+        QJsonObject json_response = doc.object();
+        
+        // CORRIGIDO: Lendo de json_response. 
+        // Ajuste para "image_url" ou "profilePicture" caso o Flask envie com outro nome
+        QString profile_picture = json_response["profile-picture"].toString(); 
+        qDebug() << "entrando no renderizador de foto" + profile_picture;
+        renderPostImage(profile_picture, picLayout);
+    };
     account = [&](){
         clearLayout(layout);
         fadeTransition(central);
+        viewProfilePicture(layout);
         QLabel *label_username = new QLabel(username);
         layout->addWidget(label_username);
         QJsonObject empty;
@@ -1495,7 +1598,7 @@ int main(int argc, char *argv[])
                 initialPage();
         });
         QObject::connect(button_edit, &QPushButton::clicked, [=](){
-                editAccount();
+                editAccount(MyBio);
         });
         QObject::connect(logout_button, &QPushButton::clicked, [=](){
                 logout();
