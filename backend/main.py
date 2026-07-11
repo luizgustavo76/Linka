@@ -160,7 +160,7 @@ def valide():
     
     token = request.headers.get("Authorization")
     if token is None:
-        return jsonify({"status": "the token is empty"}), 401
+        return jsonify({"status": "the token is empty"}), 403
     
     token = token.replace("Bearer ", "")
     
@@ -171,7 +171,7 @@ def valide():
     conn.close()
     
     if not result:
-        return jsonify({"status": "invalid token"}), 401
+        return jsonify({"status": "invalid token"}), 403
 
     token_db = result["token"]
     g.username = username = result["username"]
@@ -200,11 +200,11 @@ def valide():
     
     if token_db == token:
         if datetime.now() > expire_date:
-            return jsonify({"status": "the token has been expired"}), 401
+            return jsonify({"status": "the token has been expired"}), 403
         else:
             return None
     else:
-        return jsonify({"status": "the token is invalid"}), 401
+        return jsonify({"status": "the token is invalid"}), 403
 @app.route("/valide-session", methods=["POST"])
 def valideManual():
     public_paths = ["/login", "/register", "/new-session", "/create-profile"]
@@ -215,7 +215,7 @@ def valideManual():
     token = request.headers.get("Authorization")
     
     if token == None:
-        return jsonify({"status": "the token is empty"}), 401
+        return jsonify({"status": "the token is empty"}), 403
     else:
         token = token.replace("Bearer ", "")
         
@@ -226,7 +226,7 @@ def valideManual():
     
     if not result:
         conn.close()
-        return jsonify({"status": "invalid token"}), 401
+        return jsonify({"status": "invalid token"}), 403
         
     token_db = result["token"]
     g.username = result["username"]
@@ -234,11 +234,11 @@ def valideManual():
     
     if token_db == token:
         if datetime.now() > expire_date:
-            return jsonify({"status": "the token has been expired"}), 401
+            return jsonify({"status": "the token has been expired"}), 403
         else:
             return jsonify({"status":"the token is valid"}),200
     else:
-        return jsonify({"status": "the token is invalid"}), 401
+        return jsonify({"status": "the token is invalid"}), 403
 
 
 

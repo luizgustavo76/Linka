@@ -475,7 +475,7 @@ QString requestHTTP(const QString &url,
     // Captura o Status Code real retornado pelo servidor (ex: 200, 404, 500)
     int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode) *statusCode = code;
-    if (statusCode == nullptr ||code == 401){
+    if (code == 403){
         renoveToken();
     };
     // Lê a resposta bruta do servidor
@@ -549,7 +549,7 @@ QString requestMultipart(const QString &url,
     
     int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode) *statusCode = code;
-    if (statusCode == nullptr || code == 401){
+    if (code == 403){
         renoveToken(); // Mantive sua lógica de renovar token
     }
     
@@ -934,7 +934,7 @@ int main(int argc, char *argv[])
     json_valide["token"] = token;
     int status_code;
     requestHTTP(
-        url + "/valide",
+        url + "/valide-session",
         "POST",
         json_valide,
         5000,
@@ -2066,7 +2066,7 @@ int main(int argc, char *argv[])
 
         updateChat();
 
-        timer->start(2000);
+        timer->start(100);
 
         QLineEdit *message_box = new QLineEdit();
         message_box->setPlaceholderText(type_text);
