@@ -1562,10 +1562,7 @@ int main(int argc, char *argv[])
         );
         
         QJsonDocument doc = QJsonDocument::fromJson(response_profile.toUtf8());
-        QJsonObject json_response = doc.object();
-        
-        // CORRIGIDO: Lendo de json_response. 
-        // Ajuste para "image_url" ou "profilePicture" caso o Flask envie com outro nome
+        QJsonObject json_response = doc.object();        
         QString profile_picture = json_response["profile-picture"].toString(); 
         qDebug() << "entrando no renderizador de foto" + profile_picture;
         renderPostImage(profile_picture, picLayout);
@@ -1573,9 +1570,15 @@ int main(int argc, char *argv[])
     account = [&](){
         clearLayout(layout);
         fadeTransition(central);
-        viewProfilePicture(layout);
+        QHBoxLayout *layoutProfile = new QHBoxLayout();
+        viewProfilePicture(layoutProfile);
         QLabel *label_username = new QLabel(username);
-        layout->addWidget(label_username);
+        label_username->resize(300, 50);
+        label_username->setFixedSize(600, 100);
+        label_username->setStyleSheet("font-size: 20px; font-weight: bold; color: white;");
+        label_username->setWordWrap(true);
+        layoutProfile->addWidget(label_username);
+        layout->addLayout(layoutProfile);
         QJsonObject empty;
         QString bio_response = requestHTTP(
             url + "/view_profile/" + username,
@@ -1591,12 +1594,7 @@ int main(int argc, char *argv[])
         layout->addWidget(label_bio);
         QPushButton *button_edit = new QPushButton(edit_text);
         layout->addWidget(button_edit);
-        QPushButton *buttonBack = new QPushButton(back_text);
-        layout->addWidget(buttonBack);
         layout->addWidget(logout_button);
-        QObject::connect(buttonBack, &QPushButton::clicked, [=](){
-                initialPage();
-        });
         QObject::connect(button_edit, &QPushButton::clicked, [=](){
                 editAccount(MyBio);
         });
@@ -2392,7 +2390,7 @@ int main(int argc, char *argv[])
         QJsonObject group_request;
         group_request["username"] = username;
         QString response = requestHTTP(
-            url + "/my-group",
+            url + "/my-groups",
             "POST",
             group_request
         );
