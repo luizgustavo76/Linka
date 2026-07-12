@@ -1241,62 +1241,78 @@ int main(int argc, char *argv[])
         );
     };
     
-    otherProfilePage = [&](QString usernameProfile){
+    otherProfilePage = [&](QString usernameProfile){ // Mantém o [&] para pegar o layout e as variáveis de fora
         clearLayout(layout);
+        
+        // 1. Elementos principais da UI
         QLabel *titleUsername = new QLabel(usernameProfile);
         titleUsername->setStyleSheet("font-size: 16px; font-weight: bold; color: #333333;");
-        QJsonObject isFriend;
-        isFriend["username"] = username;
+        
+        QLabel *biography = new QLabel(); // Começa vazio
+        
         QPushButton *sentAFriend = new QPushButton(sent_friend_text);
         QPushButton *unFriend = new QPushButton(un_friend_text);
-        QString bio = "";
-        QLabel *biography = new QLabel(bio);
-        QString response_bio = requestHTTP(
-            url + "view_profile/" + usernameProfile,
-            "GET",
-            QJsonObject()
-        );
-        QJsonDocument doc_bio =
-            QJsonDocument::fromJson(response_bio.toUtf8());
+        QPushButton *back_button = new QPushButton(back_text);
+
+        // 2. Requisição HTTP da Bio (Atualizando o texto na ordem certa)
+        QString response_bio = requestHTTP(url + "view_profile/" + usernameProfile, "GET", QJsonObject());
+        QJsonDocument doc_bio = QJsonDocument::fromJson(response_bio.toUtf8());
         QJsonObject json_response_bio = doc_bio.object();
-        bio = json_response_bio["bio"].toString();
-        QString response = requestHTTP(
-            url + "/friends",
-            "POST",
-            isFriend
-        );
-        QJsonDocument doc =
-            QJsonDocument::fromJson(response.toUtf8());
+        
+        QString bio = json_response_bio["bio"].toString();
+        biography->setText(bio); // Agora o texto entra no label de verdade
+
+        // 3. Requisição de Amigos e Lógica de Checagem Sem Duplicar Botão
+        QJsonObject isFriend;
+        isFriend["username"] = username;
+        
+        QString response = requestHTTP(url + "/friends", "POST", isFriend);
+        QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
         QJsonObject json_response = doc.object();
         QJsonArray friendsArray = json_response["friends"].toArray();
+        
+        bool jaEAmigo = false; 
+        
         for (int i = 0; i < friendsArray.size(); ++i) {
             QJsonArray subArray = friendsArray[i].toArray();
-            
-            
             if (subArray.size() >= 2) {
                 QString friendCheck1 = subArray[0].toString();
                 QString friendCheck2 = subArray[1].toString();
-                if (friendCheck1 == usernameProfile || friendCheck2 == usernameProfile){
-                    layout->addWidget(unFriend);
-                }else{
-                    layout->addWidget(sentAFriend);
-                };
-            };
-        };
-        QObject::connect(sentAFriend, &QPushButton::clicked, [=](){
-            sentFriendRequest(usernameProfile);
-        });
-        QObject::connect(unFriend, &QPushButton::clicked, [=](){
-            sentUnFriendRequest(usernameProfile);
-        });
-        QPushButton *back_button = new QPushButton(back_text);
+                
+                if (friendCheck1 == usernameProfile || friendCheck2 == usernameProfile) {
+                    jaEAmigo = true;
+                    break; 
+                }
+            }
+        }
+
+        layout->addWidget(titleUsername);
+        layout->addWidget(biography);
+
+        if (jaEAmigo) {
+            layout->addWidget(unFriend);
+            
+            QObject::connect(unFriend, &QPushButton::clicked, [=](){
+                sentUnFriendRequest(usernameProfile);
+            });
+            
+            delete sentAFriend;
+        } else {
+            layout->addWidget(sentAFriend);
+            
+            QObject::connect(sentAFriend, &QPushButton::clicked, [=](){
+                sentFriendRequest(usernameProfile);
+            });
+            
+            delete unFriend;    
+        }
+
+        layout->addWidget(back_button);
         QObject::connect(back_button, &QPushButton::clicked, [=](){
             initialPage();
         });
-        layout->addWidget(titleUsername);
-        layout->addWidget(biography);
-        layout->addWidget(back_button);
-        renderBottomBar("profile"); 
+        
+        renderBottomBar("profile");
     };
     changeLangPage = [&](){
         clearLayout(layout);
@@ -2631,7 +2647,9 @@ int main(int argc, char *argv[])
             btnOptions->setProperty("active", true);
         }
         QSize iconSize(64, 64);
-        btnHome->setIconSize(iconSize);
+        QSize iconSizeHome(32, 32);
+        
+        btnHome->setIconSize(iconSizeHome);
         btnChat->setIconSize(iconSize);
         btnProfile->setIconSize(iconSize);
         btnOptions->setIconSize(iconSize);
