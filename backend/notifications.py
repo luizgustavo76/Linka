@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request, Blueprint, g
 import os
 import sqlite3
-notifications_bp = Blueprint("notifications", __name__)
+notifications_blueprint = Blueprint("notifications", __name__)
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
@@ -34,7 +34,7 @@ def create_db():
 
 create_db()
 
-@notifications_bp.route("/notifications", methods=["POST"])
+@notifications_blueprint.route("/notifications", methods=["POST"])
 def notifications():
     data = request.get_json() or {}
     username = data.get("username")
@@ -48,7 +48,7 @@ def notifications():
         
         notifications_list = []
         for items in result:
-            notifications_list.notifications.bpend({
+            notifications_list.append({
                 "receiver": items[0],
                 "from_user": items[1],
                 "datetime": items[2],
@@ -61,7 +61,7 @@ def notifications():
     else:
         return jsonify({"status": "forbidden"}), 403
 
-@notifications_bp.route("/set-read-notification", methods=["POST"])
+@notifications_blueprint.route("/set-read-notification", methods=["POST"])
 def set_read():
     data = request.get_json() or {}
     id_notif = data.get("id")
