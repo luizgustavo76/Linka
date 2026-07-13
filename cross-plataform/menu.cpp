@@ -56,6 +56,122 @@
 #include <QTranslator>
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
+#include <QString>
+
+// 1. Conditionally include headers based on the Target OS
+#if defined(Q_OS_ANDROID)
+    #include <QtAndroidExtras/QAndroidJniObject>
+    #include <QtAndroidExtras/QAndroidJniEnv>
+#else
+    // Desktop systems (Linux/Kubuntu, Windows, macOS)
+    #include <QSystemTrayIcon>
+    #include <QIcon>
+#endif
+
+void sendSystemNotification(const QString &title, const QString &message) {
+    
+    // ==========================================
+    // ANDROID IMPLEMENTATION
+    // ==========================================
+#if defined(Q_OS_ANDROID)
+    // Get the Android Context
+    QAndroidJniObject context = QAndroidJniObject::callStaticObjectMethod(
+        "org/qtproject/qt5/android/QtActivity", 
+        "isActive", 
+        "()Z"
+    ) ? QAndroidJniObject::callStaticObjectMethod(
+            "org/qtproject/qt5/android/QtActivity", 
+            "object", 
+            "()Lorg/qtproject/qt5/android/QtActivity;"
+        ) : QAndroidJniObject();
+
+    if (!context.isValid()) return;
+
+    QAndroidJniObject channelId = QAndroidJniObject::fromString("linka_channel_id");
+    QAndroidJniObject channelName = QAndroidJniObject::fromString("Linka Notifications");
+
+    // Build the notification
+    QAndroidJniObject builder("android/support/v4/app/NotificationCompat$Builder",
+                              "(Landroid/content/Context;Ljava/lang/String;)V",
+                              context.object<jobject>(),
+                              channelId.object<jstring>());
+
+    jint defaultIconId = QAndroidJniObject::getStaticField<jint>("android/R$drawable", "sym_def_app_icon");
+    
+    builder.callObjectMethod("setContentTitle", 
+                             "(Ljava/lang/CharSequence;)Landroid/support/v4/app/NotificationCompat$Builder;", 
+                             QAndroidJniObject::fromString(title).object<jstring>());
+                             
+    builder.callObjectMethod("setContentText", 
+                             "(Ljava/lang/CharSequence;)Landroid/support/v4/app/NotificationCompat$Builder;", 
+                             QAndroidJniObject::fromString(message).object<jstring>());
+                             
+    builder.callMethod<QAndroidJniObject>("setSmallIcon", 
+                                          "(I)Landroid/support/v4/app/NotificationCompat$Builder;", 
+                                          defaultIconId);
+
+    // Get Notification Manager
+    QAndroidJniObject notificationServiceString = QAndroidJniObject::getStaticObjectField(
+        "android/content/Context", 
+        "NOTIFICATION_SERVICE", 
+        "Ljava/lang/String;"
+    );
+    
+    QAndroidJniObject notificationManager = context.callObjectMethod(
+        "getSystemService", 
+        "(Ljava/lang/String;)Ljava/lang/Object;", 
+        notificationServiceString.object<jobject>()
+    );
+
+    // Register Notification Channel
+    jint importanceDefault = 3; 
+    QAndroidJniObject notificationChannel("android/app/NotificationChannel",
+                                          "(Ljava/lang/String;Ljava/lang/CharSequence;I)V",
+                                          channelId.object<jstring>(),
+                                          channelName.object<jstring>(),
+                                          importanceDefault);
+
+    notificationManager.callMethod<void>("createNotificationChannel", 
+                                         "(Landroid/app/NotificationChannel;)V", 
+                                         notificationChannel.object<jobject>());
+
+    // Trigger Notification
+    QAndroidJniObject notification = builder.callObjectMethod("build", "()Landroid/app/Notification;");
+    jint notificationId = 1001; 
+    
+    notificationManager.callMethod<void>("notify", 
+                                         "(ILandroid/app/Notification;)V", 
+                                         notificationId, 
+                                         notification.object<jobject>());
+
+    // ==========================================
+    // DESKTOP IMPLEMENTATION (Linux, Windows, macOS)
+    // ==========================================
+#else
+    // Check if system tray is available on the host OS
+    if (!QSystemTrayIcon::isSystemTrayAvailable()) {
+        return; 
+    }
+
+    // Static pointer so we don't recreate the tray icon every time a message arrives
+    static QSystemTrayIcon *trayIcon = nullptr;
+    
+    if (!trayIcon) {
+        trayIcon = new QSystemTrayIcon();
+        // Fallback icon. Make sure to use your actual resource path or system theme icon
+        trayIcon->setIcon(QIcon::fromTheme("dialog-information", QIcon(":/icons/logo.png")));
+        trayIcon->show();
+    }
+
+    // Show the notification toast
+    trayIcon->showMessage(
+        title, 
+        message, 
+        QSystemTrayIcon::Information, 
+        5000
+    );
+#endif
+}
 void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
     QLabel *imageLabel = new QLabel();
     imageLabel->setAlignment(Qt::AlignCenter);
@@ -2734,7 +2850,6 @@ int main(int argc, char *argv[])
         QWidget *container = new QWidget();
         QIcon *banner_image = new QIcon(":/assets/linka_app_login_banner.png");
         QLabel *banner_login = new QLabel();
-        container->setStyleSheet("background-image: url(':/assets/gradient_login.png'); background-position: center; background-repeat: no-repeat;");
         banner_login->setPixmap(banner_image->pixmap(QSize(400, 200)));
         banner_login->setAlignment(Qt::AlignCenter);
         bannerLayout->addWidget(banner_login);
@@ -2853,7 +2968,6 @@ int main(int argc, char *argv[])
         fadeTransition(central);
         QHBoxLayout *bannerLayout = new QHBoxLayout();
         QWidget *container = new QWidget();
-        container->setStyleSheet("background-image: url(':/assets/gradient_login.png'); background-position: center; background-repeat: no-repeat;");
         QIcon *banner_image = new QIcon(":/assets/linka_app_login_banner.png");
         QLabel *banner_login = new QLabel();
         banner_login->setPixmap(banner_image->pixmap(QSize(400, 200)));
