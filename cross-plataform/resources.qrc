@@ -32,5 +32,6 @@
         <file>assets/account.svg</file>
         <file>assets/home.svg</file>
         <file>assets/chat.svg</file>
+        <file>assets/back.png</file>
     </qresource>
 </RCC>

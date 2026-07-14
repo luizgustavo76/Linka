@@ -2413,9 +2413,15 @@ int main(int argc, char *argv[])
     chat = [&](QString user){
         clearLayout(layout);
         QList<QWidget*> message;
+        QHBoxLayout *header = new QHBoxLayout();
         QHBoxLayout *lineMessage;
-
-
+        QPushButton *backButton = new QPushButton(QIcon(":/assets/back.png"), "");
+        QLabel *usernameLabel = new QLabel(user);
+        header->addWidget(backButton);
+        viewProfilePicture(header, user);
+        header->addWidget(usernameLabel);
+        layout->addLayout(header);
+        header->addStretch();
         QScrollArea *scroll = new QScrollArea();
         scroll->setWidgetResizable(true);
 
@@ -2511,7 +2517,7 @@ int main(int argc, char *argv[])
             }
         });
 
-        timer->start(2000);
+        timer->start(100);
 
         QLineEdit *message_box = new QLineEdit();
         message_box->setPlaceholderText(type_text);
