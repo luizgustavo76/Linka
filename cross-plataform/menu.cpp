@@ -58,21 +58,15 @@
 #include <QPropertyAnimation>
 #include <QString>
 
-// 1. Conditionally include headers based on the Target OS
 #if defined(Q_OS_ANDROID)
     #include <QtAndroidExtras/QAndroidJniObject>
     #include <QtAndroidExtras/QAndroidJniEnv>
 #else
-    // Desktop systems (Linux/Kubuntu, Windows, macOS)
     #include <QSystemTrayIcon>
     #include <QIcon>
 #endif
 
 void sendSystemNotification(const QString &title, const QString &message) {
-    
-    // ==========================================
-    // ANDROID IMPLEMENTATION
-    // ==========================================
 #if defined(Q_OS_ANDROID)
     // Get the Android Context
     QAndroidJniObject context = QAndroidJniObject::callStaticObjectMethod(
@@ -200,6 +194,42 @@ void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
             }
         } else {
             imageLabel->setText("Error in image download");
+            qDebug() << urlImage;
+        }
+        reply->deleteLater();
+        manager->deleteLater();
+    });
+}
+void renderAvatarImage(QString urlImage, QBoxLayout *postLayout) {
+    QLabel *imageLabel = new QLabel();
+    imageLabel->setAlignment(Qt::AlignCenter);
+    imageLabel->setFixedSize(50, 50);
+    imageLabel->setScaledContents(true);
+    
+    imageLabel->setContextMenuPolicy(Qt::NoContextMenu);
+    imageLabel->setText("...");
+    postLayout->addWidget(imageLabel);
+
+    QNetworkAccessManager *manager = new QNetworkAccessManager();
+    QNetworkRequest request((QUrl(urlImage)));
+    QNetworkReply *reply = manager->get(request);
+
+    QObject::connect(reply, &QNetworkReply::finished, [=]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray dataImage = reply->readAll();
+            QPixmap pixmap;
+            pixmap.loadFromData(dataImage);
+
+            if (!pixmap.isNull()) {
+                QPixmap imagemRedimension = pixmap.scaled(50, 50, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+                
+                imageLabel->setText("");
+                imageLabel->setPixmap(imagemRedimension);
+            } else {
+                imageLabel->setText("Err");
+            }
+        } else {
+            imageLabel->setText("Err");
             qDebug() << urlImage;
         }
         reply->deleteLater();
@@ -928,7 +958,7 @@ int main(int argc, char *argv[])
     std::function<void()> trendingFeed;
     std::function<void(QString)> renderBottomBar;
     std::function<void(QString, QString)> profilePicturePage;
-    std::function<void(QBoxLayout*)> viewProfilePicture;
+    std::function<void(QBoxLayout*, QString)> viewProfilePicture;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1683,8 +1713,11 @@ int main(int argc, char *argv[])
         saveConfig();
         loginPage();
     };
-    viewProfilePicture = [&](QBoxLayout *picLayout){
+    viewProfilePicture = [&](QBoxLayout *picLayout, QString username){
         QJsonObject json_profile;
+        if(!username.isEmpty()){}else{
+            username = username;
+        }
         json_profile["username"] = username;
         
         QString response_profile = requestHTTP(
@@ -1697,13 +1730,13 @@ int main(int argc, char *argv[])
         QJsonObject json_response = doc.object();        
         QString profile_picture = json_response["profile-picture"].toString(); 
         qDebug() << "entrando no renderizador de foto" + profile_picture;
-        renderPostImage(profile_picture, picLayout);
+        renderAvatarImage(profile_picture, picLayout);
     };
     account = [&](){
         clearLayout(layout);
         fadeTransition(central);
         QHBoxLayout *layoutProfile = new QHBoxLayout();
-        viewProfilePicture(layoutProfile);
+        viewProfilePicture(layoutProfile, username);
         QLabel *label_username = new QLabel(username);
         label_username->resize(300, 50);
         label_username->setFixedSize(600, 100);
@@ -2580,13 +2613,19 @@ int main(int argc, char *argv[])
                     friendName = remittee;
                 else
                     friendName = receiver;
+                QWidget *containerWidget = new QWidget();
                 QPushButton *user = new QPushButton(friendName);
+                QHBoxLayout *buttonLayout = new QHBoxLayout();
+                viewProfilePicture(buttonLayout, username);
+                buttonLayout->addWidget(user);
+                buttonLayout->addStretch();
+                containerWidget->setLayout(buttonLayout);
                 QObject::connect(user, &QPushButton::clicked, [=]() mutable{
                     QTimer::singleShot(0, [=](){
                         chat(friendName);
                     });
                 });
-                widgets.append(user);
+                widgets.append(containerWidget);
             };
         };
         QPushButton *back_button = new QPushButton(back_text);

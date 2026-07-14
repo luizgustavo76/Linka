@@ -17,7 +17,7 @@ def create_table():
     conn.commit()
     conn.close()
 create_table()
-@federation_index_bp.app("/view-index")
+@federation_index_bp.route("/view-index")
 def view_index():
     conn = get_db()
     formatted_index = []
@@ -28,7 +28,7 @@ def view_index():
         formatted_index.append({
             "name":i[0],
             "url":i[1],
-            "description":1[2]
+            "description":i[2]
         })
     return jsonify(formatted_index)
 @federation_index_bp.route("/register-federation",methods=["POST"])

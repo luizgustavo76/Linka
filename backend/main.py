@@ -14,6 +14,7 @@ from images import image_bp
 from flask import Flask, Blueprint, request, jsonify, g
 import sqlite3
 import os
+from federation_index import federation_index_bp
 from sincronizer import sincronizer_bp
 from themes import theme_bp
 from datetime import datetime, timedelta
@@ -259,5 +260,6 @@ app.register_blueprint(chat_group_bp)
 app.register_blueprint(image_bp)
 app.register_blueprint(theme_bp)
 app.register_blueprint(federations_bp)
+app.register_blueprint(federation_index_bp)
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
