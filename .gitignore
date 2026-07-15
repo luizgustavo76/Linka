@@ -12,7 +12,6 @@ node_modules/
 __pycache__/
 *.pyc
 venv/
-backend/mastodon_federation/
 # Qt Creator / user files
 *.pro.user
 *.user
