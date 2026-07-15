@@ -2416,8 +2416,12 @@ int main(int argc, char *argv[])
         QHBoxLayout *header = new QHBoxLayout();
         QHBoxLayout *lineMessage;
         QPushButton *backButton = new QPushButton(QIcon(":/assets/back.png"), "");
+        backButton->setIconSize(QSize(32, 32));
         QLabel *usernameLabel = new QLabel(user);
         header->addWidget(backButton);
+        QObject::connect(backButton, &QPushButton::clicked, [=](){
+            chatPage();
+        });
         viewProfilePicture(header, user);
         header->addWidget(usernameLabel);
         layout->addLayout(header);
@@ -2531,16 +2535,6 @@ int main(int argc, char *argv[])
         QWidget *container = new QWidget();
         container->setLayout(entryBox);
 
-        QPushButton *back_button = new QPushButton(back_text);
-
-        QObject::connect(back_button, &QPushButton::clicked, [=]() mutable{
-            QTimer::singleShot(0, [=](){
-                timer->stop();
-                delete currentMessageCount; // Deleta o ponteiro para não dar Memory Leak
-                initialPage();
-            });
-        });
-
         QObject::connect(send_button, &QPushButton::clicked, [=]() mutable{
             QTimer::singleShot(0, [=](){
                 sendMessage(message_box->text(), user);
@@ -2553,7 +2547,6 @@ int main(int argc, char *argv[])
         });
 
         layout->addWidget(container);
-        layout->addWidget(back_button);
         renderBottomBar("chat");
     };
     //pagina inicial de chat
