@@ -1,17 +1,16 @@
 import requests
 import json
+import unicodedata
 from bs4 import BeautifulSoup
 from datetime import datetime
-
 def formate(posts):
-    # Se os posts vierem como string JSON, decodifica
+    # Se os posts vierem como string JSON, decodifica para lista do Python
     if isinstance(posts, str):
         posts = json.loads(posts)
         
     posts_formatados = []
     
     for post in posts:
-        # Pula itens de erro que possam ter sido retornados da API
         if "error" in post:
             continue
             
@@ -24,18 +23,24 @@ def formate(posts):
         # Limpa o HTML do post
         html_content = post["content"]
         html_content = html_content.replace("<br />", "\n").replace("<br>", "\n").replace("</p>", "\n")
-        soup = BeautifulSoup(html_content, "html.parser")
-        text_post = soup.get_text().strip()
         
-        # Monta o novo dicionário apenas com os campos desejados
+        soup = BeautifulSoup(html_content, "html.parser")
+        text_post = soup.get_text()
+        
+        # Normaliza o texto removendo caracteres invisíveis (\u00a0)
+        text_post = unicodedata.normalize("NFKC", text_post)
+        text_post = "\n".join(line.strip() for line in text_post.splitlines()).strip()
+        
+        # Monta o dicionário
         posts_formatados.append({
             "username": username,
             "text_post": text_post,
             "datetime": datetime_formatado
         })
         
-    # Retorna a nova lista convertida em uma string JSON limpa e formatada
-    return json.dumps(posts_formatados, indent=4, ensure_ascii=False)
+    # RETORNO IMPORTANTE: Retornamos a lista do Python pura! 
+    # NADA de usar json.dumps() aqui.
+    return posts_formatados
 
 def fetch_mastodon_posts(instance="mastodon.world", total_limit=100):
     api_url = f"https://{instance}/api/v1/timelines/public"
@@ -61,12 +66,3 @@ def fetch_mastodon_posts(instance="mastodon.world", total_limit=100):
         parameters['max_id'] = page_posts[-1]['id']
         
     return collected_posts[:total_limit]
-
-if __name__ == "__main__":
-    resultado = fetch_mastodon_posts()
-    
-    # Agora sim: 'resultado_formatado' recebe a string JSON filtrada
-    resultado_formatado = formate(resultado)
-    
-    # Exibe o JSON final no terminal
-    print(resultado_formatado)

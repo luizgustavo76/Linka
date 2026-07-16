@@ -13,7 +13,8 @@ def create_table():
     cur.execute("""CREATE TABLE IF NOT EXISTS federation_index(
                 name TEXT,
                 url TEXT,
-                description TEXT)""")
+                description TEXT,
+                cover_image TEXT)""")
     conn.commit()
     conn.close()
 create_table()
@@ -28,7 +29,8 @@ def view_index():
         formatted_index.append({
             "name":i[0],
             "url":i[1],
-            "description":i[2]
+            "description":i[2],
+            "cover_image":i[3]
         })
     return jsonify(formatted_index)
 @federation_index_bp.route("/register-federation",methods=["POST"])
@@ -37,11 +39,12 @@ def register_federation():
     name = data.get("name")
     url = data.get("url")
     description = data.get("description")
+    cover_image = data.get("cover_image")
     conn = get_db()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO federation_index (name, url, description) VALUES (?, ?, ?)",
-        (name, url, description)
+        "INSERT INTO federation_index (name, url, description cover_image) VALUES (?, ?, ?, ?)",
+        (name, url, description, cover_image)
     )
     conn.commit()
     conn.close()

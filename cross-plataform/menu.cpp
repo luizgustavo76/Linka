@@ -960,7 +960,7 @@ int main(int argc, char *argv[])
     std::function<void(QString, QString)> profilePicturePage;
     std::function<void(QBoxLayout*, QString)> viewProfilePicture;
     std::function<void()> addFederationFeed;
-    std::function<void()> federationFeedPage;
+    std::function<void(QString)> federationFeedPage;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -2095,6 +2095,7 @@ int main(int argc, char *argv[])
                 lblDate->setStyleSheet("color: gray; font-size: 12px;");
                 lblText->setWordWrap(true); 
                 lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+                viewProfilePicture(usernameLayout, username);
                 usernameLayout->addWidget(lblUser);
                 usernameLayout->addWidget(viewProfile);
                 usernameLayout->addStretch();
@@ -2852,42 +2853,237 @@ int main(int argc, char *argv[])
                     QJsonObject obj = value.toObject();
                     QString name = obj["name"].toString();
                     QString urlFederation = obj["url"].toString();
-
-                    // Cria um container horizontal para alinhar o nome e o botão lado a lado
+                    QString coverImage = obj["cover_image"].toString();
                     QWidget *rowWidget = new QWidget();
                     QHBoxLayout *rowLayout = new QHBoxLayout(rowWidget);
+                    renderAvatarImage(coverImage, rowLayout);
                     rowLayout->setContentsMargins(5, 2, 5, 2); // Margens apertadas para telas pequenas
 
-                    QLabel *nameLabel = new QLabel(name);
-                    QPushButton *addButton = new QPushButton("+");
-                    addButton->setFixedWidth(30); // Botão pequeno, ideal para o Galaxy Y
-
-                    rowLayout->addWidget(nameLabel);
-                    rowLayout->addWidget(addButton);
-
-                    // Armazena a URL no próprio botão para recuperar quando for clicado
-                    addButton->setProperty("url", urlFederation);
-                    addButton->setProperty("name", name);
-
-                    // Conecta o clique do botão a uma função/slot para adicionar a federação
-                    QObject::connect(addButton, &QPushButton::clicked, [addButton]() {
-                        QString fedName = addButton->property("name").toString();
-                        QString fedUrl = addButton->property("url").toString();
-                        
-                        // Aqui você chama sua lógica para salvar a federação
-                        qDebug() << "Adicionando:" << fedName << "com URL:" << fedUrl;
+                    QPushButton *nameLabel = new QPushButton(name);
+                    QObject::connect(nameLabel, &QPushButton::clicked, [=](){
+                        federationFeedPage(urlFederation);
                     });
-
-                    // Adiciona a linha criada ao layout principal da tela
+                    rowLayout->addWidget(nameLabel);
+                    rowLayout->addStretch();
                     layout->addWidget(rowWidget);
                 }
             }
         }
+        renderBottomBar("home");
     };
-    federationFeedPage = [&](){
+    federationFeedPage = [&](QString url){
         clearLayout(layout);
         fadeTransition(central);
+        QHBoxLayout *tabPages = new QHBoxLayout();
+        QPushButton *newer = new QPushButton(newer_text);
+        QPushButton *trending = new QPushButton(trending_text);
+        QPushButton *federations = new QPushButton(federations_text);
+        newer->setProperty("class", "tab-button");
+        trending->setProperty("class", "tab-button");
+        federations->setProperty("class", "tab-button");
+        newer->setProperty("active", true);
+        trending->setProperty("active", false);
+        federations->setProperty("active", false);
+        tabPages->addWidget(newer);
+        tabPages->addWidget(trending);
+        tabPages->addWidget(federations);
+        layout->addLayout(tabPages);
+        QObject::connect(trending, &QPushButton::clicked, [=](){
+            trendingFeed();
+        });
+        QObject::connect(federations, &QPushButton::clicked, [=](){
+            addFederationFeed();
+        });
+        QString url_feed = url + "/feed";
+        qDebug() << "url feed" << url_feed;
+        QNetworkRequest request{QUrl(url_feed)};
+        QNetworkReply *reply = manager->get(request);
+        QHBoxLayout *search_layout = new QHBoxLayout();
+        QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
 
+
+            QByteArray responseData = reply->readAll();
+            reply->deleteLater();
+
+            QJsonDocument doc = QJsonDocument::fromJson(responseData);
+
+            if(!doc.isArray())
+            {
+                QLabel *err = new QLabel("Invalid response from server!");
+                layout->addWidget(err);
+                return;
+            }
+
+            QJsonArray postsArray = doc.array();
+
+            QList<QWidget*> labels;
+
+            for(auto value : postsArray)
+            {
+                if(!value.isObject()) continue;
+
+                QJsonObject post = value.toObject();
+
+                int postId = post["id"].toInt();
+                QString username = post["username"].toString();
+                QString textPost = post["text_post"].toString();
+                QString datetime = post["datetime"].toString();
+                QStringList lines = textPost.split('\n');
+                QString urlImage;
+                QVBoxLayout *textLayout = new QVBoxLayout();
+                for (const QString &line : lines) {
+                    if (line.isEmpty()) continue;
+                    if (line.contains("[IMAGE]")){
+                        urlImage = line;
+                        urlImage.remove("[IMAGE]");
+                        break;
+                    }
+                }
+                for (const QString &line : lines) {
+                    if (line.isEmpty()) continue;                    
+                    if (line.contains("[IMAGE]")) {
+                        continue; 
+                    }
+                    QLabel *textLabel = new QLabel(line);
+                    textLayout->addWidget(textLabel);
+                }
+                if (!urlImage.isEmpty()) {
+                    renderPostImage(urlImage, textLayout);
+                }
+                // ===== FRAME =====
+                QFrame *frame = new QFrame();
+                frame->setStyleSheet(R"(
+                    QFrame {
+                        background-color: #1A1A1A;
+                        border: 1px solid #2F2F2F;
+                        border-radius: 14px;
+                        padding: 10px;
+                    }
+                )");
+
+                QVBoxLayout *frameLayout = new QVBoxLayout(frame);
+                QHBoxLayout *starLayout = new QHBoxLayout();
+                QHBoxLayout *usernameLayout = new QHBoxLayout();
+                QPushButton *viewProfile = new QPushButton(view_profile);
+                QObject::connect(viewProfile, &QPushButton::clicked, [=](){
+                    otherProfilePage(username);
+                });
+                QLabel *lblUser = new QLabel(username);
+                QLabel *lblText = new QLabel(textPost);
+                QLabel *lblDate = new QLabel(datetime);
+
+                lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
+                lblText->setStyleSheet("color: white; font-size: 14px;");
+                lblDate->setStyleSheet("color: gray; font-size: 12px;");
+                lblText->setWordWrap(true); 
+                lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+                viewProfilePicture(usernameLayout, username);
+                usernameLayout->addWidget(lblUser);
+                usernameLayout->addWidget(viewProfile);
+                usernameLayout->addStretch();
+                frameLayout->addLayout(usernameLayout);
+                frameLayout->addLayout(textLayout);
+                frameLayout->addWidget(lblDate);
+
+                // ===== BOTÃO STAR =====
+                QPushButton *iconButton = new QPushButton();
+                QLabel *starLabel = new QLabel("...");
+                frameLayout->addWidget(iconButton);
+                frameLayout->addWidget(starLabel);
+
+                iconButton->setIcon(QIcon(":/assets/default_star.png"));
+                iconButton->setIconSize(QSize(24, 24));
+                iconButton->setFixedSize(30, 30);
+                iconButton->setStyleSheet("border: none;");
+
+                starLabel->setStyleSheet("color: white; font-size: 14px;");
+
+
+                // ponteiro seguro
+                QPointer<QLabel> safeStarLabel = starLabel;
+
+                // buscar quantidade de estrelas
+                QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
+                QNetworkReply *starsReply = manager->get(starsReq);
+
+                QObject::connect(starsReply, &QNetworkReply::finished, [=]() mutable {
+
+                    if (!safeStarLabel) {
+                        starsReply->deleteLater();
+                        return;
+                    }
+
+                    if(starsReply->error() == QNetworkReply::NoError)
+                    {
+                        QString starsText = QString(starsReply->readAll()).trimmed();
+                        if(starsText.isEmpty()) starsText = "0";
+                        safeStarLabel->setText(starsText);
+                    }
+                    else
+                    {
+                        safeStarLabel->setText("0");
+                    }
+
+                    starsReply->deleteLater();
+                });
+
+                // clique da estrela (toggle)
+                QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
+                    QJsonObject star_json;
+                    star_json["username"] = username;
+                    star_json["post_id"] = postId;
+                    requestHTTP(
+                        url + "/star",
+                        "POST",
+                        star_json
+                    );
+                    QString has_starred = requestHTTP(
+                        url + "/has-star",
+                        "POST",
+                        star_json
+                    );
+                    QJsonDocument doc = QJsonDocument::fromJson(has_starred.toUtf8());
+                    QJsonObject obj = doc.object();
+                    bool starred = obj["starred"].toBool();
+                    if (starred == true){
+                        iconButton->setIcon(QIcon(":/assets/star.png"));
+                    }else{
+                        iconButton->setIcon(QIcon(":/assets/default_star.png"));
+                    };
+
+                });
+                starLayout->addWidget(iconButton);
+                starLayout->addWidget(starLabel);
+                starLayout->addStretch();
+
+                frameLayout->addLayout(starLayout);
+
+                labels.append(frame);
+            }
+            scroll_area(layout, labels);
+
+            // botões de baixo
+            QPushButton *btnBack = new QPushButton(back_text);
+            QPushButton *btnNewPost = new QPushButton(new_post_text);
+            QObject::connect(btnBack, &QPushButton::clicked, [=](){
+                initialPage();
+            });
+            QLineEdit *searchEntry = new QLineEdit();
+            searchEntry->setPlaceholderText(search_text);
+            QPushButton *sendButton = new QPushButton(send_text);
+            search_layout->addWidget(searchEntry);
+            search_layout->addWidget(sendButton);
+            layout->addLayout(search_layout);
+            layout->addWidget(btnNewPost);
+            renderBottomBar("home");
+
+           
+
+            QObject::connect(btnNewPost, &QPushButton::clicked, [=](){
+                new_post();
+            });
+
+        });
     };
     //pagina inicial para renderizar
     initialPage = [&]()
