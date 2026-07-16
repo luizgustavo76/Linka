@@ -959,6 +959,8 @@ int main(int argc, char *argv[])
     std::function<void(QString)> renderBottomBar;
     std::function<void(QString, QString)> profilePicturePage;
     std::function<void(QBoxLayout*, QString)> viewProfilePicture;
+    std::function<void()> addFederationFeed;
+    std::function<void()> federationFeedPage;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -2007,6 +2009,9 @@ int main(int argc, char *argv[])
         QObject::connect(trending, &QPushButton::clicked, [=](){
             trendingFeed();
         });
+        QObject::connect(federations, &QPushButton::clicked, [=](){
+            addFederationFeed();
+        });
         QString url_feed = url + "/feed";
         qDebug() << "url feed" << url_feed;
         QNetworkRequest request{QUrl(url_feed)};
@@ -2832,6 +2837,57 @@ int main(int argc, char *argv[])
         if (layout) {
             layout->addWidget(bottomBar, 0);
         }
+    };
+    addFederationFeed = [&](){
+        clearLayout(layout);
+        QJsonObject *empty = new QJsonObject();
+        QString response = requestHTTP(url + "/view-index", "GET", *empty);
+        QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+
+        // Assumindo que você tem um layout pai na sua UI (ex: QVBoxLayout* mainLayout)
+        if (doc.isArray()) {
+            QJsonArray arr = doc.array();
+            for (const QJsonValue &value : arr) {
+                if (value.isObject()) {
+                    QJsonObject obj = value.toObject();
+                    QString name = obj["name"].toString();
+                    QString urlFederation = obj["url"].toString();
+
+                    // Cria um container horizontal para alinhar o nome e o botão lado a lado
+                    QWidget *rowWidget = new QWidget();
+                    QHBoxLayout *rowLayout = new QHBoxLayout(rowWidget);
+                    rowLayout->setContentsMargins(5, 2, 5, 2); // Margens apertadas para telas pequenas
+
+                    QLabel *nameLabel = new QLabel(name);
+                    QPushButton *addButton = new QPushButton("+");
+                    addButton->setFixedWidth(30); // Botão pequeno, ideal para o Galaxy Y
+
+                    rowLayout->addWidget(nameLabel);
+                    rowLayout->addWidget(addButton);
+
+                    // Armazena a URL no próprio botão para recuperar quando for clicado
+                    addButton->setProperty("url", urlFederation);
+                    addButton->setProperty("name", name);
+
+                    // Conecta o clique do botão a uma função/slot para adicionar a federação
+                    QObject::connect(addButton, &QPushButton::clicked, [addButton]() {
+                        QString fedName = addButton->property("name").toString();
+                        QString fedUrl = addButton->property("url").toString();
+                        
+                        // Aqui você chama sua lógica para salvar a federação
+                        qDebug() << "Adicionando:" << fedName << "com URL:" << fedUrl;
+                    });
+
+                    // Adiciona a linha criada ao layout principal da tela
+                    layout->addWidget(rowWidget);
+                }
+            }
+        }
+    };
+    federationFeedPage = [&](){
+        clearLayout(layout);
+        fadeTransition(central);
+
     };
     //pagina inicial para renderizar
     initialPage = [&]()

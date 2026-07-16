@@ -39,7 +39,10 @@ def register_federation():
     description = data.get("description")
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO (name, url, description) FROM federations_index VALUES (?, ?, ?)",(name, url, description))
+    cur.execute(
+        "INSERT INTO federation_index (name, url, description) VALUES (?, ?, ?)",
+        (name, url, description)
+    )
     conn.commit()
     conn.close()
     return jsonify({"status":"the federations has registred with sucess"}),200
