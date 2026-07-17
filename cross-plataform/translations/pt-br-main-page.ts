@@ -171,7 +171,10 @@
       <source>send</source>
       <translation>Enviar</translation>
     </message>
-
+    <message>
+        <source>skip</source>
+        <translation>Pular</translation>
+    </message>
   </context>
 
 
@@ -289,6 +292,10 @@
     <message>
       <source>profile picture</source>
       <translation>Foto de perfil</translation>
+    </message>
+    <message>
+      <source>configure account</source>
+      <translation>Vamos configurar o seu perfil?</translation>
     </message>
 
   </context>

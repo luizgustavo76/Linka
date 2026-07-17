@@ -146,6 +146,10 @@
         <source>send</source>
         <translation>send</translation>
     </message>
+    <message>
+        <source>skip</source>
+        <translation>Skip</translation>
+    </message>
 </context>
 <context>
     <name>add friends</name>
@@ -240,6 +244,10 @@
     <message>
         <source>profile picture</source>
         <translation>profile picture</translation>
+    </message>
+    <message>
+      <source>configure account</source>
+      <translation>Lets configurate your profile?</translation>
     </message>
 </context>
 <context>
