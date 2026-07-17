@@ -60,7 +60,63 @@
 #include <QGraphicsOpacityEffect>
 #include <QPropertyAnimation>
 #include <QString>
+void groupButtons(const QString &jsonString, QList<QWidget*> &listaWidgets) {
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonString.toUtf8());
+    QJsonArray arrayPrincipal;
 
+    if (jsonDoc.isArray()) {
+        arrayPrincipal = jsonDoc.array();
+    } else if (jsonDoc.isObject()) {
+        QJsonObject objRaiz = jsonDoc.object();
+        
+        // Se o back-end envelopar a lista em uma chave chamada "groups" ou "my-groups"
+        if (objRaiz.contains("groups") && objRaiz["groups"].isArray()) {
+            arrayPrincipal = objRaiz["groups"].toArray();
+        } else {
+            // Caso o servidor mande apenas um único grupo direto no objeto principal
+            // simulamos o formato de array interna que o seu loop espera:
+            QJsonArray miniGrupo;
+            miniGrupo.append(objRaiz["group_id"].toVariant().toInt()); // ID
+            miniGrupo.append(objRaiz["name_group"].toString());        // Nome
+            miniGrupo.append("");                                      // Data (fallback)
+            miniGrupo.append("");                                      // Tipo (fallback)
+            
+            arrayPrincipal.append(miniGrupo);
+        }
+    } else {
+        qDebug() << "Erro: JSON inválido para processamento de grupos.";
+        return;
+    }
+    for (const QJsonValue &valorInterno : arrayPrincipal) {
+        if (valorInterno.isArray()) {
+            QJsonArray dadosDoGrupo = valorInterno.toArray();
+
+            // Garantia de segurança contra Nulls e falta de parâmetros
+            if (dadosDoGrupo.size() >= 2) {
+                int idGrupo = dadosDoGrupo.at(0).toInt();
+                QString nomeGrupo = dadosDoGrupo.at(1).toString();
+                
+                // Trata nulos sem quebrar a execução
+                QString dataCriacao = dadosDoGrupo.at(2).isNull() ? "" : dadosDoGrupo.at(2).toString();
+                QString tipoUsuario = dadosDoGrupo.at(3).isNull() ? "" : dadosDoGrupo.at(3).toString();
+
+                // 3. Cria o QPushButton dinamicamente
+                QPushButton *btnGrupo = new QPushButton(nomeGrupo);
+
+
+                // 4. Conexão do clique do botão do grupo
+                QObject::connect(btnGrupo, &QPushButton::clicked, [idGrupo, nomeGrupo]() {
+                    qDebug() << "Abriu o grupo de ID:" << idGrupo << "Nome:" << nomeGrupo;
+                    // Chame aqui a função nativa para carregar o chat da federação:
+                    // chatGroup(idGrupo);
+                });
+
+                // 5. Em vez de enfiar no layout, joga na lista de widgets recebida por referência!
+                listaWidgets.append(btnGrupo);
+            }
+        }
+    }
+}
 #if defined(Q_OS_ANDROID)
     #include <QtAndroidExtras/QAndroidJniObject>
     #include <QtAndroidExtras/QAndroidJniEnv>
@@ -172,7 +228,7 @@ void sendSystemNotification(const QString &title, const QString &message) {
 void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
     QLabel *imageLabel = new QLabel();
     imageLabel->setAlignment(Qt::AlignCenter);
-    
+    imageLabel->setObjectName("postImage");
     imageLabel->setContextMenuPolicy(Qt::NoContextMenu);
     imageLabel->setText("Loading image...");
     postLayout->addWidget(imageLabel);
@@ -1883,7 +1939,8 @@ int main(int argc, char *argv[])
                 QLabel *lblUser = new QLabel(username);
                 QLabel *lblText = new QLabel(textPost);
                 QLabel *lblDate = new QLabel(datetime);
-
+                lblText->setObjectName("postText");
+                lblDate->setObjectName("postDate");
                 lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
                 lblText->setStyleSheet("color: white; font-size: 14px;");
                 lblDate->setStyleSheet("color: gray; font-size: 12px;");
@@ -2100,7 +2157,8 @@ int main(int argc, char *argv[])
                 QLabel *lblUser = new QLabel(username);
                 QLabel *lblText = new QLabel(textPost);
                 QLabel *lblDate = new QLabel(datetime);
-
+                lblText->setObjectName("postText");
+                lblDate->setObjectName("postDate");
                 lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
                 lblText->setStyleSheet("color: white; font-size: 14px;");
                 lblDate->setStyleSheet("color: gray; font-size: 12px;");
@@ -2296,23 +2354,37 @@ int main(int argc, char *argv[])
                 bool isMe =
                     (sender == username);
 
-                ChatBubble *bubble =
-                    new ChatBubble(
-                        sender + ":" + text,
-                        isMe
-                    );
+                ChatBubble *bubble = new ChatBubble(text, isMe);
 
-                QHBoxLayout *line =
-                    new QHBoxLayout();
+                // Linha principal (horizontal) para alinhar o bloco inteiro à esquerda ou à direita
+                QHBoxLayout *line = new QHBoxLayout();
 
-                if (isMe)
-                {
+                // Bloco vertical que vai segurar o [Cabeçalho com Foto+Nome] e o [Balão]
+                QVBoxLayout *bubbleBlock = new QVBoxLayout();
+
+                // Esse é o segredo: Um mini layout horizontal só para a foto ficar lado a lado com o nome
+                QHBoxLayout *headerLayout = new QHBoxLayout();
+
+                QLabel *usernameLabel = new QLabel(username);
+
+                if (isMe) {
+                    usernameLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                    headerLayout->addStretch(); // Empurra o nome e a foto para a ponta direita
+                    headerLayout->addWidget(usernameLabel);
+                    viewProfilePicture(headerLayout, username); // A foto entra na extrema direita
+                    bubbleBlock->addLayout(headerLayout);
+                    bubbleBlock->addWidget(bubble);
                     line->addStretch();
-                    line->addWidget(bubble);
+                    line->addLayout(bubbleBlock);
                 }
-                else
-                {
-                    line->addWidget(bubble);
+                else {
+                    usernameLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+                    viewProfilePicture(headerLayout, username); // A foto entra na esquerda
+                    headerLayout->addWidget(usernameLabel);
+                    headerLayout->addStretch(); // Empurra o resto do espaço vazio para a direita
+                    bubbleBlock->addLayout(headerLayout);
+                    bubbleBlock->addWidget(bubble);
+                    line->addLayout(bubbleBlock);
                     line->addStretch();
                 }
 
@@ -2575,14 +2647,16 @@ int main(int argc, char *argv[])
             "POST",
             group_request
         );
+        
+        // Em vez de quebrar e remontar errado, apenas valide se a resposta é válida
+        // e retorne o objeto completo recebido do PythonAnywhere
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
-        QJsonObject obj = doc.object();
-        QString group_id = obj["group_id"].toString();
-        QString name_group = obj["name_group"].toString();
-        QJsonObject response_json;
-        response_json["group_id"] = group_id;
-        response_json["name_group"] = name_group;
-        return response_json;
+        if (doc.isObject()) {
+            return doc.object();
+        }
+        
+        // Fallback vazio seguro
+        return QJsonObject();
     };
     chatPage = [&](){
         clearLayout(layout);
@@ -2605,11 +2679,40 @@ int main(int argc, char *argv[])
             "POST",
             friends_json
         );
-        QJsonObject json_response_groups = viewGroupsRequest();
-        if (json_response_groups.isEmpty()){}else{
-            QPushButton *buttonGroup = new QPushButton(json_response_groups["name_group"].toString());
-            layout->addWidget(buttonGroup);
-        };
+        QJsonObject json_username;
+        json_username["username"] = username;
+        QJsonObject json_object_groups = viewGroupsRequest();
+        QString response_groups = requestHTTP(
+            url + "/my-groups",
+            "POST",
+            json_username
+        );
+        QJsonDocument doc_groups = QJsonDocument::fromJson(response_groups.toUtf8());
+        QJsonObject obj_groups = doc_groups.object();
+
+        if (obj_groups["status"].toString() == "success") {
+            QJsonArray groups = obj_groups["groups"].toArray(); // Pega a lista com segurança
+
+            for(int i = 0; i < groups.size(); i++){
+                QJsonObject groupObj = groups[i].toObject();
+                
+                // AGORA VOCÊ PEGA POR NOME, NÃO POR ÍNDICE! Muito mais fácil.
+                int idGrupo = groupObj["group_id"].toInt();
+                QString nomeGrupo = groupObj["group_name"].toString();
+
+                QPushButton *btn = new QPushButton(nomeGrupo);
+                
+                // Lembra de usar a captura por valor [=] para não zerar as variáveis
+                QObject::connect(btn, &QPushButton::clicked, [=](){
+                    qDebug() << "Clicou no grupo ID: " << idGrupo << " Nome: " << nomeGrupo;
+                    // chama a sua tela de chat aqui passando idGrupo
+                });
+
+                layout->addWidget(btn);
+            }
+        } else {
+            qDebug() << "Erro retornado pelo servidor: " << obj_groups["message"].toString();
+        }
         QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
         QJsonObject obj = doc.object();
         QJsonArray friends = obj["friends"].toArray();
