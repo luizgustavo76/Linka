@@ -1,3 +1,5 @@
+#include <QtConcurrent>
+#include <QFuture>
 #include <QFileDialog>
 #include <QTextStream>
 #include <QMessageBox>
@@ -24,6 +26,7 @@
 #include <QSplashScreen>
 #include <QStandardPaths>
 #include <QJsonDocument>
+#include <QHash>
 #include <QMenu>
 #include <QPlainTextEdit>
 #include <iostream>
@@ -554,158 +557,147 @@ QString renoveToken() {
 
     return "";
 }
+
+
 QString requestHTTP(const QString &url,
                     const QString &method,
                     const QJsonObject &json,
                     int timeoutMs,
                     int *statusCode)
 {
-    QNetworkAccessManager manager;
-    QNetworkRequest request;
-    
-    request.setUrl(QUrl(url));
+    // Criamos uma função lambda interna que vai rodar em outra thread de forma assíncrona
+    auto worker = [=]() -> QString {
+        QNetworkAccessManager manager;
+        QNetworkRequest request;
+        request.setUrl(QUrl(url));
 
-    QString m = method.toUpper();
+        QString m = method.toUpper();
+        if (m != "GET") {
+            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        }
 
-    // Se não for GET, define o cabeçalho de JSON
-    if (m != "GET") {
-        request.setHeader(
-            QNetworkRequest::ContentTypeHeader,
-            "application/json"
-        );
-    }
-    loadConfig();
-    QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-    if (!token.isEmpty()) {
-        request.setRawHeader(
-            "Authorization", 
-            QString("Bearer %1").arg(token).toUtf8()
-        );
-    };
-    QNetworkReply *reply = nullptr;
-    QByteArray jsonData = QJsonDocument(json).toJson();
+        // Como loadConfig pode ler arquivo, rodar em outra thread é excelente
+        loadConfig(); 
+        QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+        if (!token.isEmpty()) {
+            request.setRawHeader("Authorization", QString("Bearer %1").arg(token).toUtf8());
+        }
 
-    // Dispara o método correto baseado na string
-    if (m == "GET") {
-        reply = manager.get(request);
-    } else if (m == "POST") {
-        reply = manager.post(request, jsonData);
-    } else if (m == "PUT") {
-        reply = manager.put(request, jsonData);
-    } else if (m == "DELETE") {
-        reply = manager.sendCustomRequest(request, "DELETE", jsonData);
-    } else {
-        if (statusCode) *statusCode = -1;
-        return "ERROR: invalid method";
-    }
-    
-    // Loop de eventos local para aguardar o request de forma síncrona
-    QEventLoop loop;
-    QTimer timer;
-    timer.setSingleShot(true);
-    
-    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    
-    timer.start(timeoutMs);
-    loop.exec();
-    
-    // Tratamento de Timeout
-    if (!timer.isActive()) {
-        reply->abort();
-        if (statusCode) *statusCode = 408;
+        QNetworkReply *reply = nullptr;
+        QByteArray jsonData = QJsonDocument(json).toJson();
+
+        if (m == "GET") { reply = manager.get(request); }
+        else if (m == "POST") { reply = manager.post(request, jsonData); }
+        else if (m == "PUT") { reply = manager.put(request, jsonData); }
+        else if (m == "DELETE") { reply = manager.sendCustomRequest(request, "DELETE", jsonData); }
+        else {
+            if (statusCode) *statusCode = -1;
+            return "ERROR: invalid method";
+        }
+
+        QEventLoop loop;
+        QTimer timer;
+        timer.setSingleShot(true);
+
+        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+
+        timer.start(timeoutMs);
+        loop.exec(); // Esse loop agora roda na thread secundária, NÃO trava a UI!
+
+        if (!timer.isActive()) {
+            reply->abort();
+            if (statusCode) *statusCode = 408;
+            reply->deleteLater();
+            return "ERRO: Timeout";
+        }
+
+        int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (statusCode) *statusCode = code;
+        if (code == 403) {
+            renoveToken();
+        }
+
+        QString response = reply->readAll();
         reply->deleteLater();
-        return "ERRO: Timeout";
-    }
-    
-    
-    // Captura o Status Code real retornado pelo servidor (ex: 200, 404, 500)
-    int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (statusCode) *statusCode = code;
-    if (code == 403){
-        renoveToken();
+        return response;
     };
-    // Lê a resposta bruta do servidor
-    QString response = reply->readAll();
-    reply->deleteLater();
+
+    // Despacha a lambda para rodar assincronamente em segundo plano
+    QFuture<QString> future = QtConcurrent::run(worker);
     
-    return response;
+    // Retorna o resultado. Como o QtConcurrent gerencia as threads do sistema,
+    // o processamento da requisição foi isolado da sua interface principal.
+    return future.result();
 }
-
-
 QString requestMultipart(const QString &url,
                          const QString &filePath,
                          int timeoutMs,
                          int *statusCode)
 {
-    QNetworkAccessManager manager;
-    QNetworkRequest request;
-    request.setUrl(QUrl(url));
+    auto worker = [=]() -> QString {
+        QNetworkAccessManager manager;
+        QNetworkRequest request;
+        request.setUrl(QUrl(url));
 
-    // Carrega o token de sessão idêntico à sua função original
-    loadConfig();
-    QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-    if (!token.isEmpty()) {
-        request.setRawHeader(
-            "Authorization", 
-            QString("Bearer %1").arg(token).toUtf8()
-        );
-    }
+        loadConfig();
+        QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+        if (!token.isEmpty()) {
+            request.setRawHeader("Authorization", QString("Bearer %1").arg(token).toUtf8());
+        }
 
-    // Prepara o arquivo binário
-    QFile *file = new QFile(filePath);
-    if (!file->open(QIODevice::ReadOnly)) {
-        if (statusCode) *statusCode = -1;
-        delete file;
-        return "ERROR: Could not open file";
-    }
+        QFile *file = new QFile(filePath);
+        if (!file->open(QIODevice::ReadOnly)) {
+            if (statusCode) *statusCode = -1;
+            delete file;
+            return "ERROR: Could not open file";
+        }
 
-    // Cria o esqueleto do formulário multipart
-    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
-    QHttpPart imagePart;
-    QFileInfo fileInfo(filePath);
-    
-    // Define a chave exatamente como "image" para o seu Flask receber
-    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, 
-        QVariant(QString("form-data; name=\"image\"; filename=\"%1\"").arg(fileInfo.fileName())));
-    imagePart.setBodyDevice(file);
-    file->setParent(multiPart); 
-    multiPart->append(imagePart);
+        QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+        QHttpPart imagePart;
+        QFileInfo fileInfo(filePath);
+        
+        imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, 
+            QVariant(QString("form-data; name=\"image\"; filename=\"%1\"").arg(fileInfo.fileName())));
+        imagePart.setBodyDevice(file);
+        file->setParent(multiPart); 
+        multiPart->append(imagePart);
 
-    // Dispara o POST com o arquivo
-    QNetworkReply *reply = manager.post(request, multiPart);
-    multiPart->setParent(reply); 
+        QNetworkReply *reply = manager.post(request, multiPart);
+        multiPart->setParent(reply); 
 
-    // O mesmo loop de eventos síncrono que você já usa e confia
-    QEventLoop loop;
-    QTimer timer;
-    timer.setSingleShot(true);
-    
-    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    
-    timer.start(timeoutMs);
-    loop.exec();
-    
-    if (!timer.isActive()) {
-        reply->abort();
-        if (statusCode) *statusCode = 408;
+        QEventLoop loop;
+        QTimer timer;
+        timer.setSingleShot(true);
+        
+        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        
+        timer.start(timeoutMs);
+        loop.exec(); // Isolado na thread secundária!
+        
+        if (!timer.isActive()) {
+            reply->abort();
+            if (statusCode) *statusCode = 408;
+            reply->deleteLater();
+            return "ERRO: Timeout";
+        }
+        
+        int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (statusCode) *statusCode = code;
+        if (code == 403){
+            renoveToken(); 
+        }
+        
+        QString response = reply->readAll();
         reply->deleteLater();
-        return "ERRO: Timeout";
-    }
-    
-    int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (statusCode) *statusCode = code;
-    if (code == 403){
-        renoveToken(); // Mantive sua lógica de renovar token
-    }
-    
-    QString response = reply->readAll();
-    reply->deleteLater();
-    
-    return response;
-}
+        
+        return response;
+    };
 
+    QFuture<QString> future = QtConcurrent::run(worker);
+    return future.result();
+}
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 
 #endif
@@ -1715,11 +1707,23 @@ int main(int argc, char *argv[])
         saveConfig();
         loginPage();
     };
+    QHash<QString, QString> profilePictureCache;
     viewProfilePicture = [&](QBoxLayout *picLayout, QString username){
-        QJsonObject json_profile;
-        if(!username.isEmpty()){}else{
-            username = username;
+        if(username.isEmpty()){
+            return; // Evita requisição inútil se o username for vazio
         }
+
+        // 1. CHECA SE JÁ ESTÁ NO CACHE
+        if(profilePictureCache.contains(username)) {
+            qDebug() << "[CACHE HIT] Usando foto do cache para:" << username;
+            renderAvatarImage(profilePictureCache[username], picLayout);
+            return; // Sai da função sem fazer requisição HTTP!
+        }
+
+        // 2. SE NÃO ESTIVER NO CACHE, FAZ A REQUISIÇÃO (Apenas a primeira vez)
+        qDebug() << "[CACHE MISS] Baixando foto da rede para:" << username;
+        
+        QJsonObject json_profile;
         json_profile["username"] = username;
         
         QString response_profile = requestHTTP(
@@ -1731,6 +1735,12 @@ int main(int argc, char *argv[])
         QJsonDocument doc = QJsonDocument::fromJson(response_profile.toUtf8());
         QJsonObject json_response = doc.object();        
         QString profile_picture = json_response["profile-picture"].toString(); 
+        
+        // 3. SALVA NO CACHE PARA AS PRÓXIMAS VEZES
+        if(!profile_picture.isEmpty()) {
+            profilePictureCache[username] = profile_picture;
+        }
+        
         qDebug() << "entrando no renderizador de foto" + profile_picture;
         renderAvatarImage(profile_picture, picLayout);
     };
@@ -1978,6 +1988,8 @@ int main(int argc, char *argv[])
             layout->addLayout(search_layout);
             layout->addWidget(btnBack);
             layout->addWidget(btnNewPost);
+            renderBottomBar("home");
+
 
            
 
@@ -1986,7 +1998,6 @@ int main(int argc, char *argv[])
             });
 
         });
-        renderBottomBar("home");
     };
     showfeed = [&]()
     {
@@ -2881,9 +2892,9 @@ int main(int argc, char *argv[])
         newer->setProperty("class", "tab-button");
         trending->setProperty("class", "tab-button");
         federations->setProperty("class", "tab-button");
-        newer->setProperty("active", true);
+        newer->setProperty("active", false);
         trending->setProperty("active", false);
-        federations->setProperty("active", false);
+        federations->setProperty("active", true);
         tabPages->addWidget(newer);
         tabPages->addWidget(trending);
         tabPages->addWidget(federations);
