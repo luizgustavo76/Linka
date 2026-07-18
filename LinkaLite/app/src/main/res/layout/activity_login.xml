@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:padding="16dip"
+    android:background="#1e1e2e"> <!-- CORREÇÃO 1: Mudado para android:background -->
+
+    <!-- CORREÇÃO 2: Removido o ImageView do banner inexistente e trocado por um belo título em texto -->
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="LinkaLite"
+        android:textColor="#ffffff"
+        android:textSize="32sp"
+        android:gravity="center"
+        android:layout_marginTop="40dip"
+        android:layout_marginBottom="40dip" />
+
+    <EditText
+        android:id="@+id/edtUsername"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="Username"
+        android:singleLine="true" />
+
+    <EditText
+        android:id="@+id/edtPassword"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="Password"
+        android:password="true"
+        android:singleLine="true"
+        android:layout_marginTop="10dip" />
+
+    <Button
+        android:id="@+id/btnLogin"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Enter"
+        android:layout_marginTop="20dip" />
+
+    <TextView
+        android:id="@+id/txtGoToSignup"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Dont have a account? register!"
+        android:textColor="#a4a4c1"
+        android:gravity="center"
+        android:layout_marginTop="20dip"
+        android:padding="10dip" />
+</LinearLayout>

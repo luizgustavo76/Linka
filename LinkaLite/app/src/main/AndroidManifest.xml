@@ -1,26 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- ESSENCIAL: Permissão de Internet -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
-    <application
-        android:allowBackup="true"
-        android:label="@string/app_name"
-        android:icon="@mipmap/ic_launcher">
-        android:hardwareAccelerated="true"
-        <activity
-            android:name="com.LinkaProject.linkalite.MainActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
-            android:exported="true"
-            android:label="@string/app_name">
-
+    <application android:label="Meu App Linka">
+        
+        <!-- Tela de Login (A primeira que vai abrir) -->
+        <activity 
+            android:name=".LoginActivity" 
+            android:label="Login"
+            android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
 
+        <!-- Tela de Cadastro -->
+        <activity 
+            android:name=".SignupActivity" 
+            android:label="Cadastro"
+            android:exported="false" />
+            
+        <!-- Página Inicial -->
+        <activity 
+            android:name=".HomeActivity" 
+            android:label="Página Inicial"
+            android:exported="false" />
+        
     </application>
-
 </manifest>
