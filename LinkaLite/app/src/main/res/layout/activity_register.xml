@@ -4,7 +4,11 @@
     android:layout_height="fill_parent"
     android:fillViewport="true"
     android:background="#1e1e2e">
-    <LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -14,6 +18,7 @@
             android:gravity="center"
             android:layout_marginTop="30dip"
             android:layout_marginBottom="30dip" />
+
         <EditText
             android:id="@+id/edtUsername"
             android:layout_width="fill_parent"
@@ -29,6 +34,7 @@
             android:password="true"
             android:singleLine="true"
             android:layout_marginTop="10dip" />
+
         <EditText
             android:id="@+id/edtRetypePassword"
             android:layout_width="fill_parent"
@@ -37,30 +43,33 @@
             android:password="true"
             android:singleLine="true"
             android:layout_marginTop="10dip" />
+
         <EditText
             android:id="@+id/edtEmail"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:hint="email(opcional)"
-            android:password="true"
             android:singleLine="true"
             android:layout_marginTop="10dip" />
+
         <Button
-            android:id="@+id/btnLogin"
+            android:id="@+id/btnRegister"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Enter"
+            android:text="Register"
             android:layout_marginTop="20dip" />
+
         <TextView
             android:id="@+id/txtGoToSignin"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Already have a account?"
+            android:text="Already have an account?"
             android:textColor="#a4a4c1"
             android:gravity="center"
             android:layout_marginTop="20dip"
             android:padding="10dip"
             android:focusable="true"
             android:clickable="true" />
+            
     </LinearLayout>
 </ScrollView>

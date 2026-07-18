@@ -4,7 +4,7 @@
     <!-- ESSENCIAL: Permissão de Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <application android:label="Meu App Linka">
+    <application android:label="Linka Lite">
         
         <!-- Tela de Login (A primeira que vai abrir) -->
         <activity 
