@@ -2365,7 +2365,7 @@ int main(int argc, char *argv[])
                 // Esse é o segredo: Um mini layout horizontal só para a foto ficar lado a lado com o nome
                 QHBoxLayout *headerLayout = new QHBoxLayout();
 
-                QLabel *usernameLabel = new QLabel(username);
+                QLabel *usernameLabel = new QLabel(sender);
 
                 if (isMe) {
                     usernameLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -2379,7 +2379,7 @@ int main(int argc, char *argv[])
                 }
                 else {
                     usernameLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-                    viewProfilePicture(headerLayout, username); // A foto entra na esquerda
+                    viewProfilePicture(headerLayout, sender); // A foto entra na esquerda
                     headerLayout->addWidget(usernameLabel);
                     headerLayout->addStretch(); // Empurra o resto do espaço vazio para a direita
                     bubbleBlock->addLayout(headerLayout);
@@ -3241,6 +3241,13 @@ int main(int argc, char *argv[])
             json_signin,
             10000,
             &status_code
+        );
+        QJsonObject json_username;
+        json_username["username"] = username;
+        QString request_profile = requestHTTP(
+            url + "/create_profile",
+            "POST",
+            json_username
         );
         QString token = newSession(username, password);
         config["FAST-LOGIN"]["token_session"] = token.toStdString();
