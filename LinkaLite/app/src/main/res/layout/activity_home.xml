@@ -2,42 +2,69 @@
 <LinearLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="60dp" 
-    android:orientation="horizontal"
-    android:background="?android:attr/windowBackground"
-    android:elevation="8dp"
-    android:gravity="center_vertical">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF"> <!-- Fundo branco sólido bem leve para o sistema -->
 
-    <ImageButton
-        android:id="@+id/btnHome"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
+    <!-- O ListView com as travas de rolagem para Android antigo -->
+    <ListView
+        android:id="@+id/listViewPosts"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:layout_weight="1"
-        android:src="@drawable/home"
-        android:contentDescription="home" />
+        android:cacheColorHint="#FFFFFF"
+        android:scrollingCache="false"   
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp" />
 
-    <ImageButton
-        android:id="@+id/btnChat"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:src="@drawable/chat"
-        android:contentDescription="Chat" />
+    <!-- Barra de botões (Mantida preta fixa) -->
+    <LinearLayout 
+        android:layout_width="match_parent"
+        android:layout_height="60dp" 
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@android:color/black">
 
-    <ImageButton
-        android:id="@+id/btnOptions"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:src="@drawable/options"
-        android:contentDescription="Options" />
+        <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/home"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent"
+            android:contentDescription="home" />
 
-    <ImageButton
-        android:id="@+id/btnProfile"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:src="@drawable/account"
-        android:contentDescription="Profile" />
+        <ImageButton
+            android:id="@+id/btnChat"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/chat"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent"
+            android:contentDescription="Chat" />
+
+        <ImageButton
+            android:id="@+id/btnOptions"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/options"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent"
+            android:contentDescription="Options" />
+
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/account"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent"
+            android:contentDescription="Profile" />
+
+    </LinearLayout>
 
 </LinearLayout>

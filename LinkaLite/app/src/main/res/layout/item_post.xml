@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- 1. Layout Horizontal: Foto de Perfil + Username -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <ImageView
+            android:id="@+id/postAvatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/account"
+            android:contentDescription="Avatar" />
+
+        <TextView
+            android:id="@+id/postUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="\@username"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:layout_marginLeft="10dp" />
+    </LinearLayout>
+
+    <!-- 2. Conteúdo do Texto do Post -->
+    <TextView
+        android:id="@+id/postText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Texto do post aqui"
+        android:textSize="15sp"
+        android:textColor="#333333"
+        android:layout_marginBottom="6dp" />
+
+    <!-- 3. Data do Post -->
+    <TextView
+        android:id="@+id/postDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Data aqui"
+        android:textSize="12sp"
+        android:textColor="@android:color/darker_gray"
+        android:layout_marginBottom="8dp" />
+
+    <!-- 4. Layout Horizontal: Ícone de Estrela + Contador -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Usando o ícone de estrela nativo do próprio Android antigo -->
+
+        <TextView
+            android:id="@+id/starCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textSize="14sp"
+            android:layout_marginLeft="6dp" />
+    </LinearLayout>
+
+</LinearLayout>
