@@ -2,34 +2,42 @@
 <LinearLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center"> <!-- Centraliza tudo na tela, se quiser -->
+    android:layout_height="60dp" 
+    android:orientation="horizontal"
+    android:background="?android:attr/windowBackground"
+    android:elevation="8dp"
+    android:gravity="center_vertical">
 
-    <Button
-        android:id="@+id/btnProfile"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Profile" />
-
-    <Button
-        android:id="@+id/btnOptions"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Options" />
-
-    <Button
+    <ImageButton
         android:id="@+id/btnHome"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Home" />
-    <Button
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:src="@drawable/home"
+        android:contentDescription="home" />
+
+    <ImageButton
         android:id="@+id/btnChat"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Chat" />
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:src="@drawable/chat"
+        android:contentDescription="Chat" />
+
+    <ImageButton
+        android:id="@+id/btnOptions"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:src="@drawable/options"
+        android:contentDescription="Options" />
+
+    <ImageButton
+        android:id="@+id/btnProfile"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:src="@drawable/account"
+        android:contentDescription="Profile" />
 
 </LinearLayout>

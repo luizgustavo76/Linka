@@ -1,3 +1,47 @@
+import java.io.File
+
+tasks.register("gerarResolucoesIcons") {
+    doLast {
+        val pastaOriginal = file("${projectDir}/")
+        val pastaRes = file("${projectDir}/src/main/res/drawable")
+
+        if (pastaOriginal.exists() && pastaOriginal.isDirectory) {
+            pastaOriginal.listFiles()?.forEach { file ->
+                if (file.isFile && file.name.endsWith(".png")) {
+                    val nome = file.name
+                    println("⚙️ Redimensionando ícone com Java Process: $nome")
+                    
+                    val tamanhos = mapOf(
+                        "drawable-ldpi" to "24x24",
+                        "drawable-mdpi" to "32x32",
+                        "drawable-hdpi" to "48x48",
+                        "drawable-xhdpi" to "64x64",
+                        "drawable-xxhdpi" to "96x96"
+                    )
+
+                    tamanhos.forEach { (pasta, dimensao) ->
+                        val destinoPasta = File(pastaRes, pasta)
+                        if (!destinoPasta.exists()) destinoPasta.mkdirs()
+
+                        val arquivoDestino = File(destinoPasta, nome)
+
+                        // Usando ProcessBuilder do Java raiz: sem erros de escopo do Gradle!
+                        ProcessBuilder("convert", file.absolutePath, "-resize", dimensao, arquivoDestino.absolutePath)
+                            .inheritIO()
+                            .start()
+                            .waitFor()
+                    }
+                }
+            }
+        } else {
+            println("⚠️ Pasta 'imagens_originais' não encontrada em: ${pastaOriginal.absolutePath}")
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("gerarResolucoesIcons")
+}
 plugins {
     id("com.android.application")
 }

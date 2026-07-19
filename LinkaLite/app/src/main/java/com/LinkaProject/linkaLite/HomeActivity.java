@@ -10,7 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.widget.ImageButton;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -19,17 +19,17 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 public class HomeActivity extends Activity {
-    private Button btnHome;
-    private Button btnProfile;
-    private Button btnOptions;
-    private Button btnChat;
+    private ImageButton btnHome;
+    private ImageButton btnProfile;
+    private ImageButton btnOptions;
+    private ImageButton btnChat;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        btnHome = (Button) findViewById(R.id.btnHome);
-        btnChat = (Button) findViewById(R.id.btnChat);
-        btnProfile = (Button) findViewById(R.id.btnProfile);
-        btnOptions = (Button) findViewById(R.id.btnOptions);
+        btnHome = (ImageButton) findViewById(R.id.btnHome);
+        btnChat = (ImageButton) findViewById(R.id.btnChat);
+        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
     }
 }
