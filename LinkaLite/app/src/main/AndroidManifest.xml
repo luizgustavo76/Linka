@@ -20,13 +20,13 @@
         <!-- Tela de Cadastro -->
         <activity 
             android:name=".SignupActivity" 
-            android:label="Cadastro"
+            android:label="Register"
             android:exported="false" />
             
         <!-- Página Inicial -->
         <activity 
             android:name=".HomeActivity" 
-            android:label="Página Inicial"
+            android:label="Feed"
             android:exported="false" />
         
     </application>
