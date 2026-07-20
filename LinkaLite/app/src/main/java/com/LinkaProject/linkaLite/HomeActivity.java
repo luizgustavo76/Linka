@@ -119,7 +119,7 @@ public class HomeActivity extends Activity {
                 LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(R.layout.item_post, null);
             }
-
+            ImageView imgPost = (ImageView) convertView.findViewById(R.id.imgPost);
             TextView tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
             TextView tvText = (TextView) convertView.findViewById(R.id.postText);
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
@@ -130,6 +130,36 @@ public class HomeActivity extends Activity {
                 tvUsername.setText("@" + post.getString("username"));
                 tvText.setText(post.getString("text_post"));
                 tvDate.setText(post.getString("datetime"));
+                String complet = post.getString("text_post");
+                String[] lines = complet.split("\n");
+
+                // 🛠️ O PULO DO GATO: Reseta a ImageView ANTES do loop.
+                // Assim, assumimos que o post é texto puro por padrão.
+                imgPost.setImageBitmap(null);
+                imgPost.setVisibility(View.GONE);
+
+                // Variável para sabermos se já achamos a imagem (evita conflito se tiver mais de um [IMAGE])
+                boolean achouImagem = false;
+
+                for (int i = 0; i < lines.length; i++) {
+                    String actual_line = lines[i];
+                    
+                    if (actual_line.contains("[IMAGE]")) {
+                        String newUrl = actual_line.replace("[IMAGE]", "").trim();
+                        
+                        if (!newUrl.equals("")) {
+                            achouImagem = true;
+                            imgPost.setVisibility(View.VISIBLE);
+                            String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + newUrl;
+                            
+                            // Dispara o download usando a rota intermediária
+                            new ImageLoader().LoadImageUrl(urlProxy, imgPost);
+                            
+                            // Se já achou a tag de imagem, podemos parar o loop aqui (opcional)
+                            break; 
+                        }
+                    }
+                }
                 tvStarCount.setText("0"); // Se o seu JSON ainda não tem estrelas, deixamos travado em 0 por enquanto
             } catch (Exception e) {
                 e.printStackTrace();

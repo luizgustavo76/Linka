@@ -4,12 +4,14 @@
     <!-- ESSENCIAL: Permissão de Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <application android:label="Linka Lite">
+    <application android:label="Linka Lite"
+    android:icon="@drawable/icon"
+    android:usesCleartextTraffic="true">
         
         <!-- Tela de Login (A primeira que vai abrir) -->
         <activity 
             android:name=".LoginActivity" 
-            android:label="Login"
+            android:label="LinkaLite"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
