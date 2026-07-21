@@ -43,7 +43,7 @@
         android:layout_height="wrap_content"
         android:text="Texto do post aqui"
         android:textSize="15sp"
-        android:textColor="#333333"
+        android:textColor="#ffffff"
         android:layout_marginBottom="6dp" />
 
     <TextView

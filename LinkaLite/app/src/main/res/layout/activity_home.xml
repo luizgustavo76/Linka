@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFF"> <!-- Fundo branco sólido bem leve para o sistema -->
+    android:background="#1e1e2e"> <!-- Fundo branco sólido bem leve para o sistema -->
 
     <!-- O ListView com as travas de rolagem para Android antigo -->
     <ListView

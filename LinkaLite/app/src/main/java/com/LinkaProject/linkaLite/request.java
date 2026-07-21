@@ -24,7 +24,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 public class request{
-    public String requestHTTP(String urlParam, String method, JSONObject json_body, int status_code=null) {
+    public static String requestHTTP(String urlParam, String method, JSONObject json_body){
+        requestHTTP(urlParam, method, json_body, 0);
+        return "";
+    }
+    public static String requestHTTP(String urlParam, String method, JSONObject json_body, int status_code) {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(urlParam);
