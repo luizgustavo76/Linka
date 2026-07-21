@@ -24,7 +24,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 public class request{
-    public String requestHTTP(String urlParam, String method, JSONObject json_body) {
+    public String requestHTTP(String urlParam, String method, JSONObject json_body, int status_code=null) {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(urlParam);
@@ -43,6 +43,7 @@ public class request{
             }
 
             int responseCode = connection.getResponseCode();
+            status_code = responseCode;
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 StringBuilder response = new StringBuilder();

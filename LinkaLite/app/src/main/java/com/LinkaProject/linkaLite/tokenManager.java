@@ -30,4 +30,15 @@ public class tokenManager {
         }
         return "";
     }
+    public static String valideToken(String token){
+        JSONObject valideJson;
+        valideJson.put("token", token);
+        int status_code = 0;
+        String response_token = request.requestHTTP(url + "/valideToken", "post", valideJson, status_code);
+        if (status_code == 200 || status_code == 201){
+            return response_token.toString();
+        }else{
+            return response_token.toString();
+        }
+    }
 }
