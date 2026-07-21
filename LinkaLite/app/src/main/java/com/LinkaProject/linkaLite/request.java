@@ -48,6 +48,11 @@ public class request{
 
             int responseCode = connection.getResponseCode();
             status_code = responseCode;
+            if (responseCode == 403){
+                config cfg = new config();
+                String token = cfg.newSession(this);
+                cfg.updateCfg(this, "config.cfg", "FAST-LOGIN", "token_session", token);
+            }
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 StringBuilder response = new StringBuilder();

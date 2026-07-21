@@ -11,7 +11,7 @@ public class tokenManager {
             String rawJson = cfg.loadCfgAsJson(context, "config.cfg");
             if (rawJson != null && !rawJson.isEmpty()) {
                 JSONObject jsonCfg = new JSONObject(rawJson);
-                if (jsonCfg.has("[FAST_LOGIN]")) {
+                if (jsonCfg.has("[FAST-LOGIN]")) {
                     JSONObject fastLogin = jsonCfg.getJSONObject("[FAST_LOGIN]");
                     String username = fastLogin.getString("username");
                     String password = fastLogin.getString("password");
@@ -27,7 +27,6 @@ public class tokenManager {
                     }
                 }
             }
-            return "";
         } catch (Exception e) {
             e.printStackTrace();
         }

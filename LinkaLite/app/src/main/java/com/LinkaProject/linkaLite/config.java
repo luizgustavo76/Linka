@@ -21,7 +21,82 @@ public class config {
             return e.toString();
         }
     }
+    public String updateCfg(Context context, String filename, String targetSection, String newKey, String newValue) {
+        try {
+            // 1. Lê o arquivo atual (se não existir, inicia vazio)
+            String currentContent = "";
+            try {
+                FileInputStream fis = context.openFileInput(filename);
+                BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+                br.close();
+                currentContent = sb.toString();
+            } catch (Exception e) {
+                // Arquivo ainda não existe, vai criar um novo
+            }
 
+            StringBuilder newContent = new StringBuilder();
+            String headerSection = "[" + targetSection + "]";
+            boolean sectionFound = false;
+            boolean keyUpdated = false;
+
+            String[] lines = currentContent.split("\n");
+
+            for (String line : lines) {
+                String trimmed = line.trim();
+
+                // Se achou a seção desejada
+                if (trimmed.equalsIgnoreCase(headerSection)) {
+                    sectionFound = true;
+                    newContent.append(line).append("\n");
+                    continue;
+                }
+
+                // Se achou outra seção depois da que a gente queria, e ainda não adicionou a chave nova
+                if (sectionFound && !keyUpdated && trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                    newContent.append(newKey).append("=").append(newValue).append("\n");
+                    keyUpdated = true;
+                }
+
+                // Se está dentro da seção e achou a chave existente, atualiza o valor
+                if (sectionFound && !keyUpdated && trimmed.contains("=")) {
+                    int eq = trimmed.indexOf("=");
+                    String key = trimmed.substring(0, eq).trim();
+                    if (key.equalsIgnoreCase(newKey)) {
+                        newContent.append(newKey).append("=").append(newValue).append("\n");
+                        keyUpdated = true;
+                        continue; // Pula a linha antiga
+                    }
+                }
+
+                newContent.append(line).append("\n");
+            }
+
+            // Se a seção existia mas a chave era nova, insere no final da seção
+            if (sectionFound && !keyUpdated) {
+                newContent.append(newKey).append("=").append(newValue).append("\n");
+            }
+
+            // Se a seção nem existia, cria a seção e a chave no final do arquivo
+            if (!sectionFound) {
+                if (newContent.length() > 0 && !newContent.toString().endsWith("\n")) {
+                    newContent.append("\n");
+                }
+                newContent.append(headerSection).append("\n");
+                newContent.append(newKey).append("=").append(newValue).append("\n");
+            }
+
+            // 2. Salva o arquivo atualizado
+            return saveCfg(context, filename, newContent.toString().trim());
+
+        } catch (Exception e) {
+            return e.toString();
+        }
+    }
     public void createEmptyFile(Context context, String filename) {
         try {
             FileOutputStream fos = context.openFileOutput(filename, Context.MODE_PRIVATE);
