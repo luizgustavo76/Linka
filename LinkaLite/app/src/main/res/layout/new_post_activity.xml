@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF">
+    <TextView
+        android:id="@+id/newPostText"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="New Post"
+        android:textColor="#ffffff"
+        android:textSize="32sp"
+        android:gravity="center"
+        android:layout_marginTop="30dip"
+        android:layout_marginBottom="30dip"
+    />
+    <EditText
+        android:id="@+id/textPost"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="Text Post"
+        android:singleLine="false"/>
+    <Button
+        android:id="@+id/btnSend"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Send!"
+        android:layout_marginTop="20dip" />
+
+
+</LinearLayout>

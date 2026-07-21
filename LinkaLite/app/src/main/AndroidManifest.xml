@@ -30,6 +30,10 @@
             android:name=".HomeActivity" 
             android:label="Feed"
             android:exported="false" />
+        <activity
+            android:name=".newPost"
+            android:label="New post"
+            android:exported="false"/>
         
     </application>
 </manifest>

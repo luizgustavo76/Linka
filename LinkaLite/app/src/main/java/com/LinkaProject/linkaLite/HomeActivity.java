@@ -13,10 +13,11 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.widget.EditText;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
+import android.widget.Button;
+import android.content.Intent;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -29,7 +30,7 @@ public class HomeActivity extends Activity {
     private ImageButton btnProfile;
     private ImageButton btnOptions;
     private ImageButton btnChat;
-    
+    private Button newPost;
     private ListView listViewPosts;
     private PostAdapter postAdapter;
     private ArrayList<JSONObject> postsList;
@@ -38,12 +39,18 @@ public class HomeActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-
+        newPost = (Button) findViewById(R.id.newPost);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
-        
+        newPost.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HomeActivity.this, newPost.class);
+                startActivity(intent);
+            }
+        });
         // Configura a nossa ListView do Feed
         listViewPosts = (ListView) findViewById(R.id.listViewPosts);
         postsList = new ArrayList<JSONObject>();
@@ -58,7 +65,6 @@ public class HomeActivity extends Activity {
     private class FetchFeedTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... urls) {
-            // Como é um GET para o feed, passamos um JSON vazio para o corpo
             return requestHTTP(urls[0], "GET", new JSONObject());
         }
 
@@ -132,9 +138,6 @@ public class HomeActivity extends Activity {
                 tvDate.setText(post.getString("datetime"));
                 String complet = post.getString("text_post");
                 String[] lines = complet.split("\n");
-
-                // 🛠️ O PULO DO GATO: Reseta a ImageView ANTES do loop.
-                // Assim, assumimos que o post é texto puro por padrão.
                 imgPost.setImageBitmap(null);
                 imgPost.setVisibility(View.GONE);
 
@@ -180,7 +183,6 @@ public class HomeActivity extends Activity {
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
             
-            // Só ativa o output se for POST/PUT. Requisições GET não devem enviar OutputStream
             if (method.equals("POST") || method.equals("PUT")) {
                 connection.setDoOutput(true);
                 OutputStream os = connection.getOutputStream();
