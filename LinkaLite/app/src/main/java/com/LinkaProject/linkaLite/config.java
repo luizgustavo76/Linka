@@ -21,6 +21,11 @@ public class config {
             return e.toString();
         }
     }
+        public static boolean configFileExists(Context context, String fileName) {
+            File file = context.getFileStreamPath(fileName);
+            return file != null && file.exists();
+        }
+    }
     public String updateCfg(Context context, String filename, String targetSection, String newKey, String newValue) {
         try {
             // 1. Lê o arquivo atual (se não existir, inicia vazio)
@@ -150,6 +155,36 @@ public class config {
             return "{}";
         }
     }
+    private String createDefaultConfig(Context context, String fileName) {
+        try {
+            JSONObject defaultConfig = new JSONObject();
+
+            JSONObject fastLogin = new JSONObject();
+            fastLogin.put("username", "");
+            fastLogin.put("password", "")
+            fastLogin.put("token_session", "");
+
+            JSONObject server = new JSONObject();
+            server.put("url", "http://linkaProject.pythonanwhere.com");
+
+            defaultConfig.put("FAST_LOGIN", fastLogin);
+            defaultConfig.put("SERVER", server);
+
+            String jsonString = defaultConfig.toString();
+
+            // Salva no armazenamento interno do Android
+            FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
+            fos.write(jsonString.getBytes());
+            fos.close();
+
+            return jsonString;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+}
 
     public String deleteFileLinka(Context context, String filename) {
         try {

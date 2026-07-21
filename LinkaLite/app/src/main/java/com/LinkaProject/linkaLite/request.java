@@ -1,20 +1,6 @@
 package com.LinkaProject.linkaLite;
 
-import android.app.Activity;
 import android.content.Context;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -22,13 +8,26 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-public class request{
-    public static String requestHTTP(String urlParam, String method, JSONObject json_body){
-        requestHTTP(urlParam, method, json_body, 0);
-        return "";
+
+public class request {
+
+    // 1. Sobrecarga com 3 parâmetros (usada no tokenManager e newPost)
+    public static String requestHTTP(String urlParam, String method, JSONObject json_body) {
+        return requestHTTP(urlParam, method, json_body, 0, null);
     }
+
+    // 2. Sobrecarga com 4 parâmetros (url, method, json, context)
+    public static String requestHTTP(String urlParam, String method, JSONObject json_body, Context context) {
+        return requestHTTP(urlParam, method, json_body, 0, context);
+    }
+
+    // 3. Sobrecarga com 4 parâmetros (url, method, json, status_code)
     public static String requestHTTP(String urlParam, String method, JSONObject json_body, int status_code) {
+        return requestHTTP(urlParam, method, json_body, status_code, null);
+    }
+
+    // 4. Método Principal com toda a sua lógica mantida
+    public static String requestHTTP(String urlParam, String method, JSONObject json_body, int status_code, Context context) {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(urlParam);
@@ -41,18 +40,26 @@ public class request{
             if (method.equals("POST") || method.equals("PUT")) {
                 connection.setDoOutput(true);
                 OutputStream os = connection.getOutputStream();
-                os.write(json_body.toString().getBytes("UTF-8"));
+                if (json_body != null) {
+                    os.write(json_body.toString().getBytes("UTF-8"));
+                }
                 os.flush();
                 os.close();
             }
 
             int responseCode = connection.getResponseCode();
             status_code = responseCode;
-            if (responseCode == 403){
+
+            // Tratamento do erro 403 mantendo a sua intenção original:
+            if (responseCode == 403 && context != null) {
+                // Chama newSession da tokenManager (pois o método pertence a ela)
+                String token = tokenManager.newSession(context);
+                
+                // Salva a nova sessão no arquivo de configuração usando context (em vez do 'this')
                 config cfg = new config();
-                String token = cfg.newSession(this);
-                cfg.updateCfg(this, "config.cfg", "FAST-LOGIN", "token_session", token);
+                cfg.updateCfg(context, "config.cfg", "FAST-LOGIN", "token_session", token);
             }
+
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 StringBuilder response = new StringBuilder();
