@@ -89,7 +89,7 @@ public class LoginActivity extends Activity {
                 jsonParam.put("password", password);
                 config cfg = new config();
                 cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "username", username);
-                cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "password", username);
+                cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "password", password);
                 String newToken = tokenManager.newSession(LoginActivity.this);
                 cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);                   
                 OutputStream os = connection.getOutputStream();

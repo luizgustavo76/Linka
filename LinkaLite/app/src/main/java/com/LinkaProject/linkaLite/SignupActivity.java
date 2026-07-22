@@ -74,6 +74,7 @@ public class SignupActivity extends Activity {
         edtEmail = (EditText) findViewById(R.id.edtEmail);
         txtGoToSignin = (TextView) findViewById(R.id.txtGoToSignin);
         btnRegister = (Button) findViewById(R.id.btnRegister);
+        
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -89,6 +90,11 @@ public class SignupActivity extends Activity {
                     if (password.equals(passwordRetyped)) {
                         String response = requestHTTP(baseUrl + "/register", "post", json_register);
                         if (response.length() != 0) {
+                            config cfg = new config();
+                            cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "username", username);
+                            cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "password", password);
+                            String newToken = tokenManager.newSession();
+                            cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "token_session", newToken);
                             Intent intent = new Intent(SignupActivity.this, HomeActivity.class);
                             startActivity(intent);
                             finish(); 

@@ -64,7 +64,6 @@ public class newPost extends Activity {
 
                 JSONObject jsonResponse = new JSONObject();
                 jsonResponse.put("username", username);
-                jsonResponse.put("token_session", token);
                 jsonResponse.put("text_post", postTextValue); // Usando o parâmetro seguro
                 jsonResponse.put("datetime", TimeUtils.getDateTime());
 
