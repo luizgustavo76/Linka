@@ -13,12 +13,13 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.EditText;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import android.widget.Button;
-import org.json.JSONException;
 import android.content.Intent;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -27,6 +28,7 @@ import java.net.URL;
 import java.util.ArrayList;
 
 public class HomeActivity extends Activity {
+
     private ImageButton btnHome;
     private ImageButton btnProfile;
     private ImageButton btnOptions;
@@ -40,6 +42,7 @@ public class HomeActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
         config cfg = new config();
         try {
             String rawJson = cfg.loadCfgAsJson(this, "config.cfg");
@@ -47,20 +50,23 @@ public class HomeActivity extends Activity {
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             JSONObject server = jsonCfg.getJSONObject("SERVER");
 
-            String url = server.getString("url");
-            String token = fastLogin.getString("token_session");
+            String url = server.optString("url", "http://linkaProject.pythonanywhere.com");
+            String token = fastLogin.optString("token_session", "");
 
-            tokenManager.valideToken(token, url, HomeActivity.this); // Ou a chamada que você usa para validar
+            if (!token.isEmpty()) {
+                tokenManager.valideToken(token, url, HomeActivity.this);
+            }
 
         } catch (JSONException e) {
             e.printStackTrace();
-            // Trate o erro se quiser ou deixe rodar silencioso
         }
+
         newPost = (Button) findViewById(R.id.newPost);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+
         newPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -68,16 +74,21 @@ public class HomeActivity extends Activity {
                 startActivity(intent);
             }
         });
-        // Configura a nossa ListView do Feed
+
+        // Configura a ListView do Feed
         listViewPosts = (ListView) findViewById(R.id.listViewPosts);
         postsList = new ArrayList<JSONObject>();
         postAdapter = new PostAdapter(this, postsList);
         listViewPosts.setAdapter(postAdapter);
-
-        new FetchFeedTask().execute("http://linkaProject.pythonanywhere.com/feed"); // Troque pela sua URL do Flask
     }
 
-    // A AsyncTask garante que a requisição de rede rode fora da Main Thread
+    @Override
+    protected void onResume() {
+        super.onResume();
+        new FetchFeedTask().execute("http://linkaProject.pythonanywhere.com/feed");
+    }
+
+    // AsyncTask para rodar requisição de rede fora da Thread de UI
     private class FetchFeedTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... urls) {
@@ -86,13 +97,12 @@ public class HomeActivity extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            if (result == null || result.equals("")) {
-                Toast.makeText(HomeActivity.this, "Erro ao carregar o feed", Toast.LENGTH_SHORT).show();
+            if (result == null || result.trim().isEmpty()) {
+                Toast.makeText(HomeActivity.this, "Erro in feed loading", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             try {
-                // Transforma a string de resposta no Array de objetos que o servidor mandou
                 JSONArray jsonArray = new JSONArray(result);
                 postsList.clear();
 
@@ -100,17 +110,17 @@ public class HomeActivity extends Activity {
                     postsList.add(jsonArray.getJSONObject(i));
                 }
 
-                // Avisa o Adapter que chegaram dados novos para ele atualizar a tela
+                // Notifica o Adapter para atualizar a interface
                 postAdapter.notifyDataSetChanged();
 
             } catch (Exception e) {
                 e.printStackTrace();
-                Toast.makeText(HomeActivity.this, "Erro ao parsear os posts", Toast.LENGTH_SHORT).show();
+                Toast.makeText(HomeActivity.this, "Error in parsing posts", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
-    // O Adapter gerencia o reaproveitamento dos componentes visuais do layout (Padrão ViewHolder para poupar RAM)
+    // Adapter do Feed
     private class PostAdapter extends BaseAdapter {
         private Context context;
         private ArrayList<JSONObject> list;
@@ -141,45 +151,44 @@ public class HomeActivity extends Activity {
                 LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(R.layout.item_post, null);
             }
+
             ImageView imgPost = (ImageView) convertView.findViewById(R.id.imgPost);
             TextView tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
             TextView tvText = (TextView) convertView.findViewById(R.id.postText);
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
             TextView tvStarCount = (TextView) convertView.findViewById(R.id.starCount);
 
+            // Reseta visualização da imagem
+            imgPost.setImageBitmap(null);
+            imgPost.setVisibility(View.GONE);
+
             try {
                 JSONObject post = list.get(position);
-                tvUsername.setText("@" + post.getString("username"));
-                tvText.setText(post.getString("text_post"));
-                tvDate.setText(post.getString("datetime"));
-                String complet = post.getString("text_post");
-                String[] lines = complet.split("\n");
-                imgPost.setImageBitmap(null);
-                imgPost.setVisibility(View.GONE);
+                String username = post.optString("username", post.optString("user", "entity404"));
+                String textPost = post.optString("text_post", post.optString("text", ""));
+                String datetime = post.optString("datetime", post.optString("date", ""));
+                String stars = post.optString("stars", "0");
 
-                // Variável para sabermos se já achamos a imagem (evita conflito se tiver mais de um [IMAGE])
-                boolean achouImagem = false;
+                tvUsername.setText("@" + username);
+                tvText.setText(textPost);
+                tvDate.setText(datetime);
+                tvStarCount.setText(stars);
 
-                for (int i = 0; i < lines.length; i++) {
-                    String actual_line = lines[i];
-                    
-                    if (actual_line.contains("[IMAGE]")) {
-                        String newUrl = actual_line.replace("[IMAGE]", "").trim();
-                        
-                        if (!newUrl.equals("")) {
-                            achouImagem = true;
-                            imgPost.setVisibility(View.VISIBLE);
-                            String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + newUrl;
-                            
-                            // Dispara o download usando a rota intermediária
-                            new ImageLoader().LoadImageUrl(urlProxy, imgPost);
-                            
-                            // Se já achou a tag de imagem, podemos parar o loop aqui (opcional)
-                            break; 
+                // Renderização de imagem via Tag [IMAGE]
+                if (textPost.contains("[IMAGE]")) {
+                    String[] lines = textPost.split("\n");
+                    for (String line : lines) {
+                        if (line.contains("[IMAGE]")) {
+                            String newUrl = line.replace("[IMAGE]", "").trim();
+                            if (!newUrl.isEmpty()) {
+                                imgPost.setVisibility(View.VISIBLE);
+                                String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + newUrl;
+                                new ImageLoader().LoadImageUrl(urlProxy, imgPost);
+                                break;
+                            }
                         }
                     }
                 }
-                tvStarCount.setText("0"); // Se o seu JSON ainda não tem estrelas, deixamos travado em 0 por enquanto
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -188,7 +197,6 @@ public class HomeActivity extends Activity {
         }
     }
 
-    // Sua função original modificada com segurança contra escrita em requisições GET
     public String requestHTTP(String urlParam, String method, JSONObject json_body) {
         HttpURLConnection connection = null;
         try {
@@ -209,7 +217,7 @@ public class HomeActivity extends Activity {
 
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
                 StringBuilder response = new StringBuilder();
                 String line;
                 while ((line = in.readLine()) != null) {
