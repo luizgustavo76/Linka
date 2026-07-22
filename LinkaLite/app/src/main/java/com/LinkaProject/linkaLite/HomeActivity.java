@@ -50,7 +50,7 @@ public class HomeActivity extends Activity {
             String url = server.getString("url");
             String token = fastLogin.getString("token_session");
 
-            tokenManager.valideToken(token, url); // Ou a chamada que você usa para validar
+            tokenManager.valideToken(token, url, HomeActivity.this); // Ou a chamada que você usa para validar
 
         } catch (JSONException e) {
             e.printStackTrace();

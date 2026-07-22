@@ -9,7 +9,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 public class newPost extends Activity {
@@ -30,7 +29,6 @@ public class newPost extends Activity {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // 1. Pegamos o texto AQUI na Thread de UI
                 String postContent = textPost.getText().toString();
                 
                 if (postContent.trim().isEmpty()) {
@@ -38,39 +36,45 @@ public class newPost extends Activity {
                     return;
                 }
 
-                // 2. Passamos o texto para a Task
+                btnSend.setEnabled(false);
                 new SendPostTask().execute(postContent);
             }
         });
     }
 
-    // Alterado para receber o texto via String... no doInBackground
     private class SendPostTask extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... params) {
-            String postTextValue = params[0]; // Texto que veio da UI
+            String postTextValue = params[0];
 
             try {
                 config cfg = new config();
-                JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(newPost.this, "config.cfg"));
+                String rawCfg = cfg.loadCfgAsJson(newPost.this, "config.cfg");
+                JSONObject jsonCfg = new JSONObject(rawCfg);
                 
-                JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-                JSONObject server = jsonCfg.getJSONObject("SERVER");
+                JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
+                JSONObject server = jsonCfg.optJSONObject("SERVER");
                 
-                String url = server.optString("url", "");
-                String username = fastLogin.getString("username");
-                String token = fastLogin.getString("token_session");
+                // Fallback caso a URL venha nula do arquivo
+                String url = (server != null) ? server.optString("url", "http://linkaProject.pythonanywhere.com") : "http://linkaProject.pythonanywhere.com";
+                String username = (fastLogin != null) ? fastLogin.optString("username", "") : "";
+                String token = (fastLogin != null) ? fastLogin.optString("token_session", "") : "";
 
                 JSONObject jsonResponse = new JSONObject();
                 jsonResponse.put("username", username);
-                jsonResponse.put("text_post", postTextValue); // Usando o parâmetro seguro
+                jsonResponse.put("token_session", token);
+                jsonResponse.put("text_post", postTextValue);
                 jsonResponse.put("datetime", TimeUtils.getDateTime());
+
+                // Remove barra extra no final se houver
+                if (url.endsWith("/")) {
+                    url = url.substring(0, url.length() - 1);
+                }
 
                 return request.requestHTTP(url + "/new", "post", jsonResponse, newPost.this);
 
             } catch (Exception e) {
-                // Isso vai printar exatamente onde estourou no logcat se falhar!
                 e.printStackTrace();
             }
             return null;
@@ -78,7 +82,8 @@ public class newPost extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            if (result != null) {
+            btnSend.setEnabled(true);
+            if (result != null && !result.isEmpty()) {
                 Toast.makeText(newPost.this, "post was send!", Toast.LENGTH_SHORT).show();
                 finish();
             } else {

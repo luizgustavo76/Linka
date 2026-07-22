@@ -173,7 +173,7 @@ public class config {
             StringBuilder iniBuilder = new StringBuilder();
             
             iniBuilder.append("[SERVER]\n");
-            iniBuilder.append("url=http://linkaProject.pythonanwhere.com\n\n");
+            iniBuilder.append("url=http://linkaProject.pythonanywhere.com\n\n");
             
             iniBuilder.append("[FAST_LOGIN]\n");
             iniBuilder.append("username=\n");

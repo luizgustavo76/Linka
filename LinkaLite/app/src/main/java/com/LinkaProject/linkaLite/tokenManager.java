@@ -9,21 +9,32 @@ public class tokenManager {
         try {
             config cfg = new config();
             String rawJson = cfg.loadCfgAsJson(context, "config.cfg");
+            
             if (rawJson != null && !rawJson.isEmpty()) {
                 JSONObject jsonCfg = new JSONObject(rawJson);
-                if (jsonCfg.has("FAST-LOGIN")) {
+                
+                if (jsonCfg.has("FAST_LOGIN") && jsonCfg.has("SERVER")) {
                     JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-                    String username = fastLogin.getString("username");
-                    String password = fastLogin.getString("password");
-                    String url = jsonCfg.optString("url", ""); 
+                    JSONObject server = jsonCfg.getJSONObject("SERVER");
+                    
+                    String username = fastLogin.optString("username", "");
+                    String password = fastLogin.optString("password", "");
+                    String url = server.optString("url", "http://linkaProject.pythonanywhere.com"); 
+
+                    if (username.isEmpty() || password.isEmpty()) {
+                        return "";
+                    }
+
                     JSONObject jsonToken = new JSONObject();
                     jsonToken.put("username", username);
                     jsonToken.put("password", password);
                     
-                    JSONObject response = new JSONObject(request.requestHTTP(url + "/new-session", "post", jsonToken));
-                    if (response != null) {
-                        String token = response.getString("token");
-                        return token.toString();
+                    String responseStr = request.requestHTTP(url + "/new-session", "post", jsonToken, context);
+                    if (responseStr != null && !responseStr.isEmpty()) {
+                        JSONObject response = new JSONObject(responseStr);
+                        if (response.has("token")) {
+                            return response.getString("token");
+                        }
                     }
                 }
             }
@@ -33,19 +44,11 @@ public class tokenManager {
         return "";
     }
 
-    public static String valideToken(String token, String url) {
+    public static String valideToken(String token, String url, Context context) {
         try {
             JSONObject valideJson = new JSONObject();
             valideJson.put("token", token);
-            int status_code = 0;
-            
-            String response_token = request.requestHTTP(url + "/valideToken", "post", valideJson, status_code);
-            
-            if (status_code == 200 || status_code == 201) {
-                return response_token.toString();
-            } else {
-                return response_token.toString();
-            }
+            return request.requestHTTP(url + "/valideToken", "post", valideJson, context);
         } catch (Exception e) {
             e.printStackTrace();
         }

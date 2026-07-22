@@ -67,6 +67,9 @@ public class SignupActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         final String baseUrl = "http://linkaProject.pythonanywhere.com";
         super.onCreate(savedInstanceState);
+        config cfg = new config();
+        cfg.deleteFileLinka(SignupActivity.this, "config.cfg");
+        cfg.createDefaultConfig(SignupActivity.this, "config.cfg");
         setContentView(R.layout.activity_register);
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword); 
@@ -91,10 +94,10 @@ public class SignupActivity extends Activity {
                         String response = requestHTTP(baseUrl + "/register", "post", json_register);
                         if (response.length() != 0) {
                             config cfg = new config();
-                            cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "username", username);
-                            cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "password", password);
-                            String newToken = tokenManager.newSession();
-                            cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "token_session", newToken);
+                            cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "username", username);
+                            cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "password", password);
+                            String newToken = tokenManager.newSession(SignupActivity.this);
+                            cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
                             Intent intent = new Intent(SignupActivity.this, HomeActivity.class);
                             startActivity(intent);
                             finish(); 
