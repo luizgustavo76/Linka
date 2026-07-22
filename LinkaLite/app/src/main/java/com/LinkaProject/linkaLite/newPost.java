@@ -30,15 +30,27 @@ public class newPost extends Activity {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new SendPostTask().execute();
+                // 1. Pegamos o texto AQUI na Thread de UI
+                String postContent = textPost.getText().toString();
+                
+                if (postContent.trim().isEmpty()) {
+                    Toast.makeText(newPost.this, "write something!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // 2. Passamos o texto para a Task
+                new SendPostTask().execute(postContent);
             }
         });
     }
 
-    private class SendPostTask extends AsyncTask<Void, Void, String> {
+    // Alterado para receber o texto via String... no doInBackground
+    private class SendPostTask extends AsyncTask<String, Void, String> {
 
         @Override
-        protected String doInBackground(Void... params) {
+        protected String doInBackground(String... params) {
+            String postTextValue = params[0]; // Texto que veio da UI
+
             try {
                 config cfg = new config();
                 JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(newPost.this, "config.cfg"));
@@ -53,14 +65,13 @@ public class newPost extends Activity {
                 JSONObject jsonResponse = new JSONObject();
                 jsonResponse.put("username", username);
                 jsonResponse.put("token_session", token);
-                jsonResponse.put("text_post", textPost.getText().toString());
+                jsonResponse.put("text_post", postTextValue); // Usando o parâmetro seguro
                 jsonResponse.put("datetime", TimeUtils.getDateTime());
 
                 return request.requestHTTP(url + "/new", "post", jsonResponse, newPost.this);
 
-            } catch (JSONException e) {
-                e.printStackTrace();
             } catch (Exception e) {
+                // Isso vai printar exatamente onde estourou no logcat se falhar!
                 e.printStackTrace();
             }
             return null;

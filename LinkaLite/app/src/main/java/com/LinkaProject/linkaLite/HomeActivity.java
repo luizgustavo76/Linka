@@ -44,8 +44,8 @@ public class HomeActivity extends Activity {
         try {
             String rawJson = cfg.loadCfgAsJson(this, "config.cfg");
             JSONObject jsonCfg = new JSONObject(rawJson);
-            JSONObject fastLogin = jsonCfg.getJSONObject("[FAST_LOGIN]");
-            JSONObject server = jsonCfg.getJSONObject("[SERVER]");
+            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
+            JSONObject server = jsonCfg.getJSONObject("SERVER");
 
             String url = server.getString("url");
             String token = fastLogin.getString("token_session");
@@ -74,7 +74,6 @@ public class HomeActivity extends Activity {
         postAdapter = new PostAdapter(this, postsList);
         listViewPosts.setAdapter(postAdapter);
 
-        // Dispara a busca do feed na inicialização
         new FetchFeedTask().execute("http://linkaProject.pythonanywhere.com/feed"); // Troque pela sua URL do Flask
     }
 

@@ -10,23 +10,15 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class request {
-
-    // 1. Sobrecarga com 3 parâmetros (usada no tokenManager e newPost)
     public static String requestHTTP(String urlParam, String method, JSONObject json_body) {
         return requestHTTP(urlParam, method, json_body, 0, null);
     }
-
-    // 2. Sobrecarga com 4 parâmetros (url, method, json, context)
     public static String requestHTTP(String urlParam, String method, JSONObject json_body, Context context) {
         return requestHTTP(urlParam, method, json_body, 0, context);
     }
-
-    // 3. Sobrecarga com 4 parâmetros (url, method, json, status_code)
     public static String requestHTTP(String urlParam, String method, JSONObject json_body, int status_code) {
         return requestHTTP(urlParam, method, json_body, status_code, null);
     }
-
-    // 4. Método Principal com toda a sua lógica mantida
     public static String requestHTTP(String urlParam, String method, JSONObject json_body, int status_code, Context context) {
         HttpURLConnection connection = null;
         try {
@@ -49,13 +41,8 @@ public class request {
 
             int responseCode = connection.getResponseCode();
             status_code = responseCode;
-
-            // Tratamento do erro 403 mantendo a sua intenção original:
             if (responseCode == 403 && context != null) {
-                // Chama newSession da tokenManager (pois o método pertence a ela)
                 String token = tokenManager.newSession(context);
-                
-                // Salva a nova sessão no arquivo de configuração usando context (em vez do 'this')
                 config cfg = new config();
                 cfg.updateCfg(context, "config.cfg", "FAST-LOGIN", "token_session", token);
             }
