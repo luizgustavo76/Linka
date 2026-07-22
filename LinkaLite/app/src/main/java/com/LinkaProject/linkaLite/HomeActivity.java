@@ -44,7 +44,7 @@ public class HomeActivity extends Activity {
         setContentView(R.layout.activity_home);
 
         config cfg = new config();
-        try {
+        try {   
             String rawJson = cfg.loadCfgAsJson(this, "config.cfg");
             JSONObject jsonCfg = new JSONObject(rawJson);
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
@@ -151,7 +151,7 @@ public class HomeActivity extends Activity {
                 LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(R.layout.item_post, null);
             }
-
+            ImageView avatarPost = (ImageView) convertView.findViewById(R.id.postAvatar);
             ImageView imgPost = (ImageView) convertView.findViewById(R.id.imgPost);
             TextView tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
             TextView tvText = (TextView) convertView.findViewById(R.id.postText);
@@ -173,7 +173,9 @@ public class HomeActivity extends Activity {
                 tvText.setText(textPost);
                 tvDate.setText(datetime);
                 tvStarCount.setText(stars);
-
+                config cfg = new config();
+                ImageLoader imageLoader = new ImageLoader();
+                imageLoader.viewProfilePicture(context, username, avatarPost);
                 // Renderização de imagem via Tag [IMAGE]
                 if (textPost.contains("[IMAGE]")) {
                     String[] lines = textPost.split("\n");
