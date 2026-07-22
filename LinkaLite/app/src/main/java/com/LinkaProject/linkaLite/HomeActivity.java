@@ -17,6 +17,7 @@ import android.widget.EditText;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import android.widget.Button;
+import org.json.JSONException;
 import android.content.Intent;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -39,6 +40,22 @@ public class HomeActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        config cfg = new config();
+        try {
+            String rawJson = cfg.loadCfgAsJson(this, "config.cfg");
+            JSONObject jsonCfg = new JSONObject(rawJson);
+            JSONObject fastLogin = jsonCfg.getJSONObject("[FAST_LOGIN]");
+            JSONObject server = jsonCfg.getJSONObject("[SERVER]");
+
+            String url = server.getString("url");
+            String token = fastLogin.getString("token_session");
+
+            tokenManager.valideToken(token, url); // Ou a chamada que você usa para validar
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+            // Trate o erro se quiser ou deixe rodar silencioso
+        }
         newPost = (Button) findViewById(R.id.newPost);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);

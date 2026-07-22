@@ -7,7 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-
+import org.json.JSONObject;
 public class config {
 
     public String saveCfg(Context context, String filename, String content) {
@@ -25,7 +25,7 @@ public class config {
             File file = context.getFileStreamPath(fileName);
             return file != null && file.exists();
         }
-    }
+    
     public String updateCfg(Context context, String filename, String targetSection, String newKey, String newValue) {
         try {
             // 1. Lê o arquivo atual (se não existir, inicia vazio)
@@ -155,13 +155,13 @@ public class config {
             return "{}";
         }
     }
-    private String createDefaultConfig(Context context, String fileName) {
+    public String createDefaultConfig(Context context, String fileName) {
         try {
             JSONObject defaultConfig = new JSONObject();
 
             JSONObject fastLogin = new JSONObject();
             fastLogin.put("username", "");
-            fastLogin.put("password", "")
+            fastLogin.put("password", "");
             fastLogin.put("token_session", "");
 
             JSONObject server = new JSONObject();
@@ -184,7 +184,6 @@ public class config {
             return "";
         }
     }
-}
 
     public String deleteFileLinka(Context context, String filename) {
         try {

@@ -29,14 +29,13 @@ public class LoginActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
-        // Vinculando os componentes do XML
+        config cfg = new config();
+        cfg.deleteFileLinka(LoginActivity.this, "config.cfg");
+        cfg.createDefaultConfig(LoginActivity.this, "config.cfg");
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
         btnLogin = (Button) findViewById(R.id.btnLogin);
         txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
-
-        // Evento de clique do botão Entrar (Sem Lambda, estilo Java antigo)
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -46,7 +45,6 @@ public class LoginActivity extends Activity {
                 if (username.isEmpty() || password.isEmpty()) {
                     Toast.makeText(LoginActivity.this, "fill all the camps", Toast.LENGTH_SHORT).show();
                 } else {
-                    // Executa a rede em background (Equivalente ao QtConcurrent do seu código)
                     new LoginTask().execute(username, password);
                 }
             }
@@ -89,7 +87,11 @@ public class LoginActivity extends Activity {
                 JSONObject jsonParam = new JSONObject();
                 jsonParam.put("username", username);
                 jsonParam.put("password", password);
-
+                config cfg = new config();
+                cfg.updateCfg(LoginActivity.this, "config.cfg", "[FAST_LOGIN]", "username", username);
+                cfg.updateCfg(LoginActivity.this, "config.cfg", "[FAST_LOGIN]", "password", username);
+                String newToken = tokenManager.newSession(LoginActivity.this);
+                cfg.updateCfg(LoginActivity.this, "config.cfg", "[FAST_LOGIN]", "token_session", newToken);                   
                 OutputStream os = connection.getOutputStream();
                 os.write(jsonParam.toString().getBytes("UTF-8"));
                 os.flush();
@@ -125,7 +127,6 @@ public class LoginActivity extends Activity {
                     String status = responseJson.getString("status");
                     if (status.equals("login is sucessful")) {
                         Toast.makeText(LoginActivity.this, "Login has sucessful!", Toast.LENGTH_SHORT).show();
-                        // Abre a tela principal (Home)
                         Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                         startActivity(intent);
                         finish(); 
