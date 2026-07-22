@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="#1e1e2e">
+
+    <!-- Username do autor do comentário -->
+    <TextView
+        android:id="@+id/commentUsername"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="\@username"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:textColor="#cdd6f4"/> 
+
+    <!-- Texto do comentário -->
+    <TextView
+        android:id="@+id/textComment"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="comment text here...."
+        android:textSize="14sp"
+        android:textColor="#a6adc8"
+        android:layout_marginTop="2dp"/> 
+
+</LinearLayout>

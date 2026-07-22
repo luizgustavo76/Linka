@@ -40,16 +40,22 @@
         android:id="@+id/postText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Texto do post aqui"
+        android:text="Text post"
         android:textSize="15sp"
         android:textColor="#ffffff"
         android:layout_marginBottom="6dp" />
+    <Button
+        android:id="@+id/btnComments"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Comments"
+        android:layout_marginTop="20dip"/>
 
     <TextView
         android:id="@+id/postDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Data aqui"
+        android:text="Datetime"
         android:textSize="12sp"
         android:textColor="@android:color/darker_gray"
         android:layout_marginBottom="8dp" />

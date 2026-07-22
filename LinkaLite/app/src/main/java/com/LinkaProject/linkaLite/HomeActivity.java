@@ -157,8 +157,7 @@ public class HomeActivity extends Activity {
             TextView tvText = (TextView) convertView.findViewById(R.id.postText);
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
             TextView tvStarCount = (TextView) convertView.findViewById(R.id.starCount);
-
-            // Reseta visualização da imagem
+            Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
             imgPost.setImageBitmap(null);
             imgPost.setVisibility(View.GONE);
 
@@ -167,16 +166,22 @@ public class HomeActivity extends Activity {
                 String username = post.optString("username", post.optString("user", "entity404"));
                 String textPost = post.optString("text_post", post.optString("text", ""));
                 String datetime = post.optString("datetime", post.optString("date", ""));
+                String id = post.optString("id", "");
                 String stars = post.optString("stars", "0");
-
+                btnComments.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(HomeActivity.this, comments_activity.class);
+                        intent.putExtra("post_id", id);
+                        startActivity(intent);
+                    }
+                });
                 tvUsername.setText("@" + username);
-                tvText.setText(textPost);
                 tvDate.setText(datetime);
                 tvStarCount.setText(stars);
                 config cfg = new config();
                 ImageLoader imageLoader = new ImageLoader();
                 imageLoader.viewProfilePicture(context, username, avatarPost);
-                // Renderização de imagem via Tag [IMAGE]
                 if (textPost.contains("[IMAGE]")) {
                     String[] lines = textPost.split("\n");
                     for (String line : lines) {
@@ -186,11 +191,13 @@ public class HomeActivity extends Activity {
                                 imgPost.setVisibility(View.VISIBLE);
                                 String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + newUrl;
                                 new ImageLoader().LoadImageUrl(urlProxy, imgPost);
+                                textPost.replace(line, "");
                                 break;
                             }
                         }
                     }
                 }
+                tvText.setText(textPost);
             } catch (Exception e) {
                 e.printStackTrace();
             }

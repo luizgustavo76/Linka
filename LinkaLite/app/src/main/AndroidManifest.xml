@@ -34,6 +34,7 @@
             android:name=".newPost"
             android:label="New post"
             android:exported="false"/>
+        <activity android:name=".comments_activity" />
         
     </application>
 </manifest>
