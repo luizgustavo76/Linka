@@ -48,7 +48,21 @@ public class tokenManager {
         try {
             JSONObject valideJson = new JSONObject();
             valideJson.put("token", token);
-            return request.requestHTTP(url + "/valideToken", "post", valideJson, context);
+            int status_code = 0;
+            request.requestHTTP(url + "/valide-session", "post", valideJson, status_code, context);
+            if (!status_code == 200){
+                try{
+                    config cfg = new config();
+                    JSONObject jsonCfg = cfg.loadCfgAsJson(tokenManager.this, "config.cfg");
+                    JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
+                    String username = fastLogin.getString("username").toString();
+                    String password = fastLogin.getString("password").toString();
+                    String token = newSession(username, password);
+                    return "new token has created";
+                }catch (JSONException e){
+                    return "error in json parsing";
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

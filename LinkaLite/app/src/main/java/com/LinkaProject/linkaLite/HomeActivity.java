@@ -26,7 +26,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 public class HomeActivity extends Activity {
 
     private ImageButton btnHome;
@@ -37,7 +39,13 @@ public class HomeActivity extends Activity {
     private ListView listViewPosts;
     private PostAdapter postAdapter;
     private ArrayList<JSONObject> postsList;
-
+    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    Runnable tarefa = new Runnable() {
+        @Override
+        public void run() {
+            System.out.println("Executando a tarefa...");
+        }
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

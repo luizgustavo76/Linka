@@ -3,41 +3,37 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="10dp"
+    android:padding="8dp"
     android:background="#1e1e2e">
 
     <!-- Avatar do usuário -->
     <ImageView
         android:id="@+id/imgCommentAvatar"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginRight="10dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginRight="8dp"
         android:scaleType="centerCrop" />
 
-    <!-- Bloco de dados (Username + Comentário) -->
+    <!-- Bloco de dados -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <!-- Username do autor -->
         <TextView
             android:id="@+id/commentUsername"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="\@username"
             android:textStyle="bold"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textColor="#cdd6f4" /> 
 
-        <!-- Texto do comentário -->
         <TextView
             android:id="@+id/textComment"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="comment text here...."
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textColor="#a6adc8"
             android:layout_marginTop="2dp" /> 
     </LinearLayout>

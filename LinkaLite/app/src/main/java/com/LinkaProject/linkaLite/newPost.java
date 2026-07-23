@@ -56,18 +56,14 @@ public class newPost extends Activity {
                 JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
                 JSONObject server = jsonCfg.optJSONObject("SERVER");
                 
-                // Fallback caso a URL venha nula do arquivo
                 String url = (server != null) ? server.optString("url", "http://linkaProject.pythonanywhere.com") : "http://linkaProject.pythonanywhere.com";
                 String username = (fastLogin != null) ? fastLogin.optString("username", "") : "";
                 String token = (fastLogin != null) ? fastLogin.optString("token_session", "") : "";
-
                 JSONObject jsonResponse = new JSONObject();
                 jsonResponse.put("username", username);
                 jsonResponse.put("token_session", token);
                 jsonResponse.put("text_post", postTextValue);
                 jsonResponse.put("datetime", TimeUtils.getDateTime());
-
-                // Remove barra extra no final se houver
                 if (url.endsWith("/")) {
                     url = url.substring(0, url.length() - 1);
                 }
