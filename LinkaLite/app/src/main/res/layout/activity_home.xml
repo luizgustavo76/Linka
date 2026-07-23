@@ -4,31 +4,34 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#1e1e2e"> <!-- Fundo branco sólido bem leve para o sistema -->
+    android:background="#1e1e2e">
 
-    <!-- O ListView com as travas de rolagem para Android antigo -->
+    <!-- Botão de novo post no topo para não atrapalhar o scroll -->
+    <Button 
+        android:id="@+id/newPost"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="+ New Post"
+        android:textSize="13sp"
+        android:layout_margin="4dp" />
+
+    <!-- O ListView ocupando a tela central -->
     <ListView
         android:id="@+id/listViewPosts"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:cacheColorHint="#FFFFFF"
         android:scrollingCache="false"   
-        android:divider="@android:color/darker_gray"
+        android:divider="#2a2a3c"
         android:dividerHeight="1dp" />
-    <Button 
-        android:id="@+id/newPost"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="New post"
-        android:layout_marginTop="20dip" />
 
+    <!-- Menu Inferior Enxuto (40dp) -->
     <LinearLayout 
         android:layout_width="match_parent"
-        android:layout_height="60dp" 
+        android:layout_height="40dp" 
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@android:color/black">
+        android:background="#11111b">
 
         <ImageButton
             android:id="@+id/btnHome"

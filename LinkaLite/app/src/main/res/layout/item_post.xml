@@ -4,30 +4,44 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="6dp"
+    android:background="#1e1e2e">
 
+    <!-- Cabeçalho: Avatar + Nome + Data -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="8dp">
+        android:gravity="center_vertical">
 
         <ImageView
             android:id="@+id/postAvatar"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:scaleType="centerCrop"
             android:contentDescription="Avatar" />
 
         <TextView
             android:id="@+id/postUsername"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="\@username"
             android:textStyle="bold"
-            android:textSize="16sp"
-            android:layout_marginLeft="10dp" />
+            android:textColor="#cdd6f4"
+            android:textSize="13sp"
+            android:layout_marginLeft="6dp" />
+
+        <TextView
+            android:id="@+id/postDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12m"
+            android:textSize="10sp"
+            android:textColor="#a6adc8" />
     </LinearLayout>
+
+    <!-- Imagem opcional -->
     <ImageView
         android:id="@+id/imgPost"
         android:layout_width="match_parent"
@@ -35,45 +49,48 @@
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
         android:visibility="gone"
-        android:layout_marginBottom="6dp"/>
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"/>
+
+    <!-- Conteúdo do Post -->
     <TextView
         android:id="@+id/postText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Text post"
-        android:textSize="15sp"
+        android:textSize="13sp"
         android:textColor="#ffffff"
+        android:layout_marginTop="4dp"
         android:layout_marginBottom="6dp" />
-    <Button
-        android:id="@+id/btnComments"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Comments"
-        android:layout_marginTop="20dip"/>
 
-    <TextView
-        android:id="@+id/postDate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Datetime"
-        android:textSize="12sp"
-        android:textColor="@android:color/darker_gray"
-        android:layout_marginBottom="8dp" />
-
+    <!-- Rodapé: Botão de Comentários em Texto + Estrelas -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
+        <Button
+            android:id="@+id/btnComments"
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:text="Comments"
+            android:textSize="11sp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
 
         <TextView
             android:id="@+id/starCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0"
-            android:textSize="14sp"
-            android:layout_marginLeft="6dp" />
+            android:text="★ 0"
+            android:textColor="#f9e2af"
+            android:textSize="12sp" />
     </LinearLayout>
 
 </LinearLayout>

@@ -49,5 +49,16 @@
             android:dividerHeight="1dp" />
             
     </LinearLayout>
-
+    <EditText
+        android:id="@+id/commentEdt"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="Comment text"
+        android:singleLine="false"/>
+    <Button
+        android:id="@+id/btnSend"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Send!"
+        android:layout_marginTop="20dip" />
 </LinearLayout>

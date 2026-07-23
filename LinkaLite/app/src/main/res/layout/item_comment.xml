@@ -2,28 +2,44 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="8dp"
+    android:orientation="horizontal"
+    android:padding="10dp"
     android:background="#1e1e2e">
 
-    <!-- Username do autor do comentário -->
-    <TextView
-        android:id="@+id/commentUsername"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="\@username"
-        android:textStyle="bold"
-        android:textSize="14sp"
-        android:textColor="#cdd6f4"/> 
+    <!-- Avatar do usuário -->
+    <ImageView
+        android:id="@+id/imgCommentAvatar"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginRight="10dp"
+        android:scaleType="centerCrop" />
 
-    <!-- Texto do comentário -->
-    <TextView
-        android:id="@+id/textComment"
-        android:layout_width="fill_parent"
+    <!-- Bloco de dados (Username + Comentário) -->
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="comment text here...."
-        android:textSize="14sp"
-        android:textColor="#a6adc8"
-        android:layout_marginTop="2dp"/> 
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Username do autor -->
+        <TextView
+            android:id="@+id/commentUsername"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="\@username"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:textColor="#cdd6f4" /> 
+
+        <!-- Texto do comentário -->
+        <TextView
+            android:id="@+id/textComment"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="comment text here...."
+            android:textSize="14sp"
+            android:textColor="#a6adc8"
+            android:layout_marginTop="2dp" /> 
+    </LinearLayout>
 
 </LinearLayout>

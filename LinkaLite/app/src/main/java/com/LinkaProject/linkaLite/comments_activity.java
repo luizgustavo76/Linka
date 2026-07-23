@@ -16,19 +16,23 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
+import android.widget.EditText;
+import org.json.JSONException;
+import org.json.JSONObject;
+import android.widget.Button;
 public class comments_activity extends Activity {
-
+    private EditText commentEdt;
     private ListView lvComments;
     private String postId = "";
-
+    private Button btnSend;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.comments_activity);
 
         lvComments = (ListView) findViewById(R.id.lvComments);
-
+        commentEdt = (EditText) findViewById(R.id.commentEdt);
+        btnSend = (Button) findViewById(R.id.btnSend);
         // Resgata o post_id como STRING enviado da HomeActivity
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -36,7 +40,18 @@ public class comments_activity extends Activity {
         }
 
         if (postId != null && !postId.isEmpty()) {
-            new FetchCommentsTask().execute("http://linkaProject.pythonanywhere.com/comments?post_id=" + postId);
+            try{
+                JSONObject jsonComment = new JSONObject();
+                jsonComment.put("post_id", postId);
+                config cfg = new config();
+                String cfgString = cfg.loadCfgAsJson(comments_activity.this, "config.cfg");
+                JSONObject jsonCfg = new JSONObject(cfgString);
+                JSONObject server = jsonCfg.getJSONObject("SERVER");
+                String url = server.getString("url");
+                request.requestHTTP(url + "/view-comments", "post", jsonComment);
+            }catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
