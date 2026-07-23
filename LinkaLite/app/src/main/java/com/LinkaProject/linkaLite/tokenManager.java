@@ -2,7 +2,7 @@ package com.LinkaProject.linkaLite;
 
 import android.content.Context;
 import org.json.JSONObject;
-
+import org.json.JSONException;
 public class tokenManager {
 
     public static String newSession(Context context) {
@@ -50,14 +50,15 @@ public class tokenManager {
             valideJson.put("token", token);
             int status_code = 0;
             request.requestHTTP(url + "/valide-session", "post", valideJson, status_code, context);
-            if (!status_code == 200){
+            if (status_code != 200){
                 try{
                     config cfg = new config();
-                    JSONObject jsonCfg = cfg.loadCfgAsJson(tokenManager.this, "config.cfg");
+                    JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(context, "config.cfg"));
                     JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
                     String username = fastLogin.getString("username").toString();
                     String password = fastLogin.getString("password").toString();
-                    String token = newSession(username, password);
+                    token = newSession(context);
+                    cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "token_session", token);
                     return "new token has created";
                 }catch (JSONException e){
                     return "error in json parsing";

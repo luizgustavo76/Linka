@@ -40,10 +40,20 @@ public class HomeActivity extends Activity {
     private PostAdapter postAdapter;
     private ArrayList<JSONObject> postsList;
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    Runnable tarefa = new Runnable() {
+    Runnable tokenTask = new Runnable() {
         @Override
         public void run() {
-            System.out.println("Executando a tarefa...");
+            try{
+                config cfg = new config();
+                JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
+                JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
+                JSONObject server = jsonCfg.getJSONObject("SERVER");
+                String token = fastLogin.getString("token").toString();
+                String url = server.getString("url").toString();
+                String token_response = tokenManager.valideToken(url, token, HomeActivity.this);
+            }catch (JSONException e){
+                e.printStackTrace();
+            }
         }
     };
     @Override
