@@ -1,13 +1,13 @@
 from flask import Flask, request, Blueprint, jsonify, g
 import sqlite3
 import os
-
+from datetime import datetime
+import notificationsModule
 chat_bp = Blueprint("chat", __name__)
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 
-# garante que a pasta DB existe
 if not os.path.exists(db_dir):
     os.makedirs(db_dir)
 
@@ -36,8 +36,6 @@ def create_db():
     conn.close()
 
 create_db()
-
-# enviar mensagem
 @chat_bp.route("/send-message", methods=["POST"])
 def send():
     data = request.get_json()
@@ -58,7 +56,7 @@ def send():
 
         conn = get_db()
         cur = conn.cursor()
-
+    
         cur.execute("""
             INSERT INTO chat (sender, receiver, message)
             VALUES (?, ?, ?)
@@ -66,13 +64,13 @@ def send():
 
         conn.commit()
         conn.close()
-
+        date = datetime.now()
+        notificationsModule.CreateNotification(sender, receiver, date, "chat", message)    
         return jsonify({"status": "message sent"}), 200
     else:
         return jsonify({"status":"forbidden"}),403
 
 
-# ver conversa completa entre 2 usuários
 @chat_bp.route("/view", methods=["POST"])
 def view():
     data = request.get_json()

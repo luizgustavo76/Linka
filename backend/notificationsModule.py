@@ -5,4 +5,6 @@ def get_db():
 def CreateNotification(from_user, receiver, datetime, type, content):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO notifications (receiver, from_user, datetime, type, content) VALUES (?,?,?,?,?)")
+    cur.execute("INSERT INTO notifications (receiver, from_user, datetime, type, content) VALUES (?,?,?,?,?)",(receiver, from_user, datetime, type, content))
+    conn.commit()
+    conn.close()

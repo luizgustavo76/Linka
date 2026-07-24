@@ -105,7 +105,6 @@ public class config {
         }
     }
 
-    // Lê o formato INI do Linka e converte com precisão para JSON String
     public String loadCfgAsJson(Context context, String filename) {
         try {
             FileInputStream fis = context.openFileInput(filename);

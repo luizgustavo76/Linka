@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify, g
 import sqlite3
 import os
-
+from datetime import datetime
+import notificationsModule
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 post_dir = os.path.join(db_dir, "post.db")
@@ -68,8 +69,12 @@ def new_comment():
             conn = get_db()
             cur = conn.cursor()
             cur.execute("INSERT INTO comments (text_comment, username, post_id) VALUES(?,?,?)", (text_comment, username, post_id))
+            cur.execute("SELECT username FROM posts WHERE post_id = ?",(post_id,))
+            op = cur.fetchone()
             conn.commit()
             conn.close()
+        date = datetime.now()
+        notificationsModule.CreateNotification(username, op, date, "comment", text_comment)
         return jsonify({"status":"the comment has been created with sucess!"}), 200
     else:
         return jsonify({"status":"forbidden"}),403
@@ -213,6 +218,10 @@ def star():
                 "INSERT INTO stars(post_id, username) VALUES (?, ?)",
                 (post_id, username)
             )
+            date = datetime.now()
+            cur.execute("SELECT username FROM posts WHERE post_id = ?",(post_id,))
+            op = cur.fetchone()
+            notificationsModule.CreateNotification(username, op, )
             conn.commit()
             conn.close()
             return jsonify({"status": "added"}), 200

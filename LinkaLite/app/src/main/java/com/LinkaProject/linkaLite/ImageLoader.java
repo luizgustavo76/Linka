@@ -58,7 +58,6 @@ public class ImageLoader {
         }).start();
     }
 
-    // 💡 PASSE O CONTEXTO PARA CONSEGUIR LER O CONFIG.CFG NO ANDROID
     public void viewProfilePicture(Context context, String username, ImageView targetImageView) {
         // Roda a requisição de rede em uma Thread separada (obrigatório no Android)
         new Thread(new Runnable() {
