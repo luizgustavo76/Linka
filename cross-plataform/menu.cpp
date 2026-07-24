@@ -837,7 +837,70 @@ int main(int argc, char *argv[])
     QString current_version = "1.0";
     QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
     QString token_session = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-    
+    QtConcurrent::run([&]() {
+    // 1. Instancia o manager dentro da própria thread
+         QNetworkAccessManager manager;
+
+        while (true) {
+            if (!username.isEmpty()) {
+                QUrl notifUrl(url + "/notifications");
+                QNetworkRequest request(notifUrl);
+                request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+                QByteArray bearerToken = "Bearer " + token_session.toUtf8();
+                request.setRawHeader("Authorization", bearerToken);
+                // Prepara o JSON
+                QJsonObject json_notifications;
+                json_notifications["username"] = username;
+                QByteArray data = QJsonDocument(json_notifications).toJson();
+
+                // Dispara o POST
+                QNetworkReply *reply = manager.post(request, data);
+
+                // 2. O SEGREDO: Cria um EventLoop local para esperar a resposta da rede NESSA thread
+                QEventLoop loop;
+                QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+                loop.exec(); // Trava a thread aqui até a rede responder (sem travar a interface do app)
+
+                // 3. Lê o resultado
+                if (reply->error() == QNetworkReply::NoError) {
+                    QByteArray responseData = reply->readAll();
+                    QJsonDocument doc = QJsonDocument::fromJson(responseData);
+
+                    if (doc.isArray()) {
+                        QJsonArray notificationsArray = doc.array();
+
+                        for (const QJsonValue &val : notificationsArray) {
+                            QJsonObject notifObj = val.toObject();
+                            QString from_user = notifObj["from_user"].toString();
+                            QString content = notifObj["content"].toString();
+                            int notifId = notifObj["id"].toInt();
+
+                            // Envia a notificação no SO
+                            sendSystemNotification(from_user, content);
+                            QUrl readUrl(url + "/set-read-notification");
+                            QNetworkRequest readRequest(readUrl);
+                            readRequest.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+                            readRequest.setRawHeader("Authorization", bearerToken); 
+                            QJsonObject json_set_read;
+                            json_set_read["id"] = notifId;
+                            QNetworkReply *readReply = manager.post(readRequest, QJsonDocument(json_set_read).toJson());
+                            QEventLoop readLoop;
+                            QObject::connect(readReply, &QNetworkReply::finished, &readLoop, &QEventLoop::quit);
+                            readLoop.exec();
+                            readReply->deleteLater();
+                        }
+                    }
+                } else {
+                    qDebug() << "Erro HTTP na Thread:" << reply->errorString();
+                }
+
+                reply->deleteLater();
+            }
+
+            // Aguarda 3 segundos antes do próximo loop
+            QThread::sleep(3);
+        }
+    });
     if (token_session.isEmpty()){
         QJsonObject json_token;
         QString response = requestHTTP(

@@ -25,7 +25,7 @@ def create_db():
             datetime TEXT, 
             type TEXT, 
             content TEXT, 
-            read BOOLEAN, 
+            read BOOLEAN DEFAULT FALSE, 
             id INTEGER PRIMARY KEY AUTOINCREMENT
         )
     """)
@@ -36,31 +36,37 @@ create_db()
 
 @notifications_blueprint.route("/notifications", methods=["POST"])
 def notifications():
-    data = request.get_json() or {}
+    data = request.get_json(force=True) or {}
     username = data.get("username")
     
-    if g.username == username:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT receiver, from_user, datetime, type, content, read, id FROM notifications WHERE receiver = ? AND read = FALSE", (username,))
-        result = cur.fetchall()
-        conn.close()
-        
-        notifications_list = []
-        for items in result:
-            notifications_list.append({
-                "receiver": items[0],
-                "from_user": items[1],
-                "datetime": items[2],
-                "type": items[3],
-                "content": items[4],
-                "read": items[5],
-                "id": items[6] 
-            })
-        return jsonify(notifications_list)
-    else:
-        return jsonify({"status": "forbidden"}), 403
+    # Se o C++ enviar username vazio ou Nulo
+    if not username:
+        print(" [LOG FLASK] Requisição chegou sem username!")
+        return jsonify([]), 200 # Retorna lista vazia para evitar crash no C++
 
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT receiver, from_user, datetime, type, content, read, id FROM notifications WHERE receiver = ? AND (read = 0 OR read = FALSE)", 
+        (username,)
+    )
+    result = cur.fetchall()
+    conn.close()
+    
+    notifications_list = []
+    for items in result:
+        notifications_list.append({
+            "receiver": items[0],
+            "from_user": items[1],
+            "datetime": items[2],
+            "type": items[3],
+            "content": items[4],
+            "read": items[5],
+            "id": items[6] 
+        })
+        
+    print(f" [LOG FLASK] Retornando {len(notifications_list)} notificações para {username}")
+    return jsonify(notifications_list), 200
 @notifications_blueprint.route("/set-read-notification", methods=["POST"])
 def set_read():
     data = request.get_json() or {}
