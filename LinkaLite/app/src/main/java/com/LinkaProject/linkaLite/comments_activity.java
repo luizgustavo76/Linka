@@ -102,9 +102,7 @@ public class comments_activity extends Activity {
         }
     }
 
-    // =======================================================
-    // 1. Task para ENVIAR o comentário em Background (POST)
-    // =======================================================
+
     private class SendCommentTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
@@ -113,7 +111,7 @@ public class comments_activity extends Activity {
                 JSONObject commentJson = new JSONObject(jsonPayload);
 
                 // Executa o POST e traz o corpo da resposta do Flask
-                return request.requestHTTP(baseUrl + "/comments", "post", commentJson);
+                return request.requestHTTP(baseUrl + "/comments", "post", commentJson, comments_activity.this);
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;

@@ -15,7 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Button;
 import android.content.Intent;
-
+import java.util.concurrent.TimeUnit;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,28 +39,28 @@ public class HomeActivity extends Activity {
     private ListView listViewPosts;
     private PostAdapter postAdapter;
     private ArrayList<JSONObject> postsList;
-    ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    Runnable tokenTask = new Runnable() {
-        @Override
-        public void run() {
-            try{
-                config cfg = new config();
-                JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
-                JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-                JSONObject server = jsonCfg.getJSONObject("SERVER");
-                String token = fastLogin.getString("token").toString();
-                String url = server.getString("url").toString();
-                String token_response = tokenManager.valideToken(url, token, HomeActivity.this);
-            }catch (JSONException e){
-                e.printStackTrace();
-            }
-        }
-    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        Runnable tokenTask = new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    config cfg = new config();
+                    JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
+                    JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
+                    JSONObject server = jsonCfg.getJSONObject("SERVER");
+                    String token = fastLogin.getString("token").toString();
+                    String url = server.getString("url").toString();
+                    String token_response = tokenManager.valideToken(url, token, HomeActivity.this);
+                }catch (JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        };
+        scheduler.scheduleAtFixedRate(tokenTask, 0, 2, TimeUnit.MINUTES);
         config cfg = new config();
         try {   
             String rawJson = cfg.loadCfgAsJson(this, "config.cfg");

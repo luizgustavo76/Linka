@@ -10,9 +10,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -30,8 +29,17 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         config cfg = new config();
-        cfg.deleteFileLinka(LoginActivity.this, "config.cfg");
-        cfg.createDefaultConfig(LoginActivity.this, "config.cfg");
+        try{
+            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(LoginActivity.this, "config.cfg"));
+            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
+            String username = fastLogin.getString("username").toString();
+            String password = fastLogin.getString("password").toString();
+            if (!username.isEmpty()|| !password.isEmpty()){
+                new LoginTask().execute(username, password);
+            }
+        }catch (JSONException e){
+            e.printStackTrace();
+        }
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
         btnLogin = (Button) findViewById(R.id.btnLogin);
@@ -50,7 +58,6 @@ public class LoginActivity extends Activity {
             }
         });
 
-        // Navegação para a tela de Cadastro
         txtGoToSignup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -60,7 +67,6 @@ public class LoginActivity extends Activity {
         });
     }
 
-    // AsyncTask para processar a rede sem travar a interface do Android 2.0
     private class LoginTask extends AsyncTask<String, Void, String> {
         private ProgressDialog progressDialog;
 
