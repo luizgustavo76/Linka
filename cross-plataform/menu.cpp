@@ -621,138 +621,129 @@ QString requestHTTP(const QString &url,
                     int timeoutMs,
                     int *statusCode)
 {
-    // Criamos uma função lambda interna que vai rodar em outra thread de forma assíncrona
-    auto worker = [=]() -> QString {
-        QNetworkAccessManager manager;
-        QNetworkRequest request;
-        request.setUrl(QUrl(url));
+    QNetworkAccessManager manager;
+    QNetworkRequest request;
+    request.setUrl(QUrl(url));
 
-        QString m = method.toUpper();
-        if (m != "GET") {
-            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-        }
+    QString m = method.toUpper();
+    if (m != "GET") {
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    }
 
-        // Como loadConfig pode ler arquivo, rodar em outra thread é excelente
-        loadConfig(); 
-        QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-        if (!token.isEmpty()) {
-            request.setRawHeader("Authorization", QString("Bearer %1").arg(token).toUtf8());
-        }
+    loadConfig(); 
+    QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+    if (!token.isEmpty()) {
+        request.setRawHeader("Authorization", QString("Bearer %1").arg(token).toUtf8());
+    }
 
-        QNetworkReply *reply = nullptr;
-        QByteArray jsonData = QJsonDocument(json).toJson();
+    QNetworkReply *reply = nullptr;
+    QByteArray jsonData = QJsonDocument(json).toJson();
 
-        if (m == "GET") { reply = manager.get(request); }
-        else if (m == "POST") { reply = manager.post(request, jsonData); }
-        else if (m == "PUT") { reply = manager.put(request, jsonData); }
-        else if (m == "DELETE") { reply = manager.sendCustomRequest(request, "DELETE", jsonData); }
-        else {
-            if (statusCode) *statusCode = -1;
-            return "ERROR: invalid method";
-        }
+    if (m == "GET") { reply = manager.get(request); }
+    else if (m == "POST") { reply = manager.post(request, jsonData); }
+    else if (m == "PUT") { reply = manager.put(request, jsonData); }
+    else if (m == "DELETE") { reply = manager.sendCustomRequest(request, "DELETE", jsonData); }
+    else {
+        if (statusCode) *statusCode = -1;
+        return "ERROR: invalid method";
+    }
 
-        QEventLoop loop;
-        QTimer timer;
-        timer.setSingleShot(true);
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
 
-        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
 
-        timer.start(timeoutMs);
-        loop.exec(); // Esse loop agora roda na thread secundária, NÃO trava a UI!
+    timer.start(timeoutMs);
+    loop.exec(); // Executa o loop com segurança dentro da UI
 
-        if (!timer.isActive()) {
-            reply->abort();
-            if (statusCode) *statusCode = 408;
-            reply->deleteLater();
-            return "ERRO: Timeout";
-        }
-
-        int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (statusCode) *statusCode = code;
-        if (code == 403) {
-            renoveToken();
-        }
-
-        QString response = reply->readAll();
+    if (!timer.isActive()) {
+        reply->abort();
+        if (statusCode) *statusCode = 408;
         reply->deleteLater();
-        return response;
-    };
+        return "ERRO: Timeout";
+    }
 
-    // Despacha a lambda para rodar assincronamente em segundo plano
-    QFuture<QString> future = QtConcurrent::run(worker);
-    
-    // Retorna o resultado. Como o QtConcurrent gerencia as threads do sistema,
-    // o processamento da requisição foi isolado da sua interface principal.
-    return future.result();
+    int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode) *statusCode = code;
+    if (code == 403) {
+        renoveToken();
+    }
+
+    QString response = reply->readAll();
+    reply->deleteLater();
+    return response;
 }
 QString requestMultipart(const QString &url,
                          const QString &filePath,
                          int timeoutMs,
                          int *statusCode)
 {
-    auto worker = [=]() -> QString {
-        QNetworkAccessManager manager;
-        QNetworkRequest request;
-        request.setUrl(QUrl(url));
+    QNetworkAccessManager manager;
+    QNetworkRequest request;
+    request.setUrl(QUrl(url));
 
-        loadConfig();
-        QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
-        if (!token.isEmpty()) {
-            request.setRawHeader("Authorization", QString("Bearer %1").arg(token).toUtf8());
-        }
+    // Carrega o token das configurações
+    loadConfig();
+    QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
+    if (!token.isEmpty()) {
+        request.setRawHeader("Authorization", QString("Bearer %1").arg(token).toUtf8());
+    }
 
-        QFile *file = new QFile(filePath);
-        if (!file->open(QIODevice::ReadOnly)) {
-            if (statusCode) *statusCode = -1;
-            delete file;
-            return "ERROR: Could not open file";
-        }
+    // Abre o arquivo para envio
+    QFile *file = new QFile(filePath);
+    if (!file->open(QIODevice::ReadOnly)) {
+        if (statusCode) *statusCode = -1;
+        delete file;
+        return "ERROR: Could not open file";
+    }
 
-        QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
-        QHttpPart imagePart;
-        QFileInfo fileInfo(filePath);
-        
-        imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, 
-            QVariant(QString("form-data; name=\"image\"; filename=\"%1\"").arg(fileInfo.fileName())));
-        imagePart.setBodyDevice(file);
-        file->setParent(multiPart); 
-        multiPart->append(imagePart);
+    // Prepara o formulário Multipart
+    QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    QHttpPart imagePart;
+    QFileInfo fileInfo(filePath);
+    
+    imagePart.setHeader(QNetworkRequest::ContentDispositionHeader, 
+        QVariant(QString("form-data; name=\"image\"; filename=\"%1\"").arg(fileInfo.fileName())));
+    imagePart.setBodyDevice(file);
+    file->setParent(multiPart); // O arquivo será deletado junto com o multiPart
+    multiPart->append(imagePart);
 
-        QNetworkReply *reply = manager.post(request, multiPart);
-        multiPart->setParent(reply); 
+    // Envia a requisição POST
+    QNetworkReply *reply = manager.post(request, multiPart);
+    multiPart->setParent(reply); // O multiPart será deletado junto com a reply
 
-        QEventLoop loop;
-        QTimer timer;
-        timer.setSingleShot(true);
-        
-        QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-        
-        timer.start(timeoutMs);
-        loop.exec(); // Isolado na thread secundária!
-        
-        if (!timer.isActive()) {
-            reply->abort();
-            if (statusCode) *statusCode = 408;
-            reply->deleteLater();
-            return "ERRO: Timeout";
-        }
-        
-        int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (statusCode) *statusCode = code;
-        if (code == 403){
-            renoveToken(); 
-        }
-        
-        QString response = reply->readAll();
+    // Controla a espera da resposta (Síncrono sem bloquear a UI)
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    
+    timer.start(timeoutMs);
+    loop.exec(); // Aguarda a requisição terminar ou estourar o timeout
+    
+    // Tratamento de Timeout
+    if (!timer.isActive()) {
+        reply->abort();
+        if (statusCode) *statusCode = 408;
         reply->deleteLater();
-        
-        return response;
-    };
-
-    QFuture<QString> future = QtConcurrent::run(worker);
-    return future.result();
+        return "ERRO: Timeout";
+    }
+    
+    // Processa o resultado HTTP
+    int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode) *statusCode = code;
+    if (code == 403) {
+        renoveToken(); 
+    }
+    
+    QString response = reply->readAll();
+    reply->deleteLater();
+    
+    return response;
 }
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 

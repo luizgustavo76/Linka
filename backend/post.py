@@ -98,36 +98,39 @@ def view_comments():
     return jsonify({"comments":comments})
 @post_bp.route("/new", methods=["POST"])
 def new_post():
-    data = request.get_json(silent=True)
+    try:
+        data = request.get_json(silent=True)
 
-    if data is None:
-        return jsonify({"status": "JSON inválido ou vazio"}), 400
+        if data is None:
+            return jsonify({"status": "JSON inválido ou vazio"}), 400
 
-    username = data.get("username")
-    if username == g.username:
-        text_post = data.get("text_post")
-        datetime = data.get("datetime")
+        username = data.get("username")
+        if username == g.username:
+            text_post = data.get("text_post")
+            datetime = data.get("datetime")
 
-        if not username:
-            return jsonify({"status": "username not send"}), 400
+            if not username:
+                return jsonify({"status": "username not send"}), 400
 
-        if not text_post:
-            return jsonify({"status": "its not possible create a post with no cotent"}), 400
+            if not text_post:
+                return jsonify({"status": "its not possible create a post with no cotent"}), 400
 
-        conn = get_db()
-        cur = conn.cursor()
+            conn = get_db()
+            cur = conn.cursor()
 
-        cur.execute(
-            "INSERT INTO posts(username, text_post, datetime) VALUES (?, ?, ?)",
-            (username, text_post, datetime)
-        )
+            cur.execute(
+                "INSERT INTO posts(username, text_post, datetime) VALUES (?, ?, ?)",
+                (username, text_post, datetime)
+            )
 
-        conn.commit()
-        conn.close()
+            conn.commit()
+            conn.close()
 
-        return jsonify({"status": "post created with sucess"}), 200
-    else:
-        return jsonify({"status":"forbidden"}),403 
+            return jsonify({"status": "post created with sucess"}), 200
+        else:
+            return jsonify({"status":"forbidden"}),403
+    except Exception as e:
+        print("ERROR", e)
 @post_bp.route("/trending-feed", methods=["GET"])
 def trending_feed():
     posts_id = []
@@ -190,43 +193,57 @@ def star():
     data = request.get_json(force=True)
 
     post_id = data.get("post_id")
-    username = data.get("username")
-    if username == g.username:
-        if not post_id or not username:
-            return jsonify({"status": "post_id or username is missing"}), 400
+    # Forçamos o username a ser o usuário autenticado na sessão (g.username)
+    username = g.username 
 
-        conn = get_db()
-        cur = conn.cursor()
+    if not username:
+        return jsonify({"status": "forbidden"}), 403
 
+    if not post_id:
+        return jsonify({"status": "post_id is missing"}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT id FROM stars WHERE post_id = ? AND username = ?",
+        (post_id, username)
+    )
+    existing = cur.fetchone()
+
+    if existing:
         cur.execute(
-            "SELECT id FROM stars WHERE post_id = ? AND username = ?",
+            "DELETE FROM stars WHERE post_id = ? AND username = ?",
             (post_id, username)
         )
-        existing = cur.fetchone()
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "removed"}), 200
 
-        if existing:
-            cur.execute(
-                "DELETE FROM stars WHERE post_id = ? AND username = ?",
-                (post_id, username)
-            )
-            conn.commit()
-            conn.close()
-            return jsonify({"status": "removed"}), 200
-
-        else:
-            cur.execute(
-                "INSERT INTO stars(post_id, username) VALUES (?, ?)",
-                (post_id, username)
-            )
-            date = datetime.now()
-            cur.execute("SELECT username FROM posts WHERE post_id = ?",(post_id,))
-            op = cur.fetchone()
-            notificationsModule.CreateNotification(username, op, )
-            conn.commit()
-            conn.close()
-            return jsonify({"status": "added"}), 200
     else:
-        return jsonify({"status":"forbidden"}),403
+        cur.execute(
+            "INSERT INTO stars(post_id, username) VALUES (?, ?)",
+            (post_id, username)
+        )
+        
+        # Pega quem criou o post para mandar a notificação
+        cur.execute("SELECT username FROM posts WHERE id = ?", (post_id,))
+        op = cur.fetchone() # Quem vai receber a notificação
+        
+        date = datetime.now()
+        
+        # Passa username (quem deu o star) e op (dono do post)
+        notificationsModule.CreateNotification(
+            username, 
+            op, 
+            date, 
+            "star", 
+            f"{username} starred your post!"
+        )
+        
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "added"}), 200
 
 @post_bp.route("/return-stars/<int:post_id>", methods=["GET"])
 def return_stars(post_id):
@@ -247,21 +264,19 @@ def has_star():
 
     post_id = data.get("post_id")
     username = data.get("username")
-    if username == g.username:
-        if not post_id or not username:
-            return jsonify({"starred": False}), 200
+    username = g.username
+    if not post_id or not username:
+        return jsonify({"starred": False}), 200
 
-        conn = get_db()
-        cur = conn.cursor()
+    conn = get_db()
+    cur = conn.cursor()
 
-        cur.execute(
-            "SELECT 1 FROM stars WHERE post_id = ? AND username = ?",
-            (post_id, username)
-        )
-        exists = cur.fetchone()
+    cur.execute(
+        "SELECT 1 FROM stars WHERE post_id = ? AND username = ?",
+        (post_id, username)
+    )
+    exists = cur.fetchone()
 
-        conn.close()
+    conn.close()
 
-        return jsonify({"starred": exists is not None}), 200
-    else:
-        return jsonify({"status":"forbidden"}),403
+    return jsonify({"starred": exists is not None}), 200
