@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 public class chatActivity extends Activity{
-    private Button btnGlobalCHat;
+    private Button btnGlobalChat;
     private ImageView avatar;
     private TextView username;
     private ImageButton btnHome;
@@ -41,6 +41,13 @@ public class chatActivity extends Activity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-        
+        btnGlobalChat = (Button) findViewById(R.id.btnGlobalChat);
+        btnGlobalChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(chatActivity.this, ChatGlobalActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 }

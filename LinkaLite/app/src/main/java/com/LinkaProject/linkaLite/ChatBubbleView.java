@@ -27,10 +27,10 @@ public class ChatBubbleView extends LinearLayout {
 
         if (isMe) {
             bubbleContainer.setGravity(Gravity.RIGHT);
-            txtMessage.setBackgroundResource(R.drawable.bubble_mine);
+            txtMessage.setBackgroundResource(R.layout.bubble_mine);
         } else {
             bubbleContainer.setGravity(Gravity.LEFT);
-            txtMessage.setBackgroundResource(R.drawable.bubble_other);
+            txtMessage.setBackgroundResource(R.layout.bubble_other);
         }
     }
 }

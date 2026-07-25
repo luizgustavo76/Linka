@@ -46,7 +46,11 @@
             android:name=".chatActivity"
             android:label="Chat"
             android:exported="false"/>
- 
+        <activity
+            android:name=".GlobalChatActivity"
+            android:label="Global Chat"
+            android:exported="false"/>
+        
         
     </application>
 </manifest>
