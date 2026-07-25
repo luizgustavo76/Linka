@@ -16,8 +16,8 @@
             android:text="Global chat"
             android:textStyle="bold"
             android:textColor="#cdd6f4"
-            android:textSize="13sp"
-            android:layout_marginLeft="6dp" />
+            android:textSize="11sp"
+            android:layout_marginLeft="20dp" />
 
     </ScrollView>
 
