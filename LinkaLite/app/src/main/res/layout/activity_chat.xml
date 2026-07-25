@@ -1,17 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView>
-    <TextView
-        android:id="@+id/btnGlobalChat"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Global chat"
-        android:textStyle="bold"
-        android:textColor="#cdd6f4"
-        android:textSize="13sp"
-        android:layout_marginLeft="6dp"></TextView>
-</ScrollView>
-<LinearLayout 
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/btnGlobalChat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Global chat"
+            android:textStyle="bold"
+            android:textColor="#cdd6f4"
+            android:textSize="13sp"
+            android:layout_marginLeft="6dp" />
+
+    </ScrollView>
+
+    <LinearLayout 
         android:layout_width="match_parent"
         android:layout_height="40dp" 
         android:orientation="horizontal"
@@ -59,3 +69,5 @@
             android:contentDescription="Profile" />
 
     </LinearLayout>
+
+</LinearLayout>
