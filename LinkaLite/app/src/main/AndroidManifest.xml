@@ -42,6 +42,11 @@
             android:label="New post"
             android:exported="false"/>
         <activity android:name=".comments_activity" />
+        <activity
+            android:name=".chatActivity"
+            android:label="Chat"
+            android:exported="false"/>
+ 
         
     </application>
 </manifest>

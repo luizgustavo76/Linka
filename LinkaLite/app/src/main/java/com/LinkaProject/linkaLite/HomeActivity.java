@@ -84,7 +84,13 @@ public class HomeActivity extends Activity {
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
-
+        btnChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(HomeActivity.this, chatActivity.class);
+                startActivity(intent);
+            }
+        });
         newPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-class chatActivity extends Activity{
+public class chatActivity extends Activity{
     private Button btnGlobalCHat;
     private ImageView avatar;
     private TextView username;
