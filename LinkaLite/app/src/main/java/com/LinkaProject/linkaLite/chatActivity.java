@@ -49,5 +49,12 @@ public class chatActivity extends Activity{
                 startActivity(intent);
             }
         });
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(chatActivity.this, HomeActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 }

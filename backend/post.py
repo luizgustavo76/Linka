@@ -3,6 +3,7 @@ import sqlite3
 import os
 from datetime import datetime
 import notificationsModule
+import re
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 post_dir = os.path.join(db_dir, "post.db")
@@ -108,7 +109,11 @@ def new_post():
         if username == g.username:
             text_post = data.get("text_post")
             datetime = data.get("datetime")
-
+            if "@" in text_post:
+                users_mention = re.findall(r'@([^\s]+)', text_post)
+                for user in users_mention:
+                    date = datetime.now()
+                    notificationsModule.CreateNotification(username, user, date, "mention", f"{username} mentioned you in a post")
             if not username:
                 return jsonify({"status": "username not send"}), 400
 
@@ -226,13 +231,11 @@ def star():
             (post_id, username)
         )
         
-        # Pega quem criou o post para mandar a notificação
         cur.execute("SELECT username FROM posts WHERE id = ?", (post_id,))
         op = cur.fetchone() # Quem vai receber a notificação
         
         date = datetime.now()
         
-        # Passa username (quem deu o star) e op (dono do post)
         notificationsModule.CreateNotification(
             username, 
             op, 
