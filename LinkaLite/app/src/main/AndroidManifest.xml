@@ -47,7 +47,7 @@
             android:label="Chat"
             android:exported="false"/>
         <activity
-            android:name=".GlobalChatActivity"
+            android:name=".ChatGlobalActivity"
             android:label="Global Chat"
             android:exported="false"/>
         

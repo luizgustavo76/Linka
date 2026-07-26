@@ -33,7 +33,6 @@ public class request {
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
             
-            // --- NOVO: INJETAR TOKEN DE AUTENTICAÇÃO NO CABEÇALHO ---
             if (context != null) {
                 try {
                     config cfg = new config();
@@ -50,7 +49,6 @@ public class request {
                     }
                 } catch (Exception ignored) {}
             }
-            // ----------------------------------------------------
 
             if (method.equals("POST") || method.equals("PUT")) {
                 connection.setDoOutput(true);

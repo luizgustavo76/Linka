@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="#1e1e2e">
 
     <!-- NO 1: TopBar -->
     <LinearLayout
@@ -11,11 +12,14 @@
         android:orientation="horizontal"
         android:padding="8dp">
 
-        <ImageButton
-            android:id="@+id/btnHeaderImage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/back" />
+     <ImageButton
+        android:id="@+id/btnHeaderImage"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:padding="8dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/back"
+        android:background="#373754" />
 
         <TextView
             android:id="@+id/txtHeaderTitle"
