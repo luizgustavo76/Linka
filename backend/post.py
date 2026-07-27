@@ -108,7 +108,7 @@ def new_post():
         username = data.get("username")
         if username == g.username:
             text_post = data.get("text_post")
-            datetime = data.get("datetime")
+            datetime_post = data.get("datetime")
             if "@" in text_post:
                 users_mention = re.findall(r'@([^\s]+)', text_post)
                 for user in users_mention:
@@ -125,7 +125,7 @@ def new_post():
 
             cur.execute(
                 "INSERT INTO posts(username, text_post, datetime) VALUES (?, ?, ?)",
-                (username, text_post, datetime)
+                (username, text_post, datetime_post)
             )
 
             conn.commit()
@@ -136,6 +136,7 @@ def new_post():
             return jsonify({"status":"forbidden"}),403
     except Exception as e:
         print("ERROR", e)
+    return jsonify({"status":"ok"}),200
 @post_bp.route("/trending-feed", methods=["GET"])
 def trending_feed():
     posts_id = []

@@ -59,7 +59,6 @@ public class ImageLoader {
     }
 
     public void viewProfilePicture(Context context, String username, ImageView targetImageView) {
-        // Roda a requisição de rede em uma Thread separada (obrigatório no Android)
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -71,7 +70,7 @@ public class ImageLoader {
                     String url = server.getString("url");
                     JSONObject jsonProfile = new JSONObject();
                     jsonProfile.put("username", username);
-                    request req = new request(); // Assumindo que sua classe de request se chama "request"
+                    request req = new request();
                     String responseString = req.requestHTTP(url + "/view-profile-picture", "POST", jsonProfile);
                     if (responseString != null && !responseString.trim().isEmpty()) {
                         JSONObject responseJson = new JSONObject(responseString);

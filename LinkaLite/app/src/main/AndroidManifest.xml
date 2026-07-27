@@ -26,13 +26,11 @@
             </intent-filter>
         </activity>
 
-        <!-- Tela de Cadastro -->
         <activity 
             android:name=".SignupActivity" 
             android:label="Register"
             android:exported="false" />
             
-        <!-- Página Inicial -->
         <activity 
             android:name=".HomeActivity" 
             android:label="Feed"
@@ -50,7 +48,10 @@
             android:name=".ChatGlobalActivity"
             android:label="Global Chat"
             android:exported="false"/>
-        
+        <activity
+            android:name=".profile"
+            android:label="My profile"
+            android:exported="false"/>
         
     </application>
 </manifest>
