@@ -23,7 +23,7 @@ QMAKE_CXXFLAGS += -fpermissive
 ANDROID_ABIS = armeabi-v7a 
 
 # Configurações globais de Ícones
-RC_ICONS = assets/icon.ico
+RC_ICONS = assets/icon.png
 INCLUDEPATH += $$PWD/third_party
 
 # Configurações globais de SDK fora de blocos (letras minúsculas para compatibilidade)

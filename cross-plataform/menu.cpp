@@ -107,7 +107,6 @@ void groupButtons(const QString &jsonString, QList<QWidget*> &listaWidgets) {
                 // 4. Conexão do clique do botão do grupo
                 QObject::connect(btnGrupo, &QPushButton::clicked, [idGrupo, nomeGrupo]() {
                     qDebug() << "Abriu o grupo de ID:" << idGrupo << "Nome:" << nomeGrupo;
-                    // Chame aqui a função nativa para carregar o chat da federação:
                     // chatGroup(idGrupo);
                 });
 

@@ -5,16 +5,7 @@
     android:orientation="horizontal"
     android:padding="8dp"
     android:background="#1e1e2e">
-    <TextView
-        android:id="@+id/btnGlobalChat"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Global chat"
-        android:textStyle="bold"
-        android:textColor="#cdd6f4"
-        android:textSize="13sp"
-        android:layout_marginLeft="6dp"></TextView>
+    
     <ImageView
         android:id="@+id/avatar"
         android:layout_width="28dp"

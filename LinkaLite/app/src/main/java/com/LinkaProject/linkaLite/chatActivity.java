@@ -41,6 +41,7 @@ public class chatActivity extends Activity{
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
+        btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnGlobalChat = (Button) findViewById(R.id.btnGlobalChat);
         btnGlobalChat.setOnClickListener(new View.OnClickListener() {
             @Override
