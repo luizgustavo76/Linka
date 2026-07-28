@@ -91,6 +91,13 @@ public class HomeActivity extends Activity {
                 startActivity(intent);
             }
         });
+        btnOptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(HomeActivity.this, optionActivity.class);
+                startActivity(intent);
+            }
+        });
         btnProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){
