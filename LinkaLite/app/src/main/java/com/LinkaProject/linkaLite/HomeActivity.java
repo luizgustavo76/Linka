@@ -52,9 +52,9 @@ public class HomeActivity extends Activity {
                     JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
                     JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
                     JSONObject server = jsonCfg.getJSONObject("SERVER");
-                    String token = fastLogin.getString("token").toString();
+                    String token = fastLogin.getString("token_session").toString();
                     String url = server.getString("url").toString();
-                    String token_response = tokenManager.valideToken(url, token, HomeActivity.this);
+                    String token_response = tokenManager.valideToken(token, url, HomeActivity.this);
                 }catch (JSONException e){
                     e.printStackTrace();
                 }

@@ -7,7 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-
+import org.json.JSONObject;
 public class config {
 
     public String saveCfg(Context context, String filename, String content) {
@@ -106,6 +106,10 @@ public class config {
     }
 
     public String loadCfgAsJson(Context context, String filename) {
+        if (!configFileExists(context, filename)) {
+            return createDefaultConfig(context, filename);
+        }
+
         try {
             FileInputStream fis = context.openFileInput(filename);
             BufferedReader br = new BufferedReader(new InputStreamReader(fis));
@@ -114,17 +118,14 @@ public class config {
             StringBuilder json = new StringBuilder();
             json.append("{");
             boolean firstSection = true;
-            boolean hasKeysInSection = false;
 
             while ((line = br.readLine()) != null) {
                 line = line.trim();
                 
-                // Pula comentários ou linhas que começam com JSON antigo estragado
                 if (line.isEmpty() || line.startsWith("#") || line.startsWith(";") || line.startsWith("{")) {
                     continue;
                 }
                 
-                // Encontrou Cabeçalho de Seção [SECAO]
                 if (line.startsWith("[") && line.endsWith("]")) {
                     if (!firstSection) {
                         if (json.charAt(json.length() - 1) == ',') {
@@ -135,18 +136,15 @@ public class config {
                     section = line.substring(1, line.length() - 1);
                     json.append("\"").append(section).append("\":{");
                     firstSection = false;
-                    hasKeysInSection = false;
                     continue;
                 }
 
-                // Encontrou Chave=Valor
                 int eq = line.indexOf("=");
                 if (eq > 0 && section.length() > 0) {
                     String key = line.substring(0, eq).trim();
                     String value = line.substring(eq + 1).trim();
                     value = value.replace("\\", "\\\\").replace("\"", "\\\"");
                     json.append("\"").append(key).append("\":\"").append(value).append("\",");
-                    hasKeysInSection = true;
                 }
             }
 
@@ -160,12 +158,19 @@ public class config {
             
             json.append("}");
             br.close();
-            return json.toString();
+
+            String finalJson = json.toString();
+            JSONObject testObject = new JSONObject(finalJson);
+            if (!testObject.has("SERVER")) {
+                return createDefaultConfig(context, filename);
+            }
+
+            return finalJson;
+
         } catch (Exception e) {
-            return "{}";
+            return createDefaultConfig(context, filename);
         }
     }
-
     // CORRIGIDO: Gera o padrão padrão do Linka em formato INI/CFG Puro
     public String createDefaultConfig(Context context, String fileName) {
         try {

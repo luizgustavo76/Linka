@@ -1,5 +1,5 @@
 package com.LinkaProject.linkaLite;
-import com.LinkaProject.linkaLite.R;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -24,34 +24,56 @@ public class LoginActivity extends Activity {
     private EditText edtPassword;
     private Button btnLogin;
     private TextView txtGoToSignup;
+    private String serverUrl = "http://linkaProject.pythonanywhere.com";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
         config cfg = new config();
-        try{
+
+        // 1. Se o arquivo não existir, cria o padrão imediatamente
+        if (!config.configFileExists(this, "config.cfg")) {
+            cfg.createDefaultConfig(this, "config.cfg");
+        }
+
+        // 2. Leitura Segura do Config
+        try {
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(LoginActivity.this, "config.cfg"));
-            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-            String username = fastLogin.getString("username").toString();
-            String password = fastLogin.getString("password").toString();
-            if (!username.isEmpty()|| !password.isEmpty()){
-                new LoginTask().execute(username, password);
+            
+            JSONObject server = jsonCfg.optJSONObject("SERVER");
+            if (server != null) {
+                serverUrl = server.optString("url", serverUrl);
             }
-        }catch (JSONException e){
+
+            JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
+            if (fastLogin != null) {
+                String username = fastLogin.optString("username", "");
+                String password = fastLogin.optString("password", "");
+
+                // FIX: Usar && em vez de ||
+                if (!username.isEmpty() && !password.isEmpty()) {
+                    new LoginTask().execute(username, password);
+                }
+            }
+        } catch (JSONException e) {
             e.printStackTrace();
         }
+
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
         btnLogin = (Button) findViewById(R.id.btnLogin);
         txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
+
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String username = edtUsername.getText().toString();
-                String password = edtPassword.getText().toString();
+                String username = edtUsername.getText().toString().trim();
+                String password = edtPassword.getText().toString().trim();
 
                 if (username.isEmpty() || password.isEmpty()) {
-                    Toast.makeText(LoginActivity.this, "fill all the camps", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "fill all the fields", Toast.LENGTH_SHORT).show();
                 } else {
                     new LoginTask().execute(username, password);
                 }
@@ -69,6 +91,8 @@ public class LoginActivity extends Activity {
 
     private class LoginTask extends AsyncTask<String, Void, String> {
         private ProgressDialog progressDialog;
+        private String attemptedUsername;
+        private String attemptedPassword;
 
         @Override
         protected void onPreExecute() {
@@ -77,27 +101,21 @@ public class LoginActivity extends Activity {
 
         @Override
         protected String doInBackground(String... params) {
-            String username = params[0];
-            String password = params[1];
+            attemptedUsername = params[0];
+            attemptedPassword = params[1];
             HttpURLConnection connection = null;
 
             try {
-                // Substitua pela sua URL real de API
-                URL url = new URL("http://linkaProject.pythonanywhere.com/login"); 
+                URL url = new URL(serverUrl + "/login"); 
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
 
-                // Montando o JSON igual ao nlohmann::json que você usava
                 JSONObject jsonParam = new JSONObject();
-                jsonParam.put("username", username);
-                jsonParam.put("password", password);
-                config cfg = new config();
-                cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "username", username);
-                cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "password", password);
-                String newToken = tokenManager.newSession(LoginActivity.this);
-                cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);                   
+                jsonParam.put("username", attemptedUsername);
+                jsonParam.put("password", attemptedPassword);
+
                 OutputStream os = connection.getOutputStream();
                 os.write(jsonParam.toString().getBytes("UTF-8"));
                 os.flush();
@@ -105,14 +123,14 @@ public class LoginActivity extends Activity {
 
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
                     StringBuilder response = new StringBuilder();
                     String line;
                     while ((line = in.readLine()) != null) {
                         response.append(line);
                     }
                     in.close();
-                    return response.toString(); // Retorna o JSON de resposta
+                    return response.toString();
                 }
 
             } catch (Exception e) {
@@ -125,25 +143,35 @@ public class LoginActivity extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            progressDialog.dismiss();
+            if (progressDialog != null && progressDialog.isShowing()) {
+                progressDialog.dismiss();
+            }
+
             if (result != null) {
                 try {
-                    // Fazendo o parse do JSON nativo do Android
                     JSONObject responseJson = new JSONObject(result);
-                    String status = responseJson.getString("status");
+                    String status = responseJson.optString("status", "");
+
                     if (status.equals("login is sucessful")) {
-                        Toast.makeText(LoginActivity.this, "Login has sucessful!", Toast.LENGTH_SHORT).show();
+                        config cfg = new config();
+                        cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "username", attemptedUsername);
+                        cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "password", attemptedPassword);
+                        
+                        String newToken = tokenManager.newSession(LoginActivity.this);
+                        cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
+
+                        Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                         startActivity(intent);
                         finish(); 
                     } else {
-                        Toast.makeText(LoginActivity.this, "Username or password is incorrect!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(LoginActivity.this, "Username or password incorrect!", Toast.LENGTH_LONG).show();
                     }
                 } catch (Exception e) {
-                    Toast.makeText(LoginActivity.this, "Error in processing data", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "Error processing data", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(LoginActivity.this, "conection with server has failed", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, "Connection with server failed", Toast.LENGTH_SHORT).show();
             }
         }
     }

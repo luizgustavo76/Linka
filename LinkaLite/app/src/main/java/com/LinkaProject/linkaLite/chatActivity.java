@@ -43,6 +43,9 @@ public class chatActivity extends Activity{
         setContentView(R.layout.activity_chat);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnGlobalChat = (Button) findViewById(R.id.btnGlobalChat);
+        btnChat = (ImageButton) findViewById(R.id.btnChat);
+        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnGlobalChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -60,14 +63,14 @@ public class chatActivity extends Activity{
         btnOptions.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){
-                Intent intent = new Intent(HomeActivity.this, optionActivity.class);
+                Intent intent = new Intent(chatActivity.this, optionActivity.class);
                 startActivity(intent);
             }
         });
         btnProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){
-                Intent intent = new Intent(HomeActivity.this, profile.class);
+                Intent intent = new Intent(chatActivity.this, profile.class);
                 startActivity(intent);
             }
         });

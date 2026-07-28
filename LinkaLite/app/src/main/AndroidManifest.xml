@@ -52,6 +52,10 @@
             android:name=".profile"
             android:label="My profile"
             android:exported="false"/>
+        <activity
+            android:name=".optionActivity"
+            android:label="Options"
+            android:exported="false"/>
         
     </application>
 </manifest>

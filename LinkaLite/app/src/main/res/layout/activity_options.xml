@@ -4,36 +4,43 @@
     android:layout_height="fill_parent"
     android:fillViewport="true"
     android:background="#1e1e2e">
+
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
+
         <Button
             android:id="@+id/btnConfigurations"
-            android:layout_height="fill_parent"
-            android:layout_width="wrap_content"
-            android:text="configurations"/>
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="configurations" />
+
         <Button
             android:id="@+id/btnInbox"
-            android:layout_height="fill_parent"
-            android:layout_width="wrap_content"
-            android:text="Inbox"/>
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Inbox" />
+
         <Button
             android:id="@+id/btnFriends"
-            android:layout_height="fill_parent"
-            android:layout_width="wrap_content"
-            android:text="Friends"/>
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Friends" />
+
         <Button
             android:id="@+id/btnChangeServer"
-            android:layout_height="fill_parent"
-            android:layout_width="wrap_content"
-            android:text="Change server"/>
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Change server" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="40dp" 
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="#11111b">
+
             <ImageButton
                 android:id="@+id/btnHome"
                 android:layout_width="0dp"
@@ -73,6 +80,7 @@
                 android:scaleType="centerInside"
                 android:background="@android:color/transparent"
                 android:contentDescription="Profile" />
+
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
