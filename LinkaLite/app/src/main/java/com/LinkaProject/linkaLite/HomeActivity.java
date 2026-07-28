@@ -91,6 +91,13 @@ public class HomeActivity extends Activity {
                 startActivity(intent);
             }
         });
+        btnProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(HomeActivity.this, profile.class);
+                startActivity(intent);
+            }
+        });
         newPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -109,7 +116,17 @@ public class HomeActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        new FetchFeedTask().execute("http://linkaProject.pythonanywhere.com/feed");
+        String url = "";
+        try{
+            config cfg = new config();
+            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
+            JSONObject server = jsonCfg.getJSONObject("SERVER");
+            url = server.getString("url").toString();
+
+        }catch(JSONException e){
+            e.printStackTrace();
+        }
+        new FetchFeedTask().execute(url + "/feed");
     }
 
     // AsyncTask para rodar requisição de rede fora da Thread de UI
