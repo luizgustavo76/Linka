@@ -50,5 +50,26 @@ public class optionActivity extends Activity{
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(optionActivity.this, HomeActivity.class);
+                startActivity(intent);
+            }
+        });
+        btnChat.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(optionActivity.this, chatActivity.class);
+                startActivity(intent);
+            }
+        });
+        btnProfile.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(optionActivity.this, profile.class);
+                startActivity(intent);
+            }
+        });
     }
 }
