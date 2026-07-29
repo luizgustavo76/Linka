@@ -56,6 +56,9 @@
             android:name=".optionActivity"
             android:label="Options"
             android:exported="false"/>
-        
+        <activity
+            android:name=".addFriendActivity"
+            android:label="Add friends"
+            android:exported="false"/>
     </application>
 </manifest>

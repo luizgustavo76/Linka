@@ -25,15 +25,19 @@ public class LoginActivity extends Activity {
     private Button btnLogin;
     private TextView txtGoToSignup;
     private String serverUrl = "http://linkaProject.pythonanywhere.com";
+    
+    private LoginTask currentLoginTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        
         config cfg = new config();
         if (!config.configFileExists(this, "config.cfg")) {
             cfg.createDefaultConfig(this, "config.cfg");
         }
+        
         try {
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(LoginActivity.this, "config.cfg"));
             
@@ -47,9 +51,9 @@ public class LoginActivity extends Activity {
                 String username = fastLogin.optString("username", "");
                 String password = fastLogin.optString("password", "");
 
-                // FIX: Usar && em vez de ||
                 if (!username.isEmpty() && !password.isEmpty()) {
-                    new LoginTask().execute(username, password);
+                    currentLoginTask = new LoginTask();
+                    currentLoginTask.execute(username, password);
                 }
             }
         } catch (JSONException e) {
@@ -70,7 +74,8 @@ public class LoginActivity extends Activity {
                 if (username.isEmpty() || password.isEmpty()) {
                     Toast.makeText(LoginActivity.this, "fill all the fields", Toast.LENGTH_SHORT).show();
                 } else {
-                    new LoginTask().execute(username, password);
+                    currentLoginTask = new LoginTask();
+                    currentLoginTask.execute(username, password);
                 }
             }
         });
@@ -84,6 +89,14 @@ public class LoginActivity extends Activity {
         });
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (currentLoginTask != null) {
+            currentLoginTask.dismissDialogSafely();
+        }
+    }
+
     private class LoginTask extends AsyncTask<String, Void, String> {
         private ProgressDialog progressDialog;
         private String attemptedUsername;
@@ -91,7 +104,7 @@ public class LoginActivity extends Activity {
 
         @Override
         protected void onPreExecute() {
-            progressDialog = ProgressDialog.show(LoginActivity.this, "Wait", "Login...");
+            progressDialog = ProgressDialog.show(LoginActivity.this, "Wait", "Login...", true, false);
         }
 
         @Override
@@ -138,9 +151,7 @@ public class LoginActivity extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            if (progressDialog != null && progressDialog.isShowing()) {
-                progressDialog.dismiss();
-            }
+            dismissDialogSafely();
 
             if (result != null) {
                 try {
@@ -167,6 +178,17 @@ public class LoginActivity extends Activity {
                 }
             } else {
                 Toast.makeText(LoginActivity.this, "Connection with server failed", Toast.LENGTH_SHORT).show();
+            }
+        }
+        public void dismissDialogSafely() {
+            if (progressDialog != null && progressDialog.isShowing()) {
+                if (!LoginActivity.this.isFinishing()) {
+                    try {
+                        progressDialog.dismiss();
+                    } catch (IllegalArgumentException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }

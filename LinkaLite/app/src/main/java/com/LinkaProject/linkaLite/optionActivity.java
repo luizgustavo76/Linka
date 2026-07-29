@@ -71,5 +71,12 @@ public class optionActivity extends Activity{
                 startActivity(intent);
             }
         });
+        btnFriends.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(optionActivity.this, addFriendActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 }
