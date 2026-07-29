@@ -63,7 +63,6 @@ public class request {
             int responseCode = connection.getResponseCode();
             status_code = responseCode;
 
-            // Se der 403 (Token Expirado/Inválido), tenta renovar a sessão
             if (responseCode == 403 && context != null) {
                 String newToken = tokenManager.newSession(context);
                 if (newToken != null && !newToken.isEmpty()) {

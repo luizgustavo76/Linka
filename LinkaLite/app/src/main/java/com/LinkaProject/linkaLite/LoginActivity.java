@@ -30,15 +30,10 @@ public class LoginActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
         config cfg = new config();
-
-        // 1. Se o arquivo não existir, cria o padrão imediatamente
         if (!config.configFileExists(this, "config.cfg")) {
             cfg.createDefaultConfig(this, "config.cfg");
         }
-
-        // 2. Leitura Segura do Config
         try {
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(LoginActivity.this, "config.cfg"));
             
