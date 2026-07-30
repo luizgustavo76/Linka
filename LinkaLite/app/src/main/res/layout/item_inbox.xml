@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="6dp"
+    android:background="#1e1e2e">
+    <LinearLayout 
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="6dp"
+        android:background="#1e1e2e">
+        <ImageView
+            android:id="@+id/imgAvatar"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginRight="8dp"
+            android:scaleType="centerCrop"/>
+        <TextView
+            android:id="@+id/postUsername"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="\@username"
+            android:textStyle="bold"
+            android:textColor="#cdd6f4"
+            android:textSize="13sp"
+            android:layout_marginLeft="6dp" />
+    </LinearLayout>
+    <Button
+        android:id="@+id/btnAccept",
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:text="Accept"/>
+    <Button
+        android:id="@+id/btnDenied",
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:text="Denied"/>
+</LinearLayout>
