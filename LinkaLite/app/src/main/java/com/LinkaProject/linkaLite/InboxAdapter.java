@@ -10,14 +10,15 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.util.List;
-
+import org.json.JSONObject;
+import org.json.JSONException;
 public class InboxAdapter extends BaseAdapter {
 
     private Context context;
     private List<InboxItem> itemList;
     private LayoutInflater inflater;
-    private url = "";
-    private username = "";
+    private String url = "";
+    private String username = "";
     public InboxAdapter(Context context, List<InboxItem> itemList) {
         this.context = context;
         this.itemList = itemList;
@@ -52,7 +53,7 @@ public class InboxAdapter extends BaseAdapter {
         ViewHolder holder;
         try{
             config cfg = new config();
-            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(InboxAdapter.this, "config.cfg"));
+            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(context, "config.cfg"));
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             JSONObject server = jsonCfg.getJSONObject("SERVER");
             url = server.getString("url").toString();
@@ -87,7 +88,7 @@ public class InboxAdapter extends BaseAdapter {
                     JSONObject jsonAccept = new JSONObject();
                     jsonAccept.put("receiver", username);
                     jsonAccept.put("remittee", item.getUsername());
-                    request.requestHTTP(url + "/accept", "post", jsonAccept, InboxActivity.this);
+                    request.requestHTTP(url + "/accept", "post", jsonAccept, context);
                 }catch(Exception e){
                     e.printStackTrace();
                 }
@@ -104,7 +105,7 @@ public class InboxAdapter extends BaseAdapter {
                     JSONObject jsonDenied = new JSONObject();
                     jsonDenied.put("receiver", username);
                     jsonDenied.put("remittee", item.getUsername());
-                    request.requestHTTP(url + "/denied", "post", jsonDenied, InboxActivity.this);
+                    request.requestHTTP(url + "/denied", "post", jsonDenied, context);
                 }catch(Exception e){
                     e.printStackTrace();
                 }

@@ -1,51 +1,100 @@
 package com.LinkaProject.linkaLite;
 
 import android.app.Activity;
-import android.content.Context;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.Button;
 import android.content.Intent;
-import java.util.concurrent.TimeUnit;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ListView;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-public class chatActivity extends Activity{
+import java.util.List;
+
+public class chatActivity extends Activity {
+
     private Button btnGlobalChat;
-    private ImageView avatar;
-    private TextView username;
     private ImageButton btnHome;
     private ImageButton btnChat;
     private ImageButton btnOptions;
     private ImageButton btnProfile;
+
+    // Elementos da Lista
+    private ListView lvFriends;
+    private FriendsAdapter adapter;
+    private List<FriendItem> friendsList;
+
+    private String response = "";
+    private String url = "";
+    private String myUsername = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-        btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnGlobalChat = (Button) findViewById(R.id.btnGlobalChat);
+        btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+        lvFriends = (ListView) findViewById(R.id.lvFriends);
+
+        friendsList = new ArrayList<FriendItem>();
+
+        // 2. Carregar configurações
+        try {
+            config cfg = new config();
+            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(chatActivity.this, "config.cfg"));
+            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
+            JSONObject server = jsonCfg.getJSONObject("SERVER");
+
+            url = server.getString("url");
+            myUsername = fastLogin.getString("username");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            JSONObject jsonFriends = new JSONObject();
+            jsonFriends.put("username", myUsername);
+            response = request.requestHTTP(url + "/friends", "post", jsonFriends, chatActivity.this);
+
+            if (response != null && !response.trim().equals("")) {
+                JSONArray friends = new JSONObject(response).getJSONArray("friends");
+
+                for (int i = 0; i < friends.length(); i++) {
+                    JSONArray pair = friends.getJSONArray(i);
+                    
+                    String friend = pair.getString(0).equalsIgnoreCase(myUsername) ? pair.getString(1) : pair.getString(0);
+                    
+                    friendsList.add(new FriendItem("@" + friend));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        adapter = new FriendsAdapter(chatActivity.this, friendsList);
+        lvFriends.setAdapter(adapter);
+
+        lvFriends.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                FriendItem clickedFriend = friendsList.get(position);
+                if (clickedFriend.getType() == FriendsAdapter.TYPE_FRIEND) {
+                    Intent intent = new Intent(chatActivity.this, ChatGlobalActivity.class); 
+                    intent.putExtra("target_user", clickedFriend.getUsername());
+                    startActivity(intent);
+                }
+            }
+        });
+
+        // 6. Navegação dos botões do menu
         btnGlobalChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,6 +102,7 @@ public class chatActivity extends Activity{
                 startActivity(intent);
             }
         });
+
         btnHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -60,16 +110,18 @@ public class chatActivity extends Activity{
                 startActivity(intent);
             }
         });
+
         btnOptions.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
+            public void onClick(View v) {
                 Intent intent = new Intent(chatActivity.this, optionActivity.class);
                 startActivity(intent);
             }
         });
+
         btnProfile.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
+            public void onClick(View v) {
                 Intent intent = new Intent(chatActivity.this, profile.class);
                 startActivity(intent);
             }
