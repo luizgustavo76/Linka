@@ -1,4 +1,4 @@
-package com.example.linka;
+package com.LinkaProject.linkaLite;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -38,10 +38,10 @@ public class InboxAdapter extends BaseAdapter {
         return position;
     }
 
-    // O ViewHolder reutiliza as referências das views na RAM
     static class ViewHolder {
         ImageView imgAvatar;
         TextView txtUsername;
+        TextView txtMessage;
         Button btnAccept;
         Button btnDenied;
     }
@@ -55,7 +55,10 @@ public class InboxAdapter extends BaseAdapter {
             
             holder = new ViewHolder();
             holder.imgAvatar = (ImageView) convertView.findViewById(R.id.imgAvatar);
-            holder.txtUsername = (TextView) convertView.findViewById(R.id.postUsername);
+            // ID corrigido para bater com item_inbox.xml (@+id/username)
+            holder.txtUsername = (TextView) convertView.findViewById(R.id.username);
+            // Mapeando a mensagem (@+id/message)
+            holder.txtMessage = (TextView) convertView.findViewById(R.id.message);
             holder.btnAccept = (Button) convertView.findViewById(R.id.btnAccept);
             holder.btnDenied = (Button) convertView.findViewById(R.id.btnDenied);
             
@@ -66,22 +69,14 @@ public class InboxAdapter extends BaseAdapter {
 
         final InboxItem item = itemList.get(position);
 
-        // Preenche o nome do usuário
         holder.txtUsername.setText(item.getUsername());
-
-        // TODO: Carregar a imagem da URL aqui (usando o seu proxy/rota de imagens)
-        // Por enquanto usa uma imagem padrão do projeto:
-        // holder.imgAvatar.setImageResource(R.drawable.ic_avatar_placeholder);
+        holder.txtMessage.setText(item.getMessage());
 
         // Clique no Botão ACEITAR
         holder.btnAccept.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(context, "Aceitou " + item.getUsername(), Toast.LENGTH_SHORT).show();
-                
-                // 1. Envia a requisição de aceite para o seu Backend Python aqui
-                
-                // 2. Remove o item da lista e atualiza a tela
+                Toast.makeText(context, "Accept " + item.getUsername(), Toast.LENGTH_SHORT).show();
                 itemList.remove(position);
                 notifyDataSetChanged();
             }
@@ -91,11 +86,7 @@ public class InboxAdapter extends BaseAdapter {
         holder.btnDenied.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(context, "Recusou " + item.getUsername(), Toast.LENGTH_SHORT).show();
-                
-                // 1. Envia a requisição de recusa para o seu Backend Python aqui
-                
-                // 2. Remove o item da lista e atualiza a tela
+                Toast.makeText(context, "Denied " + item.getUsername(), Toast.LENGTH_SHORT).show();                
                 itemList.remove(position);
                 notifyDataSetChanged();
             }
