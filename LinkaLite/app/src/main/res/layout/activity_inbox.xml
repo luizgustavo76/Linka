@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:fillViewport="true"
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="#1e1e2e">
-    <LinearLayout
-        android:layout_width="fill_parent"
+
+    <TextView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dip">
-        <ListView
-            android:id="@+id/lvInbox"
-            android:layout_width="fill_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:divider="#2a2a3c"
-            android:dividerHeight="1dp"/>
-    </LinearLayout>
-</ScrollView>
+        android:text="Solicitations/ Inbox"
+        android:textColor="#cdd6f4"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:padding="16dp" />
+    <ListView
+        android:id="@+id/lvInbox"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="#2a2a3c"
+        android:dividerHeight="1dp" />
+
+</LinearLayout>

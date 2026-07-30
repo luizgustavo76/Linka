@@ -1,33 +1,32 @@
 package com.LinkaProject.linkaLite;
 
 import android.app.Activity;
-import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.Button;
-import android.content.Intent;
-import java.util.concurrent.TimeUnit;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-public class InboxAcitivty extends Activity{
-    
+import java.util.List;
+
+public class InboxActivity extends Activity {
+
+    private ListView lvInbox;
+    private InboxAdapter adapter;
+    private List<InboxItem> itemList;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_inbox);
+
+        lvInbox = (ListView) findViewById(R.id.lvInbox);
+        itemList = new ArrayList<InboxItem>();
+
+        // Dados de teste (no futuro você preenche isso com o JSON que vem da sua API Python)
+        itemList.add(new InboxItem("101", "@dev_galaxy_y", "http://seu-server.com/img1.jpg"));
+        itemList.add(new InboxItem("102", "@user_s2_ultra", "http://seu-server.com/img2.jpg"));
+        itemList.add(new InboxItem("103", "@retro_coder", "http://seu-server.com/img3.jpg"));
+
+        // Instancia e define o Adapter na ListView
+        adapter = new InboxAdapter(this, itemList);
+        lvInbox.setAdapter(adapter);
+    }
 }

@@ -3,41 +3,48 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="6dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="10dp"
     android:background="#1e1e2e">
-    <LinearLayout 
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
+
+    <ImageView
+        android:id="@+id/imgAvatar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginRight="10dp"
+        android:scaleType="centerCrop" />
+
+    <TextView
+        android:id="@+id/postUsername"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="6dp"
-        android:background="#1e1e2e">
-        <ImageView
-            android:id="@+id/imgAvatar"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginRight="8dp"
-            android:scaleType="centerCrop"/>
-        <TextView
-            android:id="@+id/postUsername"
-            android:layout_width="0dp"
+        android:layout_weight="1"
+        android:text="@username"
+        android:textStyle="bold"
+        android:textColor="#cdd6f4"
+        android:textSize="14sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnAccept"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="\@username"
-            android:textStyle="bold"
-            android:textColor="#cdd6f4"
-            android:textSize="13sp"
-            android:layout_marginLeft="6dp" />
+            android:text="Aceitar"
+            android:textSize="11sp"
+            android:layout_marginRight="4dp" />
+
+        <Button
+            android:id="@+id/btnDenied"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Recusar"
+            android:textSize="11sp" />
+
     </LinearLayout>
-    <Button
-        android:id="@+id/btnAccept",
-        android:layout_width="wrap_content"
-        android:layout_height="fill_parent"
-        android:text="Accept"/>
-    <Button
-        android:id="@+id/btnDenied",
-        android:layout_width="wrap_content"
-        android:layout_height="fill_parent"
-        android:text="Denied"/>
+
 </LinearLayout>
