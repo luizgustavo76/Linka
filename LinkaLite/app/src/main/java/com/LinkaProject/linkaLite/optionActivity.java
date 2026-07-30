@@ -78,5 +78,12 @@ public class optionActivity extends Activity{
                 startActivity(intent);
             }
         });
+        btnInbox.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(optionActivity.this, InboxActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 }

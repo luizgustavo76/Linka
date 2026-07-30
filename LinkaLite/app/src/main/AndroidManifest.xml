@@ -60,5 +60,9 @@
             android:name=".addFriendActivity"
             android:label="Add friends"
             android:exported="false"/>
+        <activity
+            android:name=".InboxActivity"
+            android:label="Inbox"
+            android:exported="false"/>
     </application>
 </manifest>
