@@ -22,7 +22,7 @@ venv/
 # Makefiles gerados
 Makefile
 Makefile.*
-SDKs/linkaBotsSdk/groq.py
+SDKs/linkaBotsSdk/src/groq.py
 # CMake
 CMakeCache.txt
 CMakeFiles/
