@@ -75,20 +75,14 @@ public class DmChat extends Activity {
         } catch (Exception e) {
             Log.e(TAG, "Error parsing config.cfg", e);
         }
-
-        // 3. Mapeamento da UI
         btnHeaderImage = (ImageButton) findViewById(R.id.btnHeaderImage);
         txtHeaderTitle = (TextView) findViewById(R.id.txtHeaderTitle);
         btnSend = (Button) findViewById(R.id.btnSend);
         edtInputMessage = (EditText) findViewById(R.id.edtInputMessage);
         chatContainer = (LinearLayout) findViewById(R.id.layoutMessagesContainer);
-
-        // Define o nome do amigo no topo da tela
         if (txtHeaderTitle != null) {
             txtHeaderTitle.setText(cleanOtherUser.isEmpty() ? "Chat" : cleanOtherUser);
         }
-
-        // 4. Listeners dos botões
         if (btnSend != null) {
             btnSend.setOnClickListener(new View.OnClickListener() {
                 @Override
