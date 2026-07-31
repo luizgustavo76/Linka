@@ -87,8 +87,8 @@ public class chatActivity extends Activity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 FriendItem clickedFriend = friendsList.get(position);
                 if (clickedFriend.getType() == FriendsAdapter.TYPE_FRIEND) {
-                    Intent intent = new Intent(chatActivity.this, ChatGlobalActivity.class); 
-                    intent.putExtra("target_user", clickedFriend.getUsername());
+                    Intent intent = new Intent(chatActivity.this, DmChat.class); 
+                    intent.putExtra("friend", clickedFriend.getUsername());
                     startActivity(intent);
                 }
             }

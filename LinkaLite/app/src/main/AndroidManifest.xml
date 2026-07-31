@@ -64,5 +64,9 @@
             android:name=".InboxActivity"
             android:label="Inbox"
             android:exported="false"/>
+        <activity
+            android:name=".DmChat"
+            android:label="chat"
+            android:exported="false"/>
     </application>
 </manifest>
