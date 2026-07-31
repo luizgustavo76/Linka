@@ -85,5 +85,12 @@ public class optionActivity extends Activity{
                 startActivity(intent);
             }
         });
+        btnChangeServer.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(optionActivity.this, ChangeServer.class);
+                startActivity(intent);
+            }
+        });
     }
 }

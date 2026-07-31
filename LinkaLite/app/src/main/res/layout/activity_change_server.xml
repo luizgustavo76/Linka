@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#1e1e2e">
+    <EditText
+        android:id="@+id/edtServer"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="Server url"
+        android:singleLine="true"/>
+    <Button
+        android:id="@+id/sendButton"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Send"/>
+    <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/home"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent"
+            android:contentDescription="home" />
+
+        <ImageButton
+            android:id="@+id/btnChat"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/chat"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent"
+            android:contentDescription="Chat" />
+
+        <ImageButton
+            android:id="@+id/btnOptions"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/options"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent"
+            android:contentDescription="Options" />
+
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/account"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent"
+            android:contentDescription="Profile" />
+</LinearLayout>

@@ -68,5 +68,9 @@
             android:name=".DmChat"
             android:label="chat"
             android:exported="false"/>
+        <activity
+            android:name=".ChangeServer"
+            android:label="change server"
+            android:exported="false"/>
     </application>
 </manifest>
