@@ -9,7 +9,7 @@ def new_session(url, username, password):
         timeout=10
     )
     response_json = response.json()
-    if response.status_code() == "200":
+    if response.status_code == 200:
         return response_json.get("token")
 def valide_token(url, token):
     response = requests.post(
@@ -19,4 +19,4 @@ def valide_token(url, token):
         },
         timeout=10
     )
-    return response.status_code()
+    return response.status_code
