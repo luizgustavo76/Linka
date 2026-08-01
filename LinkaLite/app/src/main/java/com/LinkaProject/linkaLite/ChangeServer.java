@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-class ChangeServer extends Activity{
+public class ChangeServer extends Activity{
     private EditText edtServer;
     private Button sendButton;
     private ImageButton btnHome;
