@@ -72,5 +72,13 @@
             android:name=".ChangeServer"
             android:label="change server"
             android:exported="false"/>
+        <activity
+            android:name=".feedFinder"
+            android:label="Feed Finder"
+            android:exported="false"/>
+        <activity
+            android:name="FederationsFeed"
+            android:label="Federations feed"
+            android:exported="false"/>
     </application>
 </manifest>

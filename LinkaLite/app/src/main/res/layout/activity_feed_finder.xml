@@ -13,20 +13,54 @@
             android:id="@+id/listFederations"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
-                <LinearLayout
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="16dip">
-                    <ImageView
-                        android:id="@+id/coverFederation"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"/>
-                    <Button
-                        android:id="@+id/btnFederation"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"/>
-                </LinearLayout>
         </ListView>
+        <LinearLayout 
+            android:layout_width="match_parent"
+            android:layout_height="40dp" 
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#11111b">
+
+            <ImageButton
+                android:id="@+id/btnHome"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:src="@drawable/home"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent"
+                android:contentDescription="home" />
+
+            <ImageButton
+                android:id="@+id/btnChat"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:src="@drawable/chat"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent"
+                android:contentDescription="Chat" />
+
+            <ImageButton
+                android:id="@+id/btnOptions"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:src="@drawable/options"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent"
+                android:contentDescription="Options" />
+
+            <ImageButton
+                android:id="@+id/btnProfile"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:src="@drawable/account"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent"
+                android:contentDescription="Profile" />
+
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 public class HomeActivity extends Activity {
-
+    private Button federationButton;
     private ImageButton btnHome;
     private ImageButton btnProfile;
     private ImageButton btnOptions;
@@ -78,12 +78,19 @@ public class HomeActivity extends Activity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+        federationButton = (Button) findViewById(R.id.federationsButton);
         newPost = (Button) findViewById(R.id.newPost);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        federationButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(HomeActivity.this, feedFinder.class);
+                startActivity(intent);
+            }
+        });
         btnChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){
