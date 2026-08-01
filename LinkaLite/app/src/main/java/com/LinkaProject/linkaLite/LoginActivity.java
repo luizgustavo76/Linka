@@ -24,7 +24,7 @@ public class LoginActivity extends Activity {
     private EditText edtPassword;
     private Button btnLogin;
     private TextView txtGoToSignup;
-    private String serverUrl = "http://192.168.0.15:5000";
+    private String serverUrl = "http://bfdad03a0c9a3294-179-222-238-217.serveousercontent.com";
     
     private LoginTask currentLoginTask;
 
@@ -32,7 +32,7 @@ public class LoginActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        
+        System.setProperty("http.keepAlive", "false");
         config cfg = new config();
         if (!config.configFileExists(this, "config.cfg")) {
             cfg.createDefaultConfig(this, "config.cfg");

@@ -26,6 +26,7 @@ public class request {
     public static String requestHTTP(String urlParam, String method, JSONObject json_body, int status_code, Context context) {
         HttpURLConnection connection = null;
         try {
+            System.setProperty("http.keepAlive", "false");
             URL url = new URL(urlParam);
             connection = (HttpURLConnection) url.openConnection();
             
