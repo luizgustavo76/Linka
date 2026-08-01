@@ -11,7 +11,6 @@
         android:orientation="vertical"
         android:padding="16dip">
 
-        <!-- Título principal -->
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -21,8 +20,6 @@
             android:gravity="center"
             android:layout_marginTop="30dip"
             android:layout_marginBottom="30dip" />
-
-        <!-- Campo de Usuário -->
         <EditText
             android:id="@+id/edtUsername"
             android:layout_width="fill_parent"
@@ -30,7 +27,6 @@
             android:hint="Username"
             android:singleLine="true" />
 
-        <!-- Campo de Senha -->
         <EditText
             android:id="@+id/edtPassword"
             android:layout_width="fill_parent"
@@ -40,7 +36,6 @@
             android:singleLine="true"
             android:layout_marginTop="10dip" />
 
-        <!-- Botão Entrar -->
         <Button
             android:id="@+id/btnLogin"
             android:layout_width="fill_parent"
