@@ -24,7 +24,7 @@ public class LoginActivity extends Activity {
     private EditText edtPassword;
     private Button btnLogin;
     private TextView txtGoToSignup;
-    private String serverUrl = "http://linkaProject.pythonanywhere.com";
+    private String serverUrl = "http://192.168.0.15:5000";
     
     private LoginTask currentLoginTask;
 

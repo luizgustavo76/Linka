@@ -8,7 +8,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
-
+import android.widget.ImageButton;
+import android.content.Intent;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,6 +22,7 @@ public class feedFinder extends Activity{
     private ImageButton btnChat;
     private ImageButton btnOptions;
     private ImageButton btnProfile;
+    private String url = "";
     @Override
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -29,6 +31,35 @@ public class feedFinder extends Activity{
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        ListView listView = (ListView) findViewById(R.id.listViewPosts);
+        List<FederationItem> itemList = new ArrayList<>();
+        try{
+            config cfg = new config();
+            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(feedFinder.this, "config.cfg"));
+            JSONObject server = jsonCfg.getJSONObject("SERVER");
+            url = server.getString("url").toString();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        String response = request.requestHTTP(url + "/view-index", "get", new JSONObject(), feedFinder.this);
+        try {
+            JSONArray jsonArray = new JSONArray(response);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject obj = jsonArray.getJSONObject(i);
+                itemList.add(new FederationItem(
+                    obj.optString("cover_image"),
+                    obj.optString("description"),
+                    obj.optString("name"),
+                    obj.optString("url")
+                ));
+            }
+
+            FederationsAdapter adapter = new FederationsAdapter(this, itemList);
+            listView.setAdapter(adapter);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
         btnChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){

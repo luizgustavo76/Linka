@@ -49,12 +49,12 @@ public class FederationsFeed extends Activity {
             public void run() {
                 try{
                     config cfg = new config();
-                    JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
+                    JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(FederationsFeed.this, "config.cfg"));
                     JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
                     JSONObject server = jsonCfg.getJSONObject("SERVER");
                     String token = fastLogin.getString("token_session").toString();
                     String url = server.getString("url").toString();
-                    String token_response = tokenManager.valideToken(token, url, HomeActivity.this);
+                    String token_response = tokenManager.valideToken(token, url, FederationsFeed.this);
                 }catch (JSONException e){
                     e.printStackTrace();
                 }
@@ -68,7 +68,7 @@ public class FederationsFeed extends Activity {
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             JSONObject server = jsonCfg.getJSONObject("SERVER");
             Intent intent = getIntent();
-            String federation = intent.getStringExtra("federation_url")
+            String federation = intent.getStringExtra("federation_url");
             String url = federation;
             String token = fastLogin.optString("token_session", "");
 
@@ -145,7 +145,7 @@ public class FederationsFeed extends Activity {
         @Override
         protected void onPostExecute(String result) {
             if (result == null || result.trim().isEmpty()) {
-                Toast.makeText(HomeActivity.this, "Erro in feed loading", Toast.LENGTH_SHORT).show();
+                Toast.makeText(FederationsFeed.this, "Erro in feed loading", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -157,12 +157,11 @@ public class FederationsFeed extends Activity {
                     postsList.add(jsonArray.getJSONObject(i));
                 }
 
-                // Notifica o Adapter para atualizar a interface
                 postAdapter.notifyDataSetChanged();
 
             } catch (Exception e) {
                 e.printStackTrace();
-                Toast.makeText(HomeActivity.this, "Error in parsing posts", Toast.LENGTH_SHORT).show();
+                Toast.makeText(FederationsFeed.this, "Error in parsing posts", Toast.LENGTH_SHORT).show();
             }
         }
     }
