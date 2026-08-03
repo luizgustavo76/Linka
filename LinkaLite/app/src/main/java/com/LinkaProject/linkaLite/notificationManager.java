@@ -9,6 +9,9 @@ import android.os.Bundle;
 public class MainActivity extends Activity {
     private String url = "";
     private String username = "";
+    private int id = 0;
+    private String fromUser = "";
+    private String content = "";
     public static void createNotification() {
         try{
             config cfg = new config();
@@ -22,16 +25,23 @@ public class MainActivity extends Activity {
         }
         JSONObject jsonNotifications;
         jsonNotifications.put("username", username);
-        JSONObject response = new JSONObject(request.requestHTTP(url + "/notifications"))
+        JSONObject response = new JSONObject(request.requestHTTP(url + "/notifications", "post", jsonNotifications, notificationManager.this));
+        List<Message> notifications = MessageParser.parseJson(response);
+
+        for (Message msg : notifications) {
+            id = msg.getId();
+            fromUser = msg.getFromUser();
+            content = msg.getContent();
+        }
         String ns = Context.NOTIFICATION_SERVICE;
         NotificationManager notificationManager = (NotificationManager) getSystemService(ns);
         int icon = android.R.drawable.stat_notify_chat;
-        CharSequence tickerText = "Novo post no Linka!";
+        CharSequence tickerText = content;
         long when = System.currentTimeMillis();
         Notification notification = new Notification(icon, tickerText, when);
         Context context = getApplicationContext();
-        CharSequence contentTitle = "Linka Network";
-        CharSequence contentText = "Alguém respondeu seu post do Mastodon!";
+        CharSequence contentTitle = "LinkaLite";
+        CharSequence contentText = content;
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
         notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
