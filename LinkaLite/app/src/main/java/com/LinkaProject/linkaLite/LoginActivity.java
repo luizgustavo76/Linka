@@ -22,6 +22,7 @@ public class LoginActivity extends Activity {
 
     private EditText edtUsername;
     private EditText edtPassword;
+    private Button btnServer;
     private Button btnLogin;
     private TextView txtGoToSignup;
     private String serverUrl = "http://bfdad03a0c9a3294-179-222-238-217.serveousercontent.com";
@@ -59,12 +60,18 @@ public class LoginActivity extends Activity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+        btnServer = (Button) findViewById(R.id.btnServer);
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
         btnLogin = (Button) findViewById(R.id.btnLogin);
         txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
-
+        btnServer.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(LoginActivity.this, ChangeServer.class);
+                startActivity(intent);
+            }
+        });
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
