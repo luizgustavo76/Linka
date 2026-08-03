@@ -51,6 +51,8 @@ def notifications():
         (username,)
     )
     result = cur.fetchall()
+    cur.execute("UPDATE notifications SET read = 1 WHERE receiver = ?",(username,))
+    conn.commit()
     conn.close()
     
     notifications_list = []
