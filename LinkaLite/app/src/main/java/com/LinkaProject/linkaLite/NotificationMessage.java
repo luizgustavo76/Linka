@@ -1,4 +1,6 @@
-public class MessageNotifications {
+package com.LinkaProject.linkaLite;
+
+public class NotificationMessage {
     private int id;
     private String content;
     private String datetime;
@@ -7,7 +9,7 @@ public class MessageNotifications {
     private int read;
     private String type;
 
-    public Message(int id, String content, String datetime, String fromUser, String receiver, int read, String type) {
+    public NotificationMessage(int id, String content, String datetime, String fromUser, String receiver, int read, String type) {
         this.id = id;
         this.content = content;
         this.datetime = datetime;

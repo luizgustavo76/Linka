@@ -44,6 +44,13 @@ public class HomeActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        ScheduledExecutorService schedulerNotifications = Executors.newSingleThreadScheduledExecutor();
+        Runnable notificationsTask = new Runnable(){
+            @Override
+            public void run(){
+                notificationManager.createNotification(HomeActivity.this);
+            }
+        };
         Runnable tokenTask = new Runnable() {
             @Override
             public void run() {
@@ -60,6 +67,7 @@ public class HomeActivity extends Activity {
                 }
             }
         };
+        schedulerNotifications.scheduleAtFixedRate(notificationsTask, 0, 5, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(tokenTask, 0, 2, TimeUnit.MINUTES);
         config cfg = new config();
         try {   
