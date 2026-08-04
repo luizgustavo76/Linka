@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Button;
 import android.content.Intent;
-import java.util.concurrent.TimeUnit;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
 public class FederationsFeed extends Activity {
 
     private ImageButton btnHome;
@@ -39,43 +41,61 @@ public class FederationsFeed extends Activity {
     private ListView listViewPosts;
     private PostAdapter postAdapter;
     private ArrayList<JSONObject> postsList;
+    private String currentUrl = "";
+    private ScheduledExecutorService scheduler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        Intent intent = getIntent();
+        if (intent != null && intent.hasExtra("url")) {
+            currentUrl = intent.getStringExtra("url");
+            if (currentUrl != null) {
+                if (!currentUrl.startsWith("http://") && !currentUrl.startsWith("https://")) {
+                    currentUrl = "http://" + currentUrl;
+                }
+                if (currentUrl.endsWith("/")) {
+                    currentUrl = currentUrl.substring(0, currentUrl.length() - 1);
+                }
+            }
+        }
+
+        scheduler = Executors.newSingleThreadScheduledExecutor();
         Runnable tokenTask = new Runnable() {
             @Override
             public void run() {
-                try{
+                try {
                     config cfg = new config();
                     JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(FederationsFeed.this, "config.cfg"));
                     JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
                     JSONObject server = jsonCfg.getJSONObject("SERVER");
-                    String token = fastLogin.getString("token_session").toString();
-                    String url = server.getString("url").toString();
-                    String token_response = tokenManager.valideToken(token, url, FederationsFeed.this);
-                }catch (JSONException e){
+                    String token = fastLogin.getString("token_session");
+                    String targetUrl = currentUrl.isEmpty() ? server.getString("url") : currentUrl;
+                    tokenManager.valideToken(token, targetUrl, FederationsFeed.this);
+                } catch (JSONException e) {
                     e.printStackTrace();
                 }
             }
         };
         scheduler.scheduleAtFixedRate(tokenTask, 0, 2, TimeUnit.MINUTES);
-        config cfg = new config();
+
         try {   
+            config cfg = new config();
             String rawJson = cfg.loadCfgAsJson(this, "config.cfg");
             JSONObject jsonCfg = new JSONObject(rawJson);
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             JSONObject server = jsonCfg.getJSONObject("SERVER");
-            Intent intent = getIntent();
-            String federation = intent.getStringExtra("federation_url");
-            String url = federation;
-            String token = fastLogin.optString("token_session", "");
-
-            if (!token.isEmpty()) {
-                tokenManager.valideToken(token, url, FederationsFeed.this);
+            
+            if (currentUrl.isEmpty()) {
+                currentUrl = server.optString("url", "");
             }
-
+            
+            String token = fastLogin.optString("token_session", "");
+            if (!token.isEmpty()) {
+                tokenManager.valideToken(token, currentUrl, FederationsFeed.this);
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -85,32 +105,36 @@ public class FederationsFeed extends Activity {
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+
         btnChat.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
-                Intent intent = new Intent(FederationsFeed.this, chatActivity.class);
-                startActivity(intent);
+            public void onClick(View v) {
+                Intent chatIntent = new Intent(FederationsFeed.this, chatActivity.class);
+                startActivity(chatIntent);
             }
         });
+
         btnOptions.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
-                Intent intent = new Intent(FederationsFeed.this, optionActivity.class);
-                startActivity(intent);
+            public void onClick(View v) {
+                Intent optionsIntent = new Intent(FederationsFeed.this, optionActivity.class);
+                startActivity(optionsIntent);
             }
         });
+
         btnProfile.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
-                Intent intent = new Intent(FederationsFeed.this, profile.class);
-                startActivity(intent);
+            public void onClick(View v) {
+                Intent profileIntent = new Intent(FederationsFeed.this, profile.class);
+                startActivity(profileIntent);
             }
         });
+
         newPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(FederationsFeed.this, newPost.class);
-                startActivity(intent);
+                Intent newPostIntent = new Intent(FederationsFeed.this, newPost.class);
+                startActivity(newPostIntent);
             }
         });
 
@@ -123,17 +147,25 @@ public class FederationsFeed extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        String url = "";
-        try{
-            config cfg = new config();
-            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(FederationsFeed.this, "config.cfg"));
-            JSONObject server = jsonCfg.getJSONObject("SERVER");
-            url = server.getString("url").toString();
-
-        }catch(JSONException e){
-            e.printStackTrace();
+        if (currentUrl == null || currentUrl.isEmpty()) {
+            try {
+                config cfg = new config();
+                JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(FederationsFeed.this, "config.cfg"));
+                JSONObject server = jsonCfg.getJSONObject("SERVER");
+                currentUrl = server.getString("url");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
-        new FetchFeedTask().execute(url + "/feed");
+        new FetchFeedTask().execute(currentUrl + "/feed");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdownNow();
+        }
     }
 
     private class FetchFeedTask extends AsyncTask<String, Void, String> {
@@ -166,7 +198,6 @@ public class FederationsFeed extends Activity {
         }
     }
 
-    // Adapter do Feed
     private class PostAdapter extends BaseAdapter {
         private Context context;
         private ArrayList<JSONObject> list;
@@ -212,22 +243,25 @@ public class FederationsFeed extends Activity {
                 String username = post.optString("username", post.optString("user", "entity404"));
                 String textPost = post.optString("text_post", post.optString("text", ""));
                 String datetime = post.optString("datetime", post.optString("date", ""));
-                String id = post.optString("id", "");
+                final String id = post.optString("id", "");
                 String stars = post.optString("stars", "0");
+
                 btnComments.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Intent intent = new Intent(FederationsFeed.this, comments_activity.class);
-                        intent.putExtra("post_id", id);
-                        startActivity(intent);
+                        Intent commentIntent = new Intent(FederationsFeed.this, comments_activity.class);
+                        commentIntent.putExtra("post_id", id);
+                        startActivity(commentIntent);
                     }
                 });
+
                 tvUsername.setText("@" + username);
                 tvDate.setText(datetime);
                 tvStarCount.setText(stars);
-                config cfg = new config();
+
                 ImageLoader imageLoader = new ImageLoader();
                 imageLoader.viewProfilePicture(context, username, avatarPost);
+
                 if (textPost.contains("[IMAGE]")) {
                     String[] lines = textPost.split("\n");
                     for (String line : lines) {
@@ -237,7 +271,7 @@ public class FederationsFeed extends Activity {
                                 imgPost.setVisibility(View.VISIBLE);
                                 String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + newUrl;
                                 new ImageLoader().LoadImageUrl(urlProxy, imgPost);
-                                textPost.replace(line, "");
+                                textPost = textPost.replace(line, "").trim();
                                 break;
                             }
                         }
@@ -261,6 +295,8 @@ public class FederationsFeed extends Activity {
             method = method.toUpperCase();
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+            connection.setRequestProperty("bypass-tunnel-remainder", "true");
             
             if (method.equals("POST") || method.equals("PUT")) {
                 connection.setDoOutput(true);

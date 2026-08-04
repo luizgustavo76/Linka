@@ -31,7 +31,7 @@ public class feedFinder extends Activity{
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
-        ListView listView = (ListView) findViewById(R.id.listViewPosts);
+        ListView listView = (ListView) findViewById(R.id.listFederations);
         List<FederationItem> itemList = new ArrayList<>();
         try{
             config cfg = new config();

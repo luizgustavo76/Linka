@@ -73,17 +73,16 @@ public class FederationsAdapter extends BaseAdapter {
 
         final FederationItem item = items.get(position);
 
-        // Define o texto do botão
         holder.btnFederation.setText(item.getName());
 
-        // Ação ao clicar no botão (Abre a URL ou executa uma ação)
         holder.btnFederation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String link = item.getUrl();
                 if (link.startsWith("http://") || link.startsWith("https://")) {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
-                    context.startActivity(intent);
+                    Intent intent = new Intent(v.getContext(), FederationsFeed.class);
+                    intent.putExtra("url", link);
+                    v.getContext().startActivity(intent);
                 } else {
                     Toast.makeText(context, "URL: " + link, Toast.LENGTH_SHORT).show();
                 }
@@ -95,7 +94,6 @@ public class FederationsAdapter extends BaseAdapter {
         holder.coverFederation.setImageBitmap(null); // Limpa imagem antiga
 
         if (imageSrc != null && imageSrc.startsWith("data:image")) {
-            // Decodifica Base64
             try {
                 String cleanBase64 = imageSrc.substring(imageSrc.indexOf(",") + 1);
                 byte[] decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT);
@@ -105,7 +103,6 @@ public class FederationsAdapter extends BaseAdapter {
                 e.printStackTrace();
             }
         } else if (imageSrc != null && (imageSrc.startsWith("http://") || imageSrc.startsWith("https://"))) {
-            // Baixa a imagem da URL em Background Thread
             final ImageView targetImageView = holder.coverFederation;
             executorService.execute(new Runnable() {
                 @Override

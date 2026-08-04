@@ -43,7 +43,7 @@ def register_federation():
     conn = get_db()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO federation_index (name, url, description cover_image) VALUES (?, ?, ?, ?)",
+        "INSERT INTO federation_index (name, url, description, cover_image) VALUES (?, ?, ?, ?)",
         (name, url, description, cover_image)
     )
     conn.commit()
