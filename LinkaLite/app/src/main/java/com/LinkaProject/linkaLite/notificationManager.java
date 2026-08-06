@@ -53,7 +53,7 @@ public class notificationManager {
                 Intent notificationIntent = new Intent(context, HomeActivity.class);                
                 PendingIntent contentIntent = PendingIntent.getActivity(
                     context, 
-                    id, 
+                    id,
                     notificationIntent, 
                     PendingIntent.FLAG_UPDATE_CURRENT
                 );

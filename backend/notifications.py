@@ -42,7 +42,7 @@ def notifications():
     # Se o C++ enviar username vazio ou Nulo
     if not username:
         print(" [LOG FLASK] Requisição chegou sem username!")
-        return jsonify([]), 200 # Retorna lista vazia para evitar crash no C++
+        return jsonify([]), 200
 
     conn = get_db()
     cur = conn.cursor()
