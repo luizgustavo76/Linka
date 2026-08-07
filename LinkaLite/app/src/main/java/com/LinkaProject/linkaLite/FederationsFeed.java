@@ -75,9 +75,6 @@ public class FederationsFeed extends Activity {
             }
             
             String token = fastLogin.optString("token_session", "");
-            if (!token.isEmpty()) {
-                tokenManager.valideToken(token, currentUrl, FederationsFeed.this);
-            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -277,7 +274,6 @@ public class FederationsFeed extends Activity {
             method = method.toUpperCase();
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
             connection.setRequestProperty("bypass-tunnel-remainder", "true");
             
             if (method.equals("POST") || method.equals("PUT")) {
