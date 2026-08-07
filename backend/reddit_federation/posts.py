@@ -11,14 +11,14 @@ post_bp = Blueprint("post_bp", __name__)
 @post_bp.route("/feed")
 @post_bp.route("/feed/")
 @post_bp.route("/feed/<subreddit>")
-def subreddit_posts(subreddit="comentariosMelhores"):
-    clear_sub = subreddit.strip("/") if subreddit else "comentariosMelhores"
+def subreddit_posts(subreddit):
+    clear_sub = subreddit.strip("/") if subreddit else "LinkaProject"
     
     if clear_sub.endswith("/feed"):
         clear_sub = clear_sub[:-5]
     
     if not clear_sub or clear_sub.lower() in ["feed", "valide-session"]:
-        clear_sub = "comentariosMelhores"
+        clear_sub = "LinkaProject"
 
     posts = []
     

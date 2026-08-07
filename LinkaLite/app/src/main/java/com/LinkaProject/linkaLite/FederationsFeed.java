@@ -22,6 +22,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -62,7 +63,6 @@ public class FederationsFeed extends Activity {
             }
         }
 
-
         try {   
             config cfg = new config();
             String rawJson = cfg.loadCfgAsJson(this, "config.cfg");
@@ -76,6 +76,7 @@ public class FederationsFeed extends Activity {
             
             String token = fastLogin.optString("token_session", "");
         } catch (JSONException e) {
+            Log.e("LINKA_DEBUG", "Erro ao carregar config.cfg: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -133,10 +134,12 @@ public class FederationsFeed extends Activity {
                 JSONObject server = jsonCfg.getJSONObject("SERVER");
                 currentUrl = server.getString("url");
             } catch (JSONException e) {
+                Log.e("LINKA_DEBUG", "Erro ao recuperar URL em onResume: " + e.getMessage());
                 e.printStackTrace();
             }
         }
-        new FetchFeedTask().execute(currentUrl);
+        Log.d("LINKA_FEED", "Executando FetchFeedTask para: " + currentUrl);
+        new FetchFeedTask().execute(currentUrl + "?bypass-tunnel-reminder=true");
     }
 
     @Override
@@ -148,31 +151,74 @@ public class FederationsFeed extends Activity {
     }
 
     private class FetchFeedTask extends AsyncTask<String, Void, String> {
+        private String requestedUrl;
+
         @Override
         protected String doInBackground(String... urls) {
-            return requestHTTP(urls[0], "GET", new JSONObject());
+            requestedUrl = urls[0];
+            Log.d("LINKA_FEED", "Requisitando feed na URL: " + requestedUrl);
+            return requestHTTP(requestedUrl, "GET", new JSONObject());
         }
 
         @Override
         protected void onPostExecute(String result) {
-            if (result == null || result.trim().isEmpty()) {
-                Toast.makeText(FederationsFeed.this, "Erro in feed loading", Toast.LENGTH_SHORT).show();
+            Log.d("LINKA_FEED", "Resultado recebido (tam: " + (result != null ? result.length() : 0) + ")");
+            Log.d("LINKA_FEED", "Conteudo RAW: " + result);
+
+            if (result == null || result.trim().length() == 0) {
+                Log.e("LINKA_FEED", "Resposta nula ou vazia do servidor/túnel.");
+                Toast.makeText(FederationsFeed.this, "Erro: Servidor nao respondeu", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            String trimmed = result.trim();
+
+            if (trimmed.startsWith("<")) {
+                Log.e("LINKA_FEED", "O servidor retornou HTML em vez de JSON! Verifique o erro do Flask ou aviso do tunel.");
+                Toast.makeText(FederationsFeed.this, "Erro: Servidor retornou HTML em vez de JSON", Toast.LENGTH_LONG).show();
                 return;
             }
 
             try {
-                JSONArray jsonArray = new JSONArray(result);
                 postsList.clear();
+                JSONArray jsonArray = null;
 
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    postsList.add(jsonArray.getJSONObject(i));
+                if (trimmed.startsWith("[")) {
+                    jsonArray = new JSONArray(trimmed);
+                } else if (trimmed.startsWith("{")) {
+                    JSONObject jsonObject = new JSONObject(trimmed);
+                    if (jsonObject.has("posts")) {
+                        jsonArray = jsonObject.getJSONArray("posts");
+                    } else if (jsonObject.has("feed")) {
+                        jsonArray = jsonObject.getJSONArray("feed");
+                    } else if (jsonObject.has("data")) {
+                        jsonArray = jsonObject.getJSONArray("data");
+                    } else {
+                        Log.e("LINKA_FEED", "Objeto JSON recebido sem array 'posts'/'feed'/'data'. Chaves disponíveis: " + jsonObject.names());
+                    }
+                } else {
+                    Log.e("LINKA_FEED", "Formato invalido de resposta: " + trimmed);
                 }
 
-                postAdapter.notifyDataSetChanged();
+                if (jsonArray != null) {
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        postsList.add(jsonArray.getJSONObject(i));
+                    }
+                    Log.d("LINKA_FEED", "Sucesso! " + postsList.size() + " posts renderizados.");
+                    postAdapter.notifyDataSetChanged();
+                } else {
+                    Log.e("LINKA_FEED", "Nao foi possivel extrair o JSONArray dos posts.");
+                    Toast.makeText(FederationsFeed.this, "Erro: Estrutura JSON incompativel", Toast.LENGTH_SHORT).show();
+                }
 
-            } catch (Exception e) {
+            } catch (JSONException e) {
+                Log.e("LINKA_FEED", "JSONException ao processar posts: " + e.getMessage());
                 e.printStackTrace();
-                Toast.makeText(FederationsFeed.this, "Error in parsing posts", Toast.LENGTH_SHORT).show();
+                Toast.makeText(FederationsFeed.this, "Erro de sintaxe JSON", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Log.e("LINKA_FEED", "Excecao geral no parsing: " + e.getMessage());
+                e.printStackTrace();
+                Toast.makeText(FederationsFeed.this, "Erro no processamento dos posts", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -258,6 +304,7 @@ public class FederationsFeed extends Activity {
                 }
                 tvText.setText(textPost);
             } catch (Exception e) {
+                Log.e("LINKA_ADAPTER", "Erro ao renderizar item da posicao " + position + ": " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -267,15 +314,25 @@ public class FederationsFeed extends Activity {
 
     public String requestHTTP(String urlParam, String method, JSONObject json_body) {
         HttpURLConnection connection = null;
+        Log.d("LINKA_HTTP", "Iniciando requisicao HTTP [" + method + "] -> " + urlParam);
         try {
             URL url = new URL(urlParam);
             connection = (HttpURLConnection) url.openConnection();
             
+            HttpURLConnection.setFollowRedirects(true);
+            connection.setInstanceFollowRedirects(true);
+            
             method = method.toUpperCase();
             connection.setRequestMethod(method);
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("bypass-tunnel-remainder", "true");
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
             
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+            connection.setRequestProperty("bypass-tunnel-reminder", "true");
+            connection.setRequestProperty("ngrok-skip-browser-warning", "true");
+            connection.setRequestProperty("X-Pinggy-No-Page", "true");
+            connection.setRequestProperty("User-Agent", "LinkaLiteApp/1.0");
             if (method.equals("POST") || method.equals("PUT")) {
                 connection.setDoOutput(true);
                 OutputStream os = connection.getOutputStream();
@@ -285,6 +342,8 @@ public class FederationsFeed extends Activity {
             }
 
             int responseCode = connection.getResponseCode();
+            Log.d("LINKA_HTTP", "Response Code: " + responseCode + " para " + urlParam);
+
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
                 StringBuilder response = new StringBuilder();
@@ -294,8 +353,29 @@ public class FederationsFeed extends Activity {
                 }
                 in.close();
                 return response.toString();
+            } else {
+                InputStream errStream = connection.getErrorStream();
+                if (errStream != null) {
+                    BufferedReader inErr = new BufferedReader(new InputStreamReader(errStream, "UTF-8"));
+                    StringBuilder errResponse = new StringBuilder();
+                    String errLine;
+                    while ((errLine = inErr.readLine()) != null) {
+                        errResponse.append(errLine);
+                    }
+                    inErr.close();
+                    Log.e("LINKA_HTTP", "Corpo do erro HTTP " + responseCode + ": " + errResponse.toString());
+                } else {
+                    Log.e("LINKA_HTTP", "Erro HTTP sem corpo de resposta: " + responseCode);
+                }
             }
+        } catch (java.net.UnknownHostException e) {
+            Log.e("LINKA_HTTP", "DNS Error (Host nao encontrado): " + e.getMessage());
+        } catch (java.net.SocketTimeoutException e) {
+            Log.e("LINKA_HTTP", "Timeout na conexao (10s expirados): " + e.getMessage());
+        } catch (javax.net.ssl.SSLException e) {
+            Log.e("LINKA_HTTP", "Erro TLS/SSL Handshake (Android antigo): " + e.getMessage());
         } catch (Exception e) {
+            Log.e("LINKA_HTTP", "Excecao inesperada na conexao: " + e.getMessage());
             e.printStackTrace();
         } finally {
             if (connection != null) {
