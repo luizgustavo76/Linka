@@ -3061,7 +3061,7 @@ int main(int argc, char *argv[])
         QObject::connect(federations, &QPushButton::clicked, [=](){
             addFederationFeed();
         });
-        QString url_feed = url + "/feed";
+        QString url_feed = url;
         qDebug() << "url feed" << url_feed;
         QNetworkRequest request{QUrl(url_feed)};
         QNetworkReply *reply = manager->get(request);

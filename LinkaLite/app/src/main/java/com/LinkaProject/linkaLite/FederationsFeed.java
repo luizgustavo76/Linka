@@ -62,24 +62,6 @@ public class FederationsFeed extends Activity {
             }
         }
 
-        scheduler = Executors.newSingleThreadScheduledExecutor();
-        Runnable tokenTask = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    config cfg = new config();
-                    JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(FederationsFeed.this, "config.cfg"));
-                    JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-                    JSONObject server = jsonCfg.getJSONObject("SERVER");
-                    String token = fastLogin.getString("token_session");
-                    String targetUrl = currentUrl.isEmpty() ? server.getString("url") : currentUrl;
-                    tokenManager.valideToken(token, targetUrl, FederationsFeed.this);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        scheduler.scheduleAtFixedRate(tokenTask, 0, 2, TimeUnit.MINUTES);
 
         try {   
             config cfg = new config();
@@ -157,7 +139,7 @@ public class FederationsFeed extends Activity {
                 e.printStackTrace();
             }
         }
-        new FetchFeedTask().execute(currentUrl + "/feed");
+        new FetchFeedTask().execute(currentUrl);
     }
 
     @Override

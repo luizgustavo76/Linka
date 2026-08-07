@@ -27,7 +27,6 @@ public class ImageLoader {
                     conexao = (HttpURLConnection) url.openConnection();
                     conexao.setDoInput(true);
                     
-                    // Finja ser um navegador para não tomar 403
                     conexao.setRequestProperty("User-Agent", "Mozilla/5.0 (Android; Mobile; rv:13.0) Gecko/13.0 Firefox/13.0");
                     conexao.connect();
 
