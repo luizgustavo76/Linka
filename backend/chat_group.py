@@ -41,6 +41,7 @@ def create_db():
                     group_id INTEGER,
                     sender TEXT,
                     message TEXT,
+                    channel TEXT,
                     FOREIGN KEY(group_id) REFERENCES meta(id))""")
                     
     cur.execute("""CREATE TABLE IF NOT EXISTS post_group(
@@ -197,8 +198,8 @@ def send_group_message():
     sender = data.get("sender")
     group_id = data.get("group_id")
     message = data.get("message")
-    
-    if not sender or not group_id or not message:
+    channel = data.get("channel")
+    if not sender or not group_id or not message or not channel:
         return jsonify({"status": "error", "message": "Data is missing"}), 400
     
     conn = get_db()
@@ -207,7 +208,7 @@ def send_group_message():
     result = cur.fetchone()
     
     if result:
-        cur.execute("INSERT INTO chat_group (group_id, sender, message) VALUES (?, ?, ?)", (group_id, sender, message))
+        cur.execute("INSERT INTO chat_group (group_id, sender, message, channel) VALUES (?, ?, ?)", (group_id, sender, message, channel))
         conn.commit()
         conn.close()
         return jsonify({"status": "success", "message": "Message sent"}), 200
@@ -220,8 +221,8 @@ def view_group_message():
     data = request.get_json() or {}
     last_id = data.get("id", 0)
     group_id = data.get("group_id")
-    
-    if not group_id:
+    channel = data.get("channel")
+    if not group_id or not channel:
         return jsonify({"status": "error", "message": "group_id is required"}), 400
         
     conn = get_db()
@@ -232,14 +233,14 @@ def view_group_message():
             cur.execute("""
                 SELECT sender, message, id FROM (
                     SELECT sender, message, id FROM chat_group
-                    WHERE group_id = ? ORDER BY id DESC LIMIT 20
+                    WHERE group_id = ? AND channel = ? ORDER BY id DESC LIMIT 20
                 ) ORDER BY id ASC
-            """, (group_id,))
+            """, (group_id, channel))
         else:
             cur.execute("""
                 SELECT sender, message, id FROM chat_group
-                WHERE id > ? AND group_id = ? ORDER BY id ASC
-            """, (last_id, group_id))
+                WHERE id > ? AND group_id = ? AND channel = ?ORDER BY id ASC
+            """, (last_id, group_id, channel))
         rows = cur.fetchall()
     except ValueError:
         conn.close()
