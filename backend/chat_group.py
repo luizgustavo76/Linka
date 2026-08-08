@@ -29,10 +29,13 @@ def create_db():
                     description TEXT,
                     create_date TEXT,
                     rules TEXT)""")
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS channels(
-        name TEXT,
-        type TEXT)""")
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS channels(
+                    group_id INTEGER,
+                    name TEXT,
+                    type TEXT,
+                    FOREIGN KEY(group_id) REFERENCES meta(id))""")
+
     cur.execute("""CREATE TABLE IF NOT EXISTS chat_group(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     group_id INTEGER,
@@ -46,7 +49,7 @@ def create_db():
                     username TEXT,
                     text_post TEXT,
                     stars INTEGER,
-                    create_data TEXT,
+                    create_date TEXT,
                     FOREIGN KEY(group_id) REFERENCES meta(id))""")
                     
     cur.execute("""CREATE TABLE IF NOT EXISTS users_in_group(
@@ -61,25 +64,46 @@ def create_db():
     
     conn.commit()
     conn.close()
-
 create_db()
 @chat_group_bp.route("/new-channel", methods=["POST"])
 def new_channel():
     data = request.get_json()
     username = data.get("username")
     channel_name = data.get("channel_name")
+    group_id = data.get("group_id")
     type = data.get("type")
+    if None in [username, channel_name, group_id, type]:
+        return jsonify({"status":"data is missing"})
+    else:
+        if username == g.username:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("SELECT username FROM users_in_group WHERE username = ? AND permissions = 'admin' AND group_id = ?",(username, group_id))
+            result = cur.fetchone()
+            if result:
+                cur.execute("INSERT INTO channels (name, type, group_id) VALUES(?,?,?)",(channel_name, type, group_id))
+                conn.commit()
+                return jsonify({"status":"channel created!"}),201
+            else:
+                return jsonify({"status":"you aren`t admin"}),403
+        else:
+            return jsonify({"status":"forbidden"}),403
+@chat_group_bp.route("/view-channels", methods=["POST"])
+def view_channels():
+    data = request.get_json()
+    username = data.get("username")
     if username == g.username:
+        group_id = data.get("group_id")
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND permission = 'admin'",(username,))
+        cur.execute("SELECT username FROM users_in_group WHERE username = ?",(username,))
         result = cur.fetchone()
         if result:
-            cur.execute("INSERT FROM channels (name, type) VALUES(?,?)",(channel_name, type))
-            conn.commit()
-            return jsonify({"status":"channel created!"}),201
+            cur.execute("SELECT * FROM channels WHERE group_id = ?",(group_id,))
+            result = cur.fetchall()
+            return jsonify(result), 200
         else:
-            return jsonify({"status":"you aren`t admin"}),403
+            return jsonify({"status":"you aren`t in group"}),403
     else:
         return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/new-post-group", methods=["POST"])
@@ -131,7 +155,6 @@ def view_posts_group():
     posts = cur.fetchall()
     conn.close()
     
-    # JSON estruturado limpo e explícito para o C++
     list_posts = [{
         "id": post[0],
         "group_id": post[1],
@@ -237,7 +260,6 @@ def my_groups():
         
     conn = get_db()
     cur = conn.cursor()
-    # Fazemos um JOIN com a tabela 'meta' para trazer o nome real do grupo, não apenas IDs!
     cur.execute("""
         SELECT u.group_id, m.name, u.permissions 
         FROM users_in_group u
@@ -247,7 +269,6 @@ def my_groups():
     result = cur.fetchall()
     conn.close()
     
-    # Transforma o array do SQL em objetos fáceis com chaves nomeadas
     groups_list = [{
         "group_id": row[0],
         "group_name": row[1],
