@@ -43,7 +43,6 @@ public class DmChat extends Activity {
 
         Log.d(TAG, "=== DmChat Started ===");
 
-        // 1. Resgata o usuário destino vindo da Activity anterior
         Intent intent = getIntent();
         if (intent != null) {
             if (intent.hasExtra("target_user")) {
@@ -59,7 +58,6 @@ public class DmChat extends Activity {
 
         String cleanOtherUser = other_user.replace("@", "").trim();
 
-        // 2. Carrega configurações locais
         try {
             config cfg = new config();
             String rawCfg = cfg.loadCfgAsJson(this, "config.cfg");

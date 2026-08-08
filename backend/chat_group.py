@@ -29,7 +29,10 @@ def create_db():
                     description TEXT,
                     create_date TEXT,
                     rules TEXT)""")
-                    
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS channels(
+        name TEXT,
+        type TEXT)""")
     cur.execute("""CREATE TABLE IF NOT EXISTS chat_group(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     group_id INTEGER,
@@ -60,7 +63,25 @@ def create_db():
     conn.close()
 
 create_db()
-
+@chat_group_bp.route("/new-channel", methods=["POST"])
+def new_channel():
+    data = request.get_json()
+    username = data.get("username")
+    channel_name = data.get("channel_name")
+    type = data.get("type")
+    if username == g.username:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND permission = 'admin'",(username,))
+        result = cur.fetchone()
+        if result:
+            cur.execute("INSERT FROM channels (name, type) VALUES(?,?)",(channel_name, type))
+            conn.commit()
+            return jsonify({"status":"channel created!"}),201
+        else:
+            return jsonify({"status":"you aren`t admin"}),403
+    else:
+        return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/new-post-group", methods=["POST"])
 def create_post_group():
     data = request.get_json() or {}
@@ -75,7 +96,6 @@ def create_post_group():
     
     conn = get_db()
     cur = conn.cursor()
-    # Correção: alterado 'sender' indefinido para 'username'
     cur.execute("SELECT username FROM users_in_group WHERE group_id = ? AND username = ?", (group_id, username))
     result = cur.fetchone()
     
