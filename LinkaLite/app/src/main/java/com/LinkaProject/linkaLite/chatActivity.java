@@ -23,12 +23,10 @@ public class chatActivity extends Activity {
     private ImageButton btnChat;
     private ImageButton btnOptions;
     private ImageButton btnProfile;
-
-    // Elementos da Lista
+    private Button btnNewChat;
     private ListView lvFriends;
     private FriendsAdapter adapter;
     private List<FriendItem> friendsList;
-
     private String response = "";
     private String url = "";
     private String myUsername = "";
@@ -43,10 +41,9 @@ public class chatActivity extends Activity {
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         lvFriends = (ListView) findViewById(R.id.lvFriends);
-
+        btnNewChat = (Button) findViewById(R.id.btnNewChat);
         friendsList = new ArrayList<FriendItem>();
 
-        // 2. Carregar configurações
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(chatActivity.this, "config.cfg"));
@@ -93,8 +90,13 @@ public class chatActivity extends Activity {
                 }
             }
         });
-
-        // 6. Navegação dos botões do menu
+        btnNewChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(chatActivity.this, newChat.class);
+                startActivity(intent);
+            }
+        });
         btnGlobalChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

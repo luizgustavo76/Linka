@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- ESSENCIAL: Permissão de Internet -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <application android:label="Linka Lite"
@@ -78,8 +77,16 @@
             android:label="Feed Finder"
             android:exported="false"/>
         <activity
-            android:name="FederationsFeed"
+            android:name=".FederationsFeed"
             android:label="Federations feed"
+            android:exported="false"/>
+        <activity
+            android:name=".newChat"
+            android:label="New chat"
+            android:exported="false"/>
+        <activity
+            android:name=".NewGroupActivity"
+            android:label="New group"
             android:exported="false"/>
     </application>
 </manifest>

@@ -28,7 +28,6 @@ public class comments_activity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // 1. Recebe o post_id aceitando tanto String quanto Int
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             Object idObj = extras.get("post_id");
@@ -37,7 +36,6 @@ public class comments_activity extends Activity {
             }
         }
 
-        // 2. Carrega configurações do app
         try {
             config cfg = new config();
             String cfgString = cfg.loadCfgAsJson(comments_activity.this, "config.cfg");

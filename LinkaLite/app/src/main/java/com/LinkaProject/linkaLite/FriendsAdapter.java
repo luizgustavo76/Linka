@@ -64,7 +64,6 @@ public class FriendsAdapter extends BaseAdapter {
         int type = getItemViewType(position);
         FriendItem item = itemList.get(position);
 
-        // --- TIPO 0: ITEM DE AMIGO (item_friend.xml) ---
         if (type == TYPE_FRIEND) {
             FriendViewHolder holder;
 

@@ -1,13 +1,13 @@
 package com.LinkaProject.linkaLite;
 
-import android.content.Context; // Adicionado para poder ler o arquivo de config
+import android.content.Context; 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.widget.ImageView;
 
-import org.json.JSONException;  // Import do JSON
-import org.json.JSONObject;     // Import do JSON
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;

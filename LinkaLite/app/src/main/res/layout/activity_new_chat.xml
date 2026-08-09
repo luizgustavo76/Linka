@@ -1,35 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#1e1e2e">
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
     <Button
-        android:id="@+id/btnNewChat"
+        android:id="@+id/btnNewGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="New"
+        android:text="New group"
         android:textStyle="bold"
         android:textColor="#000000"
         android:layout_margin="12dp" />
     <Button
-        android:id="@+id/btnGlobalChat"
+        android:id="@+id/btnExternalServer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Global chat"
+        android:text="External Server"
         android:textStyle="bold"
         android:textColor="#000000"
         android:layout_margin="12dp" />
-
-    <ListView
-        android:id="@+id/lvFriends"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="#2a2a3c"
-        android:dividerHeight="1dp" />
-
-    <LinearLayout 
+        <LinearLayout 
         android:layout_width="match_parent"
         android:layout_height="40dp" 
         android:orientation="horizontal"
@@ -77,5 +64,4 @@
             android:contentDescription="Profile" />
 
     </LinearLayout>
-
 </LinearLayout>
