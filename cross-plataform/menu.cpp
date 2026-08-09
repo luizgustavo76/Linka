@@ -1390,23 +1390,50 @@ int main(int argc, char *argv[])
 
             saveConfig();
 
-            qDebug() << "Depois de salvar:" << QString::fromStdString(config["FEDERATIONS"]["url"]);
         });
         renderBottomBar("options");
+    };
+    auto applyTheme = [=](const QString &qrcPath, const QString &configPath) {
+        QFile file(qrcPath);
+        if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qApp->setStyleSheet(QString::fromUtf8(file.readAll()));
+            file.close();
+            config["THEMES"]["theme"] = configPath.toStdString(); // Ajuste para QString se sua lib de config usar
+            saveConfig();
+        }
     };
     //menu de adicionar tema
     addThemePage = [&](){
         clearLayout(layout);
         fadeTransition(central);
         loadConfig();
+        QList<QWidget*> widgets;
+        QPushButton *DarkBlueButton = new QPushButton("Dark Blue");
+        QPushButton *DarkGreenButton = new QPushButton("Dark Green");
+        QPushButton *DarkMaroonButton = new QPushButton("Dark Maroon");
+        QPushButton *DarkPurpleButton = new QPushButton("Dark Purple");
+        widgets.append(DarkBlueButton);
+        widgets.append(DarkGreenButton);
+        widgets.append(DarkMaroonButton);
+        widgets.append(DarkPurpleButton);
         QLabel *labelTheme = new QLabel(QString::fromStdString(config["THEMES"]["theme"]));;
         layout->addWidget(labelTheme);
         QPushButton *button_add_theme = new QPushButton(add_theme_text);
         layout->addWidget(button_add_theme);
-        QPushButton *back_button = new QPushButton(back_text);
-        layout->addWidget(back_button);
-        QObject::connect(back_button, &QPushButton::clicked, [=](){
-                initialPage();
+        QObject::connect(DarkBlueButton, &QPushButton::clicked, [=](){
+            applyTheme(":/styles/DarkBlue.qss", "styles/DarkBlue.qss");
+        });
+
+        QObject::connect(DarkGreenButton, &QPushButton::clicked, [=](){
+            applyTheme(":/styles/DarkGreen.qss", "styles/DarkGreen.qss");
+        });
+
+        QObject::connect(DarkMaroonButton, &QPushButton::clicked, [=](){
+            applyTheme(":/styles/DarkMaroon.qss", "styles/DarkMaroon.qss");
+        });
+
+        QObject::connect(DarkPurpleButton, &QPushButton::clicked, [=](){
+            applyTheme(":/styles/DarkPurple.qss", "styles/DarkPurple.qss");
         });
         QObject::connect(button_add_theme, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [&](){
@@ -1461,6 +1488,7 @@ int main(int argc, char *argv[])
                     saveConfig();
                 });
         });
+        scroll_area(layout, widgets);
         renderBottomBar("options");
     };
     sentFriendRequest = [&](QString receiver){
@@ -1657,14 +1685,12 @@ int main(int argc, char *argv[])
         fadeTransition(central);
         QList<QWidget*> buttons;
         QPushButton *friends = new QPushButton(friends_text);
-        QPushButton *back = new QPushButton(back_text);
         QPushButton *inbox = new QPushButton(inbox_text);
         QPushButton *button_options = new QPushButton(options_text);
         QPushButton *button_change_url = new QPushButton(url);
         buttons.append(button_options);
         buttons.append(inbox);
         buttons.append(friends);
-        buttons.append(back);
         buttons.append(button_change_url);
         QObject::connect(button_options, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [optionsPage](){ 
@@ -1674,11 +1700,6 @@ int main(int argc, char *argv[])
         QObject::connect(inbox, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [inboxPage](){
                     if (inboxPage) inboxPage();
-                });
-        });
-        QObject::connect(back, &QPushButton::clicked, [=](){
-                QTimer::singleShot(0, [initialPage](){ 
-                    if (initialPage) initialPage();
                 });
         });
         QObject::connect(friends, &QPushButton::clicked, [=](){
