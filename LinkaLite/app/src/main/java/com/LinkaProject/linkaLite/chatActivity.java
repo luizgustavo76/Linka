@@ -8,7 +8,8 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
-
+import java.util.Map;
+import java.util.HashMap;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,28 +58,36 @@ public class chatActivity extends Activity {
         }
 
         try {
-            JSONObject jsonFriends = new JSONObject();
-            jsonFriends.put("username", myUsername);
-            response = request.requestHTTP(url + "/friends", "post", jsonFriends, chatActivity.this);
+            JSONObject jsonPayload = new JSONObject();
+            jsonPayload.put("username", myUsername);
+            String response = request.requestHTTP(url + "/friends", "post", jsonPayload, chatActivity.this);
+            String responseGroups = request.requestHTTP(url + "/my-groups", "post", jsonPayload, chatActivity.this);
+            if (responseGroups != null && !responseGroups.trim().equals("")) {
+                JSONArray groupsArray = new JSONObject(responseGroups).getJSONArray("groups");
+                for (int i = 0; i < groupsArray.length(); i++) {
+                    JSONObject groupObj = groupsArray.getJSONObject(i);
+                    String groupName = groupObj.isNull("group_name") ? "Group NONAME" : groupObj.getString("group_name");
+                    int id = groupObj.getInt("group_id");
+                    String permissions = groupObj.optString("permissions", "");
 
-            if (response != null && !response.trim().equals("")) {
-                JSONArray friends = new JSONObject(response).getJSONArray("friends");
-
-                for (int i = 0; i < friends.length(); i++) {
-                    JSONArray pair = friends.getJSONArray(i);
-                    
-                    String friend = pair.getString(0).equalsIgnoreCase(myUsername) ? pair.getString(1) : pair.getString(0);
-                    
-                    friendsList.add(new FriendItem("@" + friend));
+                    friendsList.add(new FriendItem(id, groupName, permissions));
                 }
             }
-        } catch (Exception e) {
+            if (response != null && !response.trim().equals("")) {
+                JSONArray friends = new JSONObject(response).getJSONArray("friends");
+                for (int i = 0; i < friends.length(); i++) {
+                    JSONArray pair = friends.getJSONArray(i);
+                    String friend = pair.getString(0).equalsIgnoreCase(myUsername) ? pair.getString(1) : pair.getString(0);
+
+                    friendsList.add(new FriendItem(friend));
+                }
+            }
+
+        } catch (JSONException e) {
             e.printStackTrace();
         }
-
         adapter = new FriendsAdapter(chatActivity.this, friendsList);
         lvFriends.setAdapter(adapter);
-
         lvFriends.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {

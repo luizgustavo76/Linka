@@ -263,4 +263,4 @@ app.register_blueprint(theme_bp)
 app.register_blueprint(federations_bp)
 app.register_blueprint(federation_index_bp)
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    app.run(host='0.0.0.0', debug=True, port=8000)

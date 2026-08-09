@@ -14,7 +14,7 @@ public class FriendsAdapter extends BaseAdapter {
     public static final int TYPE_FRIEND = 0;
     public static final int TYPE_HEADER = 1;
     private static final int TOTAL_TYPES = 2;
-
+    public static final int TYPE_GROUP = 2; 
     private Context context;    
     private List<FriendItem> itemList;
     private LayoutInflater inflater;
