@@ -1,6 +1,5 @@
 package com.LinkaProject.linkaLite;
 import android.widget.ImageButton;
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -25,7 +24,7 @@ public class newChat extends Activity{
     private ImageButton btnChat;
     private ImageButton btnOptions;
     private ImageButton btnProfile;
-    public void onCreateonCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);        
         setContentView(R.layout.activity_new_chat);
         btnNewGroup = (Button) findViewById(R.id.btnNewGroup);

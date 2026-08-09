@@ -1,20 +1,18 @@
-from flask import Flask, request, jsonify, Blueprint, send_from_directory, g
+from flask import Flask, request, jsonify, Blueprint, send_from_directory, g, Response
 import os
 import uuid
 import sqlite3
 from supabase import create_client, Client
 import dotenv
+import requests
 
 dotenv.load_dotenv("backend.env")
 url = os.getenv("SUPABASE_URL")
 key = os.getenv("SUPABASE_KEY")
 
 supabase: Client = create_client(url, key)
-#pasta atual
 base_dir = os.path.dirname(os.path.abspath(__file__))
-#pasta dos bancos de dados
 db_dir = (base_dir + "/DB")
-#arquivo de banco de dado de post
 profile_dir = (db_dir + "/profile.db")
 profile_bp = Blueprint("profile", __name__)
 def get_db():
@@ -123,7 +121,23 @@ def upload_profile_pic():
             print(e)
             return jsonify({"status": "error", "message": str(e)}), 500
 
+@profile_bp.route("/lite-render", methods=["GET"])
+def lite_render():
+    image_url = request.args.get("url")
+    
+    if not image_url:
+        return jsonify({"error": "URL parameter missing"}), 400
 
+    try:
+        headers = {"User-Agent": "Mozilla/5.0"}
+        res = requests.get(image_url, headers=headers, timeout=10)
+        if res.status_code == 200:
+            content_type = res.headers.get("Content-Type", "image/jpeg")
+            return Response(res.content, mimetype=content_type, status=200)
+        return jsonify({"error": "Failed to fetch image"}), res.status_code
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 @profile_bp.route("/view-profile-picture",methods=["POST"])
 def get_profile_pic():
     data = request.get_json()

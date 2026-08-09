@@ -29,7 +29,7 @@ public class NewGroupActivity extends Activity{
     private Button btnCreate;
     private String username = "";
     private String url = "";
-    public void onCreateonCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);        
         setContentView(R.layout.activity_new_group);
         btnHome = (ImageButton) findViewById(R.id.btnHome);

@@ -128,7 +128,8 @@ public_routes = [
     "post.return_stars",
     "None",
     "profile.create",
-    "images.upload_image"
+    "images.upload_image",
+    "get_profile_pic"
 ]
 @app.before_request
 def valide():

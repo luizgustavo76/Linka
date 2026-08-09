@@ -39,7 +39,6 @@
 
     </LinearLayout>
 
-    <!-- Botão "+ New Post" slim -->
     <Button 
         android:id="@+id/newPost"
         android:layout_width="match_parent"
