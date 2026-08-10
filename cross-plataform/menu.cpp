@@ -778,17 +778,20 @@ void loadStyle()
 {
     loadConfig();
 
-    QString themePath = QString::fromStdString(config["THEMES"]["theme"]);
+    QString themePath = QString::fromStdString(config["THEMES"]["theme"]).trimmed();
 
-    // fallback seguro
     if (themePath.isEmpty()) {
         themePath = ":/styles/theme.qss";
+    }
+    if (!themePath.startsWith(":/") && QDir::isRelativePath(themePath)) {
+        QDir appDir(QCoreApplication::applicationDirPath());
+        themePath = appDir.filePath(themePath);
     }
 
     QFile file(themePath);
 
     if (!file.exists()) {
-        qDebug() << "QSS not found:" << themePath;
+        qDebug() << "QSS não encontrado em:" << themePath;
         return;
     }
 
@@ -797,17 +800,20 @@ void loadStyle()
         return;
     }
 
-    QString qss = file.readAll();
+    QString qss = QString::fromUtf8(file.readAll());
 
     if (qss.isEmpty()) {
-        qDebug() << "QSS empty file!";
+        qDebug() << "QSS arquivo vazio!";
         return;
     }
 
-    qApp->setStyleSheet(qss);
-    qDebug() << "QSS loaded";
+    if (qApp) {
+        qApp->setStyleSheet(qss);
+        qDebug() << "QSS carregado com sucesso de:" << themePath;
+    } else {
+        qDebug() << "ERRO: qApp é nulo! Chame loadStyle() após criar o QApplication no main().";
+    }
 }
-
 void clearLayout(QLayout *layout) {
     if (!layout) return; 
 
@@ -837,7 +843,6 @@ int main(int argc, char *argv[])
     QString username = QString::fromStdString(config["FAST-LOGIN"]["username"]);
     QString token_session = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
     QtConcurrent::run([&]() {
-    // 1. Instancia o manager dentro da própria thread
          QNetworkAccessManager manager;
 
         while (true) {
@@ -847,20 +852,16 @@ int main(int argc, char *argv[])
                 request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
                 QByteArray bearerToken = "Bearer " + token_session.toUtf8();
                 request.setRawHeader("Authorization", bearerToken);
-                // Prepara o JSON
                 QJsonObject json_notifications;
                 json_notifications["username"] = username;
                 QByteArray data = QJsonDocument(json_notifications).toJson();
 
-                // Dispara o POST
                 QNetworkReply *reply = manager.post(request, data);
 
-                // 2. O SEGREDO: Cria um EventLoop local para esperar a resposta da rede NESSA thread
                 QEventLoop loop;
                 QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-                loop.exec(); // Trava a thread aqui até a rede responder (sem travar a interface do app)
+                loop.exec(); 
 
-                // 3. Lê o resultado
                 if (reply->error() == QNetworkReply::NoError) {
                     QByteArray responseData = reply->readAll();
                     QJsonDocument doc = QJsonDocument::fromJson(responseData);
@@ -896,7 +897,6 @@ int main(int argc, char *argv[])
                 reply->deleteLater();
             }
 
-            // Aguarda 3 segundos antes do próximo loop
             QThread::sleep(3);
         }
     });
@@ -1398,11 +1398,10 @@ int main(int argc, char *argv[])
         if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             qApp->setStyleSheet(QString::fromUtf8(file.readAll()));
             file.close();
-            config["THEMES"]["theme"] = configPath.toStdString(); // Ajuste para QString se sua lib de config usar
+            config["THEMES"]["theme"] = qrcPath.toStdString();
             saveConfig();
         }
     };
-    //menu de adicionar tema
     addThemePage = [&](){
         clearLayout(layout);
         fadeTransition(central);
