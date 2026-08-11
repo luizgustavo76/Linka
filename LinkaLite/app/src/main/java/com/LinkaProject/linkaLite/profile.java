@@ -41,6 +41,13 @@ public class profile extends Activity{
         ImageView imgProfile = (ImageView) findViewById(R.id.imgProfilePicture);
         ImageLoader loader = new ImageLoader();
         loader.viewProfilePicture(profile.this, username, imgProfile);
+        btnEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(profile.this, EditAccount.class);
+                startActivity(intent);
+            }
+        });
         btnExit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

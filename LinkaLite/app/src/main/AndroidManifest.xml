@@ -88,5 +88,9 @@
             android:name=".NewGroupActivity"
             android:label="New group"
             android:exported="false"/>
+        <activity
+            android:name=".EditAccount"
+            android:label="Edit account"
+            android:exported="false"/>
     </application>
 </manifest>
