@@ -152,4 +152,4 @@ Backend and desktop developer focused on lightweight and multi-platform systems.
 # License
 
 This project is open-source.
-If you create an instance, client or other product that uses the Linka services, please give me the credits.
+read the LICENSE.txt, is a apache 2.0 license
