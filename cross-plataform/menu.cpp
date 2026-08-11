@@ -2003,47 +2003,58 @@ int main(int argc, char *argv[])
                 )");
 
                 QVBoxLayout *frameLayout = new QVBoxLayout(frame);
-                QHBoxLayout *starLayout = new QHBoxLayout();
                 QHBoxLayout *usernameLayout = new QHBoxLayout();
+                QHBoxLayout *starLayout = new QHBoxLayout(); // Layout horizontal para a barra de ações/bottom
+
+                QLabel *lblUser = new QLabel(username);
                 QPushButton *viewProfile = new QPushButton(view_profile);
                 QObject::connect(viewProfile, &QPushButton::clicked, [=](){
                     otherProfilePage(username);
                 });
-                QLabel *lblUser = new QLabel(username);
-                QLabel *lblText = new QLabel(textPost);
-                QLabel *lblDate = new QLabel(datetime);
-                lblText->setObjectName("postText");
-                lblDate->setObjectName("postDate");
+
                 lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
-                lblText->setStyleSheet("color: white; font-size: 14px;");
-                lblDate->setStyleSheet("color: gray; font-size: 12px;");
-                lblText->setWordWrap(true); 
-                lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+
                 usernameLayout->addWidget(lblUser);
                 usernameLayout->addWidget(viewProfile);
                 usernameLayout->addStretch();
+
+                QLabel *lblText = new QLabel(textPost);
+                lblText->setObjectName("postText");
+                lblText->setStyleSheet("color: white; font-size: 14px;");
+                lblText->setWordWrap(true); 
+                lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+
+                QLabel *lblDate = new QLabel(datetime);
+                lblDate->setObjectName("postDate");
+                lblDate->setStyleSheet("color: gray; font-size: 12px;");
+
+                QPushButton *iconButton = new QPushButton();
+                QLabel *starLabel = new QLabel("...");
+
+
+                starLayout->addWidget(iconButton);
+                starLayout->addWidget(starLabel);
+                starLayout->addStretch(); 
+
                 frameLayout->addLayout(usernameLayout);
                 frameLayout->addWidget(lblText);
                 frameLayout->addWidget(lblDate);
-
-                // ===== BOTÃO STAR =====
-                QPushButton *iconButton = new QPushButton();
-                QLabel *starLabel = new QLabel("...");
-                frameLayout->addWidget(iconButton);
-                frameLayout->addWidget(starLabel);
+                frameLayout->addLayout(starLayout);
 
                 iconButton->setIcon(QIcon(":/assets/default_star.png"));
                 iconButton->setIconSize(QSize(24, 24));
                 iconButton->setFixedSize(30, 30);
                 iconButton->setStyleSheet("border: none;");
-
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
-
-
-                // ponteiro seguro
+                QPushButton *shareButton = new QPushButton("SHARE");
+                shareButton->setStyleSheet("background-color: red; color: white; font-weight: bold;");
+                shareButton->setIcon(QIcon(":/assets/share.png"));
+                shareButton->setIconSize(QSize(24, 24));
+                shareButton->setFixedSize(30, 30);
+                shareButton->setStyleSheet("border: none;");
+                starLayout->addWidget(shareButton);
                 QPointer<QLabel> safeStarLabel = starLabel;
 
-                // buscar quantidade de estrelas
                 QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
                 QNetworkReply *starsReply = manager->get(starsReq);
 
@@ -2068,7 +2079,6 @@ int main(int argc, char *argv[])
                     starsReply->deleteLater();
                 });
 
-                // clique da estrela (toggle)
                 QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
                     QJsonObject star_json;
                     star_json["username"] = username;
@@ -2257,12 +2267,16 @@ int main(int argc, char *argv[])
                 iconButton->setStyleSheet("border: none;");
 
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
+                QPushButton *shareButton = new QPushButton("SHARE");
+                shareButton->setStyleSheet("background-color: red; color: white; font-weight: bold;");
+                shareButton->setIcon(QIcon(":/assets/share.png"));
+                shareButton->setIconSize(QSize(24, 24));
+                shareButton->setFixedSize(30, 30);
+                shareButton->setStyleSheet("border: none;");
+                starLayout->addWidget(shareButton);
 
-
-                // ponteiro seguro
                 QPointer<QLabel> safeStarLabel = starLabel;
 
-                // buscar quantidade de estrelas
                 QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
                 QNetworkReply *starsReply = manager->get(starsReq);
 
