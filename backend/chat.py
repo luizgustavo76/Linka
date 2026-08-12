@@ -68,6 +68,7 @@ def send():
         notificationsModule.CreateNotification(sender, receiver, date, "chat", message)    
         return jsonify({"status": "message sent"}), 200
     else:
+        print("foi aqui")
         return jsonify({"status":"forbidden"}),403
 
 

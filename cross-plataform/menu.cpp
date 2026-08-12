@@ -1113,27 +1113,17 @@ int main(int argc, char *argv[])
         });
         QPushButton *discordButton = new QPushButton();
         discordButton->setIcon(QIcon(":/assets/discord.png"));
-        
         QPushButton *redditButton = new QPushButton();
         redditButton->setIcon(QIcon(":/assets/reddit.png"));
-        
-        // 1. Reduza o tamanho dos ícones para algo realista em telas de celular
-        // Em vez de 200 de largura, use tamanhos quadrados ou mais compactos para não estourar
         discordButton->setIconSize(QSize(120, 40)); 
         redditButton->setIconSize(QSize(120, 40));
-
-        // 2. O SEGREDO: Trave a largura máxima do BOTÃO para ele não crescer além disso
         discordButton->setMaximumWidth(130);
         redditButton->setMaximumWidth(130);
-        
         QHBoxLayout *layoutHorizontal = new QHBoxLayout();
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
         layoutHorizontal->addWidget(discordButton);
         layoutHorizontal->addWidget(redditButton);
-        
-        // Adiciona um spacer na direita também para centralizar os dois botões bonitinho no meio da tela
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-        
         layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
         layout->addLayout(layoutHorizontal);
         QObject::connect(discordButton, &QPushButton::clicked, [=](){
@@ -2114,7 +2104,6 @@ int main(int argc, char *argv[])
 
             scroll_area(layout, labels);
 
-            // botões de baixo
             QPushButton *btnBack = new QPushButton(back_text);
             QPushButton *btnNewPost = new QPushButton(new_post_text);
             QObject::connect(btnBack, &QPushButton::clicked, [=](){
@@ -2138,6 +2127,95 @@ int main(int argc, char *argv[])
             });
 
         });
+    };
+    auto sharePost = [&](int post_id, QString federation_url){
+        clearLayout(layout);
+        fadeTransition(central);
+        QList<QWidget*> widgets;        
+        QJsonObject friends_json;
+        friends_json["username"] = username;
+        QString response_friends = requestHTTP(
+            url + "/friends",
+            "POST",
+            friends_json
+        );
+        QJsonObject json_username;
+        json_username["username"] = username;
+        QJsonObject json_object_groups = viewGroupsRequest();
+        QString response_groups = requestHTTP(
+            url + "/my-groups",
+            "POST",
+            json_username
+        );
+        QJsonDocument doc_groups = QJsonDocument::fromJson(response_groups.toUtf8());
+        QJsonObject obj_groups = doc_groups.object();
+
+        if (obj_groups["status"].toString() == "success") {
+            QJsonArray groups = obj_groups["groups"].toArray();
+            for(int i = 0; i < groups.size(); i++){
+                QJsonObject groupObj = groups[i].toObject();
+                
+                int idGrupo = groupObj["group_id"].toInt();
+                QString nomeGrupo = groupObj["group_name"].toString();
+
+                QPushButton *btn = new QPushButton(nomeGrupo);
+                
+                QObject::connect(btn, &QPushButton::clicked, [=](){
+                    qDebug() << "Clicou no grupo ID: " << idGrupo << " Nome: " << nomeGrupo;
+                });
+
+                layout->addWidget(btn);
+            }
+        } else {
+            qDebug() << "Erro retornado pelo servidor: " << obj_groups["message"].toString();
+        }
+        QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
+        QJsonObject obj = doc.object();
+        QJsonArray friends = obj["friends"].toArray();
+        if (friends.isEmpty())
+        {
+            QLabel *label_error = new QLabel("No Friends....");
+            widgets.append(label_error);
+        }
+        else
+        {
+            for(int i = 0; i < friends.size(); i++){
+                QJsonArray row = friends[i].toArray();
+                QString receiver = row[0].toString();
+                QString remittee = row[1].toString();
+                QString friendName;
+                if(receiver == username)
+                    friendName = remittee;
+                else
+                    friendName = receiver;
+                QWidget *containerWidget = new QWidget();
+                QPushButton *user = new QPushButton(friendName);
+                QHBoxLayout *buttonLayout = new QHBoxLayout();
+                viewProfilePicture(buttonLayout, username);
+                buttonLayout->addWidget(user);
+                buttonLayout->addStretch();
+                containerWidget->setLayout(buttonLayout);
+                QObject::connect(user, &QPushButton::clicked, [=]() mutable{
+                    QTimer::singleShot(0, [=](){
+                        int postId = post_id;
+                        QString final_message = QString("[POST id=%1 fed=%2]").arg(QString::number(postId), federation_url);
+                        QJsonObject jsonChat;
+                        jsonChat["sender"] = username;
+                        jsonChat["receiver"] = friendName;
+                        jsonChat["message"] = final_message;
+                        requestHTTP(
+                            url + "/send-message",
+                            "POST",
+                            jsonChat
+                        );
+                        chat(friendName);
+                    });
+                });
+                widgets.append(containerWidget);
+            };
+        };
+        scroll_area(layout, widgets);
+        renderBottomBar("chat");
     };
     showfeed = [&]()
     {
@@ -2255,7 +2333,6 @@ int main(int argc, char *argv[])
                 frameLayout->addLayout(textLayout);
                 frameLayout->addWidget(lblDate);
 
-                // ===== BOTÃO STAR =====
                 QPushButton *iconButton = new QPushButton();
                 QLabel *starLabel = new QLabel("...");
                 frameLayout->addWidget(iconButton);
@@ -2274,7 +2351,9 @@ int main(int argc, char *argv[])
                 shareButton->setFixedSize(30, 30);
                 shareButton->setStyleSheet("border: none;");
                 starLayout->addWidget(shareButton);
-
+                QObject::connect(shareButton, &QPushButton::clicked, [=](){
+                    sharePost(postId, "http://linkaProject.pythonanywhere.com");
+                });
                 QPointer<QLabel> safeStarLabel = starLabel;
 
                 QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
@@ -2301,7 +2380,6 @@ int main(int argc, char *argv[])
                     starsReply->deleteLater();
                 });
 
-                // clique da estrela (toggle)
                 QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
                     QJsonObject star_json;
                     star_json["username"] = username;
@@ -2778,21 +2856,17 @@ int main(int argc, char *argv[])
         QJsonObject obj_groups = doc_groups.object();
 
         if (obj_groups["status"].toString() == "success") {
-            QJsonArray groups = obj_groups["groups"].toArray(); // Pega a lista com segurança
-
+            QJsonArray groups = obj_groups["groups"].toArray();
             for(int i = 0; i < groups.size(); i++){
                 QJsonObject groupObj = groups[i].toObject();
                 
-                // AGORA VOCÊ PEGA POR NOME, NÃO POR ÍNDICE! Muito mais fácil.
                 int idGrupo = groupObj["group_id"].toInt();
                 QString nomeGrupo = groupObj["group_name"].toString();
 
                 QPushButton *btn = new QPushButton(nomeGrupo);
                 
-                // Lembra de usar a captura por valor [=] para não zerar as variáveis
                 QObject::connect(btn, &QPushButton::clicked, [=](){
                     qDebug() << "Clicou no grupo ID: " << idGrupo << " Nome: " << nomeGrupo;
-                    // chama a sua tela de chat aqui passando idGrupo
                 });
 
                 layout->addWidget(btn);
