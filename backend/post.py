@@ -56,7 +56,14 @@ def create_db():
 
 
 create_db()
-
+@post_bp.route("/view-post", methods=["POST"])
+def view_post():
+    data = request.get_json()
+    post_id = data.get("post_id")
+    conn = get_db()
+    cur = conn.cursor()
+    posts = cur.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    return jsonify([dict(row) for row in posts])
 @post_bp.route("/comments", methods=["POST"])
 def new_comment():
     data = request.get_json(force=True)
@@ -182,15 +189,6 @@ def feed():
         })
 
     return jsonify(lista_posts), 200
-@post_bp.errorhandler(415)
-def unsupported_media_type_debug(e):
-    print("====== MATEI A CHARADA ======")
-    print(f"Rota que deu erro: {request.path}")
-    print(f"Método usado: {request.method}")
-    print(f"Headers recebidos: {dict(request.headers)}")
-    print(f"Corpo (Data) bruto: {request.data}")
-    print("=============================")
-    return jsonify({"erro_debug": "Olhe o terminal do VS Code!"}), 415
 
 
 
@@ -199,7 +197,6 @@ def star():
     data = request.get_json(force=True)
 
     post_id = data.get("post_id")
-    # Forçamos o username a ser o usuário autenticado na sessão (g.username)
     username = g.username 
 
     if not username:
@@ -233,7 +230,7 @@ def star():
         )
         
         cur.execute("SELECT username FROM posts WHERE id = ?", (post_id,))
-        op = cur.fetchone() # Quem vai receber a notificação
+        op = cur.fetchone()
         
         date = datetime.now()
         

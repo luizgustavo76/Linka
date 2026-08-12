@@ -1829,17 +1829,14 @@ int main(int argc, char *argv[])
     QHash<QString, QString> profilePictureCache;
     viewProfilePicture = [&](QBoxLayout *picLayout, QString username){
         if(username.isEmpty()){
-            return; // Evita requisição inútil se o username for vazio
+            return; 
         }
-
-        // 1. CHECA SE JÁ ESTÁ NO CACHE
         if(profilePictureCache.contains(username)) {
             qDebug() << "[CACHE HIT] Usando foto do cache para:" << username;
             renderAvatarImage(profilePictureCache[username], picLayout);
-            return; // Sai da função sem fazer requisição HTTP!
+            return; 
         }
 
-        // 2. SE NÃO ESTIVER NO CACHE, FAZ A REQUISIÇÃO (Apenas a primeira vez)
         qDebug() << "[CACHE MISS] Baixando foto da rede para:" << username;
         
         QJsonObject json_profile;
@@ -1855,7 +1852,6 @@ int main(int argc, char *argv[])
         QJsonObject json_response = doc.object();        
         QString profile_picture = json_response["profile-picture"].toString(); 
         
-        // 3. SALVA NO CACHE PARA AS PRÓXIMAS VEZES
         if(!profile_picture.isEmpty()) {
             profilePictureCache[username] = profile_picture;
         }
