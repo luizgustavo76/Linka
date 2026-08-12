@@ -1,0 +1,12 @@
+{
+    "badges":{
+        "Linka veterans":{
+            "description":"badge for the 100 firsts users",
+            "sql_query":"SELECT username FROM login WHERE id < 100"
+        },
+        "Linka copywriter":{
+            "description":"create 100 posts in Linka",
+            "sql_query":"SELECT 1 FROM posts WHERE username = ? HAVING COUNT(*) > 100;"
+        }
+    }
+}

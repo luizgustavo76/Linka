@@ -26,9 +26,22 @@ def create_table():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS linkos_table(
+            username TEXT,
+            linkos INTEGER
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS badges(
+            username TEXT,
+            badge TEXT
+        )
+    """)
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS profile (
             username TEXT PRIMARY KEY,
             bio TEXT,
+            actual_badge TEXT,
             ProfilePicture TEXT,
             followers INTEGER,
             following INTEGER

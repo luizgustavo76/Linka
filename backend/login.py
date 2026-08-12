@@ -8,22 +8,17 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 login_bp = Blueprint("login", __name__)
-load_dotenv()
+load_dotenv("backend.env")
 class Login:
     def __init__(self):
-        #pasta atual
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
-        #pasta onde está os banco de dados
         self.db_dir = (self.base_dir + "/DB")
-        #banco de dados de login
         self.login_dir = os.path.join(self.db_dir, "login.db")
         self.fast_login = os.path.join(self.db_dir, "FastLogin.db")
-        #senha em hash
         self.senha_hash = None
         
         if not os.path.exists(self.db_dir):
             os.makedirs(self.db_dir)
-        #criar banco se não existir
         def criar_db_login():
             conn = self.get_db_login()
             cur = conn.cursor()
@@ -34,6 +29,12 @@ class Login:
                         email TEXT UNIQUE,
                         id TEXT UNIQUE
                     )
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS linkos_table(
+                    username TEXT,
+                    linkos INTEGER
+                )
             """)
             conn.commit()
             conn.close()
@@ -61,11 +62,9 @@ class Login:
         conn = sqlite3.connect(self.fast_login, timeout=15)
         conn.execute("PRAGMA journal_mode=WAL;")
         return conn
-    #transformar senha em texto para hash
     def gerar_hash(self, senha):
         self.senha_hash = generate_password_hash(senha)
         return self.senha_hash
-    #verificar se a hash com a senha
     def verificar_hash(self, senha, hash):
         return check_password_hash(hash, senha)
 login_system = Login()
@@ -89,7 +88,6 @@ def enviar_email(destino, assunto, mensagem_html):
 
     print("Email enviado com sucesso!")
 
-#rota pra registrar usuarios
 @login_bp.route("/register", methods=["POST"])
 def register():
     try:
@@ -289,7 +287,6 @@ def fast_login():
             return jsonify({"status":"logged in with sucess"}),200
     except:
         return jsonify({"status":"user dont have a session"}),401
-#login route
 @login_bp.route("/login", methods=["POST"])
 def login():
     dados = request.get_json()
@@ -298,7 +295,6 @@ def login():
     conn = login_system.get_db_login()
     cur = conn.cursor()
     cur.execute("SELECT username FROM login WHERE username = ?", (username,))
-    #resultado de usernames, se existir aquele username ele retorna o nome se não retorna None
     resultado_username = cur.fetchone()
     conn.close()
     if not resultado_username:
