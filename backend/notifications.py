@@ -39,7 +39,6 @@ def notifications():
     data = request.get_json(force=True) or {}
     username = data.get("username")
     
-    # Se o C++ enviar username vazio ou Nulo
     if not username:
         print(" [LOG FLASK] Requisição chegou sem username!")
         return jsonify([]), 200

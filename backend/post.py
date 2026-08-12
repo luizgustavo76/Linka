@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 import notificationsModule
 import re
+import linkosModule
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 post_dir = os.path.join(db_dir, "post.db")
@@ -53,8 +54,6 @@ def create_db():
     """)
     conn.commit()
     conn.close()
-
-
 create_db()
 @post_bp.route("/view-post", methods=["POST"])
 def view_post():
@@ -81,6 +80,7 @@ def new_comment():
             op = cur.fetchone()
             conn.commit()
             conn.close()
+            linkosModule.add_linkos(username, 2)
         date = datetime.now()
         notificationsModule.CreateNotification(username, op, date, "comment", text_comment)
         return jsonify({"status":"the comment has been created with sucess!"}), 200
@@ -137,7 +137,7 @@ def new_post():
 
             conn.commit()
             conn.close()
-
+            linkosModule.add_linkos(username, "5")
             return jsonify({"status": "post created with sucess"}), 200
         else:
             return jsonify({"status":"forbidden"}),403
@@ -231,7 +231,7 @@ def star():
         
         cur.execute("SELECT username FROM posts WHERE id = ?", (post_id,))
         op = cur.fetchone()
-        
+        linkosModule.add_linkos(op, "3")
         date = datetime.now()
         
         notificationsModule.CreateNotification(
