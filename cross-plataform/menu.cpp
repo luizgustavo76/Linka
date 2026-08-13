@@ -1,3 +1,4 @@
+#include <QRegularExpression>
 #include <QtConcurrent>
 #include <QFuture>
 #include <QFileDialog>
@@ -2734,9 +2735,49 @@ int main(int argc, char *argv[])
 
                     QString sender = msg["sender"].toString();
                     QString text = msg["message"].toString();
+                    QRegularExpression rx(R"(\[POST\s+id=(\d+)\s+fed=([^\s\]]+)\])");
+                    QRegularExpressionMatch match = rx.match(text);
+                    bool shared;
+                    QRegularExpression rx(R"(\[POST\s+id=(\d+)\s+fed=([^\s\]]+)\])");
+                    QRegularExpressionMatchIterator i = rx.globalMatch(text);
+                    while (i.hasNext()) {
+                        QRegularExpressionMatch match = i.next();
+                        if (match.hasMatch()) {
+                            int postId = match.captured(1).toInt();
+                            QString fedUrl = match.captured(2);
+                            if (!fedUrl.endsWith("/")) {
+                                fedUrl += "/";
+                            }
+                            shared = true;
+                            QJsonObject jsonViewPost;
+                            jsonViewPost["post_id"] = postId;
+                            requestHTTP(
+                                fedUrl + "view-post",
+                                "POST",
+                                jsonViewPost
+                            );
+                            QJsonParseError error;
+                            QJsonDocument doc = QJsonDocument::fromJson(responseData, &error);
 
+                            if (error.error != QJsonParseError::NoError || !doc.isArray()) {
+                                qDebug() << "Error in json parsing" << error.errorString();
+                                return;
+                            }
+
+                            QJsonArray postsArray = doc.array();
+
+                            for (const QJsonValue &value : postsArray) {
+                                if (!value.isObject()) continue;
+
+                                QJsonObject post = value.toObject();
+
+                                int id = post["id"].toInt();
+                                QString username = post["username"].toString();
+                                QString textPost = post["text_post"].toString();
+                                QString datetime = post["datetime"].toString();
+                        }
+                    }
                     bool isMe = (sender == username);
-
                     ChatBubble *bubble = new ChatBubble(text, isMe);
                     QHBoxLayout *line = new QHBoxLayout();
 
@@ -2799,7 +2840,6 @@ int main(int argc, char *argv[])
         layout->addWidget(container);
         renderBottomBar("chat");
     };
-    //pagina inicial de chat
     viewGroupsRequest = [&](){
         QJsonObject group_request;
         group_request["username"] = username;
@@ -2808,15 +2848,12 @@ int main(int argc, char *argv[])
             "POST",
             group_request
         );
-        
-        // Em vez de quebrar e remontar errado, apenas valide se a resposta é válida
-        // e retorne o objeto completo recebido do PythonAnywhere
+
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
         if (doc.isObject()) {
             return doc.object();
         }
         
-        // Fallback vazio seguro
         return QJsonObject();
     };
     chatPage = [&](){
