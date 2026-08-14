@@ -173,6 +173,10 @@
 <context>
     <name>chat</name>
     <message>
+      <source>channel name</source>
+      <translation>Channel name</translation>
+    </message>
+    <message>
         <source>type here</source>
         <translation>Type here</translation>
     </message>

@@ -200,7 +200,10 @@
 
   <context>
     <name>chat</name>
-
+    <message>
+      <source>channel name</source>
+      <translation>Nome do canal</translation>
+    </message>
     <message>
       <source>type here</source>
       <translation>Digite aqui</translation>

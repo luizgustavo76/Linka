@@ -1,3 +1,4 @@
+#include <QComboBox>
 #include <QRegularExpression>
 #include <QtConcurrent>
 #include <QFuture>
@@ -959,6 +960,7 @@ int main(int argc, char *argv[])
     layout->addWidget(header_linka);
     layout->setContentsMargins(30, 30, 30, 30);
     //strings traduzidas
+    QString channel_name_text = QCoreApplication::translate("chat", "channel name");
     QString text_post = QCoreApplication::translate("feed", "text post");
     QString back_text = QCoreApplication::translate("global", "back");
     QString new_post_text = QCoreApplication::translate("feed", "new post");
@@ -1063,6 +1065,7 @@ int main(int argc, char *argv[])
     std::function<void(QBoxLayout*, QString)> viewProfilePicture;
     std::function<void()> addFederationFeed;
     std::function<void(QString)> federationFeedPage;
+    std::function<void(int)> addChannelPage;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -3110,7 +3113,7 @@ int main(int argc, char *argv[])
         QByteArray rawResponsePermissions = requestHTTP(url + "/view-permissions", "POST", jsonPermission).toUtf8();
         QJsonDocument docPermission = QJsonDocument::fromJson(rawResponsePermissions);
         bool isAdmin = false;
-        if (docPermission.isArray()){
+        if (docPermission.isObject()){
             QJsonArray permissionsArray = docPermission.array();
             QJsonObject rootObj = docPermission.object();
             if (rootObj.contains("permission") && rootObj["permission"].isArray()) {
@@ -3125,6 +3128,9 @@ int main(int argc, char *argv[])
         };
         QPushButton *addUserButton = new QPushButton();
         QPushButton *addChannel = new QPushButton("+");
+        QObject::connect(addChannel, &QPushButton::clicked, [=](){
+            addChannelPage(groupId);
+        });
         addUserButton->setIcon(QIcon(":/assets/add-user.png"));
         action_bar->addWidget(addUserButton);
         if (isAdmin){
@@ -3153,6 +3159,33 @@ int main(int argc, char *argv[])
             }
         }
         scroll_area(layout, widgets);
+        renderBottomBar("chat");
+    };
+    addChannelPage = [&](int group_id){
+        clearLayout(layout);
+        fadeTransition(central);
+        QLineEdit *channelName = new QLineEdit();
+        channelName->setPlaceholderText(channel_name_text);
+        QComboBox *comboBox = new QComboBox();
+        comboBox->addItem("Chat", "chat");
+        comboBox->addItem("posts", "posts");
+        QPushButton *sendButton = new QPushButton(send_text);
+        QString currentType;
+        QObject::connect(comboBox, &QComboBox::currentTextChanged, [=](const QString &text) {
+            currentType = comboBox->currentData().toString();
+        });
+        QObject::connect(sendButton, &QPushButton::clicked, [=](){
+            QJsonObject jsonChannel;
+            jsonChannel["channel_name"] = channelName->text();
+            jsonChannel["group_id"] = group_id;
+            jsonChannel["username"] = username;
+            jsonChannel["type"] = currentType;
+            requestHTTP(url + "/new-channel", "POST", jsonChannel);
+            viewChannelGroup(group_id);
+        });
+        layout->addWidget(channelName);
+        layout->addWidget(comboBox);
+        layout->addWidget(sendButton);
         renderBottomBar("chat");
     };
     chatPage = [&](){
