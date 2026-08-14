@@ -91,22 +91,31 @@ def new_channel():
             return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/view-channels", methods=["POST"])
 def view_channels():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
-    if username == g.username:
-        group_id = data.get("group_id")
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT username FROM users_in_group WHERE username = ?",(username,))
-        result = cur.fetchone()
-        if result:
-            cur.execute("SELECT * FROM channels WHERE group_id = ?",(group_id,))
-            result = cur.fetchall()
-            return jsonify(result), 200
-        else:
-            return jsonify({"status":"you aren`t in group"}),403
-    else:
-        return jsonify({"status":"forbidden"}),403
+    if username != g.username:
+        return jsonify({"status": "forbidden"}), 403
+    group_id = data.get("group_id")
+    if not group_id:
+        return jsonify({"status": "group_id is missing"}), 400
+    conn = get_db()
+    cur = conn.cursor()    
+    cur.execute("SELECT 1 FROM users_in_group WHERE username = ? AND group_id = ?", (username, group_id))
+    user_in_group = cur.fetchone()
+    if not user_in_group:
+        conn.close()
+        return jsonify({"status": "you aren't in group"}), 403
+    cur.execute("SELECT group_id, name, type FROM channels WHERE group_id = ?", (group_id,))
+    rows = cur.fetchall()
+    conn.close()
+    channels = []
+    for row in rows:
+        channels.append({
+            "group_id": row[0],
+            "channel_name": row[1],
+            "type": row[2]
+        })
+    return jsonify(channels), 200
 @chat_group_bp.route("/new-post-group", methods=["POST"])
 def create_post_group():
     data = request.get_json() or {}

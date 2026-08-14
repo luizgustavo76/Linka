@@ -2940,6 +2940,31 @@ int main(int argc, char *argv[])
         
         return QJsonObject();
     };
+    auto viewChannelGroup = [&](int groupId){
+        QList<QWidget*> widgets;
+        clearLayout(layout);
+        fadeTransition(central);
+        QJsonObject jsonChannel;
+        jsonChannel["group_id"] = groupId;
+        jsonChannel["username"] = username;
+        QByteArray rawResponse = requestHTTP(url + "/view-channels", "POST", jsonChannel).toUtf8();
+        QJsonDocument doc = QJsonDocument::fromJson(rawResponse);
+        if (doc.isArray()) {
+            QJsonArray channelList = doc.array();
+            for (const QJsonValue &val : channelList) {
+                if (val.isObject()) {
+                    QJsonObject channelObj = val.toObject();
+                    int channelGroupId = channelObj["group_id"].toInt();
+                    QString channelName = channelObj["channel_name"].toString();
+                    QString type = channelObj["type"].toString();
+                    QPushButton *channelButton = new QPushButton(channelName);
+                    widgets.append(channelButton);
+                }
+            }
+        }
+        scroll_area(layout, widgets);
+        renderBottomBar("chat");
+    };
     chatPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -2977,16 +3002,16 @@ int main(int argc, char *argv[])
             for(int i = 0; i < groups.size(); i++){
                 QJsonObject groupObj = groups[i].toObject();
                 
-                int idGrupo = groupObj["group_id"].toInt();
-                QString nomeGrupo = groupObj["group_name"].toString();
+                int groupId = groupObj["group_id"].toInt();
+                QString nameGroup = groupObj["group_name"].toString();
 
-                QPushButton *btn = new QPushButton(nomeGrupo);
+                QPushButton *btn = new QPushButton(nameGroup);
                 
                 QObject::connect(btn, &QPushButton::clicked, [=](){
-                    qDebug() << "Clicou no grupo ID: " << idGrupo << " Nome: " << nomeGrupo;
+                    viewChannelGroup(groupId);
                 });
 
-                layout->addWidget(btn);
+                widgets.append(btn);
             }
         } else {
             qDebug() << "Erro retornado pelo servidor: " << obj_groups["message"].toString();
