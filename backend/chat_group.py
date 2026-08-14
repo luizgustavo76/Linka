@@ -27,7 +27,7 @@ def create_db():
                     name TEXT,
                     username_owner TEXT,
                     description TEXT,
-                    create_date TEXT,
+                    create_data TEXT,
                     rules TEXT)""")
 
     cur.execute("""CREATE TABLE IF NOT EXISTS channels(
@@ -50,7 +50,7 @@ def create_db():
                     username TEXT,
                     text_post TEXT,
                     stars INTEGER,
-                    create_date TEXT,
+                    create_data TEXT,
                     FOREIGN KEY(group_id) REFERENCES meta(id))""")
                     
     cur.execute("""CREATE TABLE IF NOT EXISTS users_in_group(
@@ -204,16 +204,16 @@ def create_group():
         
     name_group = data.get("name_group")
     description = data.get("description")   
-    create_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    create_data = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO meta (username_owner, name, description, create_date) VALUES(?,?,?,?)",
-                (username, name_group, description, create_date))
+    cur.execute("INSERT INTO meta (username_owner, name, description, create_data) VALUES(?,?,?,?)",
+                (username, name_group, description, create_data))
     group_id = cur.lastrowid
     
     cur.execute("INSERT INTO users_in_group (group_id, username, entrance_date, permissions) VALUES (?,?,?,?)", 
-                (group_id, username, create_date, "admin"))
+                (group_id, username, create_data, "admin"))
     conn.commit()
     conn.close()
     
@@ -235,7 +235,7 @@ def send_group_message():
     result = cur.fetchone()
     
     if result:
-        cur.execute("INSERT INTO chat_group (group_id, sender, message, channel) VALUES (?, ?, ?)", (group_id, sender, message, channel))
+        cur.execute("INSERT INTO chat_group (group_id, sender, message, channel) VALUES (?, ?, ?, ?)", (group_id, sender, message, channel))
         conn.commit()
         conn.close()
         return jsonify({"status": "success", "message": "Message sent"}), 200
@@ -256,18 +256,25 @@ def view_group_message():
     cur = conn.cursor()
 
     try:
-        if int(last_id) == 0:
+        try:
+            last_id_num = int(last_id) if last_id else 0
+        except ValueError:
+            last_id_num = 0
+
+        if last_id_num == 0:
             cur.execute("""
                 SELECT sender, message, id FROM (
                     SELECT sender, message, id FROM chat_group
-                    WHERE group_id = ? AND channel = ? ORDER BY id DESC LIMIT 20
-                ) ORDER BY id ASC
+                    WHERE group_id = ? AND channel = ? 
+                    ORDER BY id DESC LIMIT 20
+                ) AS subquery ORDER BY id ASC
             """, (group_id, channel))
         else:
             cur.execute("""
                 SELECT sender, message, id FROM chat_group
-                WHERE id > ? AND group_id = ? AND channel = ?ORDER BY id ASC
-            """, (last_id, group_id, channel))
+                WHERE id > ? AND group_id = ? AND channel = ? 
+                ORDER BY id ASC
+            """, (last_id_num, group_id, channel))
         rows = cur.fetchall()
     except ValueError:
         conn.close()

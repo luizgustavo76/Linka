@@ -2640,6 +2640,165 @@ int main(int argc, char *argv[])
         layout->addWidget(back_button);
         renderBottomBar("chat");
     };
+    auto groupChat = [&](int group_id, QString channel){
+        clearLayout(layout);
+
+        QScrollArea *scroll = new QScrollArea();
+        scroll->setWidgetResizable(true);
+
+        QWidget *containerScroll = new QWidget();
+        QVBoxLayout *containerLayout = new QVBoxLayout(containerScroll);
+        scroll->setWidget(containerScroll);
+        layout->addWidget(scroll);
+        auto lastId = std::make_shared<int>(0);
+        QTimer *timer = new QTimer(scroll);
+
+        auto updateChat = [=]() mutable {
+
+            QJsonObject view_chat;
+            view_chat["id"] = *lastId;
+            view_chat["channel"] = channel;
+            view_chat["group_id"] = group_id;
+            
+            QString chat_message = requestHTTP(
+                url + "/view-group-message",
+                "POST",
+                view_chat
+            );
+
+            QJsonDocument doc = QJsonDocument::fromJson(chat_message.toUtf8());
+            if (!doc.isObject())
+                return;
+
+            QJsonObject rootObj = doc.object();
+            if (!rootObj.contains("messages") || !rootObj["messages"].isArray())
+                return;
+
+            QJsonArray msgs = rootObj["messages"].toArray();
+
+            for (int i = 0; i < msgs.size(); i++)
+            {
+                QJsonObject msg = msgs[i].toObject();
+
+                QString sender = msg["sender"].toString();
+                QString text   = msg["message"].toString();
+                int id         = msg["id"].toInt();
+
+                if (id > *lastId)
+                    *lastId = id;
+
+                bool isMe = (sender == username);
+
+                ChatBubble *bubble = new ChatBubble(text, isMe);
+                QHBoxLayout *line  = new QHBoxLayout();
+                QVBoxLayout *bubbleBlock = new QVBoxLayout();
+                QHBoxLayout *headerLayout = new QHBoxLayout();
+
+                QLabel *usernameLabel = new QLabel(sender);
+
+                if (isMe) {
+                    usernameLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+                    headerLayout->addStretch(); 
+                    headerLayout->addWidget(usernameLabel);
+                    viewProfilePicture(headerLayout, username); 
+                    bubbleBlock->addLayout(headerLayout);
+                    bubbleBlock->addWidget(bubble);
+                    line->addStretch();
+                    line->addLayout(bubbleBlock);
+                }
+                else {
+                    usernameLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+                    viewProfilePicture(headerLayout, sender); 
+                    headerLayout->addWidget(usernameLabel);
+                    headerLayout->addStretch();
+                    bubbleBlock->addLayout(headerLayout);
+                    bubbleBlock->addWidget(bubble);
+                    line->addLayout(bubbleBlock);
+                    line->addStretch();
+                }
+
+                QWidget *lineWidget = new QWidget();
+                lineWidget->setLayout(line);
+                containerLayout->addWidget(lineWidget);
+            }
+
+            if (!msgs.isEmpty())
+            {
+                QTimer::singleShot(
+                    50,
+                    [=](){
+                        scroll->verticalScrollBar()->setValue(
+                            scroll->verticalScrollBar()->maximum()
+                        );
+                    }
+                );
+            }
+        };
+
+        QObject::connect(timer, &QTimer::timeout, updateChat);
+
+        updateChat();
+        timer->start(1000);
+
+        QLineEdit *message_box = new QLineEdit();
+        message_box->setPlaceholderText(type_text);
+
+        QPushButton *send_button = new QPushButton(send_text);
+        QHBoxLayout *entryBox = new QHBoxLayout();
+
+        entryBox->addWidget(message_box);
+        entryBox->addWidget(send_button);
+
+        QWidget *container = new QWidget();
+        container->setLayout(entryBox);
+
+        QPushButton *back_button = new QPushButton(back_text);
+
+        QObject::connect(
+            back_button,
+            &QPushButton::clicked,
+            [=]() mutable {
+                timer->stop();
+                initialPage();
+            }
+        );
+
+        QObject::connect(
+            send_button,
+            &QPushButton::clicked,
+            [=]() mutable {
+                QString text = message_box->text();
+                if (text.isEmpty())
+                    return;
+
+                QJsonObject json;
+                json["sender"]   = username;
+                json["message"]  = text;
+                json["group_id"] = group_id;
+                json["channel"]  = channel;
+
+                requestHTTP(
+                    url + "/send-group-message",
+                    "POST",
+                    json
+                );
+
+                message_box->clear();
+            }
+        );
+
+        QObject::connect(
+            message_box,
+            &QLineEdit::returnPressed,
+            [=]() mutable {
+                send_button->click();
+            }
+        );
+
+        layout->addWidget(container);
+        layout->addWidget(back_button);
+        renderBottomBar("chat");
+    };
     auto view_single_post = [&](int post_id, QString targetUrl = "") -> QJsonObject {
         if (targetUrl.isEmpty()) {
             targetUrl = url;
@@ -2986,6 +3145,9 @@ int main(int argc, char *argv[])
                     QString channelName = channelObj["channel_name"].toString();
                     QString type = channelObj["type"].toString();
                     QPushButton *channelButton = new QPushButton(channelName);
+                    QObject::connect(channelButton, &QPushButton::clicked, [=](){
+                        groupChat(channelGroupId, channelName);
+                    });
                     widgets.append(channelButton);
                 }
             }
