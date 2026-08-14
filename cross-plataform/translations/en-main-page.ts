@@ -92,6 +92,10 @@
 <context>
     <name>feed</name>
     <message>
+        <source>view complete post</source>
+        <translation>view complete post</translation>
+    </message>
+    <message>
         <source>newer</source>
         <translation>Newer</translation>
     </message>

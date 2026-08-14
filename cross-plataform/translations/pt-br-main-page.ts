@@ -109,6 +109,10 @@
   <context>
     <name>feed</name>
     <message>
+        <source>view complete post</source>
+        <translation>Veja o post completo</translation>
+    </message>
+    <message>
         <source>newer</source>
         <translation>Novos</translation>
     </message>

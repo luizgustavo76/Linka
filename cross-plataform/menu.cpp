@@ -2660,7 +2660,77 @@ int main(int argc, char *argv[])
         layout->addWidget(back_button);
         renderBottomBar("chat");
     };
-    //tela quando você esta conversando com o usuario
+    auto view_single_post = [&](int post_id) -> QJsonObject {
+        QJsonObject jsonViewPost;
+        jsonViewPost["post_id"] = post_id;
+
+        QNetworkAccessManager manager;
+        QUrl fedUrl(url + "/view-post"); 
+        QNetworkRequest request(fedUrl);
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+        QNetworkReply *reply = manager.post(request, QJsonDocument(jsonViewPost).toJson());
+
+        QEventLoop loop;
+        QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        loop.exec();
+
+        QJsonObject result;
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray responseData = reply->readAll();        
+            QJsonParseError error;
+            QJsonDocument doc = QJsonDocument::fromJson(responseData, &error);
+            
+            if (error.error == QJsonParseError::NoError && doc.isObject()) {
+                result = doc.object(); 
+            }
+        }
+
+        reply->deleteLater();
+        return result;
+    };
+
+    auto renderSinglePost = [&](QString author, QString text_post, QString datetime, int postId) -> void {
+        Q_UNUSED(postId);
+        QList<QWidget*> labsList;
+        clearLayout(layout);
+        fadeTransition(central);
+
+        QFrame *frame = new QFrame();
+        QVBoxLayout *frameLayout = new QVBoxLayout(frame);
+
+        QHBoxLayout *usernameLayout = new QHBoxLayout();
+        QPushButton *viewProfile = new QPushButton("View profile");
+        
+        QObject::connect(viewProfile, &QPushButton::clicked, [=]() {
+            otherProfilePage(author);
+        });
+
+        QLabel *lblUser = new QLabel(author);
+        lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
+
+        viewProfilePicture(usernameLayout, author);
+        usernameLayout->addWidget(lblUser);
+        usernameLayout->addWidget(viewProfile);
+        usernameLayout->addStretch();
+        
+        frameLayout->addLayout(usernameLayout);
+
+        QLabel *lblDate = new QLabel(datetime);
+        lblDate->setObjectName("postDate");
+        lblDate->setStyleSheet("color: gray; font-size: 12px;");
+        frameLayout->addWidget(lblDate);
+
+        QLabel *lblText = new QLabel(text_post);
+        lblText->setObjectName("postText");
+        lblText->setStyleSheet("color: white; font-size: 14px;");
+        lblText->setWordWrap(true);
+        lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+        frameLayout->addWidget(lblText);
+
+        labsList.clear();
+        labsList.append(frame); 
+        scroll_area(layout, labsList);
+    };
     chat = [&](QString user){
         clearLayout(layout);
         QList<QWidget*> message;
@@ -2711,13 +2781,10 @@ int main(int argc, char *argv[])
 
             QJsonArray msgs = obj["messages"].toArray();
 
-            
             if (msgs.size() != *currentMessageCount)
             {
                 int oldSize = *currentMessageCount;
                 *currentMessageCount = msgs.size(); 
-
-                
                 QLayoutItem *child;
                 while ((child = containerLayout->takeAt(0)) != nullptr)
                 {
@@ -2727,21 +2794,23 @@ int main(int argc, char *argv[])
                     }
                     delete child;
                 }
-
-                
                 for (int i = 0; i < msgs.size(); i++)
                 {
                     QJsonObject msg = msgs[i].toObject();
 
                     QString sender = msg["sender"].toString();
                     QString text = msg["message"].toString();
+
                     QRegularExpression rx(R"(\[POST\s+id=(\d+)\s+fed=([^\s\]]+)\])");
-                    QRegularExpressionMatch match = rx.match(text);
-                    bool shared;
-                    QRegularExpression rx(R"(\[POST\s+id=(\d+)\s+fed=([^\s\]]+)\])");
-                    QRegularExpressionMatchIterator i = rx.globalMatch(text);
-                    while (i.hasNext()) {
-                        QRegularExpressionMatch match = i.next();
+                    QRegularExpressionMatchIterator matchIt = rx.globalMatch(text);
+
+                    bool shared = false;
+                    QString author;
+                    QString textPost;
+                    QString datetime;
+
+                    while (matchIt.hasNext()) {
+                        QRegularExpressionMatch match = matchIt.next();
                         if (match.hasMatch()) {
                             int postId = match.captured(1).toInt();
                             QString fedUrl = match.captured(2);
@@ -2749,55 +2818,59 @@ int main(int argc, char *argv[])
                                 fedUrl += "/";
                             }
                             shared = true;
-                            QJsonObject jsonViewPost;
-                            jsonViewPost["post_id"] = postId;
-                            requestHTTP(
-                                fedUrl + "view-post",
-                                "POST",
-                                jsonViewPost
-                            );
-                            QJsonParseError error;
-                            QJsonDocument doc = QJsonDocument::fromJson(responseData, &error);
 
-                            if (error.error != QJsonParseError::NoError || !doc.isArray()) {
-                                qDebug() << "Error in json parsing" << error.errorString();
-                                return;
-                            }
+                            QJsonObject post = view_single_post(postId);
 
-                            QJsonArray postsArray = doc.array();
-
-                            for (const QJsonValue &value : postsArray) {
-                                if (!value.isObject()) continue;
-
-                                QJsonObject post = value.toObject();
-
-                                int id = post["id"].toInt();
-                                QString username = post["username"].toString();
-                                QString textPost = post["text_post"].toString();
-                                QString datetime = post["datetime"].toString();
+                            author = post["username"].toString();
+                            textPost = post["text_post"].toString();
+                            datetime = post["datetime"].toString();
                         }
                     }
+
                     bool isMe = (sender == username);
                     ChatBubble *bubble = new ChatBubble(text, isMe);
                     QHBoxLayout *line = new QHBoxLayout();
 
-                    if (isMe)
-                    {
-                        line->addStretch();
-                        line->addWidget(bubble);
-                    }
-                    else
-                    {
-                        line->addWidget(bubble);
-                        line->addStretch();
+                    if (!shared) {
+                        if (isMe) {
+                            line->addStretch();
+                            line->addWidget(bubble);
+                        } else {
+                            line->addWidget(bubble);
+                            line->addStretch();
+                        }
+                    } else {
+                        QVBoxLayout *colunn = new QVBoxLayout();
+                        QLabel *authorLabel = new QLabel(author);
+                        QLabel *textPostLabel = new QLabel(textPost);
+                        QLabel *datetimeLabel = new QLabel(datetime);
+
+                        QString view_complete_post_text = "View complete post";
+                        QPushButton *viewPostButton = new QPushButton(view_complete_post_text);
+
+                        colunn->addWidget(authorLabel);
+                        colunn->addWidget(textPostLabel);
+                        colunn->addWidget(datetimeLabel);
+                        colunn->addWidget(viewPostButton); // Corrigido erro de digitação (colunn)
+
+                        QWidget *sharedWidget = new QWidget();
+                        sharedWidget->setLayout(colunn);
+
+                        if (isMe) {
+                            line->addStretch();
+                            line->addWidget(sharedWidget);
+                        } else {
+                            line->addWidget(sharedWidget);
+                            line->addStretch();
+                        }
                     }
 
                     QWidget *lineWidget = new QWidget();
                     lineWidget->setLayout(line);
                     containerLayout->addWidget(lineWidget);
-                }
 
-                
+                } // <--- O LAÇO 'for' AGORA FECHA NO LUGAR CERTO!
+
                 bool lastMsgIsMe = false;
                 if (msgs.size() > 0) {
                     lastMsgIsMe = (msgs[msgs.size() - 1].toObject()["sender"].toString() == username);
@@ -2809,8 +2882,8 @@ int main(int argc, char *argv[])
                         scroll->verticalScrollBar()->setValue(scroll->verticalScrollBar()->maximum());
                     });
                 }
-            }
-        });
+            } 
+        }); 
 
         timer->start(100);
 
@@ -3787,4 +3860,4 @@ int main(int argc, char *argv[])
     window.showMaximized();
     return app.exec();
     
-}
+};
