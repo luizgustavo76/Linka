@@ -129,11 +129,12 @@ public_routes = [
     "None",
     "profile.create",
     "images.upload_image",
-    "get_profile_pic"
+    "profile.get_profile_pic",
+    "post.view_post"
 ]
 @app.before_request
 def valide():
-    if request.path in ["/receiveToken", "/sendToken", "/upload-image"]:
+    if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post"]:
         return None
     if request.method == "GET":
         return None

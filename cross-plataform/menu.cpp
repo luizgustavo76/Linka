@@ -2033,13 +2033,6 @@ int main(int argc, char *argv[])
                 iconButton->setFixedSize(30, 30);
                 iconButton->setStyleSheet("border: none;");
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
-                QPushButton *shareButton = new QPushButton("SHARE");
-                shareButton->setStyleSheet("background-color: red; color: white; font-weight: bold;");
-                shareButton->setIcon(QIcon(":/assets/share.png"));
-                shareButton->setIconSize(QSize(24, 24));
-                shareButton->setFixedSize(30, 30);
-                shareButton->setStyleSheet("border: none;");
-                starLayout->addWidget(shareButton);
                 QPointer<QLabel> safeStarLabel = starLabel;
 
                 QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
@@ -2341,16 +2334,6 @@ int main(int argc, char *argv[])
                 iconButton->setStyleSheet("border: none;");
 
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
-                QPushButton *shareButton = new QPushButton("SHARE");
-                shareButton->setStyleSheet("background-color: red; color: white; font-weight: bold;");
-                shareButton->setIcon(QIcon(":/assets/share.png"));
-                shareButton->setIconSize(QSize(24, 24));
-                shareButton->setFixedSize(30, 30);
-                shareButton->setStyleSheet("border: none;");
-                starLayout->addWidget(shareButton);
-                QObject::connect(shareButton, &QPushButton::clicked, [=](){
-                    sharePost(postId, "http://linkaProject.pythonanywhere.com");
-                });
                 QPointer<QLabel> safeStarLabel = starLabel;
 
                 QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
@@ -2518,22 +2501,19 @@ int main(int argc, char *argv[])
 
                 ChatBubble *bubble = new ChatBubble(text, isMe);
 
-                // Linha principal (horizontal) para alinhar o bloco inteiro à esquerda ou à direita
                 QHBoxLayout *line = new QHBoxLayout();
 
-                // Bloco vertical que vai segurar o [Cabeçalho com Foto+Nome] e o [Balão]
                 QVBoxLayout *bubbleBlock = new QVBoxLayout();
 
-                // Esse é o segredo: Um mini layout horizontal só para a foto ficar lado a lado com o nome
                 QHBoxLayout *headerLayout = new QHBoxLayout();
 
                 QLabel *usernameLabel = new QLabel(sender);
 
                 if (isMe) {
                     usernameLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-                    headerLayout->addStretch(); // Empurra o nome e a foto para a ponta direita
+                    headerLayout->addStretch(); 
                     headerLayout->addWidget(usernameLabel);
-                    viewProfilePicture(headerLayout, username); // A foto entra na extrema direita
+                    viewProfilePicture(headerLayout, username); 
                     bubbleBlock->addLayout(headerLayout);
                     bubbleBlock->addWidget(bubble);
                     line->addStretch();
@@ -2541,9 +2521,9 @@ int main(int argc, char *argv[])
                 }
                 else {
                     usernameLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-                    viewProfilePicture(headerLayout, sender); // A foto entra na esquerda
+                    viewProfilePicture(headerLayout, sender); 
                     headerLayout->addWidget(usernameLabel);
-                    headerLayout->addStretch(); // Empurra o resto do espaço vazio para a direita
+                    headerLayout->addStretch();
                     bubbleBlock->addLayout(headerLayout);
                     bubbleBlock->addWidget(bubble);
                     line->addLayout(bubbleBlock);
@@ -2660,14 +2640,34 @@ int main(int argc, char *argv[])
         layout->addWidget(back_button);
         renderBottomBar("chat");
     };
-    auto view_single_post = [&](int post_id) -> QJsonObject {
+    auto view_single_post = [&](int post_id, QString targetUrl = "") -> QJsonObject {
+        if (targetUrl.isEmpty()) {
+            targetUrl = url;
+        }
+
+        if (targetUrl.startsWith("http://")) {
+            targetUrl.replace("http://", "https://");
+        } else if (!targetUrl.startsWith("https://")) {
+            targetUrl = "https://" + targetUrl;
+        }
+
+        if (targetUrl.endsWith("/")) {
+            targetUrl.chop(1);
+        }
+        QUrl fedUrl(targetUrl + "/view-post"); 
+        qDebug() << "[DEBUG] Disparando view_single_post para:" << fedUrl.toString();
+
         QJsonObject jsonViewPost;
         jsonViewPost["post_id"] = post_id;
 
-        QNetworkAccessManager manager;
-        QUrl fedUrl(url + "/view-post"); 
         QNetworkRequest request(fedUrl);
+        QByteArray bearerToken = "Bearer " + token_session.toUtf8();
+        request.setRawHeader("Authorization", bearerToken);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+
+        QNetworkAccessManager manager;
         QNetworkReply *reply = manager.post(request, QJsonDocument(jsonViewPost).toJson());
 
         QEventLoop loop;
@@ -2680,9 +2680,15 @@ int main(int argc, char *argv[])
             QJsonParseError error;
             QJsonDocument doc = QJsonDocument::fromJson(responseData, &error);
             
-            if (error.error == QJsonParseError::NoError && doc.isObject()) {
-                result = doc.object(); 
+            if (error.error == QJsonParseError::NoError) {
+                if (doc.isArray() && !doc.array().isEmpty()) {
+                    result = doc.array().at(0).toObject();
+                } else if (doc.isObject()) {
+                    result = doc.object();
+                }
             }
+        } else {
+            qDebug() << "[ERRO NETWORK] Falha em view_single_post:" << reply->errorString();
         }
 
         reply->deleteLater();
@@ -2690,43 +2696,49 @@ int main(int argc, char *argv[])
     };
 
     auto renderSinglePost = [&](QString author, QString text_post, QString datetime, int postId) -> void {
-        Q_UNUSED(postId);
         QList<QWidget*> labsList;
+        Q_UNUSED(postId);
+
+        qDebug() << "--- RENDER POST ---";
+        qDebug() << "Author:" << author;
+        qDebug() << "Text:" << text_post;
+        qDebug() << "Date:" << datetime;
+
+
         clearLayout(layout);
         fadeTransition(central);
 
         QFrame *frame = new QFrame();
+        frame->setStyleSheet("QFrame { background-color: #1e1e1e; border-radius: 8px; padding: 10px; }");
         QVBoxLayout *frameLayout = new QVBoxLayout(frame);
 
         QHBoxLayout *usernameLayout = new QHBoxLayout();
-        QPushButton *viewProfile = new QPushButton("View profile");
         
+        QString displayAuthor = author.isEmpty() ? "Usuário Desconhecido" : author;
+        QLabel *lblUser = new QLabel(displayAuthor);
+        lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
+
+        QPushButton *viewProfile = new QPushButton("View profile");
         QObject::connect(viewProfile, &QPushButton::clicked, [=]() {
             otherProfilePage(author);
         });
 
-        QLabel *lblUser = new QLabel(author);
-        lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
-
-        viewProfilePicture(usernameLayout, author);
+        viewProfilePicture(usernameLayout, displayAuthor);
         usernameLayout->addWidget(lblUser);
         usernameLayout->addWidget(viewProfile);
         usernameLayout->addStretch();
-        
-        frameLayout->addLayout(usernameLayout);
-
-        QLabel *lblDate = new QLabel(datetime);
+        QString displayDate = datetime.isEmpty() ? "Data indisponível" : datetime;
+        QLabel *lblDate = new QLabel(displayDate);
         lblDate->setObjectName("postDate");
-        lblDate->setStyleSheet("color: gray; font-size: 12px;");
+        lblDate->setStyleSheet("color: #aaaaaa; font-size: 12px; margin-top: 4px;");
         frameLayout->addWidget(lblDate);
-
-        QLabel *lblText = new QLabel(text_post);
+        QString displayText = text_post.isEmpty() ? "[Post sem conteúdo ou falha ao carregar]" : text_post;
+        QLabel *lblText = new QLabel(displayText);
         lblText->setObjectName("postText");
-        lblText->setStyleSheet("color: white; font-size: 14px;");
+        lblText->setStyleSheet("color: white; font-size: 14px; margin-top: 8px;");
         lblText->setWordWrap(true);
-        lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+        lblText->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
         frameLayout->addWidget(lblText);
-
         labsList.clear();
         labsList.append(frame); 
         scroll_area(layout, labsList);
@@ -2808,22 +2820,19 @@ int main(int argc, char *argv[])
                     QString author;
                     QString textPost;
                     QString datetime;
-
+                    int post_id;
                     while (matchIt.hasNext()) {
                         QRegularExpressionMatch match = matchIt.next();
                         if (match.hasMatch()) {
                             int postId = match.captured(1).toInt();
                             QString fedUrl = match.captured(2);
-                            if (!fedUrl.endsWith("/")) {
-                                fedUrl += "/";
-                            }
                             shared = true;
-
-                            QJsonObject post = view_single_post(postId);
-
+                            QString baseUrl = fedUrl.isEmpty() ? url : fedUrl;
+                            QJsonObject post = view_single_post(postId, baseUrl);
                             author = post["username"].toString();
                             textPost = post["text_post"].toString();
                             datetime = post["datetime"].toString();
+                            post_id = post["id"].toInt();
                         }
                     }
 
@@ -2847,11 +2856,13 @@ int main(int argc, char *argv[])
 
                         QString view_complete_post_text = "View complete post";
                         QPushButton *viewPostButton = new QPushButton(view_complete_post_text);
-
+                        QObject::connect(viewPostButton, &QPushButton::clicked, [=](){
+                            renderSinglePost(author, textPost, datetime, post_id);
+                        });
                         colunn->addWidget(authorLabel);
                         colunn->addWidget(textPostLabel);
                         colunn->addWidget(datetimeLabel);
-                        colunn->addWidget(viewPostButton); // Corrigido erro de digitação (colunn)
+                        colunn->addWidget(viewPostButton);
 
                         QWidget *sharedWidget = new QWidget();
                         sharedWidget->setLayout(colunn);
@@ -2869,7 +2880,7 @@ int main(int argc, char *argv[])
                     lineWidget->setLayout(line);
                     containerLayout->addWidget(lineWidget);
 
-                } // <--- O LAÇO 'for' AGORA FECHA NO LUGAR CERTO!
+                }
 
                 bool lastMsgIsMe = false;
                 if (msgs.size() > 0) {
