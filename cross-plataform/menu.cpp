@@ -2942,8 +2942,36 @@ int main(int argc, char *argv[])
     };
     auto viewChannelGroup = [&](int groupId){
         QList<QWidget*> widgets;
+        QHBoxLayout *action_bar = new QHBoxLayout();
         clearLayout(layout);
         fadeTransition(central);
+        QJsonObject jsonPermission;
+        jsonPermission["username"] = username;
+        jsonPermission["group_id"] = groupId;
+        QByteArray rawResponsePermissions = requestHTTP(url + "/view-permissions", "POST", jsonPermission).toUtf8();
+        QJsonDocument docPermission = QJsonDocument::fromJson(rawResponsePermissions);
+        bool isAdmin = false;
+        if (docPermission.isArray()){
+            QJsonArray permissionsArray = docPermission.array();
+            QJsonObject rootObj = docPermission.object();
+            if (rootObj.contains("permission") && rootObj["permission"].isArray()) {
+                QJsonArray permissionsArray = rootObj["permission"].toArray();
+                for (const QJsonValue &val : permissionsArray) {
+                    QString perm = val.toString();
+                    if (perm == "admin") {
+                        isAdmin = true;
+                    }
+                }
+            }
+        };
+        QPushButton *addUserButton = new QPushButton();
+        QPushButton *addChannel = new QPushButton("+");
+        addUserButton->setIcon(QIcon(":/assets/add-user.png"));
+        action_bar->addWidget(addUserButton);
+        if (isAdmin){
+            action_bar->addWidget(addChannel);
+        };
+        layout->addLayout(action_bar);
         QJsonObject jsonChannel;
         jsonChannel["group_id"] = groupId;
         jsonChannel["username"] = username;
@@ -3239,7 +3267,11 @@ int main(int argc, char *argv[])
         QObject::connect(btnHome, &QPushButton::clicked, [=]() { 
             showfeed();
         });
-        QObject::connect(btnChat, &QPushButton::clicked, [=]() { chatPage(); });
+        QObject::connect(btnChat, &QPushButton::clicked, [=]() {
+            QTimer::singleShot(50, [=](){
+                chatPage();
+            });
+        });
         QObject::connect(btnProfile, &QPushButton::clicked, [=]() { account(); });
         QObject::connect(btnOptions, &QPushButton::clicked, [options]() { if (options) options(); });
 
@@ -3262,7 +3294,6 @@ int main(int argc, char *argv[])
         QString response = requestHTTP(url + "/view-index", "GET", *empty);
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
 
-        // Assumindo que você tem um layout pai na sua UI (ex: QVBoxLayout* mainLayout)
         if (doc.isArray()) {
             QJsonArray arr = doc.array();
             for (const QJsonValue &value : arr) {

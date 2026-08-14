@@ -89,6 +89,24 @@ def new_channel():
                 return jsonify({"status":"you aren`t admin"}),403
         else:
             return jsonify({"status":"forbidden"}),403
+@chat_group_bp.route("/view-permissions", methods=["POST"])
+def view_permissions():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        group_id = data.get("group_id")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ?",(username, group_id))
+        result = cur.fetchone()
+        if result:
+            cur.execute("SELECT permissions FROM users_in_group WHERE username = ? AND group_id = ?",(username, group_id))
+            permission = cur.fetchone()
+            return jsonify({"permission":permission}),200
+        else:
+            return jsonify({"status":"you arent in group"}),403
+    else:
+        return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/view-channels", methods=["POST"])
 def view_channels():
     data = request.get_json(silent=True) or {}
