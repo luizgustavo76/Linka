@@ -2643,6 +2643,77 @@ int main(int argc, char *argv[])
         layout->addWidget(back_button);
         renderBottomBar("chat");
     };
+    auto addUserGroupPage = [&](int groupId){
+        clearLayout(layout);
+        fadeTransition(central);
+        QList<QWidget*> widgets;        
+        QJsonObject friends_json;
+        friends_json["username"] = username;
+        QString response_friends = requestHTTP(
+            url + "/friends",
+            "POST",
+            friends_json
+        );
+        QJsonObject json_username;
+        QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
+        QJsonObject obj = doc.object();
+        QJsonArray friends = obj["friends"].toArray();
+        if (friends.isEmpty())
+        {
+            QLabel *label_error = new QLabel("No Friends....");
+            widgets.append(label_error);
+        }
+        else
+        {
+            for(int i = 0; i < friends.size(); i++){
+                QJsonArray row = friends[i].toArray();
+                QString receiver = row[0].toString();
+                QString remittee = row[1].toString();
+                QString friendName;
+                if(receiver == username)
+                    friendName = remittee;
+                else
+                    friendName = receiver;
+                QWidget *containerWidget = new QWidget();
+                QPushButton *user = new QPushButton(friendName);
+                QHBoxLayout *buttonLayout = new QHBoxLayout();
+                viewProfilePicture(buttonLayout, username);
+                buttonLayout->addWidget(user);
+                buttonLayout->addStretch();
+                containerWidget->setLayout(buttonLayout);
+                QObject::connect(user, &QPushButton::clicked, [=]() mutable{
+                    QTimer::singleShot(0, [=](){
+                        QJsonObject jsonInvite;
+                        jsonInvite["username"] = username;
+                        jsonInvite["group_id"] = groupId;
+                        jsonInvite["expire_at"] = "1 week";
+                        jsonInvite["acess_limit"] = 1;
+                        QString response = requestHTTP(
+                            url + "/generate-invite",
+                            "POST",
+                            jsonInvite
+                        );
+                        QJsonDocument docInvite = QJsonDocument::fromJson(response.toUtf8());
+                        QJsonObject objInvite = docInvite.object();
+                        QString inviteCode = objInvite["code"].toString();
+                        QJsonObject jsonChat;
+                        jsonChat["sender"] = username;
+                        jsonChat["receiver"] = friendName;
+                        jsonChat["message"] = "[INVITE]" + inviteCode;
+                        requestHTTP(
+                            url + "/send-message",
+                            "POST",
+                            jsonChat
+                        );
+                        chat(friendName);
+                    });
+                });
+                widgets.append(containerWidget);
+            };
+        };
+        scroll_area(layout, widgets);
+        renderBottomBar("chat");
+    };
     auto groupChat = [&](int group_id, QString channel){
         clearLayout(layout);
 
@@ -3133,7 +3204,7 @@ int main(int argc, char *argv[])
             addChannelPage(groupId);
         });
         QObject::connect(addUserButton, &QPushButton::clicked, [=](){
-
+            addUserGroupPage(groupId);
         });
         addUserButton->setIcon(QIcon(":/assets/add-user.png"));
         action_bar->addWidget(addUserButton);
@@ -3277,14 +3348,7 @@ int main(int argc, char *argv[])
                 widgets.append(containerWidget);
             };
         };
-        QPushButton *back_button = new QPushButton(back_text);
-        QObject::connect(back_button, &QPushButton::clicked, [=]() mutable{
-            QTimer::singleShot(0, [=](){
-                initialPage();
-            });
-        });
         widgets.append(ChatGlobalButton);
-        widgets.append(back_button);
         scroll_area(layout, widgets);
         renderBottomBar("chat");
     };
