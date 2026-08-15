@@ -234,11 +234,11 @@ void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
     imageLabel->setText("Loading image...");
     postLayout->addWidget(imageLabel);
 
-    QNetworkAccessManager *manager = new QNetworkAccessManager();
+    QNetworkAccessManager *manager = new QNetworkAccessManager(imageLabel);
     QNetworkRequest request((QUrl(urlImage)));
     QNetworkReply *reply = manager->get(request);
 
-    QObject::connect(reply, &QNetworkReply::finished, [=]() {
+    QObject::connect(reply, &QNetworkReply::finished, imageLabel, [=]() {
         if (reply->error() == QNetworkReply::NoError) {
             QByteArray dataImage = reply->readAll();
             QPixmap pixmap;
@@ -257,7 +257,6 @@ void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
             qDebug() << urlImage;
         }
         reply->deleteLater();
-        manager->deleteLater();
     });
 }
 void renderAvatarImage(QString urlImage, QBoxLayout *postLayout) {
@@ -270,11 +269,10 @@ void renderAvatarImage(QString urlImage, QBoxLayout *postLayout) {
     imageLabel->setText("...");
     postLayout->addWidget(imageLabel);
 
-    QNetworkAccessManager *manager = new QNetworkAccessManager();
+    QNetworkAccessManager *manager = new QNetworkAccessManager(imageLabel);
     QNetworkRequest request((QUrl(urlImage)));
-    QNetworkReply *reply = manager->get(request);
-
-    QObject::connect(reply, &QNetworkReply::finished, [=]() {
+    QNetworkReply *reply = manager->get(request);   
+    QObject::connect(reply, &QNetworkReply::finished, imageLabel, [=]() {
         if (reply->error() == QNetworkReply::NoError) {
             QByteArray dataImage = reply->readAll();
             QPixmap pixmap;
@@ -293,7 +291,6 @@ void renderAvatarImage(QString urlImage, QBoxLayout *postLayout) {
             qDebug() << urlImage;
         }
         reply->deleteLater();
-        manager->deleteLater();
     });
 }
 void fadeTransition(QWidget *widget)
@@ -3182,6 +3179,10 @@ int main(int argc, char *argv[])
         };
         QPushButton *addUserButton = new QPushButton();
         QPushButton *addChannel = new QPushButton("+");
+        QPushButton *configurationsGroup = new QPushButton();
+        configurationsGroup->setIcon(QIcon(":/assets/config.png"));
+        configurationsGroup->setIconSize(QSize(14, 14));        
+        action_bar->addWidget(configurationsGroup);
         QObject::connect(addChannel, &QPushButton::clicked, [=](){
             addChannelPage(groupId);
         });
@@ -3189,6 +3190,7 @@ int main(int argc, char *argv[])
             addUserGroupPage(groupId);
         });
         addUserButton->setIcon(QIcon(":/assets/add-user.png"));
+        addUserButton->setIconSize(QSize(14, 14));
         action_bar->addWidget(addUserButton);
         if (isAdmin){
             action_bar->addWidget(addChannel);
