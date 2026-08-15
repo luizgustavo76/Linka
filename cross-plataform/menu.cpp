@@ -2659,6 +2659,7 @@ int main(int argc, char *argv[])
         auto updateChat = [=]() mutable {
 
             QJsonObject view_chat;
+            view_chat["username"] = username;
             view_chat["id"] = *lastId;
             view_chat["channel"] = channel;
             view_chat["group_id"] = group_id;
@@ -3132,7 +3133,7 @@ int main(int argc, char *argv[])
             addChannelPage(groupId);
         });
         QObject::connect(addUserButton, &QPushButton::clicked, [=](){
-            
+
         });
         addUserButton->setIcon(QIcon(":/assets/add-user.png"));
         action_bar->addWidget(addUserButton);

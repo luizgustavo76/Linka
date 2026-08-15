@@ -85,9 +85,9 @@ EXPIRE_MAP = {
     "1 week": datetime.timedelta(weeks=1),
     "1 month": datetime.timedelta(days=30),
     "3 month": datetime.timedelta(days=90),
-    "never expire": None
+    "never expire": datetime.timedelta(days=99999)
 }
-@chat_group_bp.route("generate-invite",methods=["POST"])
+@chat_group_bp.route("/generate-invite",methods=["POST"])
 def generate_invite():
     data = request.get_json()
     username = data.get("username")
@@ -125,12 +125,12 @@ def join_group():
         code = data.get("code")
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT (code, group_id) FROM invites WHERE code = ? AND status = 'ACTIVE' AND uses < acess_limit",(code,))
+        cur.execute("SELECT code, group_id FROM invites WHERE code = ? AND status = 'ACTIVE' AND uses < acess_limit",(code,))
         result = cur.fetchone()
-        group_id = result["group_id"]
         if result:
+            group_id = result[1]
             entrande_data = datetime.datetime.now()
-            cur.execute("INSERT INTO users_in_group (username, group_id, entrance_date, permission) VALUES(?, ?, ?, ?)",(username, group_id, entrande_data, "member"))
+            cur.execute("INSERT INTO users_in_group (username, group_id, entrance_date, permissions) VALUES(?, ?, ?, ?)",(username, group_id, entrande_data, "member"))
             conn.commit()
             conn.close()
             return jsonify({"status":"you are now a member"}),200
@@ -148,15 +148,16 @@ def remove_channel():
         group_id = data.get("group_id")
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ? AND permission = 'admim'")
+        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ? AND permissions = 'admin'",(username, group_id))
         result = cur.fetchone()
         if result:
             cur.execute("DELETE FROM channels WHERE name = ? AND group_id = ?",(channel_name, group_id))
             conn.commit()
             conn.close()
+            return jsonify({"status":"the channel has removed"}),200
         else:
             conn.close()
-            return jsonify({"status":"you arenta admin"})
+            return jsonify({"status":"you arent admin"})
     else:
         return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/new-channel", methods=["POST"])
@@ -359,6 +360,7 @@ def view_group_message():
         cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ?",(username, group_id))
         result = cur.fetchone()
         if not result:
+            conn.close()
             return jsonify({"status":"you arent a member"}),403
         try:
             try:
