@@ -66,7 +66,7 @@ def create_db():
                 expire_at TEXT,
                 code TEXT,
                 acess_limit INTEGER,
-                uses INTEGER,
+                uses INTEGER DEFAULT 0,
                 status TEXT DEFAULT 'ACTIVE')""")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_chat_group_id ON chat_group(group_id);")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_users_group_id ON users_in_group(group_id);")
@@ -129,6 +129,10 @@ def join_group():
         result = cur.fetchone()
         if result:
             group_id = result[1]
+            cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ?",(username, group_id))
+            result_user = cur.fetchone()
+            if result_user:
+                return jsonify({"status":"you already in group"}),401
             entrande_data = datetime.datetime.now()
             cur.execute("INSERT INTO users_in_group (username, group_id, entrance_date, permissions) VALUES(?, ?, ?, ?)",(username, group_id, entrande_data, "member"))
             conn.commit()

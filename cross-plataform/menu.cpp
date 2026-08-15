@@ -3046,30 +3046,13 @@ int main(int argc, char *argv[])
 
                     QString sender = msg["sender"].toString();
                     QString text = msg["message"].toString();
-
-                    QRegularExpression rx(R"(\[POST\s+id=(\d+)\s+fed=([^\s\]]+)\])");
-                    QRegularExpressionMatchIterator matchIt = rx.globalMatch(text);
-
                     bool shared = false;
-                    QString author;
-                    QString textPost;
-                    QString datetime;
-                    int post_id;
-                    while (matchIt.hasNext()) {
-                        QRegularExpressionMatch match = matchIt.next();
-                        if (match.hasMatch()) {
-                            int postId = match.captured(1).toInt();
-                            QString fedUrl = match.captured(2);
-                            shared = true;
-                            QString baseUrl = fedUrl.isEmpty() ? url : fedUrl;
-                            QJsonObject post = view_single_post(postId, baseUrl);
-                            author = post["username"].toString();
-                            textPost = post["text_post"].toString();
-                            datetime = post["datetime"].toString();
-                            post_id = post["id"].toInt();
-                        }
+                    QString code;
+                    if(text.startsWith("[INVITE]"))
+                    {
+                        code = text.remove("[INVITE]");
+                        shared = true;
                     }
-
                     bool isMe = (sender == username);
                     ChatBubble *bubble = new ChatBubble(text, isMe);
                     QHBoxLayout *line = new QHBoxLayout();
@@ -3083,24 +3066,23 @@ int main(int argc, char *argv[])
                             line->addStretch();
                         }
                     } else {
-                        QVBoxLayout *colunn = new QVBoxLayout();
-                        QLabel *authorLabel = new QLabel(author);
-                        QLabel *textPostLabel = new QLabel(textPost);
-                        QLabel *datetimeLabel = new QLabel(datetime);
-
-                        QString view_complete_post_text = "View complete post";
-                        QPushButton *viewPostButton = new QPushButton(view_complete_post_text);
-                        QObject::connect(viewPostButton, &QPushButton::clicked, [=](){
-                            renderSinglePost(author, textPost, datetime, post_id);
-                        });
-                        colunn->addWidget(authorLabel);
-                        colunn->addWidget(textPostLabel);
-                        colunn->addWidget(datetimeLabel);
-                        colunn->addWidget(viewPostButton);
-
+                        QVBoxLayout *collun = new QVBoxLayout();
                         QWidget *sharedWidget = new QWidget();
-                        sharedWidget->setLayout(colunn);
-
+                        QLabel *labelGroup = new QLabel(sender + " has invited you to enter in a group");
+                        QPushButton *enterButton = new QPushButton("accept invite");
+                        QObject::connect(enterButton, &QPushButton::clicked, [=](){
+                            QJsonObject jsonAccept;
+                            jsonAccept["username"] = username;
+                            jsonAccept["code"] = code;
+                            requestHTTP(
+                                url + "/join-group",
+                                "POST",
+                                jsonAccept
+                            );
+                        });
+                        collun->addWidget(labelGroup);
+                        collun->addWidget(enterButton);
+                        sharedWidget->setLayout(collun);
                         if (isMe) {
                             line->addStretch();
                             line->addWidget(sharedWidget);
