@@ -3131,6 +3131,9 @@ int main(int argc, char *argv[])
         QObject::connect(addChannel, &QPushButton::clicked, [=](){
             addChannelPage(groupId);
         });
+        QObject::connect(addUserButton, &QPushButton::clicked, [=](){
+            
+        });
         addUserButton->setIcon(QIcon(":/assets/add-user.png"));
         action_bar->addWidget(addUserButton);
         if (isAdmin){
@@ -3300,7 +3303,6 @@ int main(int argc, char *argv[])
         resultLabel->setWordWrap(true);
         content.append(resultLabel);
 
-        // Área onde os resultados vão aparecer
         QWidget *resultsContainer = new QWidget();
         QVBoxLayout *resultsLayout = new QVBoxLayout(resultsContainer);
         resultsLayout->setContentsMargins(0,0,0,0);

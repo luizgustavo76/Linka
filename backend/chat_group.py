@@ -2,7 +2,7 @@ from flask import Flask, Blueprint, request, jsonify, g
 import sqlite3
 import os
 import datetime
-
+import secrets
 chat_group_bp = Blueprint("chat_group", __name__)
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
@@ -59,13 +59,63 @@ def create_db():
                     entrance_date TEXT,
                     permissions TEXT,
                     FOREIGN KEY(group_id) REFERENCES meta(id))""")
-    
+    cur.execute("""CREATE TABLE IF NOT EXISTS invites(
+                group_id INTEGER,
+                creator TEXT,
+                created_at TEXT,
+                expire_at TEXT,
+                code TEXT,
+                acess_limit INTEGER,
+                status TEXT DEFAULT 'ACTIVE')""")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_chat_group_id ON chat_group(group_id);")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_users_group_id ON users_in_group(group_id);")
     
     conn.commit()
     conn.close()
 create_db()
+EXPIRE_MAP = {
+    "5 minutes": datetime.timedelta(minutes=5),
+    "10 minutes": datetime.timedelta(minutes=10),
+    "30 minutes": datetime.timedelta(minutes=30),
+    "1 hour": datetime.timedelta(hours=1),
+    "3 hour": datetime.timedelta(hours=3),
+    "10 hour": datetime.timedelta(hours=10),
+    "1 day": datetime.timedelta(days=1),
+    "1 week": datetime.timedelta(weeks=1),
+    "1 month": datetime.timedelta(days=30),
+    "3 month": datetime.timedelta(days=90),
+    "never expire": None
+}
+@chat_group_bp.route("generate-invite",methods=["POST"])
+def generate_invite():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        group_id = data.get("group_id")
+        expire_option = data.get("expire_at")
+        acess_limit = data.get("acess_limit")
+        if None in [group_id, expire_option, acess_limit]:
+            return jsonify({"status":"data is missing"}),401
+        if not expire_option in EXPIRE_MAP:
+            return jsonify({"status":"invalid expire data"}),401
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ?",(username, group_id))
+        result = cur.fetchone()
+        if result:
+            code = secrets.token_hex(4)
+            created_at = datetime.datetime.now()
+            delta = EXPIRE_MAP[expire_option]
+            expire_at =  (created_at + delta).strftime("%Y-%m-%d %H:%M:%S")
+            cur.execute("INSERT INTO invites (group_id, creator, created_at, expire_at, code, acess_limit) VALUES(?, ?, ?, ?, ?, ?)",(group_id, username, created_at, expire_at, code, acess_limit))
+            conn.commit()
+            conn.close()
+            return jsonify({"status":"invite created", "code":code}),200
+        else:
+            conn.close()
+            return jsonify({"status":"you arent a member"}),403
+    else:
+        return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/new-channel", methods=["POST"])
 def new_channel():
     data = request.get_json()
@@ -84,10 +134,12 @@ def new_channel():
             if result:
                 cur.execute("INSERT INTO channels (name, type, group_id) VALUES(?,?,?)",(channel_name, type, group_id))
                 conn.commit()
+                conn.close()
                 return jsonify({"status":"channel created!"}),201
             else:
                 return jsonify({"status":"you aren`t admin"}),403
         else:
+            conn.close()
             return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/view-permissions", methods=["POST"])
 def view_permissions():
@@ -102,8 +154,10 @@ def view_permissions():
         if result:
             cur.execute("SELECT permissions FROM users_in_group WHERE username = ? AND group_id = ?",(username, group_id))
             permission = cur.fetchone()
+            conn.close()
             return jsonify({"permission":permission}),200
         else:
+            conn.close()
             return jsonify({"status":"you arent in group"}),403
     else:
         return jsonify({"status":"forbidden"}),403
@@ -226,65 +280,74 @@ def send_group_message():
     group_id = data.get("group_id")
     message = data.get("message")
     channel = data.get("channel")
-    if not sender or not group_id or not message or not channel:
-        return jsonify({"status": "error", "message": "Data is missing"}), 400
-    
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT username FROM users_in_group WHERE group_id = ? AND username = ?", (group_id, sender))
-    result = cur.fetchone()
-    
-    if result:
-        cur.execute("INSERT INTO chat_group (group_id, sender, message, channel) VALUES (?, ?, ?, ?)", (group_id, sender, message, channel))
-        conn.commit()
+    if sender == g.username:
+        if not sender or not group_id or not message or not channel:
+            return jsonify({"status": "error", "message": "Data is missing"}), 400
+        
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE group_id = ? AND username = ?", (group_id, sender))
+        result = cur.fetchone()
+        
+        if result:
+            cur.execute("INSERT INTO chat_group (group_id, sender, message, channel) VALUES (?, ?, ?, ?)", (group_id, sender, message, channel))
+            conn.commit()
+            conn.close()
+            return jsonify({"status": "success", "message": "Message sent"}), 200
+        
         conn.close()
-        return jsonify({"status": "success", "message": "Message sent"}), 200
-    
-    conn.close()
-    return jsonify({"status": "error", "message": "User is not a member of this group"}), 403
+        return jsonify({"status": "error", "message": "User is not a member of this group"}), 403
+    else:
+        return jsonify({"status":"forbidden"}),403
 
 @chat_group_bp.route("/view-group-message", methods=["POST"])
 def view_group_message():
     data = request.get_json() or {}
+    username = data.get("username")
     last_id = data.get("id", 0)
     group_id = data.get("group_id")
     channel = data.get("channel")
-    if not group_id or not channel:
-        return jsonify({"status": "error", "message": "group_id is required"}), 400
-        
-    conn = get_db()
-    cur = conn.cursor()
-
-    try:
+    if username == g.username:
+        if not group_id or not channel:
+            return jsonify({"status": "error", "message": "group_id is required"}), 400
+            
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ?",(username, group_id))
+        result = cur.fetchone()
+        if not result:
+            return jsonify({"status":"you arent a member"}),403
         try:
-            last_id_num = int(last_id) if last_id else 0
-        except ValueError:
-            last_id_num = 0
+            try:
+                last_id_num = int(last_id) if last_id else 0
+            except ValueError:
+                last_id_num = 0
 
-        if last_id_num == 0:
-            cur.execute("""
-                SELECT sender, message, id FROM (
+            if last_id_num == 0:
+                cur.execute("""
+                    SELECT sender, message, id FROM (
+                        SELECT sender, message, id FROM chat_group
+                        WHERE group_id = ? AND channel = ? 
+                        ORDER BY id DESC LIMIT 20
+                    ) AS subquery ORDER BY id ASC
+                """, (group_id, channel))
+            else:
+                cur.execute("""
                     SELECT sender, message, id FROM chat_group
-                    WHERE group_id = ? AND channel = ? 
-                    ORDER BY id DESC LIMIT 20
-                ) AS subquery ORDER BY id ASC
-            """, (group_id, channel))
-        else:
-            cur.execute("""
-                SELECT sender, message, id FROM chat_group
-                WHERE id > ? AND group_id = ? AND channel = ? 
-                ORDER BY id ASC
-            """, (last_id_num, group_id, channel))
-        rows = cur.fetchall()
-    except ValueError:
-        conn.close()
-        return jsonify({"status": "error", "message": "Invalid last_id format"}), 400
-    finally:
-        conn.close()
+                    WHERE id > ? AND group_id = ? AND channel = ? 
+                    ORDER BY id ASC
+                """, (last_id_num, group_id, channel))
+            rows = cur.fetchall()
+        except ValueError:
+            conn.close()
+            return jsonify({"status": "error", "message": "Invalid last_id format"}), 400
+        finally:
+            conn.close()
 
-    messages = [{"sender": row[0], "message": row[1], "id": row[2]} for row in rows]
-    return jsonify({"status": "success", "messages": messages}), 200
-
+        messages = [{"sender": row[0], "message": row[1], "id": row[2]} for row in rows]
+        return jsonify({"status": "success", "messages": messages}), 200
+    else:
+        return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/my-groups", methods=["POST"])
 def my_groups():
     data = request.get_json() or {}
