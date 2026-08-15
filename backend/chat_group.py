@@ -66,6 +66,7 @@ def create_db():
                 expire_at TEXT,
                 code TEXT,
                 acess_limit INTEGER,
+                uses INTEGER,
                 status TEXT DEFAULT 'ACTIVE')""")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_chat_group_id ON chat_group(group_id);")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_users_group_id ON users_in_group(group_id);")
@@ -114,6 +115,48 @@ def generate_invite():
         else:
             conn.close()
             return jsonify({"status":"you arent a member"}),403
+    else:
+        return jsonify({"status":"forbidden"}),403
+@chat_group_bp.route("/join-group", methods=["POST"])
+def join_group():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        code = data.get("code")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT (code, group_id) FROM invites WHERE code = ? AND status = 'ACTIVE' AND uses < acess_limit",(code,))
+        result = cur.fetchone()
+        group_id = result["group_id"]
+        if result:
+            entrande_data = datetime.datetime.now()
+            cur.execute("INSERT INTO users_in_group (username, group_id, entrance_date, permission) VALUES(?, ?, ?, ?)",(username, group_id, entrande_data, "member"))
+            conn.commit()
+            conn.close()
+            return jsonify({"status":"you are now a member"}),200
+        else:
+            conn.close()
+            return jsonify({"status":"code is invalid, check the capacity of acess, contact the invite sender"}),401
+    else:
+        return jsonify({"status":"forbidden"}),403
+@chat_group_bp.route("/remove-channel", methods=["POST"])
+def remove_channel():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        channel_name = data.get("channel_name")
+        group_id = data.get("group_id")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ? AND permission = 'admim'")
+        result = cur.fetchone()
+        if result:
+            cur.execute("DELETE FROM channels WHERE name = ? AND group_id = ?",(channel_name, group_id))
+            conn.commit()
+            conn.close()
+        else:
+            conn.close()
+            return jsonify({"status":"you arenta admin"})
     else:
         return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/new-channel", methods=["POST"])
