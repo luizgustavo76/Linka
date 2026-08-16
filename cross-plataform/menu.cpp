@@ -1065,6 +1065,7 @@ int main(int argc, char *argv[])
     std::function<void()> addFederationFeed;
     std::function<void(QString)> federationFeedPage;
     std::function<void(int)> addChannelPage;
+    std::function<void(int)> viewChannelGroup;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -2110,10 +2111,6 @@ int main(int argc, char *argv[])
             layout->addWidget(btnBack);
             layout->addWidget(btnNewPost);
             renderBottomBar("home");
-
-
-           
-
             QObject::connect(btnNewPost, &QPushButton::clicked, [=](){
                 new_post();
             });
@@ -2713,6 +2710,64 @@ int main(int argc, char *argv[])
         scroll_area(layout, widgets);
         renderBottomBar("chat");
     };
+    auto banUserPage = [&](int groupId){
+        clearLayout(layout);
+        fadeTransition(central);
+        QList<QWidget*> widgets;        
+        QJsonObject friends_json;
+        friends_json["username"] = username;
+        QString response_friends = requestHTTP(
+            url + "/friends",
+            "POST",
+            friends_json
+        );
+        QJsonObject json_username;
+        QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
+        QJsonObject obj = doc.object();
+        QJsonArray friends = obj["friends"].toArray();
+        if (friends.isEmpty())
+        {
+            QLabel *label_error = new QLabel("No Friends....");
+            widgets.append(label_error);
+        }
+        else
+        {
+            for(int i = 0; i < friends.size(); i++){
+                QJsonArray row = friends[i].toArray();
+                QString receiver = row[0].toString();
+                QString remittee = row[1].toString();
+                QString friendName;
+                if(receiver == username)
+                    friendName = remittee;
+                else
+                    friendName = receiver;
+                QWidget *containerWidget = new QWidget();
+                QPushButton *user = new QPushButton(friendName);
+                QHBoxLayout *buttonLayout = new QHBoxLayout();
+                viewProfilePicture(buttonLayout, username);
+                buttonLayout->addWidget(user);
+                buttonLayout->addStretch();
+                containerWidget->setLayout(buttonLayout);
+                QObject::connect(user, &QPushButton::clicked, [=]() mutable{
+                    QTimer::singleShot(0, [=](){
+                        QJsonObject jsonBan;
+                        jsonBan["username"] = username;
+                        jsonBan["group_id"] = groupId;
+                        jsonBan["target_user"] = friendName;
+                        requestHTTP(
+                            url + "/remove-user",
+                            "POST",
+                            jsonBan
+                        );
+                        viewChannelGroup(groupId);
+                    });
+                });
+                widgets.append(containerWidget);
+            };
+        };
+        scroll_area(layout, widgets);
+        renderBottomBar("chat");
+    };
     auto groupChat = [&](int group_id, QString channel){
         clearLayout(layout);
 
@@ -3162,6 +3217,9 @@ int main(int argc, char *argv[])
         if (permission == "admin"){
             QPushButton *changeNameButton = new QPushButton(change_name_text);
             QPushButton *banUserButton = new QPushButton(ban_user_text);
+            QObject::connect(banUserButton, &QPushButton::clicked, [=](){
+                banUserPage(groupId);
+            });
             widgets.append(changeNameButton);
             widgets.append(banUserButton);
         };
@@ -3181,7 +3239,7 @@ int main(int argc, char *argv[])
         scroll_area(layout, widgets);
         renderBottomBar("chat");
     };
-    auto viewChannelGroup = [&](int groupId){
+    viewChannelGroup = [&](int groupId){
         QList<QWidget*> widgets;
         QHBoxLayout *action_bar = new QHBoxLayout();
         clearLayout(layout);
