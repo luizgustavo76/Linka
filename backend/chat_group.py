@@ -3,6 +3,7 @@ import sqlite3
 import os
 import datetime
 import secrets
+import notificationsModule
 chat_group_bp = Blueprint("chat_group", __name__)
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
@@ -87,6 +88,7 @@ EXPIRE_MAP = {
     "3 month": datetime.timedelta(days=90),
     "never expire": datetime.timedelta(days=99999)
 }
+
 @chat_group_bp.route("/generate-invite",methods=["POST"])
 def generate_invite():
     data = request.get_json()
@@ -125,7 +127,13 @@ def join_group():
         code = data.get("code")
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT code, group_id FROM invites WHERE code = ? AND status = 'ACTIVE' AND uses < acess_limit",(code,))
+        cur.execute(
+            """SELECT group_id FROM invites 
+            WHERE code = ? AND status = 'ACTIVE' 
+            AND uses < acess_limit 
+            AND datetime(expire_at) > datetime('now')""", 
+            (code,)
+        )
         result = cur.fetchone()
         if result:
             group_id = result[1]
@@ -135,6 +143,7 @@ def join_group():
                 return jsonify({"status":"you already in group"}),401
             entrande_data = datetime.datetime.now()
             cur.execute("INSERT INTO users_in_group (username, group_id, entrance_date, permissions) VALUES(?, ?, ?, ?)",(username, group_id, entrande_data, "member"))
+            cur.execute("UPDATE invites SET uses = uses + 1 WHERE code = ?", (code,))
             conn.commit()
             conn.close()
             return jsonify({"status":"you are now a member"}),200
@@ -185,6 +194,7 @@ def new_channel():
                 conn.close()
                 return jsonify({"status":"channel created!"}),201
             else:
+                conn.close()
                 return jsonify({"status":"you aren`t admin"}),403
         else:
             conn.close()
@@ -331,7 +341,10 @@ def send_group_message():
     if sender == g.username:
         if not sender or not group_id or not message or not channel:
             return jsonify({"status": "error", "message": "Data is missing"}), 400
-        
+        if message.startswith("@"):
+            mention = message[1:]
+            date = datetime.datetime.now()
+            notificationsModule.CreateNotification(sender, mention, date, "chat", message)
         conn = get_db()
         cur = conn.cursor()
         cur.execute("SELECT username FROM users_in_group WHERE group_id = ? AND username = ?", (group_id, sender))
@@ -347,7 +360,29 @@ def send_group_message():
         return jsonify({"status": "error", "message": "User is not a member of this group"}), 403
     else:
         return jsonify({"status":"forbidden"}),403
-
+@chat_group_bp.route("/remove-user", methods=["POST"])
+def remove_user():
+    data = request.get_json()
+    username = data.get("username")
+    group_id = data.get("group_id")
+    if username == g.username:
+        target_user = data.get("target_user")
+        if None in [username, group_id, target_user]:
+            return jsonify({"status":"data is missing"}),401
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ? AND permissions = 'admin'",(username, group_id))
+        result = cur.fetchone()
+        if result:
+            cur.execute("DELETE FROM users_in_group WHERE username = ? AND group_id = ?",(target_user, group_id))
+            conn.commit()
+            conn.close()
+            return jsonify({"status":"the user has banned with sucess"}),200
+        else:
+            conn.close()
+            return jsonify({"status":"you arent a admin"}),403
+    else:
+        return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/view-group-message", methods=["POST"])
 def view_group_message():
     data = request.get_json() or {}
