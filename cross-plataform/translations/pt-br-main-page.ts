@@ -205,6 +205,14 @@
       <translation>Nome do canal</translation>
     </message>
     <message>
+      <source>change name</source>
+      <translation>Trocar o nome</translation>
+    </message>
+    <message>
+      <source>ban user</source>
+      <translation>Banir usuário</translation>
+    </message>
+    <message>
       <source>type here</source>
       <translation>Digite aqui</translation>
     </message>

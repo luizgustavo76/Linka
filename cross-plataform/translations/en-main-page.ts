@@ -185,6 +185,14 @@
         <translation>New group</translation>
     </message>
     <message>
+      <source>change name</source>
+      <translation>change name</translation>
+    </message>
+    <message>
+      <source>ban user</source>
+      <translation>Ban user</translation>
+    </message>
+    <message>
       <source>name group</source>
       <translation>Nome do grupo</translation>
     </message>

@@ -999,6 +999,8 @@ int main(int argc, char *argv[])
     QString newer_text = QCoreApplication::translate("feed", "newer");
     QString trending_text = QCoreApplication::translate("feed", "trending");
     QString federations_text = QCoreApplication::translate("feed", "federations");
+    QString change_name_text = = QCoreApplication::translate("chat", "change name");
+    QString ban_user_text = QCoreApplication::translate("chat", "ban user");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -3153,6 +3155,12 @@ int main(int argc, char *argv[])
         
         return QJsonObject();
     };
+    auto configGroup = [&](int groupId){
+        clearLayout(layout);
+        fadeTransition(central);
+        QList<QWidget*> widgets;
+        QPushButton *changeNameButton = new QPushButton(change_name_text);
+    };
     auto viewChannelGroup = [&](int groupId){
         QList<QWidget*> widgets;
         QHBoxLayout *action_bar = new QHBoxLayout();
@@ -3211,7 +3219,9 @@ int main(int argc, char *argv[])
                     QString type = channelObj["type"].toString();
                     QPushButton *channelButton = new QPushButton(channelName);
                     QObject::connect(channelButton, &QPushButton::clicked, [=](){
-                        groupChat(channelGroupId, channelName);
+                        if (type == "chat"){
+                            groupChat(channelGroupId, channelName);
+                        }
                     });
                     widgets.append(channelButton);
                 }
