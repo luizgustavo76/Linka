@@ -999,7 +999,7 @@ int main(int argc, char *argv[])
     QString newer_text = QCoreApplication::translate("feed", "newer");
     QString trending_text = QCoreApplication::translate("feed", "trending");
     QString federations_text = QCoreApplication::translate("feed", "federations");
-    QString change_name_text = = QCoreApplication::translate("chat", "change name");
+    QString change_name_text = QCoreApplication::translate("chat", "change name");
     QString ban_user_text = QCoreApplication::translate("chat", "ban user");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
@@ -3155,11 +3155,31 @@ int main(int argc, char *argv[])
         
         return QJsonObject();
     };
-    auto configGroup = [&](int groupId){
+    auto configGroup = [&](int groupId, QString permission){
         clearLayout(layout);
         fadeTransition(central);
         QList<QWidget*> widgets;
-        QPushButton *changeNameButton = new QPushButton(change_name_text);
+        if (permission == "admin"){
+            QPushButton *changeNameButton = new QPushButton(change_name_text);
+            QPushButton *banUserButton = new QPushButton(ban_user_text);
+            widgets.append(changeNameButton);
+            widgets.append(banUserButton);
+        };
+        QPushButton *exitGroup = new QPushButton(exit_text);
+        QObject::connect(exitGroup, &QPushButton::clicked, [=](){
+            QJsonObject exitJson;
+            exitJson["username"] = username;
+            exitJson["group_id"] = groupId;
+            requestHTTP(
+                url + "/exit-group",
+                "POST",
+                exitJson
+            );
+            chatPage();
+        });
+        widgets.append(exitGroup);
+        scroll_area(layout, widgets);
+        renderBottomBar("chat");
     };
     auto viewChannelGroup = [&](int groupId){
         QList<QWidget*> widgets;
@@ -3172,13 +3192,14 @@ int main(int argc, char *argv[])
         QByteArray rawResponsePermissions = requestHTTP(url + "/view-permissions", "POST", jsonPermission).toUtf8();
         QJsonDocument docPermission = QJsonDocument::fromJson(rawResponsePermissions);
         bool isAdmin = false;
+        QString perm;
         if (docPermission.isObject()){
             QJsonArray permissionsArray = docPermission.array();
             QJsonObject rootObj = docPermission.object();
             if (rootObj.contains("permission") && rootObj["permission"].isArray()) {
                 QJsonArray permissionsArray = rootObj["permission"].toArray();
                 for (const QJsonValue &val : permissionsArray) {
-                    QString perm = val.toString();
+                     perm = val.toString();
                     if (perm == "admin") {
                         isAdmin = true;
                     }
@@ -3193,6 +3214,9 @@ int main(int argc, char *argv[])
         action_bar->addWidget(configurationsGroup);
         QObject::connect(addChannel, &QPushButton::clicked, [=](){
             addChannelPage(groupId);
+        });
+        QObject::connect(configurationsGroup, &QPushButton::clicked, [=](){
+            configGroup(groupId, perm);
         });
         QObject::connect(addUserButton, &QPushButton::clicked, [=](){
             addUserGroupPage(groupId);

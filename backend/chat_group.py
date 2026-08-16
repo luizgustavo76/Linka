@@ -119,6 +119,21 @@ def generate_invite():
             return jsonify({"status":"you arent a member"}),403
     else:
         return jsonify({"status":"forbidden"}),403
+@chat_group_bp.route("/exit-group", methods=["POST"])
+def exit_server():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        group_id = data.get("group_id")
+        if group_id == None:
+            return jsonify({"status":"data is missing"}),400
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM users_in_group WHERE username = ? AND group_id = ?",(username, group_id))
+        conn.commit()
+        conn.close()
+    else:
+        return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/rename-group", methods=["POST"])
 def rename_group():
     data = request.get_json()
@@ -133,7 +148,7 @@ def rename_group():
         cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ? AND permissions = 'admin'",(username, group_id))
         result = cur.fetchone()
         if result:
-            cur.execute("UPDATE meta SET name = ?",(new_name))
+            cur.execute("UPDATE meta SET name = ? WHERE group_id = ?",(new_name, group_id))
             conn.commit()
             conn.close()
         else:
