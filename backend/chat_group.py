@@ -119,6 +119,28 @@ def generate_invite():
             return jsonify({"status":"you arent a member"}),403
     else:
         return jsonify({"status":"forbidden"}),403
+@chat_group_bp.route("/rename-group", methods=["POST"])
+def rename_group():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        group_id = data.get("group_id")
+        new_name = data.get("new_name")
+        if None in [group_id, new_name]:
+            return jsonify({"status":"data is missing"}),401
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ? AND permissions = 'admin'",(username, group_id))
+        result = cur.fetchone()
+        if result:
+            cur.execute("UPDATE meta SET name = ?",(new_name))
+            conn.commit()
+            conn.close()
+        else:
+            conn.close()
+            return jsonify({"status":"you arent a admin!"}),403
+    else:
+        return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/join-group", methods=["POST"])
 def join_group():
     data = request.get_json()

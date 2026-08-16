@@ -3181,7 +3181,7 @@ int main(int argc, char *argv[])
         QPushButton *addChannel = new QPushButton("+");
         QPushButton *configurationsGroup = new QPushButton();
         configurationsGroup->setIcon(QIcon(":/assets/config.png"));
-        configurationsGroup->setIconSize(QSize(14, 14));        
+        configurationsGroup->setIconSize(QSize(36, 36));        
         action_bar->addWidget(configurationsGroup);
         QObject::connect(addChannel, &QPushButton::clicked, [=](){
             addChannelPage(groupId);
@@ -3190,7 +3190,7 @@ int main(int argc, char *argv[])
             addUserGroupPage(groupId);
         });
         addUserButton->setIcon(QIcon(":/assets/add-user.png"));
-        addUserButton->setIconSize(QSize(14, 14));
+        addUserButton->setIconSize(QSize(36, 36));
         action_bar->addWidget(addUserButton);
         if (isAdmin){
             action_bar->addWidget(addChannel);
