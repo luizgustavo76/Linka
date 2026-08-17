@@ -1,4 +1,4 @@
-QT += widgets network svg concurrent
+QT += widgets network svg concurrent openglwidgets
 
 # Adiciona o módulo AndroidExtras apenas quando estiver compilando para Android
 android {
