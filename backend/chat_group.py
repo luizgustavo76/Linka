@@ -397,6 +397,23 @@ def send_group_message():
         return jsonify({"status": "error", "message": "User is not a member of this group"}), 403
     else:
         return jsonify({"status":"forbidden"}),403
+@chat_group_bp.route("/members", methods=["POST"])
+def members():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        group_id = data.get("group_id")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ?",(username, group_id))
+        result = cur.fetchone()
+        if result:
+            cur.execute("SELECT username FROM users_in_group WHERE group_id = ?",(group_id,))
+            result_member = cur.fetchall()
+            members = [row[0] for row in result_member]
+            return jsonify({"group_id": group_id, "members": members})
+    else:
+        return jsonify({"status":"forbidden"}),403
 @chat_group_bp.route("/remove-user", methods=["POST"])
 def remove_user():
     data = request.get_json()

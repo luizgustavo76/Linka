@@ -2714,10 +2714,10 @@ int main(int argc, char *argv[])
         clearLayout(layout);
         fadeTransition(central);
         QList<QWidget*> widgets;        
-        QJsonObject friends_json;
+        QJsonObject group_json;
         friends_json["username"] = username;
         QString response_friends = requestHTTP(
-            url + "/friends",
+            url + "/members",
             "POST",
             friends_json
         );
