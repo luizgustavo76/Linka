@@ -2715,32 +2715,27 @@ int main(int argc, char *argv[])
         fadeTransition(central);
         QList<QWidget*> widgets;        
         QJsonObject group_json;
-        friends_json["username"] = username;
-        QString response_friends = requestHTTP(
+        group_json["username"] = username;
+        group_json["group_id"] = groupId;
+        QString response_members = requestHTTP(
             url + "/members",
             "POST",
-            friends_json
+            group_json
         );
         QJsonObject json_username;
-        QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
+        QJsonDocument doc = QJsonDocument::fromJson(response_members.toUtf8());
         QJsonObject obj = doc.object();
-        QJsonArray friends = obj["friends"].toArray();
-        if (friends.isEmpty())
+        QJsonArray members = obj["member"].toArray();
+        if (members.isEmpty())
         {
-            QLabel *label_error = new QLabel("No Friends....");
+            QLabel *label_error = new QLabel("No members....");
             widgets.append(label_error);
         }
         else
         {
-            for(int i = 0; i < friends.size(); i++){
-                QJsonArray row = friends[i].toArray();
-                QString receiver = row[0].toString();
-                QString remittee = row[1].toString();
-                QString friendName;
-                if(receiver == username)
-                    friendName = remittee;
-                else
-                    friendName = receiver;
+            for(int i = 0; i < members.size(); i++){
+                QJsonArray row = members[i].toArray();
+                QString friendName = row[i].toString();
                 QWidget *containerWidget = new QWidget();
                 QPushButton *user = new QPushButton(friendName);
                 QHBoxLayout *buttonLayout = new QHBoxLayout();
