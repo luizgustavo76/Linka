@@ -2226,6 +2226,44 @@ int main(int argc, char *argv[])
     static QJsonArray cachedFeedArray;             
     static QHash<int, QString> starCountCache;    
     static QHash<QString, QPixmap> avatarCache;
+    auto commentsPage = [&](int postId){
+        clearLayout(layout);
+        fadeTransition(central);
+        QList<QWidget*> widgets;
+        QJsonObject jsonComments;
+        jsonComments["post_id"] = postId;
+        QString response = requestHTTP(
+            url + "/view-comments",
+            "POST",
+            jsonComments
+        );
+        QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
+        QJsonObject obj = doc.object();
+        QJsonArray comments = obj["comments"].toArray();
+        for (int i = 0; i < comments.size(); ++i) {
+            QJsonObject item = comments[i].toObject();
+
+            int commentId = item["comment_id"].toInt();
+            int postId = item["post_id"].toInt();
+            QString textComment = item["text_comment"].toString();
+            QString usernameComment = item["username"].toString();
+            QHBoxLayout *lineLayout = new QHBoxLayout();
+            viewProfilePicture(lineLayout, usernameComment);
+            QVBoxLayout *contentLayout = new QVBoxLayout();
+            QLabel *usernameLabel = new QLabel(usernameComment);
+            QLabel *commentLabel = new QLabel(textComment);
+            contentLayout->addWidget(usernameLabel);
+            contentLayout->addWidget(commentLabel);
+            lineLayout->addLayout(contentLayout);
+            lineLayout->addStretch();
+            contentLayout->addStretch();
+            QWidget *lineContainer = new QWidget();
+            lineContainer->setLayout(lineLayout);
+            widgets.append(lineContainer);
+        };
+        scroll_area(layout, widgets);
+        renderBottomBar("home");
+    };
     showfeed = [&]()
     {
         clearLayout(layout);
@@ -2349,6 +2387,11 @@ int main(int argc, char *argv[])
                 });
 
                 QHBoxLayout *starLayout = new QHBoxLayout();
+                QPushButton *commentsButton = new QPushButton();
+                QObject::connect(commentsButton, &QPushButton::clicked, [=](){
+                    commentsPage(postId);
+                });
+                starLayout->addWidget(commentsButton);
                 starLayout->addWidget(iconButton);
                 starLayout->addWidget(starLabel);
                 starLayout->addStretch();
