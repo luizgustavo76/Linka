@@ -1,0 +1,19 @@
+{
+    "modules-flags":{
+        "chat_global":true,
+        "chat_group":true,
+        "chat":true,
+        "federation_index":true,
+        "federations":true,
+        "friends":true,
+        "images":true,
+        "notifications":true,
+        "post":true,
+        "profiles":true,
+        "reports":true,
+        "search":true,
+        "sincronizer":true,
+        "status":true,
+        "themes":true
+    }
+}
