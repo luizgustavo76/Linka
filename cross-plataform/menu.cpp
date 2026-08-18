@@ -2226,42 +2226,70 @@ int main(int argc, char *argv[])
     static QJsonArray cachedFeedArray;             
     static QHash<int, QString> starCountCache;    
     static QHash<QString, QPixmap> avatarCache;
-    auto commentsPage = [&](int postId){
+    std::function<void(int)> commentsPage = [&](int postId) {
         clearLayout(layout);
         fadeTransition(central);
         QList<QWidget*> widgets;
+        
         QJsonObject jsonComments;
         jsonComments["post_id"] = postId;
+        
         QString response = requestHTTP(
             url + "/view-comments",
             "POST",
             jsonComments
         );
+        
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
         QJsonObject obj = doc.object();
         QJsonArray comments = obj["comments"].toArray();
+        
         for (int i = 0; i < comments.size(); ++i) {
             QJsonObject item = comments[i].toObject();
 
-            int commentId = item["comment_id"].toInt();
-            int postId = item["post_id"].toInt();
             QString textComment = item["text_comment"].toString();
             QString usernameComment = item["username"].toString();
             QHBoxLayout *lineLayout = new QHBoxLayout();
+            lineLayout->setAlignment(Qt::AlignTop);
             viewProfilePicture(lineLayout, usernameComment);
             QVBoxLayout *contentLayout = new QVBoxLayout();
             QLabel *usernameLabel = new QLabel(usernameComment);
+            usernameLabel->setStyleSheet("font-weight: bold;");
             QLabel *commentLabel = new QLabel(textComment);
+            commentLabel->setWordWrap(true);
+
             contentLayout->addWidget(usernameLabel);
             contentLayout->addWidget(commentLabel);
-            lineLayout->addLayout(contentLayout);
-            lineLayout->addStretch();
-            contentLayout->addStretch();
+            contentLayout->setSpacing(2); 
+
+            lineLayout->addLayout(contentLayout, 1); 
+
             QWidget *lineContainer = new QWidget();
             lineContainer->setLayout(lineLayout);
+            
             widgets.append(lineContainer);
-        };
+        }
+        QHBoxLayout *HLayoutComment = new QHBoxLayout();
+        QLineEdit *commentEdit = new QLineEdit();
+        commentEdit->setPlaceholderText(comments_text);
+        QPushButton *buttonSendComment = new QPushButton(send_text);
+        QObject::connect(buttonSendComment, &QPushButton::clicked, [=](){
+            QJsonObject jsonNewComment;
+            qDebug() << "opa apertou ai paizão";
+            jsonNewComment["username"] = username;
+            jsonNewComment["post_id"] = postId;
+            jsonNewComment["text_comment"] = commentEdit->text();
+            requestHTTP(
+                url + "/comments",
+                "POST",
+                jsonNewComment
+            );
+            QTimer::singleShot(0, [=]() { commentsPage(postId); });
+        });
+        HLayoutComment->addWidget(commentEdit);
+        HLayoutComment->addWidget(buttonSendComment);
         scroll_area(layout, widgets);
+        layout->addLayout(HLayoutComment);
         renderBottomBar("home");
     };
     showfeed = [&]()

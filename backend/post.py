@@ -67,25 +67,31 @@ def view_post():
 def new_comment():
     data = request.get_json(force=True)
     username = data.get("username")
-    if username == g.username:
-        text_comment = data.get("text_comment")
+    
+    current_user = getattr(g, "username", None)
+
+    if username and username == current_user:
+        text_comment = data.get("text_comment") or data.get("text_post")
         post_id = data.get("post_id")
-        if None in (username, text_comment, post_id):
-            return jsonify({"status":"the informations is empty"}), 401
-        else:
-            conn = get_db()
-            cur = conn.cursor()
-            cur.execute("INSERT INTO comments (text_comment, username, post_id) VALUES(?,?,?)", (text_comment, username, post_id))
-            cur.execute("SELECT username FROM posts WHERE post_id = ?",(post_id,))
-            op = cur.fetchone()
-            conn.commit()
-            conn.close()
-            linkosModule.add_linkos(username, 2)
+
+        if not text_comment or not post_id:
+            return jsonify({"status": "the informations is empty"}), 400
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO comments (text_comment, username, post_id) VALUES(?,?,?)", (text_comment, username, post_id))
+        cur.execute("SELECT username FROM posts WHERE id = ?", (post_id,))
+        op = cur.fetchone()
+        conn.commit()
+        conn.close()
+        linkosModule.add_linkos(username, 2)
+        post_owner = op[0] if op else None        
         date = datetime.now()
-        notificationsModule.CreateNotification(username, op, date, "comment", text_comment)
-        return jsonify({"status":"the comment has been created with sucess!"}), 200
+        if post_owner:
+            notificationsModule.CreateNotification(username, post_owner, date, "comment", text_comment)
+        return jsonify({"status": "the comment has been created with sucess!"}), 200
     else:
-        return jsonify({"status":"forbidden"}),403
+        return jsonify({"status": "forbidden"}), 403
 @post_bp.route("/view-comments", methods=["POST"])
 def view_comments():
     data = request.get_json(force=True)
