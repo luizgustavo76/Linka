@@ -62,7 +62,6 @@ def search():
 
     conn.close()
 
-    # ===== BUSCA POSTS =====
     conn = get_db_post()
     cursor = conn.cursor()
 

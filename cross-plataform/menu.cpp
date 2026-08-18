@@ -1019,7 +1019,21 @@ int main(int argc, char *argv[])
         return input;
     };
 
-    
+    auto renderTopBar = [&](QString title, std::function<void()> onBack) {
+        QHBoxLayout *headerLayout = new QHBoxLayout();
+        QLabel *titleLabel = new QLabel(title);        
+        QPushButton *backButton = new QPushButton(QIcon(":/assets/back.png"), "");
+        backButton->setIconSize(QSize(32, 32));
+        headerLayout->addWidget(backButton);
+        headerLayout->addWidget(titleLabel);
+        headerLayout->addStretch();
+        QObject::connect(backButton, &QPushButton::clicked, [=](){
+            if (onBack) {
+                onBack();
+            }
+        });
+        layout->addLayout(headerLayout);
+    };
     std::function<void()> showfeed;
     std::function<void()> initialPage;
     std::function<void()> showInitialPage;
@@ -1160,7 +1174,6 @@ int main(int argc, char *argv[])
     QJsonDocument doc = QJsonDocument::fromJson(byteArray);
     QJsonObject jsonObject = doc.object();
     
-    // 1. Pegue as strings e use .trimmed() para limpar qualquer espaço ou \n invisível
     QString min_ver_str = jsonObject["minim-version"].toString().trimmed();
     QString linkUpdate = jsonObject["url"].toString();
     QString cur_ver_str = current_version.trimmed();
@@ -1178,7 +1191,6 @@ int main(int argc, char *argv[])
         window.showMaximized();
         return app.exec(); 
     }
-    // validation of token
     QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
     QJsonObject json_valide;
     json_valide["token"] = token;
@@ -1402,6 +1414,7 @@ int main(int argc, char *argv[])
     };
     addThemePage = [&](){
         clearLayout(layout);
+        renderTopBar(add_theme_text, optionsPage);
         fadeTransition(central);
         loadConfig();
         QList<QWidget*> widgets;
@@ -3525,6 +3538,7 @@ int main(int argc, char *argv[])
 
         scroll_area(layout, content);
     };
+        
     renderBottomBar = [&](QString actual_window){
         splash.finish(&window);
 
