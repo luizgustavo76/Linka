@@ -96,6 +96,18 @@
         <translation>view complete post</translation>
     </message>
     <message>
+        <source>submmit federation</source>
+        <translation>submmit federation</translation>
+    </message>
+    <message>
+        <source>cover image</source>
+        <translation>cover image</translation>
+    </message>
+    <message>
+        <source>name</source>
+        <translation>name</translation>
+    </message>
+    <message>
         <source>newer</source>
         <translation>Newer</translation>
     </message>

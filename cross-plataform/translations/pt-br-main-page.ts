@@ -109,6 +109,18 @@
   <context>
     <name>feed</name>
     <message>
+        <source>submmit federation</source>
+        <translation>enviar federação</translation>
+    </message>
+    <message>
+        <source>cover image</source>
+        <translation>imagem principal</translation>
+    </message>
+    <message>
+        <source>name</source>
+        <translation>nome</translation>
+    </message>
+    <message>
         <source>view complete post</source>
         <translation>Veja o post completo</translation>
     </message>
@@ -130,7 +142,7 @@
     </message>
     <message>
         <source>new comment</source>
-        <translation>New comment</translation>
+        <translation>Novo comentario</translation>
     </message>
     <message>
       <source>new post</source>

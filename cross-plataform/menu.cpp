@@ -3677,8 +3677,20 @@ int main(int argc, char *argv[])
             layout->addWidget(bottomBar, 0);
         }
     };
+    auto submmitFederationPage = [&](){
+        clearLayout(layout);
+        QLabel *labelSubmmit = new QLabel(submmit_federation_text);
+        QLineEdit *nameFederation = new QLineEdit();
+        nameFederation->setPlaceholderText(submmit_federation_text);
+        QLabel *labelCoverImage = new QLabel(cover_image_text);
+        QLineEdit *coverImageUrl = new QLineEdit();
+    };
     addFederationFeed = [&](){
         clearLayout(layout);
+        QList <QWidget*> widgets;
+        QPushButton *submmitFederation - new QPushButton();
+        widgets.append(submmitFederation);
+
         QJsonObject *empty = new QJsonObject();
         QString response = requestHTTP(url + "/view-index", "GET", *empty);
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
@@ -3702,10 +3714,11 @@ int main(int argc, char *argv[])
                     });
                     rowLayout->addWidget(nameLabel);
                     rowLayout->addStretch();
-                    layout->addWidget(rowWidget);
+                    widgets.append(rowWidget);
                 }
             }
         }
+        scroll_area(layout, widgets);
         renderBottomBar("home");
     };
     federationFeedPage = [&](QString url){

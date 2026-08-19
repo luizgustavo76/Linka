@@ -17,7 +17,7 @@
 #include <map>
 #include <QFile>
 #include <QTranslator>
-
+#include <QKeyEvent>
 QTranslator translator;
 
 void loadLanguage(const QString& lang)
