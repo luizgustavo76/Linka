@@ -1008,6 +1008,7 @@ int main(int argc, char *argv[])
     QString submmit_federation_text = QCoreApplication::translate("feed", "submmit federation");
     QString cover_image_text = QCoreApplication::translate("feed", "cover image");
     QString name_text = QCoreApplication::translate("feed", "name");
+    QString add_external_chat = QCoreApplication::translate("chat", "add external name");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -1857,7 +1858,10 @@ int main(int argc, char *argv[])
         }
         if(profilePictureCache.contains(username)) {
             qDebug() << "[CACHE HIT] Usando foto do cache para:" << username;
-            renderAvatarImage(profilePictureCache[username], picLayout);
+            QString cachedPic = profilePictureCache[username];
+            if(cachedPic != "NO_IMAGE") {
+                renderAvatarImage(cachedPic, picLayout);
+            }
             return; 
         }
 
@@ -1878,10 +1882,11 @@ int main(int argc, char *argv[])
         
         if(!profile_picture.isEmpty()) {
             profilePictureCache[username] = profile_picture;
+            qDebug() << "entrando no renderizador de foto" + profile_picture;
+            renderAvatarImage(profile_picture, picLayout);
+        } else {
+            profilePictureCache[username] = "NO_IMAGE";
         }
-        
-        qDebug() << "entrando no renderizador de foto" + profile_picture;
-        renderAvatarImage(profile_picture, picLayout);
     };
     account = [&](){
         clearLayout(layout);
@@ -2295,6 +2300,7 @@ int main(int argc, char *argv[])
         layout->addLayout(HLayoutComment);
         renderBottomBar("home");
     };
+    
     showfeed = [&]()
     {
         clearLayout(layout);
@@ -2383,25 +2389,30 @@ int main(int argc, char *argv[])
                 iconButton->setIconSize(QSize(24, 24));
                 iconButton->setFixedSize(30, 30);
                 iconButton->setStyleSheet("border: none;");
-                QString initialStarCount = starCountCache.value(postId, "...");
-                QLabel *starLabel = new QLabel(initialStarCount);
+                QLabel *starLabel = new QLabel();
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
-                QPointer<QLabel> safeStarLabel = starLabel;
-                QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
-                QNetworkReply *starsReply = manager->get(starsReq);
-                QObject::connect(starsReply, &QNetworkReply::finished, [=]() mutable {
-                    if (!safeStarLabel) {
+
+                if (starCountCache.contains(postId)) {
+                    starLabel->setText(starCountCache.value(postId));
+                } else {
+                    starLabel->setText("...");
+                    QPointer<QLabel> safeStarLabel = starLabel;
+                    QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
+                    QNetworkReply *starsReply = manager->get(starsReq);
+                    QObject::connect(starsReply, &QNetworkReply::finished, [=]() mutable {
+                        if (!safeStarLabel) {
+                            starsReply->deleteLater();
+                            return;
+                        }
+                        if (starsReply->error() == QNetworkReply::NoError) {
+                            QString starsText = QString(starsReply->readAll()).trimmed();
+                            if (starsText.isEmpty()) starsText = "0";
+                            starCountCache[postId] = starsText;
+                            safeStarLabel->setText(starsText);
+                        }
                         starsReply->deleteLater();
-                        return;
-                    }
-                    if (starsReply->error() == QNetworkReply::NoError) {
-                        QString starsText = QString(starsReply->readAll()).trimmed();
-                        if (starsText.isEmpty()) starsText = "0";
-                        starCountCache[postId] = starsText;
-                        safeStarLabel->setText(starsText);
-                    }
-                    starsReply->deleteLater();
-                });
+                    });
+                }
 
                 QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
                     QJsonObject star_json;
@@ -2450,8 +2461,10 @@ int main(int argc, char *argv[])
             QObject::connect(btnBack, &QPushButton::clicked, [=](){ initialPage(); });
             QObject::connect(btnNewPost, &QPushButton::clicked, [=](){ new_post(); });
         };
+
         if (!cachedFeedArray.isEmpty()) {
             renderPostsList(cachedFeedArray);
+            return;
         }
 
         QString url_feed = url + "/feed";
@@ -3682,6 +3695,7 @@ int main(int argc, char *argv[])
     };
     auto submmitFederationPage = [&](){
         clearLayout(layout);
+        QVBoxLayout *VLayout = new QVBoxLayout();
         fadeTransition(central);
         QLabel *labelSubmmit = new QLabel(submmit_federation_text);
         QLineEdit *nameFederation = new QLineEdit();
@@ -3696,15 +3710,17 @@ int main(int argc, char *argv[])
         QLineEdit *descriptionEntry = new QLineEdit();
         descriptionEntry->setPlaceholderText(description_text);
         QPushButton *submmitButton = new QPushButton(submmit_federation_text);
-        layout->addWidget(labelSubmmit);
-        layout->addWidget(nameFederation);
-        layout->addWidget(urlLabel);
-        layout->addWidget(urlEntry);
-        layout->addWidget(labelCoverImage);
-        layout->addWidget(coverImageUrl);
-        layout->addWidget(descriptionLabel);
-        layout->addWidget(descriptionEntry);
-        layout->addWidget(submmitButton);
+        VLayout->addWidget(labelSubmmit);
+        VLayout->addWidget(nameFederation);
+        VLayout->addWidget(urlLabel);
+        VLayout->addWidget(urlEntry);
+        VLayout->addWidget(labelCoverImage);
+        VLayout->addWidget(coverImageUrl);
+        VLayout->addWidget(descriptionLabel);
+        VLayout->addWidget(descriptionEntry);
+        VLayout->addWidget(submmitButton);
+        VLayout->addStretch();
+        layout->addLayout(VLayout);
         QObject::connect(submmitButton, &QPushButton::clicked, [=](){
             QJsonObject jsonIndex;
             jsonIndex["name"] = nameFederation->text();
@@ -3718,6 +3734,7 @@ int main(int argc, char *argv[])
             );
             addFederationFeed();
         });
+        renderBottomBar("home");
     };
     addFederationFeed = [&](){
         clearLayout(layout);

@@ -213,6 +213,10 @@
   <context>
     <name>chat</name>
     <message>
+        <source>add external chat</source>
+        <translation>Adicionar chat externo</translation>
+    </message>
+    <message>
       <source>channel name</source>
       <translation>Nome do canal</translation>
     </message>

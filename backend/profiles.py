@@ -159,5 +159,7 @@ def get_profile_pic():
     cur = conn.cursor()
     cur.execute("SELECT ProfilePicture FROM profile WHERE username = ?", (username,))
     result = cur.fetchone()
-    print(result)
-    return jsonify({"profile-picture":result[0]}),200
+    if result:
+        return jsonify({"profile-picture":result[0]}),200
+    else:
+        return jsonify({"status":"profile picture has not founded"}),400

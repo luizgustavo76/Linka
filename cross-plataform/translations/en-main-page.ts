@@ -185,6 +185,10 @@
 <context>
     <name>chat</name>
     <message>
+        <source>add external chat</source>
+        <translation>add external chat</translation>
+    </message>
+    <message>
       <source>channel name</source>
       <translation>Channel name</translation>
     </message>
