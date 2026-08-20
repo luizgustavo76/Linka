@@ -24,6 +24,13 @@ def create_db():
                 remittee TEXT
                 )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS external_contacts(
+        username TEXT,
+        contact_name TEXT,
+        url TEXT
+        )
+    """)
     cur.execute("CREATE TABLE IF NOT EXISTS inbox (receiver TEXT, remittee TEXT, message TEXT)")
     conn.commit()
     conn.close()
@@ -106,6 +113,23 @@ def denied():
     conn.commit()
     conn.close()
     return jsonify({"status": "the request was deleted"})
+@friends_bp.route("/external-contacts", methods=["POST"])
+def external_contacts():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM external_contacts WHERE username = ?",(username,))
+        rows = cur.fetchall()
+        conn.close()
+        contacts_list = [
+            {"contact_id": row[0], "contact_name": row[1], "platform": row[2]} 
+            for row in rows
+        ]
+        return jsonify(contacts_list)
+    else:
+        return jsonify({"status":"forbidden"}),403
 @friends_bp.route("/send-friend", methods=["POST"])
 def send():
     data = request.get_json()

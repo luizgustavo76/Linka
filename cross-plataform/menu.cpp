@@ -4285,6 +4285,8 @@ int main(int argc, char *argv[])
         clearLayout(layout);
         QPushButton *newGroupButton = new QPushButton(new_group_text);
         layout->addWidget(newGroupButton);
+        QPushButton *addExternalChat = new QPushButton(add_external_chat);
+        layout->addWidget(addExternalChat);
         QList<QWidget*> button_area;
         QJsonObject friends_json;
         friends_json["username"] = username;
