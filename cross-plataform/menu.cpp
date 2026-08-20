@@ -4281,12 +4281,27 @@ int main(int argc, char *argv[])
         layout->addWidget(backButton);
         renderBottomBar("chat");
     };
+    auto addExternalChatPage = [&](){
+        clearLayout(layout);
+        QLineEdit *urlEdit = new QLineEdit();
+        urlEdit->setPlaceholderText("url");
+        QLineEdit *nameEdit = new QLineEdit();
+        nameEdit->setPlaceholderText(name_text);
+        QPushButton *submmitButton = new QPushButton(send_text);
+        layout->addWidget(urlEdit);
+        layout->addWidget(nameEdit);
+        layout->addWidget(submmitButton);
+        renderBottomBar("chat");
+    };
     new_chat = [&](){
         clearLayout(layout);
         QPushButton *newGroupButton = new QPushButton(new_group_text);
         layout->addWidget(newGroupButton);
         QPushButton *addExternalChat = new QPushButton(add_external_chat);
         layout->addWidget(addExternalChat);
+        QObject::connect(addExternalChat, &QPushButton::clicked, [=](){
+            addExternalChatPage();
+        });
         QList<QWidget*> button_area;
         QJsonObject friends_json;
         friends_json["username"] = username;

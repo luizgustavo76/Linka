@@ -113,6 +113,21 @@ def denied():
     conn.commit()
     conn.close()
     return jsonify({"status": "the request was deleted"})
+@friends_bp.route("/add-external-contact", methods=["POST"])
+def add_external_contact():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        name_contact = data.get("name_contact")
+        url = data.get("url")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO external_contacts (username, contact_name, url) VALUES(?,?,?)",(username, name_contact, url))
+        conn.commit()
+        conn.close()
+        return jsonify({"status":"external account added"}),200
+    else:
+        return jsonify({"status":"forbidden"}),403
 @friends_bp.route("/external-contacts", methods=["POST"])
 def external_contacts():
     data = request.get_json()
