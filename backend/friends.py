@@ -139,7 +139,7 @@ def external_contacts():
         rows = cur.fetchall()
         conn.close()
         contacts_list = [
-            {"contact_id": row[0], "contact_name": row[1], "platform": row[2]} 
+            {"username": row[0], "contact_name": row[1], "url": row[2]} 
             for row in rows
         ]
         return jsonify(contacts_list)

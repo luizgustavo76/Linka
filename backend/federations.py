@@ -1,29 +1,46 @@
+import json
 from flask import Flask, request, jsonify, Blueprint
 from linkaFederations import LinkaFederations
-import sqlite3
-import os
 
 federations_bp = Blueprint("federations_bp", __name__)
-base_dir = os.path.dirname(os.path.abspath(__file__))
 
 @federations_bp.route("/send-request", methods=["POST"])
 def send_request():
     try:
-        data = request.get_json()
-        payload = data.get("payload")
-        headers = data.get("headers")
-        method = data.get("method")
-        route = data.get("route")
-        url = data.get("url")
-        
+        raw_data = request.get_data(as_text=True)
+        data = json.loads(raw_data)
+
+        if isinstance(data, str):
+            data = json.loads(data)
+
+        if not isinstance(data, dict):
+            return jsonify({
+                "status": "error",
+                "error": f"Expected JSON object, got {type(data).__name__}"
+            }), 400
+
+        payload = data.get("payload", {})
+        headers = data.get("headers", {})
+        method = str(data.get("method", "POST")).upper()
+        route = data.get("route", "")
+        url = data.get("url", "")
+
         fed = LinkaFederations()
-        fed.actual_server = "http://127.0.0.1:5000" 
-        
-        if method.lower() == "post":
+        fed.actual_server = "http://127.0.0.1:5000"
+
+        response = None
+        if method == "POST":
             response = fed.sendPayload(payload, url, route, headers)
-        if method.lower() == "get":
+        elif method == "GET":
             response = fed.receiveConnection(url, route, headers)
-            
-        return jsonify({"status": "the request was send!", "response": response}), 200
+        else:
+            return jsonify({
+                "status": "error", 
+                "error": f"Method {method} not supported"
+            }), 400
+
+        return jsonify({"status": "request_sent", "response": response}), 200
+
     except Exception as e:
-        return jsonify({"status": "error send request", "error": str(e)}), 401
+        print(f"[ERROR /send-request]: {e}")
+        return jsonify({"status": "error", "error": str(e)}), 500

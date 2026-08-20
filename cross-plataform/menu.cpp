@@ -3097,6 +3097,177 @@ int main(int argc, char *argv[])
         labsList.append(frame); 
         scroll_area(layout, labsList);
     };
+    auto chatExternal = [&](QString user, QString federation_url){
+        clearLayout(layout);
+        QHBoxLayout *header = new QHBoxLayout();
+        QPushButton *backButton = new QPushButton(QIcon(":/assets/back.png"), "");
+        backButton->setIconSize(QSize(32, 32));
+        QLabel *usernameLabel = new QLabel(user);
+        
+        header->addWidget(backButton);
+        viewProfilePicture(header, user);
+        header->addWidget(usernameLabel);
+        header->addStretch();
+        layout->addLayout(header);
+
+        QScrollArea *scroll = new QScrollArea();
+        scroll->setWidgetResizable(true);
+
+        QWidget *containerScroll = new QWidget();
+        QVBoxLayout *containerLayout = new QVBoxLayout(containerScroll);
+        scroll->setWidget(containerScroll);
+        layout->addWidget(scroll);
+
+        QObject::connect(backButton, &QPushButton::clicked, [=](){
+            chatPage();
+        });
+
+        QTimer *timer = new QTimer(containerScroll);
+        
+        auto currentMessageCount = std::make_shared<int>(0); 
+
+        QObject::connect(timer, &QTimer::timeout, [=]() mutable {
+            QJsonObject view_chat;
+            view_chat["user1"] = username;
+            view_chat["user2"] = user;
+
+            QJsonObject federationJson;
+            federationJson["url"] = federation_url;
+            federationJson["route"] = "/view";
+            federationJson["method"] = "POST";
+            federationJson["payload"] = view_chat;
+            QJsonObject reqHeaders;
+            reqHeaders["Authorization"] = "Bearer " + token;
+            federationJson["headers"] = reqHeaders;
+            QString chat_message = requestHTTP(
+                url + "/send-request",
+                "POST",
+                federationJson
+            );
+
+            QJsonDocument doc = QJsonDocument::fromJson(chat_message.toUtf8());
+            if (!doc.isObject()) return;
+
+            QJsonObject obj = doc.object();
+            if (!obj.contains("messages")) return;
+            QJsonArray msgs = obj["messages"].toArray();
+            if (msgs.size() != *currentMessageCount)
+            {
+                int oldSize = *currentMessageCount;
+                *currentMessageCount = msgs.size(); 
+                QLayoutItem *child;
+                while ((child = containerLayout->takeAt(0)) != nullptr) {
+                    if (child->widget()) delete child->widget();
+                    delete child;
+                }
+
+                for (int i = 0; i < msgs.size(); i++)
+                {
+                    QJsonObject msg = msgs[i].toObject();
+                    QString sender = msg["sender"].toString();
+                    QString text = msg["message"].toString();
+                    bool shared = false;
+                    QString code;
+
+                    if (text.startsWith("[INVITE]")) {
+                        code = QString(text).remove("[INVITE]");
+                        shared = true;
+                    }
+
+                    bool isMe = (sender == username);
+                    QHBoxLayout *line = new QHBoxLayout();
+
+                    if (!shared) {
+                        ChatBubble *bubble = new ChatBubble(text, isMe);
+                        if (isMe) {
+                            line->addStretch();
+                            line->addWidget(bubble);
+                        } else {
+                            line->addWidget(bubble);
+                            line->addStretch();
+                        }
+                    } else {
+                        QVBoxLayout *collun = new QVBoxLayout();
+                        QWidget *sharedWidget = new QWidget();
+                        QLabel *labelGroup = new QLabel(sender + " invited you to enter in a group");
+                        QPushButton *enterButton = new QPushButton("Accept invite");
+                        
+                        QObject::connect(enterButton, &QPushButton::clicked, [=](){
+                            QJsonObject jsonAccept;
+                            jsonAccept["username"] = username;
+                            jsonAccept["code"] = code;
+                            requestHTTP(url + "/join-group", "POST", jsonAccept);
+                        });
+
+                        collun->addWidget(labelGroup);
+                        collun->addWidget(enterButton);
+                        sharedWidget->setLayout(collun);
+
+                        if (isMe) {
+                            line->addStretch();
+                            line->addWidget(sharedWidget);
+                        } else {
+                            line->addWidget(sharedWidget);
+                            line->addStretch();
+                        }
+                    }
+
+                    QWidget *lineWidget = new QWidget();
+                    lineWidget->setLayout(line);
+                    containerLayout->addWidget(lineWidget);
+                }
+
+                bool lastMsgIsMe = (msgs.size() > 0) && (msgs.last().toObject()["sender"].toString() == username);
+                if (oldSize == 0 || lastMsgIsMe) {
+                    QTimer::singleShot(50, [=](){
+                        scroll->verticalScrollBar()->setValue(scroll->verticalScrollBar()->maximum());
+                    });
+                }
+            } 
+        }); 
+
+        timer->start(100);
+
+        QLineEdit *message_box = new QLineEdit();
+        message_box->setPlaceholderText(type_text);
+
+        QHBoxLayout *entryBox = new QHBoxLayout();
+        QPushButton *send_button = new QPushButton(send_text);
+
+        entryBox->addWidget(message_box);
+        entryBox->addWidget(send_button);
+
+        QWidget *container = new QWidget();
+        container->setLayout(entryBox);
+
+        auto fnSendMessage = [=]() {
+            QString text = message_box->text().trimmed();
+            if (text.isEmpty()) return;
+
+            QJsonObject msgPayload;
+            msgPayload["sender"] = username;
+            msgPayload["receiver"] = user;
+            msgPayload["message"] = text;
+
+            QJsonObject federationJson;
+            federationJson["url"] = federation_url;
+            federationJson["route"] = "/send";
+            federationJson["method"] = "POST";
+            federationJson["payload"] = msgPayload;
+            QJsonObject reqHeaders;
+            reqHeaders["Authorization"] = "Bearer " + token;
+            federationJson["headers"] = reqHeaders;
+
+            requestHTTP(url + "/send-request", "POST", federationJson);
+            message_box->clear();
+        };
+
+        QObject::connect(send_button, &QPushButton::clicked, fnSendMessage);
+        QObject::connect(message_box, &QLineEdit::returnPressed, fnSendMessage);
+
+        layout->addWidget(container);
+        renderBottomBar("chat");
+    };
     chat = [&](QString user){
         clearLayout(layout);
         QList<QWidget*> message;
@@ -3418,78 +3589,80 @@ int main(int argc, char *argv[])
         QObject::connect(ChatGlobalButton, &QPushButton::clicked, [=]() mutable{
             chatGlobal();
         });
-        
-        QJsonObject friends_json;
-        friends_json["username"] = username;
-        QString response_friends = requestHTTP(
-            url + "/friends",
-            "POST",
-            friends_json
-        );
-        QJsonObject json_username;
-        json_username["username"] = username;
-        QJsonObject json_object_groups = viewGroupsRequest();
-        QString response_groups = requestHTTP(
-            url + "/my-groups",
-            "POST",
-            json_username
-        );
+        QJsonObject reqJson;
+        reqJson["username"] = username;
+
+        QString response_friends = requestHTTP(url + "/friends", "POST", reqJson);
+        QString response_groups = requestHTTP(url + "/my-groups", "POST", reqJson);
+        QString response_external = requestHTTP(url + "/external-contacts", "POST", reqJson);
+
         QJsonDocument doc_groups = QJsonDocument::fromJson(response_groups.toUtf8());
         QJsonObject obj_groups = doc_groups.object();
-
         if (obj_groups["status"].toString() == "success") {
             QJsonArray groups = obj_groups["groups"].toArray();
             for(int i = 0; i < groups.size(); i++){
                 QJsonObject groupObj = groups[i].toObject();
-                
                 int groupId = groupObj["group_id"].toInt();
                 QString nameGroup = groupObj["group_name"].toString();
 
-                QPushButton *btn = new QPushButton(nameGroup);
-                
+                QPushButton *btn = new QPushButton("[Group] " + nameGroup);
                 QObject::connect(btn, &QPushButton::clicked, [=](){
                     viewChannelGroup(groupId);
                 });
-
                 widgets.append(btn);
             }
         } else {
-            qDebug() << "Erro retornado pelo servidor: " << obj_groups["message"].toString();
         }
-        QJsonDocument doc = QJsonDocument::fromJson(response_friends.toUtf8());
-        QJsonObject obj = doc.object();
-        QJsonArray friends = obj["friends"].toArray();
-        if (friends.isEmpty())
-        {
-            QLabel *label_error = new QLabel("No Friends....");
+
+        QJsonDocument doc_external = QJsonDocument::fromJson(response_external.toUtf8());
+        if (doc_external.isArray()) {
+            QJsonArray extArray = doc_external.array();
+            for (int i = 0; i < extArray.size(); ++i) {
+                QJsonObject extObj = extArray[i].toObject();
+                
+                QString contactId = extObj["username"].toString();
+                QString contactName = extObj["contact_name"].isNull() ? contactId : extObj["contact_name"].toString();
+                QString platform = extObj["url"].toString();
+                QPushButton *extBtn = new QPushButton(QString("[%1] %2").arg(platform.toUpper(), contactName));
+                QObject::connect(extBtn, &QPushButton::clicked, [=](){
+                    chatExternal(contactName, platform); 
+                });
+                widgets.append(extBtn);
+            }
+        }
+
+        QJsonDocument doc_friends = QJsonDocument::fromJson(response_friends.toUtf8());
+        QJsonObject obj_friends = doc_friends.object();
+        QJsonArray friends = obj_friends["friends"].toArray();
+        
+        if (friends.isEmpty() && doc_external.array().isEmpty()) {
+            QLabel *label_error = new QLabel("No Friends or External Contacts....");
             widgets.append(label_error);
-        }
-        else
-        {
+        } else {
             for(int i = 0; i < friends.size(); i++){
                 QJsonArray row = friends[i].toArray();
                 QString receiver = row[0].toString();
                 QString remittee = row[1].toString();
-                QString friendName;
-                if(receiver == username)
-                    friendName = remittee;
-                else
-                    friendName = receiver;
+                QString friendName = (receiver == username) ? remittee : receiver;
+
                 QWidget *containerWidget = new QWidget();
                 QPushButton *user = new QPushButton(friendName);
                 QHBoxLayout *buttonLayout = new QHBoxLayout();
+                
                 viewProfilePicture(buttonLayout, username);
                 buttonLayout->addWidget(user);
                 buttonLayout->addStretch();
                 containerWidget->setLayout(buttonLayout);
+
                 QObject::connect(user, &QPushButton::clicked, [=]() mutable{
                     QTimer::singleShot(0, [=](){
                         chat(friendName);
                     });
                 });
                 widgets.append(containerWidget);
-            };
-        };
+            }
+        }
+
         widgets.append(ChatGlobalButton);
         scroll_area(layout, widgets);
         renderBottomBar("chat");
@@ -4295,19 +4468,19 @@ int main(int argc, char *argv[])
             QJsonObject jsonAdd;
             jsonAdd["username"] = username;
             jsonAdd["url"] = urlEdit->text();
-            jsonAdd["contact_name"] = nameEdit->text();
+            jsonAdd["name_contact"] = nameEdit->text();
             requestHTTP(
                 url + "/add-external-contact",
                 "POST",
                 jsonAdd
             );
+            chatPage();
         });
         renderBottomBar("chat");
     };
     new_chat = [&](){
         clearLayout(layout);
         QPushButton *newGroupButton = new QPushButton(new_group_text);
-        layout->addWidget(newGroupButton);
         QPushButton *addExternalChat = new QPushButton(add_external_chat);
         layout->addWidget(addExternalChat);
         QObject::connect(addExternalChat, &QPushButton::clicked, [=](){
