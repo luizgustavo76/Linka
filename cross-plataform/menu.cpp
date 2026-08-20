@@ -1005,6 +1005,9 @@ int main(int argc, char *argv[])
     QString federations_text = QCoreApplication::translate("feed", "federations");
     QString change_name_text = QCoreApplication::translate("chat", "change name");
     QString ban_user_text = QCoreApplication::translate("chat", "ban user");
+    QString submmit_federation_text = QCoreApplication::translate("feed", "submmit federation");
+    QString cover_image_text = QCoreApplication::translate("feed", "cover image");
+    QString name_text = QCoreApplication::translate("feed", "name");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
 
@@ -3679,18 +3682,51 @@ int main(int argc, char *argv[])
     };
     auto submmitFederationPage = [&](){
         clearLayout(layout);
+        fadeTransition(central);
         QLabel *labelSubmmit = new QLabel(submmit_federation_text);
         QLineEdit *nameFederation = new QLineEdit();
-        nameFederation->setPlaceholderText(submmit_federation_text);
+        nameFederation->setPlaceholderText(name_text);
+        QLabel *urlLabel = new QLabel("url");
+        QLineEdit *urlEntry = new QLineEdit();
+        urlEntry->setPlaceholderText("url");
         QLabel *labelCoverImage = new QLabel(cover_image_text);
         QLineEdit *coverImageUrl = new QLineEdit();
+        coverImageUrl->setPlaceholderText("url" + cover_image_text);
+        QLabel *descriptionLabel = new QLabel(description_text);
+        QLineEdit *descriptionEntry = new QLineEdit();
+        descriptionEntry->setPlaceholderText(description_text);
+        QPushButton *submmitButton = new QPushButton(submmit_federation_text);
+        layout->addWidget(labelSubmmit);
+        layout->addWidget(nameFederation);
+        layout->addWidget(urlLabel);
+        layout->addWidget(urlEntry);
+        layout->addWidget(labelCoverImage);
+        layout->addWidget(coverImageUrl);
+        layout->addWidget(descriptionLabel);
+        layout->addWidget(descriptionEntry);
+        layout->addWidget(submmitButton);
+        QObject::connect(submmitButton, &QPushButton::clicked, [=](){
+            QJsonObject jsonIndex;
+            jsonIndex["name"] = nameFederation->text();
+            jsonIndex["cover-image"] = coverImageUrl->text();
+            jsonIndex["description"] = descriptionEntry->text();
+            jsonIndex["url"] = urlEntry->text();
+            requestHTTP(
+                url + "/register-federation",
+                "POST",
+                jsonIndex
+            );
+            addFederationFeed();
+        });
     };
     addFederationFeed = [&](){
         clearLayout(layout);
         QList <QWidget*> widgets;
-        QPushButton *submmitFederation - new QPushButton();
+        QPushButton *submmitFederation = new QPushButton();
         widgets.append(submmitFederation);
-
+        QObject::connect(submmitFederation, &QPushButton::clicked, [=](){
+            submmitFederationPage();
+        });
         QJsonObject *empty = new QJsonObject();
         QString response = requestHTTP(url + "/view-index", "GET", *empty);
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
