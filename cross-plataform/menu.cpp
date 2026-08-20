@@ -4291,6 +4291,17 @@ int main(int argc, char *argv[])
         layout->addWidget(urlEdit);
         layout->addWidget(nameEdit);
         layout->addWidget(submmitButton);
+        QObject::connect(submmitButton, &QPushButton::clicked, [=](){
+            QJsonObject jsonAdd;
+            jsonAdd["username"] = username;
+            jsonAdd["url"] = urlEdit->text();
+            jsonAdd["contact_name"] = nameEdit->text();
+            requestHTTP(
+                url + "/add-external-contact",
+                "POST",
+                jsonAdd
+            );
+        });
         renderBottomBar("chat");
     };
     new_chat = [&](){
