@@ -1,4 +1,7 @@
-QT += widgets network svg concurrent openglwidgets
+QT += widgets network svg concurrent androidextras
+!android {
+    QT += openglwidgets
+}
 
 # Adiciona o módulo AndroidExtras apenas quando estiver compilando para Android
 android {
@@ -51,6 +54,14 @@ android {
 
 # Arquivos de distribuição para o Qt Creator gerenciar
 DISTFILES += \
+    android/.gradle/9.2.0/checksums/checksums.lock \
+    android/.gradle/9.2.0/fileChanges/last-build.bin \
+    android/.gradle/9.2.0/fileHashes/fileHashes.bin \
+    android/.gradle/9.2.0/fileHashes/fileHashes.lock \
+    android/.gradle/9.2.0/gc.properties \
+    android/.gradle/buildOutputCleanup/buildOutputCleanup.lock \
+    android/.gradle/buildOutputCleanup/cache.properties \
+    android/.gradle/vcs-1/gc.properties \
     android/AndroidManifest.xml \
     android/build.gradle \
     android/gradle.properties \
