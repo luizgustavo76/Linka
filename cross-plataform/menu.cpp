@@ -939,7 +939,7 @@ int main(int argc, char *argv[])
 
     if (url.isEmpty())
     {
-        config["SERVER"]["url"] = "http:/linkaProject.pythonanywhere.com";
+        config["SERVER"]["url"] = "http://127.0.0.1:5000";
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }
@@ -1097,6 +1097,7 @@ int main(int argc, char *argv[])
         QLabel *banner_login = new QLabel();
         banner_login->setPixmap(banner_image->pixmap(QSize(400, 200)));
         banner_login->setAlignment(Qt::AlignCenter);
+        layout->addWidget(banner_login);
         QHBoxLayout *loginButtons = new QHBoxLayout();
         QPushButton *signinPage_button = new QPushButton(signup_text);
         QPushButton *signupPage_button = new QPushButton(signin_text);
@@ -1122,13 +1123,15 @@ int main(int argc, char *argv[])
         QObject::connect(signupPage_button, &QPushButton::clicked, [=](){
             signinPage();
         });
-        QObject::connect(send_button, &QPushButton::clicked, [=, &token_session]() mutable {
+        QObject::connect(send_button, &QPushButton::clicked, [=, &token_session, &username]() mutable {
             QString userTxt = usernameEntry->text();
             QString passTxt = passwordEntry->text();
 
             QString token_gerado = newSession(userTxt, passTxt);
             if (!token_gerado.isEmpty()){
                 loadConfig();
+                username = userTxt;
+                token_session = token_gerado;
                 config["FAST-LOGIN"]["username"] = userTxt.toStdString();
                 config["FAST-LOGIN"]["password"] = passTxt.toStdString();
                 config["FAST-LOGIN"]["token_session"] = token_gerado.toStdString();
@@ -4265,7 +4268,7 @@ int main(int argc, char *argv[])
         QObject::connect(signupPage_button, &QPushButton::clicked, [=](){
             signinPage();
         });
-        QObject::connect(send_button, &QPushButton::clicked, [=](){
+        QObject::connect(send_button, &QPushButton::clicked, [=, &token_session, &username](){
             if (passwordEntry->text() == retryPasswordEntry->text()) {
                 int status_code = signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
                 if (status_code == 200 || status_code == 201){
@@ -4277,6 +4280,7 @@ int main(int argc, char *argv[])
                         create_json
                     );
                     loadConfig();
+                    username = usernameEntry->text();
                     config["FAST-LOGIN"]["username"] = usernameEntry->text().toStdString();
                     config["FAST-LOGIN"]["password"] = passwordEntry->text().toStdString();
                     saveConfig();
@@ -4381,13 +4385,15 @@ int main(int argc, char *argv[])
         QObject::connect(signupPage_button, &QPushButton::clicked, [=](){
             signinPage();
         });
-        QObject::connect(send_button, &QPushButton::clicked, [=, &token_session]() mutable {
+        QObject::connect(send_button, &QPushButton::clicked, [=, &token_session, &username]() mutable {
             QString userTxt = usernameEntry->text();
             QString passTxt = passwordEntry->text();
 
             QString token_gerado = newSession(userTxt, passTxt);
             if (!token_gerado.isEmpty()){
                 loadConfig();
+                username = userTxt;
+                token_session = token_gerado;
                 config["FAST-LOGIN"]["username"] = userTxt.toStdString();
                 config["FAST-LOGIN"]["password"] = passTxt.toStdString();
                 config["FAST-LOGIN"]["token_session"] = token_gerado.toStdString();

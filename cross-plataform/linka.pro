@@ -1,4 +1,4 @@
-QT += widgets network svg concurrent androidextras
+QT += widgets network svg concurrent
 !android {
     QT += openglwidgets
 }

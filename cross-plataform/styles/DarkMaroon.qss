@@ -36,13 +36,13 @@ QPushButton:hover { background-color: #222222; border: 1px solid #ff4757; }
 QPushButton:pressed { background-color: #171717; border: 1px solid #d63031; }
 
 QPushButton[class="tab-button"] {
-    background-color: transparent; 
-    border: none;                  
-    color: #888888;                
+    background-color: transparent;
+    border: none;
+    color: #888888;
     font-size: 16px;
     font-weight: bold;
-    padding-bottom: 8px;           
-    border-bottom: 2px solid transparent; 
+    padding-bottom: 8px;
+    border-bottom: 2px solid transparent;
 }
 QPushButton[class="tab-button"]:hover { color: #FFFFFF; }
 QPushButton[class="tab-button"][active="true"] {
