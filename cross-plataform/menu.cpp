@@ -784,7 +784,7 @@ void loadStyle()
     QString themePath = QString::fromStdString(config["THEMES"]["theme"]).trimmed();
 
     if (themePath.isEmpty()) {
-        themePath = ":/styles/theme.qss";
+        themePath = ":/styles/DarkBlue.qss";
     }
     if (!themePath.startsWith(":/") && QDir::isRelativePath(themePath)) {
         QDir appDir(QCoreApplication::applicationDirPath());
@@ -939,7 +939,7 @@ int main(int argc, char *argv[])
 
     if (url.isEmpty())
     {
-        config["SERVER"]["url"] = "http://127.0.0.1:5000";
+        config["SERVER"]["url"] = "http://192.168.0.17:5000";
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }
@@ -1917,6 +1917,7 @@ int main(int argc, char *argv[])
         QJsonObject json_bio = doc.object();
         QString MyBio = json_bio["bio"].toString();
         QLabel *label_bio = new QLabel(MyBio);
+        label_bio->setWordWrap(true);
         layout->addWidget(label_bio);
         QPushButton *button_edit = new QPushButton(edit_text);
         layout->addWidget(button_edit);
@@ -2434,13 +2435,13 @@ int main(int argc, char *argv[])
                 });
 
                 QHBoxLayout *starLayout = new QHBoxLayout();
-                QPushButton *commentsButton = new QPushButton();
+                QPushButton *commentsButton = new QPushButton(comments_text);
                 QObject::connect(commentsButton, &QPushButton::clicked, [=](){
                     commentsPage(postId);
                 });
-                starLayout->addWidget(commentsButton);
                 starLayout->addWidget(iconButton);
                 starLayout->addWidget(starLabel);
+                starLayout->addWidget(commentsButton);
                 starLayout->addStretch();
 
                 frameLayout->addLayout(starLayout);

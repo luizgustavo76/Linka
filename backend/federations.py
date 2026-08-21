@@ -1,8 +1,21 @@
 import json
 from flask import Flask, request, jsonify, Blueprint
 from linkaFederations import LinkaFederations
+from federation_crypto import get_my_public_key_pem, verify_incoming_request
 
 federations_bp = Blueprint("federations_bp", __name__)
+
+# Endpoint público para que outros nós confirmem a sua existência e peguem sua chave
+@federations_bp.route("/.well-known/federation-key", methods=["GET"])
+def get_federation_key():
+    return jsonify({"public_key": get_my_public_key_pem()}), 200
+
+# Exemplo de Middleware interno para proteger rotas da sua federação
+def protection_layer():
+    is_valid, msg, status_code = verify_incoming_request(request)
+    if not is_valid:
+        return jsonify({"status": "forbidden", "error": msg}), status_code
+    return None
 
 @federations_bp.route("/send-request", methods=["POST"])
 def send_request():
@@ -26,7 +39,7 @@ def send_request():
         url = data.get("url", "")
 
         fed = LinkaFederations()
-        fed.actual_server = "http://127.0.0.1:5000"
+        fed.actual_server = "http://127.0.0.1:5000"  # Coloque a URL pública desta instância aqui
 
         response = None
         if method == "POST":
@@ -35,7 +48,7 @@ def send_request():
             response = fed.receiveConnection(url, route, headers)
         else:
             return jsonify({
-                "status": "error", 
+                "status": "error",
                 "error": f"Method {method} not supported"
             }), 400
 
