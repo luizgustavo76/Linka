@@ -6,60 +6,49 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
-
 import java.util.List;
 
-public class ChannelAdapter extends BaseAdapter {
-
+public class GroupAdapter extends BaseAdapter {
     private Context context;
-    private List<Channel> channelList;
+    private List<Group> groupList;
     private LayoutInflater inflater;
 
-    public ChannelAdapter(Context context, List<Channel> channelList) {
+    public GroupAdapter(Context context, List<Group> groupList) {
         this.context = context;
-        this.channelList = channelList;
+        this.groupList = groupList;
         this.inflater = LayoutInflater.from(context);
     }
 
     @Override
-    public int getCount() {
-        return channelList != null ? channelList.size() : 0;
-    }
+    public int getCount() { return groupList != null ? groupList.size() : 0; }
 
     @Override
-    public Object getItem(int position) {
-        return channelList.get(position);
-    }
+    public Object getItem(int position) { return groupList.get(position); }
 
     @Override
-    public long getItemId(int position) {
-        return position;
-    }
+    public long getItemId(int position) { return groupList.get(position).getId(); }
 
     private static class ViewHolder {
-        TextView txtName;
-        TextView txtDescription;
+        TextView txtGroupName;
+        TextView txtGroupPerm;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
-
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.item_channel, parent, false);
-            
             holder = new ViewHolder();
-            holder.txtName = (TextView) convertView.findViewById(R.id.txtChannelName);
-            holder.txtDescription = (TextView) convertView.findViewById(R.id.txtChannelDescription);
-            
+            holder.txtGroupName = (TextView) convertView.findViewById(R.id.txtChannelName);
+            holder.txtGroupPerm = (TextView) convertView.findViewById(R.id.txtChannelDescription);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        Channel channel = channelList.get(position);
-        holder.txtName.setText("# " + channel.getName());
-        holder.txtDescription.setText(channel.getDescription());
+        Group group = groupList.get(position);
+        holder.txtGroupName.setText(group.getName());
+        holder.txtGroupPerm.setText("Permissão: " + group.getPermissions());
 
         return convertView;
     }

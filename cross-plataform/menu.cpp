@@ -3539,15 +3539,17 @@ int main(int argc, char *argv[])
             for (const QJsonValue &val : channelList) {
                 if (val.isObject()) {
                     QJsonObject channelObj = val.toObject();
+                    
                     int channelGroupId = channelObj["group_id"].toInt();
                     QString channelName = channelObj["channel_name"].toString();
-                    QString type = channelObj["type"].toString();
+
                     QPushButton *channelButton = new QPushButton(channelName);
+
                     QObject::connect(channelButton, &QPushButton::clicked, [=](){
-                        if (type == "chat"){
-                            groupChat(channelGroupId, channelName);
-                        }
+                        qDebug() << "Abrindo canal:" << channelName << "ID:" << channelGroupId;
+                        groupChat(channelGroupId, channelName);
                     });
+
                     widgets.append(channelButton);
                 }
             }
@@ -4491,6 +4493,7 @@ int main(int argc, char *argv[])
     new_chat = [&](){
         clearLayout(layout);
         QPushButton *newGroupButton = new QPushButton(new_group_text);
+        layout->addWidget(newGroupButton);
         QPushButton *addExternalChat = new QPushButton(add_external_chat);
         layout->addWidget(addExternalChat);
         QObject::connect(addExternalChat, &QPushButton::clicked, [=](){

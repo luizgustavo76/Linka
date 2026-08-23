@@ -260,21 +260,40 @@ def view_permissions():
 def view_channels():
     data = request.get_json(silent=True) or {}
     username = data.get("username")
-    if username != g.username:
-        return jsonify({"status": "forbidden"}), 403
     group_id = data.get("group_id")
-    if not group_id:
+
+    # Debug: verifique no console do Flask o que está chegando
+    print(f"[DEBUG] payload username: {username} | g.username: {getattr(g, 'username', None)}")
+    print(f"[DEBUG] payload group_id: {group_id} (tipo: {type(group_id)})")
+
+    # 1. Validação do usuário
+    if not username or username.strip() != str(getattr(g, "username", "")).strip():
+        return jsonify({"status": "forbidden", "reason": "username mismatch"}), 403
+
+    # 2. Validação do group_id
+    if group_id is None:
         return jsonify({"status": "group_id is missing"}), 400
+
+    try:
+        group_id = int(group_id)
+    except ValueError:
+        return jsonify({"status": "invalid group_id"}), 400
+
     conn = get_db()
     cur = conn.cursor()    
+
+    # 3. Verificação de membresia no grupo
     cur.execute("SELECT 1 FROM users_in_group WHERE username = ? AND group_id = ?", (username, group_id))
     user_in_group = cur.fetchone()
+
     if not user_in_group:
         conn.close()
-        return jsonify({"status": "you aren't in group"}), 403
+        return jsonify({"status": "you aren't in group", "reason": "user not in users_in_group"}), 403
+
     cur.execute("SELECT group_id, name, type FROM channels WHERE group_id = ?", (group_id,))
     rows = cur.fetchall()
     conn.close()
+
     channels = []
     for row in rows:
         channels.append({
@@ -282,6 +301,7 @@ def view_channels():
             "channel_name": row[1],
             "type": row[2]
         })
+
     return jsonify(channels), 200
 @chat_group_bp.route("/new-post-group", methods=["POST"])
 def create_post_group():

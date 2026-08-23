@@ -92,5 +92,9 @@
             android:name=".EditAccount"
             android:label="Edit account"
             android:exported="false"/>
+        <activity
+            android:name=".ChannelsGroupActivity"
+            android:label="Channels"
+            android:exported="false"/>
     </application>
 </manifest>
