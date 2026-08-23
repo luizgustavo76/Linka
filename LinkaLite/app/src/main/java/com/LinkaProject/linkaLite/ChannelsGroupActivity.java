@@ -153,8 +153,8 @@ public class ChannelsGroupActivity extends Activity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         Channel selectedChannel = channelList.get(position);
-                        Intent intent = new Intent(ChannelsGroupActivity.this, chatActivity.class);
-                        intent.putExtra("channelName", selectedChannel.getName());
+                        Intent intent = new Intent(ChannelsGroupActivity.this, GroupChatActivity.class);
+                        intent.putExtra("channel", selectedChannel.getName());
                         intent.putExtra("groupId", groupId);
                         startActivity(intent);
                     }

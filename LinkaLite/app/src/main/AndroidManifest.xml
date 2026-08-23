@@ -96,5 +96,7 @@
             android:name=".ChannelsGroupActivity"
             android:label="Channels"
             android:exported="false"/>
+        <activity android:name=".GroupChatActivity" 
+            android:label="Group Chat"/>
     </application>
 </manifest>

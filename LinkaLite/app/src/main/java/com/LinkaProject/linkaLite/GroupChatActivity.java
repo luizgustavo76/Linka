@@ -116,7 +116,7 @@ public class GroupChatActivity extends Activity {
                 json_chat.put("channel", channel);
                 json_chat.put("username", username);
                 json_chat.put("group_id", group_id);
-                return request.requestHTTP(fullUrl, "post", json_chat, 0, GroupChatActivity.this);
+                return request.requestHTTP(fullUrl, "post", json_chat, GroupChatActivity.this);
             } catch (Exception e) {
                 Log.e(TAG, "Exception in FetchMessagesTask", e);    
                 return null;
@@ -166,7 +166,7 @@ public class GroupChatActivity extends Activity {
                 json_chat.put("channel", channel);
                 json_chat.put("username", username);
                 json_chat.put("group_id", group_id);
-                request.requestHTTP(url + "/send-group-message", "post", json_chat, 0, GroupChatActivity.this);
+                request.requestHTTP(url + "/send-group-message", "post", json_chat, GroupChatActivity.this);
                 return true;
             } catch (Exception e) {
                 Log.e(TAG, "Error sending message", e);
