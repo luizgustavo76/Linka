@@ -19,7 +19,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ChatGlobalActivity extends Activity {
+public class GroupChatActivity extends Activity {
     private static final String TAG = "LINKA_DEBUG";
 
     private ImageButton btnHeaderImage;
@@ -40,7 +40,7 @@ public class ChatGlobalActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.global_chat);
 
-        Log.d(TAG, "=== ChatGlobalActivity Started ===");
+        Log.d(TAG, "=== GroupChatActivity Started ===");
 
         try {
             config cfg = new config();
@@ -77,7 +77,7 @@ public class ChatGlobalActivity extends Activity {
         btnHeaderImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(ChatGlobalActivity.this, chatActivity.class);
+                Intent intent = new Intent(GroupChatActivity.this, chatActivity.class);
                 startActivity(intent);
             }
         });
@@ -110,13 +110,13 @@ public class ChatGlobalActivity extends Activity {
                 if (url == null || url.trim().isEmpty()) return null;
                 Intent intent = getIntent();
                 String channel = intent.getStringExtra("channel");
-                int group_id = intent.getIntExtra("group_id");
+                int group_id = intent.getIntExtra("group_id", -1);
                 JSONObject json_chat = new JSONObject();
                 json_chat.put("id", 0);
                 json_chat.put("channel", channel);
                 json_chat.put("username", username);
                 json_chat.put("group_id", group_id);
-                return request.requestHTTP(fullUrl, "post", json_chat, 0, ChatGlobalActivity.this);
+                return request.requestHTTP(fullUrl, "post", json_chat, 0, GroupChatActivity.this);
             } catch (Exception e) {
                 Log.e(TAG, "Exception in FetchMessagesTask", e);    
                 return null;
@@ -139,7 +139,7 @@ public class ChatGlobalActivity extends Activity {
                     boolean isMe = sender.equalsIgnoreCase(username);
                     String displayText = sender.isEmpty() ? text : sender + ": " + text;
 
-                    ChatBubbleView bubble = new ChatBubbleView(ChatGlobalActivity.this, displayText, isMe);
+                    ChatBubbleView bubble = new ChatBubbleView(GroupChatActivity.this, displayText, isMe);
                     chatContainer.addView(bubble);
                 }
             } catch (JSONException e) {
@@ -161,12 +161,12 @@ public class ChatGlobalActivity extends Activity {
                 JSONObject json_chat = new JSONObject();
                 Intent intent = getIntent();
                 String channel = intent.getStringExtra("channel");
-                int group_id = intent.getIntExtra("group_id");
+                int group_id = intent.getIntExtra("group_id", -1);
                 json_chat.put("message", messageToSend);
                 json_chat.put("channel", channel);
                 json_chat.put("username", username);
                 json_chat.put("group_id", group_id);
-                request.requestHTTP(url + "/send-group-message", "post", json_chat, 0, ChatGlobalActivity.this);
+                request.requestHTTP(url + "/send-group-message", "post", json_chat, 0, GroupChatActivity.this);
                 return true;
             } catch (Exception e) {
                 Log.e(TAG, "Error sending message", e);
@@ -179,7 +179,7 @@ public class ChatGlobalActivity extends Activity {
             if (success) {
                 new FetchMessagesTask().execute();
             } else {
-                Toast.makeText(ChatGlobalActivity.this, "Erro ao enviar mensagem", Toast.LENGTH_SHORT).show();
+                Toast.makeText(GroupChatActivity.this, "Erro ao enviar mensagem", Toast.LENGTH_SHORT).show();
             }
         }
     }
