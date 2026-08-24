@@ -2307,8 +2307,25 @@ int main(int argc, char *argv[])
         renderBottomBar("home");
     };
 
-    showfeed = [&]()
+    // Defina o timer fora do lambda (pode ser membro da classe, estático ou capturado no escopo)
+static QTimer *feedTimer = nullptr;
+
+showfeed = [&]()
     {
+        // Configura e inicia o timer de 2 minutos apenas uma vez
+        if (!feedTimer) {
+            feedTimer = new QTimer(central); // central garante a destruição com a janela
+            feedTimer->setInterval(120000);   // 120.000 ms = 2 minutos
+            
+            QObject::connect(feedTimer, &QTimer::timeout, [&]() {
+                // Limpa o cache para forçar a requisição HTTP e renderizar os novos posts
+                cachedFeedArray = QJsonArray(); 
+                showfeed();
+            });
+            
+            feedTimer->start();
+        }
+
         clearLayout(layout);
         fadeTransition(central);
         QHBoxLayout *tabPages = new QHBoxLayout();
@@ -2492,18 +2509,6 @@ int main(int argc, char *argv[])
                 renderPostsList(cachedFeedArray);
             }
         });
-    };
-    auto searchRequest = [&](QString content){
-        QJsonObject search;
-        search["content"] = content;
-
-        QString response = requestHTTP(
-            url + "/search",
-            "POST",
-            search
-        );
-
-        return response;
     };
     sendMessage = [&](QString message, QString user){
         QJsonObject chatJson;
@@ -3676,138 +3681,7 @@ int main(int argc, char *argv[])
         scroll_area(layout, widgets);
         renderBottomBar("chat");
     };
-    searchPage = [&](){
-        clearLayout(layout);
-
-        QList<QWidget*> content;
-
-        QLineEdit *searchEntry = new QLineEdit();
-        searchEntry->setPlaceholderText(search_text);
-        content.append(searchEntry);
-
-        QPushButton *buttonSearch = new QPushButton(search_text + "!");
-        content.append(buttonSearch);
-
-        QLabel *resultLabel = new QLabel("");
-        resultLabel->setWordWrap(true);
-        content.append(resultLabel);
-
-        QWidget *resultsContainer = new QWidget();
-        QVBoxLayout *resultsLayout = new QVBoxLayout(resultsContainer);
-        resultsLayout->setContentsMargins(0,0,0,0);
-        resultsLayout->setSpacing(10);
-
-        content.append(resultsContainer);
-
-        QPushButton *button_back = new QPushButton(back_text);
-
-        QObject::connect(button_back, &QPushButton::clicked, [=](){
-            QTimer::singleShot(0, [=](){
-                initialPage();
-            });
-        });
-
-        QObject::connect(buttonSearch, &QPushButton::clicked, [=]() mutable {
-            QTimer::singleShot(0, [=]() mutable {
-
-                // limpar resultados anteriores
-                QLayoutItem *child;
-                while ((child = resultsLayout->takeAt(0)) != nullptr) {
-                    if (child->widget()) {
-                        child->widget()->deleteLater();
-                    }
-                    delete child;
-                }
-
-                QString source_response = searchRequest(searchEntry->text());
-
-                if (source_response.isEmpty())
-                {
-                    resultLabel->setText("");
-                    return;
-                }
-
-                QJsonDocument doc = QJsonDocument::fromJson(source_response.toUtf8());
-
-                if (!doc.isObject())
-                {
-                    resultLabel->setText(source_response);
-                    return;
-                }
-
-                QJsonObject obj = doc.object();
-
-                // ===== usernames =====
-                if (obj.contains("usernames") && obj["usernames"].isArray())
-                {
-                    QJsonArray arr = obj["usernames"].toArray();
-
-                    for (auto v : arr)
-                    {
-                        QString user = v.toString();
-
-                        QFrame *frame = new QFrame();
-                        frame->setStyleSheet(R"(
-                            QFrame {
-                                background-color: #1A1A1A;
-                                border: 1px solid #2F2F2F;
-                                border-radius: 14px;
-                                padding: 10px;
-                            }
-                        )");
-
-                        QVBoxLayout *frameLayout = new QVBoxLayout(frame);
-
-                        QLabel *lbl = new QLabel(user);
-                        lbl->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
-
-                        frameLayout->addWidget(lbl);
-
-                        resultsLayout->addWidget(frame);
-                    }
-                }
-
-                // ===== posts =====
-                if (obj.contains("posts") && obj["posts"].isArray())
-                {
-                    QJsonArray arr = obj["posts"].toArray();
-
-                    for (auto v : arr)
-                    {
-                        QString post = v.toString();
-
-                        QFrame *frame = new QFrame();
-                        frame->setStyleSheet(R"(
-                            QFrame {
-                                background-color: #1A1A1A;
-                                border: 1px solid #2F2F2F;
-                                border-radius: 14px;
-                                padding: 10px;
-                            }
-                        )");
-
-                        QVBoxLayout *frameLayout = new QVBoxLayout(frame);
-
-                        QLabel *lbl = new QLabel(post);
-                        lbl->setWordWrap(true);
-                        lbl->setStyleSheet("color: white; font-size: 14px;");
-
-                        frameLayout->addWidget(lbl);
-
-                        resultsLayout->addWidget(frame);
-                    }
-                }
-
-                resultsLayout->addStretch();
-
-            });
-        });
-
-        content.append(button_back);
-
-        scroll_area(layout, content);
-    };
-
+    
     renderBottomBar = [&](QString actual_window){
         splash.finish(&window);
 

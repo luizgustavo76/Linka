@@ -5,13 +5,16 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -25,7 +28,7 @@ public class LoginActivity extends Activity {
     private Button btnServer;
     private Button btnLogin;
     private TextView txtGoToSignup;
-    private String serverUrl = "http://bfdad03a0c9a3294-179-222-238-217.serveousercontent.com";
+    private String serverUrl = "http://linkaTesters.pythonanywhere.com";
     
     private LoginTask currentLoginTask;
 
@@ -34,6 +37,7 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         System.setProperty("http.keepAlive", "false");
+
         config cfg = new config();
         if (!config.configFileExists(this, "config.cfg")) {
             cfg.createDefaultConfig(this, "config.cfg");
@@ -53,18 +57,19 @@ public class LoginActivity extends Activity {
                 String password = fastLogin.optString("password", "");
 
                 if (!username.isEmpty() && !password.isEmpty()) {
-                    currentLoginTask = new LoginTask();
-                    currentLoginTask.execute(username, password);
+                    executeLogin(username, password);
                 }
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e("LinkaLogin", "Error loading JSON config", e);
         }
+
         btnServer = (Button) findViewById(R.id.btnServer);
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
         btnLogin = (Button) findViewById(R.id.btnLogin);
         txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
+
         btnServer.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -72,6 +77,7 @@ public class LoginActivity extends Activity {
                 startActivity(intent);
             }
         });
+
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -81,8 +87,7 @@ public class LoginActivity extends Activity {
                 if (username.isEmpty() || password.isEmpty()) {
                     Toast.makeText(LoginActivity.this, "fill all the fields", Toast.LENGTH_SHORT).show();
                 } else {
-                    currentLoginTask = new LoginTask();
-                    currentLoginTask.execute(username, password);
+                    executeLogin(username, password);
                 }
             }
         });
@@ -94,6 +99,14 @@ public class LoginActivity extends Activity {
                 startActivity(intent);
             }
         });
+    }
+
+    private void executeLogin(String username, String password) {
+        if (currentLoginTask != null && currentLoginTask.getStatus() == AsyncTask.Status.RUNNING) {
+            currentLoginTask.cancel(true);
+        }
+        currentLoginTask = new LoginTask();
+        currentLoginTask.execute(username, password);
     }
 
     @Override
@@ -121,10 +134,25 @@ public class LoginActivity extends Activity {
             HttpURLConnection connection = null;
 
             try {
-                URL url = new URL(serverUrl + "/login"); 
+                // Formata a URL para prevenir erros de endpoint
+                String baseUrl = serverUrl.trim();
+                if (baseUrl.endsWith("/")) {
+                    baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+                }
+
+                if (baseUrl.startsWith("http://")) {
+                    baseUrl = baseUrl.replace("http://", "https://");
+                } else if (!baseUrl.startsWith("https://")) {
+                    baseUrl = "https://" + baseUrl;
+                }
+
+                URL url = new URL(baseUrl + "/login"); 
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json");
+                connection.setRequestProperty("Accept", "application/json");
+                connection.setConnectTimeout(10000); // 10 segundos timeout
+                connection.setReadTimeout(10000);
                 connection.setDoOutput(true);
 
                 JSONObject jsonParam = new JSONObject();
@@ -146,10 +174,12 @@ public class LoginActivity extends Activity {
                     }
                     in.close();
                     return response.toString();
+                } else {
+                    Log.e("LinkaLogin", "HTTP Error Code: " + responseCode);
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e("LinkaLogin", "Connection Exception", e);
             } finally {
                 if (connection != null) connection.disconnect();
             }
@@ -187,13 +217,14 @@ public class LoginActivity extends Activity {
                 Toast.makeText(LoginActivity.this, "Connection with server failed", Toast.LENGTH_SHORT).show();
             }
         }
+
         public void dismissDialogSafely() {
             if (progressDialog != null && progressDialog.isShowing()) {
                 if (!LoginActivity.this.isFinishing()) {
                     try {
                         progressDialog.dismiss();
                     } catch (IllegalArgumentException e) {
-                        e.printStackTrace();
+                        Log.e("LinkaLogin", "Error dismissing progress dialog", e);
                     }
                 }
             }
