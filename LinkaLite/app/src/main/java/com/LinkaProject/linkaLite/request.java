@@ -87,6 +87,8 @@ public class request {
             connection = (HttpURLConnection) url.openConnection();
             
             method = method.toUpperCase();
+            connection.setConnectTimeout(8000); // Max 8s para conectar
+            connection.setReadTimeout(8000);
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
             

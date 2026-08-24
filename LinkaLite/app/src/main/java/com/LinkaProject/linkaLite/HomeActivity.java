@@ -67,7 +67,7 @@ public class HomeActivity extends Activity {
                 }
             }
         };
-        schedulerNotifications.scheduleAtFixedRate(notificationsTask, 0, 5, TimeUnit.SECONDS);
+        schedulerNotifications.scheduleAtFixedRate(notificationsTask, 0, 15, TimeUnit.SECONDS);
         scheduler.scheduleAtFixedRate(tokenTask, 0, 2, TimeUnit.MINUTES);
         config cfg = new config();
         try {   
@@ -306,5 +306,18 @@ public class HomeActivity extends Activity {
             }
         }
         return ""; 
+    }
+    private ScheduledExecutorService scheduler;
+    private ScheduledExecutorService schedulerNotifications;
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (scheduler != null && !scheduler.isShutdown()) {
+            scheduler.shutdownNow();
+        }
+        if (schedulerNotifications != null && !schedulerNotifications.isShutdown()) {
+            schedulerNotifications.shutdownNow();
+        }
     }
 }
