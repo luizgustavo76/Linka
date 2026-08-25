@@ -28,21 +28,36 @@ public class LoginActivity extends Activity {
     private Button btnServer;
     private Button btnLogin;
     private TextView txtGoToSignup;
-    private String serverUrl = "http://linkaTesters.pythonanywhere.com";
+    private String serverUrl = "http://linkaProject.pythonanywhere.com";
     
     private LoginTask currentLoginTask;
-
+    private void executeLogin(String username, String password) {
+        if (currentLoginTask != null && currentLoginTask.getStatus() == AsyncTask.Status.RUNNING) {
+            currentLoginTask.cancel(true);
+        }
+        currentLoginTask = new LoginTask();
+        currentLoginTask.execute(username, password);
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         System.setProperty("http.keepAlive", "false");
 
+        btnServer = (Button) findViewById(R.id.btnServer);
+        edtUsername = (EditText) findViewById(R.id.edtUsername);
+        edtPassword = (EditText) findViewById(R.id.edtPassword);
+        btnLogin = (Button) findViewById(R.id.btnLogin);
+        txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
+
         config cfg = new config();
         if (!config.configFileExists(this, "config.cfg")) {
             cfg.createDefaultConfig(this, "config.cfg");
         }
         
+        String fastUsername = "";
+        String fastPassword = "";
+
         try {
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(LoginActivity.this, "config.cfg"));
             
@@ -53,22 +68,12 @@ public class LoginActivity extends Activity {
 
             JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
             if (fastLogin != null) {
-                String username = fastLogin.optString("username", "");
-                String password = fastLogin.optString("password", "");
-
-                if (!username.isEmpty() && !password.isEmpty()) {
-                    executeLogin(username, password);
-                }
+                fastUsername = fastLogin.optString("username", "");
+                fastPassword = fastLogin.optString("password", "");
             }
         } catch (JSONException e) {
             Log.e("LinkaLogin", "Error loading JSON config", e);
         }
-
-        btnServer = (Button) findViewById(R.id.btnServer);
-        edtUsername = (EditText) findViewById(R.id.edtUsername);
-        edtPassword = (EditText) findViewById(R.id.edtPassword);
-        btnLogin = (Button) findViewById(R.id.btnLogin);
-        txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
 
         btnServer.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -99,16 +104,11 @@ public class LoginActivity extends Activity {
                 startActivity(intent);
             }
         });
-    }
 
-    private void executeLogin(String username, String password) {
-        if (currentLoginTask != null && currentLoginTask.getStatus() == AsyncTask.Status.RUNNING) {
-            currentLoginTask.cancel(true);
+        if (!fastUsername.isEmpty() && !fastPassword.isEmpty()) {
+            executeLogin(fastUsername, fastPassword);
         }
-        currentLoginTask = new LoginTask();
-        currentLoginTask.execute(username, password);
     }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -139,15 +139,6 @@ public class LoginActivity extends Activity {
                     baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                 }
 
-                // Força HTTPS se estiver apontando para o PythonAnywhere
-                if (baseUrl.contains("pythonanywhere.com")) {
-                    baseUrl = baseUrl.replace("http://", "https://");
-                    if (!baseUrl.startsWith("https://")) {
-                        baseUrl = "https://" + baseUrl;
-                    }
-                } else if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
-                    baseUrl = "http://" + baseUrl;
-                }
 
                 URL url = new URL(baseUrl + "/login"); 
                 connection = (HttpURLConnection) url.openConnection();
