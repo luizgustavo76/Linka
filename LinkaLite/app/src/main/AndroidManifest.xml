@@ -99,5 +99,7 @@
             android:exported="false"/>
         <activity android:name=".GroupChatActivity" 
             android:label="Group Chat"/>
+        <activity android:name=".ExternalChat" 
+            android:label="External chat"/>
     </application>
 </manifest>

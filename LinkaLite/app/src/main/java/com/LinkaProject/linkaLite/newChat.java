@@ -40,6 +40,13 @@ public class newChat extends Activity{
                 startActivity(intent);
             }
         });
+        btnExternalServer.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(newChat.this, ExternalChat.class);
+                startActivity(intent);
+            }
+        });
         btnHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){
