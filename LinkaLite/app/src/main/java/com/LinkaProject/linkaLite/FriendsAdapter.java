@@ -80,14 +80,14 @@ public class FriendsAdapter extends BaseAdapter {
 
         if (item != null) {
             if (item.getType() == TYPE_GROUP) {
-                holder.txtName.setText("[Grupo] " + (item.getGroupName() != null ? item.getGroupName() : "Sem Nome"));
-                holder.txtSubtitle.setText("Permissão: " + (item.getPermissions() != null ? item.getPermissions() : "membro"));
+                holder.txtName.setText("[Group] " + (item.getGroupName() != null ? item.getGroupName() : "Sem Nome"));
+                holder.txtSubtitle.setText("Permission: " + (item.getPermissions() != null ? item.getPermissions() : "membro"));
             } else if (item.getType() == TYPE_HEADER) {
                 holder.txtName.setText(item.getGroupName());
                 holder.txtSubtitle.setText("");
             } else {
                 holder.txtName.setText(item.getUsername() != null ? item.getUsername() : "Usuário");
-                holder.txtSubtitle.setText("Conversa Privada");
+                holder.txtSubtitle.setText("DM");
             }
         }
 
