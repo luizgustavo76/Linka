@@ -134,33 +134,44 @@ public class LoginActivity extends Activity {
             HttpURLConnection connection = null;
 
             try {
-                // Formata a URL para prevenir erros de endpoint
                 String baseUrl = serverUrl.trim();
                 if (baseUrl.endsWith("/")) {
                     baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                 }
 
-                if (baseUrl.startsWith("http://")) {
+                // Força HTTPS se estiver apontando para o PythonAnywhere
+                if (baseUrl.contains("pythonanywhere.com")) {
                     baseUrl = baseUrl.replace("http://", "https://");
-                } else if (!baseUrl.startsWith("https://")) {
-                    baseUrl = "https://" + baseUrl;
+                    if (!baseUrl.startsWith("https://")) {
+                        baseUrl = "https://" + baseUrl;
+                    }
+                } else if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+                    baseUrl = "http://" + baseUrl;
                 }
 
                 URL url = new URL(baseUrl + "/login"); 
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type", "application/json");
+                
+                // Cabeçalhos essenciais para o PythonAnywhere não fechar a conexão
+                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+                connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
                 connection.setRequestProperty("Accept", "application/json");
-                connection.setConnectTimeout(10000); // 10 segundos timeout
-                connection.setReadTimeout(10000);
+                connection.setRequestProperty("Connection", "close");
+                
+                connection.setConnectTimeout(15000);
+                connection.setReadTimeout(15000);
                 connection.setDoOutput(true);
 
                 JSONObject jsonParam = new JSONObject();
                 jsonParam.put("username", attemptedUsername);
                 jsonParam.put("password", attemptedPassword);
 
+                byte[] postData = jsonParam.toString().getBytes("UTF-8");
+                connection.setRequestProperty("Content-Length", String.valueOf(postData.length));
+
                 OutputStream os = connection.getOutputStream();
-                os.write(jsonParam.toString().getBytes("UTF-8"));
+                os.write(postData);
                 os.flush();
                 os.close();
 
@@ -179,13 +190,13 @@ public class LoginActivity extends Activity {
                 }
 
             } catch (Exception e) {
-                Log.e("LinkaLogin", "Connection Exception", e);
+                Log.e("LinkaLogin", "ERRO REAL DA CONEXAO: ", e);
+                return null;
             } finally {
                 if (connection != null) connection.disconnect();
             }
             return null;
         }
-
         @Override
         protected void onPostExecute(String result) {
             dismissDialogSafely();

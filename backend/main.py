@@ -293,4 +293,4 @@ if root_flags["federations"]:
 if root_flags["federation_index"]:
     app.register_blueprint(federation_index_bp)
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, ssl_context='adhoc')
+    app.run(host='0.0.0.0', port=5000)
