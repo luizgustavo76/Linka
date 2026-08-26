@@ -1,5 +1,4 @@
 package com.LinkaProject.linkaLite;
-
 import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -16,11 +15,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.Button;
 import android.content.Intent;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,9 +28,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 public class FederationsFeed extends Activity {
-
     private ImageButton btnHome;
     private ImageButton btnProfile;
     private ImageButton btnOptions;
@@ -44,12 +39,10 @@ public class FederationsFeed extends Activity {
     private ArrayList<JSONObject> postsList;
     private String currentUrl = "";
     private ScheduledExecutorService scheduler;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra("url")) {
             currentUrl = intent.getStringExtra("url");
@@ -62,30 +55,25 @@ public class FederationsFeed extends Activity {
                 }
             }
         }
-
         try {   
             config cfg = new config();
             String rawJson = cfg.loadCfgAsJson(this, "config.cfg");
             JSONObject jsonCfg = new JSONObject(rawJson);
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             JSONObject server = jsonCfg.getJSONObject("SERVER");
-            
             if (currentUrl.isEmpty()) {
                 currentUrl = server.optString("url", "");
             }
-            
             String token = fastLogin.optString("token_session", "");
         } catch (JSONException e) {
             Log.e("LINKA_DEBUG", "Erro ao carregar config.cfg: " + e.getMessage());
             e.printStackTrace();
         }
-
         newPost = (Button) findViewById(R.id.newPost);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
-
         btnChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -93,7 +81,6 @@ public class FederationsFeed extends Activity {
                 startActivity(chatIntent);
             }
         });
-
         btnOptions.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -101,7 +88,6 @@ public class FederationsFeed extends Activity {
                 startActivity(optionsIntent);
             }
         });
-
         btnProfile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -109,7 +95,6 @@ public class FederationsFeed extends Activity {
                 startActivity(profileIntent);
             }
         });
-
         newPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -117,13 +102,11 @@ public class FederationsFeed extends Activity {
                 startActivity(newPostIntent);
             }
         });
-
         listViewPosts = (ListView) findViewById(R.id.listViewPosts);
         postsList = new ArrayList<JSONObject>();
         postAdapter = new PostAdapter(this, postsList);
         listViewPosts.setAdapter(postAdapter);
     }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -141,7 +124,6 @@ public class FederationsFeed extends Activity {
         Log.d("LINKA_FEED", "Executando FetchFeedTask para: " + currentUrl);
         new FetchFeedTask().execute(currentUrl + "?bypass-tunnel-reminder=true");
     }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -149,40 +131,32 @@ public class FederationsFeed extends Activity {
             scheduler.shutdownNow();
         }
     }
-
     private class FetchFeedTask extends AsyncTask<String, Void, String> {
         private String requestedUrl;
-
         @Override
         protected String doInBackground(String... urls) {
             requestedUrl = urls[0];
             Log.d("LINKA_FEED", "Requisitando feed na URL: " + requestedUrl);
             return requestHTTP(requestedUrl, "GET", new JSONObject());
         }
-
         @Override
         protected void onPostExecute(String result) {
             Log.d("LINKA_FEED", "Resultado recebido (tam: " + (result != null ? result.length() : 0) + ")");
             Log.d("LINKA_FEED", "Conteudo RAW: " + result);
-
             if (result == null || result.trim().length() == 0) {
                 Log.e("LINKA_FEED", "Resposta nula ou vazia do servidor/túnel.");
                 Toast.makeText(FederationsFeed.this, "Erro: Servidor nao respondeu", Toast.LENGTH_SHORT).show();
                 return;
             }
-
             String trimmed = result.trim();
-
             if (trimmed.startsWith("<")) {
                 Log.e("LINKA_FEED", "O servidor retornou HTML em vez de JSON! Verifique o erro do Flask ou aviso do tunel.");
                 Toast.makeText(FederationsFeed.this, "Erro: Servidor retornou HTML em vez de JSON", Toast.LENGTH_LONG).show();
                 return;
             }
-
             try {
                 postsList.clear();
                 JSONArray jsonArray = null;
-
                 if (trimmed.startsWith("[")) {
                     jsonArray = new JSONArray(trimmed);
                 } else if (trimmed.startsWith("{")) {
@@ -199,7 +173,6 @@ public class FederationsFeed extends Activity {
                 } else {
                     Log.e("LINKA_FEED", "Formato invalido de resposta: " + trimmed);
                 }
-
                 if (jsonArray != null) {
                     for (int i = 0; i < jsonArray.length(); i++) {
                         postsList.add(jsonArray.getJSONObject(i));
@@ -210,7 +183,6 @@ public class FederationsFeed extends Activity {
                     Log.e("LINKA_FEED", "Nao foi possivel extrair o JSONArray dos posts.");
                     Toast.makeText(FederationsFeed.this, "Erro: Estrutura JSON incompativel", Toast.LENGTH_SHORT).show();
                 }
-
             } catch (JSONException e) {
                 Log.e("LINKA_FEED", "JSONException ao processar posts: " + e.getMessage());
                 e.printStackTrace();
@@ -222,31 +194,25 @@ public class FederationsFeed extends Activity {
             }
         }
     }
-
     private class PostAdapter extends BaseAdapter {
         private Context context;
         private ArrayList<JSONObject> list;
-
         public PostAdapter(Context context, ArrayList<JSONObject> list) {
             this.context = context;
             this.list = list;
         }
-
         @Override
         public int getCount() {
             return list.size();
         }
-
         @Override
         public Object getItem(int position) {
             return list.get(position);
         }
-
         @Override
         public long getItemId(int position) {
             return position;
         }
-
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
@@ -262,7 +228,6 @@ public class FederationsFeed extends Activity {
             Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
             imgPost.setImageBitmap(null);
             imgPost.setVisibility(View.GONE);
-
             try {
                 JSONObject post = list.get(position);
                 String username = post.optString("username", post.optString("user", "entity404"));
@@ -270,7 +235,6 @@ public class FederationsFeed extends Activity {
                 String datetime = post.optString("datetime", post.optString("date", ""));
                 final String id = post.optString("id", "");
                 String stars = post.optString("stars", "0");
-
                 btnComments.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -279,14 +243,11 @@ public class FederationsFeed extends Activity {
                         startActivity(commentIntent);
                     }
                 });
-
                 tvUsername.setText("@" + username);
                 tvDate.setText(datetime);
                 tvStarCount.setText(stars);
-
                 ImageLoader imageLoader = new ImageLoader();
                 imageLoader.viewProfilePicture(context, username, avatarPost);
-
                 if (textPost.contains("[IMAGE]")) {
                     String[] lines = textPost.split("\n");
                     for (String line : lines) {
@@ -307,26 +268,21 @@ public class FederationsFeed extends Activity {
                 Log.e("LINKA_ADAPTER", "Erro ao renderizar item da posicao " + position + ": " + e.getMessage());
                 e.printStackTrace();
             }
-
             return convertView;
         }
     }
-
     public String requestHTTP(String urlParam, String method, JSONObject json_body) {
         HttpURLConnection connection = null;
         Log.d("LINKA_HTTP", "Iniciando requisicao HTTP [" + method + "] -> " + urlParam);
         try {
             URL url = new URL(urlParam);
             connection = (HttpURLConnection) url.openConnection();
-            
             HttpURLConnection.setFollowRedirects(true);
             connection.setInstanceFollowRedirects(true);
-            
             method = method.toUpperCase();
             connection.setRequestMethod(method);
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(10000);
-            
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
             connection.setRequestProperty("bypass-tunnel-reminder", "true");
@@ -340,10 +296,8 @@ public class FederationsFeed extends Activity {
                 os.flush();
                 os.close();
             }
-
             int responseCode = connection.getResponseCode();
             Log.d("LINKA_HTTP", "Response Code: " + responseCode + " para " + urlParam);
-
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
                 StringBuilder response = new StringBuilder();

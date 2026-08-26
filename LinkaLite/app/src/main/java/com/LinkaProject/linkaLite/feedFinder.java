@@ -1,5 +1,4 @@
 package com.LinkaProject.linkaLite;
-
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,7 +12,6 @@ import android.content.Intent;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.List;
 public class feedFinder extends Activity{
@@ -53,10 +51,8 @@ public class feedFinder extends Activity{
                     obj.optString("url")
                 ));
             }
-
             FederationsAdapter adapter = new FederationsAdapter(this, itemList);
             listView.setAdapter(adapter);
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
