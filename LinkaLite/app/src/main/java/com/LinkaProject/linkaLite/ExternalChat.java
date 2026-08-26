@@ -70,7 +70,7 @@ public class ExternalChat extends Activity{
                 }catch(Exception e){
                     e.printStackTrace();
                 }
-                Intent intent = new Intent(ExternalChat.this);
+                Intent intent = new Intent(ExternalChat.this, DmExternalChat);
                 intent.putExtra("destiny", edtUsername.getText());
                 intent.putExtra("urlDestiny", edtUrl.getText());
                 startActivity(intent);

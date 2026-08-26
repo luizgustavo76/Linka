@@ -28,6 +28,7 @@ public class DmExternalChat extends Activity {
     private String other_user = "";
     private final Handler autoUpdateHandler = new Handler(Looper.getMainLooper());
     private Runnable autoUpdateRunnable;
+    private String token_session = "";
     private static final int UPDATE_INTERVAL = 2000; 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +54,7 @@ public class DmExternalChat extends Activity {
                 JSONObject jsonCfg = new JSONObject(rawCfg);
                 JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
                 JSONObject server = jsonCfg.getJSONObject("SERVER");
+                token_session = fastLogin.optString("token_session", "");
                 username = fastLogin.optString("username", "").replace("@", "").trim();
                 url = server.optString("url", "").trim();
             }
@@ -113,14 +115,20 @@ public class DmExternalChat extends Activity {
                 String fullUrl = url + "/send-request";
                 JSONObject jsonRequest = new JSONObject();
                 Intent intent = getIntent();
-                String urlDestiny = intent.getStringExtra("urlDestiny");
-                String destiny = intent.getStringExtra("destiny");
-                jsonRequest.put("url", urlDestiny);
                 JSONObject json_chat = new JSONObject();
                 json_chat.put("user1", username);
                 json_chat.put("user2", cleanOtherUser);
                 json_chat.put("id", 0);
-                String response = request.requestHTTP(fullUrl, "post", json_chat, DmChat.this);
+                String urlDestiny = intent.getStringExtra("urlDestiny");
+                String destiny = intent.getStringExtra("destiny");
+                jsonRequest.put("url", urlDestiny);
+                jsonRequest.put("route", "/send-message");
+                jsonRequest.put("method", "post");
+                jsonRequest.put("payload", json_chat);
+                JSONObject jsonHeaders = new JSONObject();
+                jsonHeaders.put("Authorization", "Bearer " + token_session);
+                jsonRequest.put("headers", jsonHeaders);
+                String response = request.requestHTTP(fullUrl, "post", jsonRequest, DmExternalChat.this);
                 Log.d(TAG, "[Fetch] Resposta do servidor: " + response);
                 return response;
             } catch (Exception e) {
@@ -145,7 +153,7 @@ public class DmExternalChat extends Activity {
                     String sender = msgObj.optString("sender", "");
                     boolean isMe = sender.equalsIgnoreCase(username);
                     String displayText = sender.isEmpty() ? text : sender + ": " + text;
-                    ChatBubbleView bubble = new ChatBubbleView(DmChat.this, displayText, isMe);
+                    ChatBubbleView bubble = new ChatBubbleView(DmExternalChat.this, displayText, isMe);
                     chatContainer.addView(bubble);
                 }
             } catch (JSONException e) {
@@ -165,12 +173,21 @@ public class DmExternalChat extends Activity {
                     return false;
                 }
                 String cleanOtherUser = other_user.replace("@", "").trim();
-                String fullUrl = url + "/send-message";
+                String fullUrl = url + "/send-request";
+                JSONObject jsonResponse = new JSONObject();
                 JSONObject json_chat = new JSONObject();
                 json_chat.put("sender", username);
                 json_chat.put("receiver", cleanOtherUser);
                 json_chat.put("message", messageToSend);
-                String response = request.requestHTTP(fullUrl, "post", json_chat, DmChat.this);
+                String urlDestiny = intent.getStringExtra("urlDestiny");
+                String destiny = intent.getStringExtra("destiny");
+                jsonResponse.put("url", urlDestiny);
+                jsonResponse.put("route", "/view");
+                jsonResponse.put("payload", json_chat);
+                JSONObject jsonHeaders = new JSONObject();
+                jsonHeaders.put("Authorization", "Bearer " + token_session);
+                jsonResponse.put("headers", jsonHeaders);
+                String response = request.requestHTTP(fullUrl, "post", jsonResponse, DmExternalChat.this);
                 return response != null && !response.trim().isEmpty();
             } catch (Exception e) {
                 return false;
@@ -181,7 +198,7 @@ public class DmExternalChat extends Activity {
             if (success) {
                 new FetchMessagesTask().execute();
             } else {
-                Toast.makeText(DmChat.this, "Error in mesage sending", Toast.LENGTH_SHORT).show();
+                Toast.makeText(DmExternalChat.this, "Error in mesage sending", Toast.LENGTH_SHORT).show();
             }
         }
     }
