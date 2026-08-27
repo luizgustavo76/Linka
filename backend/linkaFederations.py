@@ -41,7 +41,6 @@ class LinkaFederations:
     def receiveConnection(self, slug_or_url, route, headers=None):
         target_url = self.resolve_target(slug_or_url)
         try:
-            # Assina a requisição GET
             fed_headers = sign_payload(self.actual_server, {})
             if headers:
                 fed_headers.update(headers)
@@ -58,14 +57,11 @@ class LinkaFederations:
         target_url = self.resolve_target(slug_or_url)
 
         try:
-            # 1. Gera os cabeçalhos criptográficos provando quem é este nó
             fed_headers = sign_payload(self.actual_server, payload)
 
-            # 2. Mescla com cabeçalhos adicionais que o app interno passar
             if headers:
                 fed_headers.update(headers)
 
-            # 3. Dispara a requisição direto para o alvo
             response = requests.post(
                 target_url + route,
                 json=payload,
