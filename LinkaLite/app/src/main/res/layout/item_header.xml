@@ -7,4 +7,4 @@
     android:textColor="#a6adc8"
     android:textSize="12sp"
     android:textStyle="bold"
-    android:background="#181825" />
+    android:background="@drawable/bg_material_card" />

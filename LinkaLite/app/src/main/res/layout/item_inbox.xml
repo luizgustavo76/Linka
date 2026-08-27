@@ -6,7 +6,7 @@
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:padding="10dp"
-    android:background="#1e1e2e">
+    android:background="@drawable/bg_material_card">
 
     <ImageView
         android:id="@+id/imgAvatar"

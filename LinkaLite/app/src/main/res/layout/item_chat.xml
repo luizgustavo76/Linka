@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="8dp"
-    android:background="#1e1e2e">
+    android:background="@drawable/bg_material_card">
     
     <ImageView
         android:id="@+id/avatar"
