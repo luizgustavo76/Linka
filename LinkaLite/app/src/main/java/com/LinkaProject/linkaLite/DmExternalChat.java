@@ -114,13 +114,12 @@ public class DmExternalChat extends Activity {
                 String cleanOtherUser = other_user.replace("@", "").trim();
                 String fullUrl = url + "/send-request";
                 JSONObject jsonRequest = new JSONObject();
-                Intent intent = getIntent();
                 JSONObject json_chat = new JSONObject();
                 json_chat.put("user1", username);
                 json_chat.put("user2", cleanOtherUser);
                 json_chat.put("id", 0);
-                String urlDestiny = intent.getStringExtra("urlDestiny");
-                String destiny = intent.getStringExtra("destiny");
+                String urlDestiny = getIntent().getStringExtra("urlDestiny");
+                String destiny = getIntent().getStringExtra("destiny");
                 jsonRequest.put("url", urlDestiny);
                 jsonRequest.put("route", "/send-message");
                 jsonRequest.put("method", "post");
@@ -179,8 +178,8 @@ public class DmExternalChat extends Activity {
                 json_chat.put("sender", username);
                 json_chat.put("receiver", cleanOtherUser);
                 json_chat.put("message", messageToSend);
-                String urlDestiny = intent.getStringExtra("urlDestiny");
-                String destiny = intent.getStringExtra("destiny");
+                String urlDestiny = getIntent().getStringExtra("urlDestiny");
+                String destiny = getIntent().getStringExtra("destiny");
                 jsonResponse.put("url", urlDestiny);
                 jsonResponse.put("route", "/view");
                 jsonResponse.put("payload", json_chat);

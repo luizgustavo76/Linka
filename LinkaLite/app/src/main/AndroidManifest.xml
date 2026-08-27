@@ -101,5 +101,7 @@
             android:label="Group Chat"/>
         <activity android:name=".ExternalChat" 
             android:label="External chat"/>
+        <activity android:name=".DmExternalChat" 
+            android:label="External chat"/>
     </application>
 </manifest>

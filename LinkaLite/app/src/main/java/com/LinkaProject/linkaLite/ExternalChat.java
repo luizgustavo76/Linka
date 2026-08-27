@@ -41,7 +41,7 @@ public class ExternalChat extends Activity{
     public void onCreate(Bundle savedInstanceState){
         try{
             config cfg = new config();
-            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson("config.cfg", ExternalChat.this));
+            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(ExternalChat.this, "config.cfg"));
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             JSONObject server = jsonCfg.getJSONObject("SERVER");
             url = server.optString("url", "");
@@ -66,16 +66,16 @@ public class ExternalChat extends Activity{
                     jsonAdd.put("destiny", edtUsername.getText());
                     jsonAdd.put("urlDestiny", edtUrl.getText());
                     jsonAdd.put("username", username);
-                    requestHTTP(url + "/add-external-contact", "post", jsonAdd, ExternalChat.this);
+                    request.requestHTTP(url + "/add-external-contact", "post", jsonAdd, ExternalChat.this);
                 }catch(Exception e){
                     e.printStackTrace();
                 }
-                Intent intent = new Intent(ExternalChat.this, DmExternalChat);
+                Intent intent = new Intent(ExternalChat.this, DmExternalChat.class);
                 intent.putExtra("destiny", edtUsername.getText());
                 intent.putExtra("urlDestiny", edtUrl.getText());
                 startActivity(intent);
             }
-        })
+        });
         btnHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
