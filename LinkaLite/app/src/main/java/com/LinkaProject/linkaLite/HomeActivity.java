@@ -1,5 +1,4 @@
 package com.LinkaProject.linkaLite;
-
 import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -19,7 +18,6 @@ import java.util.concurrent.TimeUnit;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -75,14 +73,11 @@ public class HomeActivity extends Activity {
             JSONObject jsonCfg = new JSONObject(rawJson);
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             JSONObject server = jsonCfg.getJSONObject("SERVER");
-
             String url = server.optString("url", "http://linkaProject.pythonanywhere.com");
             String token = fastLogin.optString("token_session", "");
-
             if (!token.isEmpty()) {
                 tokenManager.valideToken(token, url, HomeActivity.this);
             }
-
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -127,14 +122,12 @@ public class HomeActivity extends Activity {
                 startActivity(intent);
             }
         });
-
         // Configura a ListView do Feed
         listViewPosts = (ListView) findViewById(R.id.listViewPosts);
         postsList = new ArrayList<JSONObject>();
         postAdapter = new PostAdapter(this, postsList);
         listViewPosts.setAdapter(postAdapter);
     }
-
     @Override
     protected void onResume() {
         super.onResume();
@@ -144,70 +137,57 @@ public class HomeActivity extends Activity {
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
             JSONObject server = jsonCfg.getJSONObject("SERVER");
             url = server.getString("url").toString();
-
         }catch(JSONException e){
             e.printStackTrace();
         }
         new FetchFeedTask().execute(url + "/feed");
     }
-
     // AsyncTask para rodar requisição de rede fora da Thread de UI
     private class FetchFeedTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... urls) {
             return requestHTTP(urls[0], "GET", new JSONObject());
         }
-
         @Override
         protected void onPostExecute(String result) {
             if (result == null || result.trim().isEmpty()) {
                 Toast.makeText(HomeActivity.this, "Erro in feed loading", Toast.LENGTH_SHORT).show();
                 return;
             }
-
             try {
                 JSONArray jsonArray = new JSONArray(result);
                 postsList.clear();
-
                 for (int i = 0; i < jsonArray.length(); i++) {
                     postsList.add(jsonArray.getJSONObject(i));
                 }
-
                 // Notifica o Adapter para atualizar a interface
                 postAdapter.notifyDataSetChanged();
-
             } catch (Exception e) {
                 e.printStackTrace();
                 Toast.makeText(HomeActivity.this, "Error in parsing posts", Toast.LENGTH_SHORT).show();
             }
         }
     }
-
     // Adapter do Feed
     private class PostAdapter extends BaseAdapter {
         private Context context;
         private ArrayList<JSONObject> list;
-
         public PostAdapter(Context context, ArrayList<JSONObject> list) {
             this.context = context;
             this.list = list;
         }
-
         @Override
         public int getCount() {
             return list.size();
         }
-
         @Override
         public Object getItem(int position) {
             return list.get(position);
         }
-
         @Override
         public long getItemId(int position) {
             return position;
         }
-
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
@@ -223,7 +203,6 @@ public class HomeActivity extends Activity {
             Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
             imgPost.setImageBitmap(null);
             imgPost.setVisibility(View.GONE);
-
             try {
                 JSONObject post = list.get(position);
                 String username = post.optString("username", post.optString("user", "entity404"));
@@ -264,21 +243,17 @@ public class HomeActivity extends Activity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
             return convertView;
         }
     }
-
     public String requestHTTP(String urlParam, String method, JSONObject json_body) {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(urlParam);
             connection = (HttpURLConnection) url.openConnection();
-            
             method = method.toUpperCase();
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
-            
             if (method.equals("POST") || method.equals("PUT")) {
                 connection.setDoOutput(true);
                 OutputStream os = connection.getOutputStream();
@@ -286,7 +261,6 @@ public class HomeActivity extends Activity {
                 os.flush();
                 os.close();
             }
-
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
@@ -309,7 +283,6 @@ public class HomeActivity extends Activity {
     }
     private ScheduledExecutorService scheduler;
     private ScheduledExecutorService schedulerNotifications;
-
     @Override
     protected void onDestroy() {
         super.onDestroy();

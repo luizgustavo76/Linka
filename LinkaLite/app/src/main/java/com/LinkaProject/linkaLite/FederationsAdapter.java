@@ -1,5 +1,4 @@
 package com.LinkaProject.linkaLite;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -15,52 +14,42 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
-
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 public class FederationsAdapter extends BaseAdapter {
-
     private Context context;
     private List<FederationItem> items;
     private LayoutInflater inflater;
     private ExecutorService executorService;
-
     public FederationsAdapter(Context context, List<FederationItem> items) {
         this.context = context;
         this.items = items;
         this.inflater = LayoutInflater.from(context);
         this.executorService = Executors.newFixedThreadPool(4); // Para baixar imagens em background
     }
-
     @Override
     public int getCount() {
         return items.size();
     }
-
     @Override
     public Object getItem(int position) {
         return items.get(position);
     }
-
     @Override
     public long getItemId(int position) {
         return position;
     }
-
     static class ViewHolder {
         ImageView coverFederation;
         Button btnFederation;
     }
-
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
-
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.item_federations, parent, false);
             holder = new ViewHolder();
@@ -70,11 +59,8 @@ public class FederationsAdapter extends BaseAdapter {
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
-
         final FederationItem item = items.get(position);
-
         holder.btnFederation.setText(item.getName());
-
         holder.btnFederation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -88,11 +74,9 @@ public class FederationsAdapter extends BaseAdapter {
                 }
             }
         });
-
         // Tratamento da Imagem (Base64 vs HTTP)
         String imageSrc = item.getCoverImage();
         holder.coverFederation.setImageBitmap(null); // Limpa imagem antiga
-
         if (imageSrc != null && imageSrc.startsWith("data:image")) {
             try {
                 String cleanBase64 = imageSrc.substring(imageSrc.indexOf(",") + 1);
@@ -119,10 +103,8 @@ public class FederationsAdapter extends BaseAdapter {
                 }
             });
         }
-
         return convertView;
     }
-
     private Bitmap downloadBitmap(String urlString) {
         try {
             URL url = new URL(urlString);

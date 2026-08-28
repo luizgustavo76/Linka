@@ -1,20 +1,15 @@
 package com.LinkaProject.linkaLite;
-
 import android.content.Context; 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
 import android.widget.ImageView;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.net.URLEncoder;
-
 public class ImageLoader {
     private final Handler handler = new Handler(Looper.getMainLooper());
-
     public void LoadImageUrl(final String urlString, final ImageView imageView) {
         new Thread(new Runnable() {
             @Override
@@ -22,13 +17,10 @@ public class ImageLoader {
                 if (imageView == null || urlString == null || urlString.trim().isEmpty() || urlString.equals("null")) {
                     return;
                 }
-
                 Context context = imageView.getContext();
                 byte[] imageData = request.requestBytes(urlString, "GET", context);
-
                 if (imageData != null && imageData.length > 0) {
                     final Bitmap bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
-
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -40,7 +32,6 @@ public class ImageLoader {
             }
         }).start();
     }
-
     public void viewProfilePicture(Context context, String username, ImageView targetImageView) {
         new Thread(new Runnable() {
             @Override
@@ -64,7 +55,6 @@ public class ImageLoader {
                             }
                         }
                     }
-
                 } catch (JSONException e) {
                     e.printStackTrace();
                 } catch (Exception e) {

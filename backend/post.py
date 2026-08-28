@@ -55,6 +55,26 @@ def create_db():
     conn.commit()
     conn.close()
 create_db()
+@post_bp.route("/view-profile-posts", methods=["POST"])
+def view_profile_posts():
+    data = request.get_json(silent=True) or {}
+    username = data.get("username")
+    if isinstance(username, list) and len(username) > 0:
+        username = username[0]
+    username = str(username).strip() if username else ""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM posts WHERE username = ?", (username,))
+    result = cur.fetchall()
+    posts = []
+    for single_posts in result:
+        posts.append({
+            "id": single_posts[0],
+            "username": single_posts[1],
+            "text_post": single_posts[2],
+            "datetime": single_posts[3]
+        })
+    return jsonify(posts)   
 @post_bp.route("/view-post", methods=["POST"])
 def view_post():
     data = request.get_json()

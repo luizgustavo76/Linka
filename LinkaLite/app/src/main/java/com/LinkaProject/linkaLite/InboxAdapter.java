@@ -1,5 +1,4 @@
 package com.LinkaProject.linkaLite;
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,7 +12,6 @@ import java.util.List;
 import org.json.JSONObject;
 import org.json.JSONException;
 public class InboxAdapter extends BaseAdapter {
-
     private Context context;
     private List<InboxItem> itemList;
     private LayoutInflater inflater;
@@ -24,22 +22,18 @@ public class InboxAdapter extends BaseAdapter {
         this.itemList = itemList;
         this.inflater = LayoutInflater.from(context);
     }
-
     @Override
     public int getCount() {
         return itemList.size();
     }
-
     @Override
     public Object getItem(int position) {
         return itemList.get(position);
     }
-
     @Override
     public long getItemId(int position) {
         return position;
     }
-
     static class ViewHolder {
         ImageView imgAvatar;
         TextView txtUsername;
@@ -47,7 +41,6 @@ public class InboxAdapter extends BaseAdapter {
         Button btnAccept;
         Button btnDenied;
     }
-
     @Override
     public View getView(final int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
@@ -63,24 +56,19 @@ public class InboxAdapter extends BaseAdapter {
         }
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.item_inbox, parent, false);
-            
             holder = new ViewHolder();
             holder.imgAvatar = (ImageView) convertView.findViewById(R.id.imgAvatar);
             holder.txtUsername = (TextView) convertView.findViewById(R.id.username);
             holder.txtMessage = (TextView) convertView.findViewById(R.id.message);
             holder.btnAccept = (Button) convertView.findViewById(R.id.btnAccept);
             holder.btnDenied = (Button) convertView.findViewById(R.id.btnDenied);
-            
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
         }
-
         final InboxItem item = itemList.get(position);
-
         holder.txtUsername.setText(item.getUsername());
         holder.txtMessage.setText(item.getMessage());
-
         holder.btnAccept.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -97,7 +85,6 @@ public class InboxAdapter extends BaseAdapter {
                 notifyDataSetChanged();
             }
         });
-
         holder.btnDenied.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -114,7 +101,6 @@ public class InboxAdapter extends BaseAdapter {
                 notifyDataSetChanged();
             }
         });
-
         return convertView;
     }
 }
