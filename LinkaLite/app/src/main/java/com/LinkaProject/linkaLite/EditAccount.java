@@ -42,7 +42,13 @@ public class EditAccount extends Activity {
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
-
+        btnChangeBiography.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(EditAccount.this, ChangeBiography.class);
+                startActivity(intent);
+            }
+        });
         btnChangePicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

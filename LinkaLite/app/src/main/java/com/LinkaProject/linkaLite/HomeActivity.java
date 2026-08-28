@@ -122,7 +122,6 @@ public class HomeActivity extends Activity {
                 startActivity(intent);
             }
         });
-        // Configura a ListView do Feed
         listViewPosts = (ListView) findViewById(R.id.listViewPosts);
         postsList = new ArrayList<JSONObject>();
         postAdapter = new PostAdapter(this, postsList);
@@ -197,6 +196,16 @@ public class HomeActivity extends Activity {
             ImageView avatarPost = (ImageView) convertView.findViewById(R.id.postAvatar);
             ImageView imgPost = (ImageView) convertView.findViewById(R.id.imgPost);
             TextView tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
+            tvUsername.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v){
+                    Intent intent = new Intent(HomeActivity.this, ViewProfile.class);
+                    JSONObject post = list.get(position);
+                    String usernameProfile = post.optString("username", post.optString("user", "entity404"));
+                    intent.putExtra("usernameProfile", usernameProfile);
+                    startActivity(intent);
+                }
+            });
             TextView tvText = (TextView) convertView.findViewById(R.id.postText);
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
             TextView tvStarCount = (TextView) convertView.findViewById(R.id.starCount);

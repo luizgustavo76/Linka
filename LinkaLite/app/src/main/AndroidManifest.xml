@@ -103,5 +103,9 @@
             android:label="External chat"/>
         <activity android:name=".DmExternalChat" 
             android:label="External chat"/>
+        <activity android:name=".ViewProfile" 
+            android:label="View profile"/>
+        <activity android:name=".ChangeBiography" 
+            android:label="Change biography"/>
     </application>
 </manifest>
