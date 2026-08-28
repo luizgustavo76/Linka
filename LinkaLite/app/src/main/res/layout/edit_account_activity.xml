@@ -3,34 +3,45 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@drawable/bg_material_card">
 
-    <ImageView
-        android:id="@+id/imgProfile"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <Button
-        android:id="@+id/btnChangePicture"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Change profile picture" />
-
-    <Button
-        android:id="@+id/btnChangeBiography"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Change Biography" /> 
-
-    <!-- Espaçador para empurrar a barra inferior para o rodapé da tela -->
-    <View
+    <!-- ScrollView para conter o conteúdo do perfil -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:fillViewport="true">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/imgProfile"
+                android:layout_width="match_parent"
+                android:layout_height="220dp"
+                android:scaleType="centerCrop" />
+
+            <Button
+                android:id="@+id/btnChangePicture"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Change profile picture" />
+
+            <Button
+                android:id="@+id/btnChangeBiography"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Change Biography" /> 
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Barra inferior fixa no rodapé -->
     <LinearLayout 
         android:layout_width="match_parent"
-        android:layout_height="40dp" 
+        android:layout_height="48dp" 
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="#11111b">
