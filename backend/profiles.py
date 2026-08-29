@@ -64,6 +64,8 @@ def edit():
             conn.commit()
             conn.close()
             return jsonify({"status":"edit is sucessful"}),200
+        else:
+            return jsonify({"status":"method not allowed"}),401
     else:
         return jsonify({"status":"forbidden"}),403
 @profile_bp.route("/create_profile",methods=["post"])
