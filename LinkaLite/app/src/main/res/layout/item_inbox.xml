@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="10dp"
+    android:padding="10dip"
     android:background="@drawable/bg_material_card">
 
     <ImageView
         android:id="@+id/imgAvatar"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginRight="10dp"
+        android:layout_width="40dip"
+        android:layout_height="40dip"
+        android:layout_marginRight="10dip"
         android:scaleType="centerCrop" />
 
     <TextView
         android:id="@+id/username"
-        android:layout_width="0dp"
+        android:layout_width="0dip"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:text="@username"
@@ -39,7 +39,7 @@
             android:layout_height="wrap_content"
             android:text="Accept"
             android:textSize="11sp"
-            android:layout_marginRight="4dp" />
+            android:layout_marginRight="4dip" />
 
         <Button
             android:id="@+id/btnDenied"

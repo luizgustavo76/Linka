@@ -1,80 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
     android:orientation="vertical"
     android:background="@drawable/bg_material_card">
     <Button
         android:id="@+id/btnNewChat"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="New"
         android:textStyle="bold"
         android:textColor="#000000"
-        android:layout_margin="12dp" />
+        android:layout_margin="12dip" />
     <Button
         android:id="@+id/btnGlobalChat"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="Global chat"
         android:textStyle="bold"
         android:textColor="#000000"
-        android:layout_margin="12dp" />
+        android:layout_margin="12dip" />
 
     <ListView
         android:id="@+id/lvFriends"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
         android:layout_weight="1"
         android:divider="#2a2a3c"
-        android:dividerHeight="1dp" />
+        android:dividerHeight="1dip" />
 
     <LinearLayout 
-        android:layout_width="match_parent"
-        android:layout_height="40dp" 
+        android:layout_width="fill_parent"
+        android:layout_height="40dip" 
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="#11111b">
 
         <ImageButton
             android:id="@+id/btnHome"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:src="@drawable/home"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent"
-            android:contentDescription="home" />
+            android:background="@android:color/transparent" />
 
         <ImageButton
             android:id="@+id/btnChat"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:src="@drawable/chat"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent"
-            android:contentDescription="Chat" />
+            android:background="@android:color/transparent" />
 
         <ImageButton
             android:id="@+id/btnOptions"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:src="@drawable/options"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent"
-            android:contentDescription="Options" />
+            android:background="@android:color/transparent" />
 
         <ImageButton
             android:id="@+id/btnProfile"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:src="@drawable/account"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent"
-            android:contentDescription="Profile" />
+            android:background="@android:color/transparent" />
 
     </LinearLayout>
 

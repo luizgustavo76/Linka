@@ -35,7 +35,6 @@ public class ChannelsGroupActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_channels);
-        // 1. Carregar Configurações
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(this, "config.cfg"));
@@ -46,7 +45,6 @@ public class ChannelsGroupActivity extends Activity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // 2. Mapear Componentes
         btnBack = (ImageButton) findViewById(R.id.btnBack);
         textGroup = (TextView) findViewById(R.id.textGroup);
         btnAdd = (Button) findViewById(R.id.btnAdd);
@@ -55,19 +53,27 @@ public class ChannelsGroupActivity extends Activity {
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
-        // Garanta que você tem um <ListView id="@+id/listChannels"/> no seu R.layout.activity_channels
         listChannelsView = (ListView) findViewById(R.id.listChannels); 
         channelList = new ArrayList<Channel>();
         Intent intent = getIntent();
         groupId = intent.getIntExtra("groupId", -1);
-        // Se o groupId for -1, significa que a Intent anterior não enviou o parâmetro
         if (groupId == -1) {
             Toast.makeText(this, "ID do grupo inválido", Toast.LENGTH_SHORT).show();
             return;
         }
-        // 4. Disparar Requisição assíncrona
         new FetchChannelsTask().execute();
-        // 5. NAVEGAÇÃO DOS BOTÕES
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(ChannelsGroupActivity.this, AddGroupChannel.class));
+            }
+        });
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(ChannelsGroupActivity.this, HomeActivity.class));
+            }
+        });
         btnHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -93,7 +99,6 @@ public class ChannelsGroupActivity extends Activity {
             }
         });
     }
-    // Task Assíncrona para requisição HTTP em background (Padrão Java 5/Android Antigo)
     private class FetchChannelsTask extends AsyncTask<Void, Void, String> {
         @Override
         protected String doInBackground(Void... params) {

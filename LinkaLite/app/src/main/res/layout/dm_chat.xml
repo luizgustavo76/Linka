@@ -10,13 +10,13 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dp">
+        android:padding="8dip">
 
      <ImageButton
         android:id="@+id/btnHeaderImage"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:padding="8dp"
+        android:layout_width="40dip"
+        android:layout_height="40dip"
+        android:padding="8dip"
         android:scaleType="fitCenter"
         android:src="@drawable/back"
         android:background="#373754" />
@@ -31,7 +31,7 @@
     <ScrollView
         android:id="@+id/scrollMessages"
         android:layout_width="fill_parent"
-        android:layout_height="0dp"
+        android:layout_height="0dip"
         android:layout_weight="1">
 
         <LinearLayout
@@ -46,11 +46,11 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dp">
+        android:padding="8dip">
 
         <EditText
             android:id="@+id/edtInputMessage"
-            android:layout_width="0dp"
+            android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="Type your message..." />

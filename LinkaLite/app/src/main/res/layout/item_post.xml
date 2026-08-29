@@ -1,36 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="6dp"
+    android:padding="6dip"
     android:background="@drawable/bg_material_card">
 
     <!-- Cabeçalho: Avatar + Nome + Data -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
         <ImageView
             android:id="@+id/postAvatar"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:scaleType="centerCrop"
-            android:contentDescription="Avatar" />
+            android:layout_width="28dip"
+            android:layout_height="28dip"
+            android:scaleType="centerCrop" />
 
         <TextView
             android:id="@+id/postUsername"
-            android:layout_width="0dp"
+            android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="\@username"
             android:textStyle="bold"
             android:textColor="#cdd6f4"
             android:textSize="13sp"
-            android:layout_marginLeft="6dp" />
+            android:layout_marginLeft="6dip" />
 
         <TextView
             android:id="@+id/postDate"
@@ -44,28 +43,28 @@
     <!-- Imagem opcional -->
     <ImageView
         android:id="@+id/imgPost"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
         android:visibility="gone"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="4dp"/>
+        android:layout_marginTop="4dip"
+        android:layout_marginBottom="4dip"/>
 
     <!-- Conteúdo do Post -->
     <TextView
         android:id="@+id/postText"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="Text post"
         android:textSize="13sp"
         android:textColor="#ffffff"
-        android:layout_marginTop="4dp"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginTop="4dip"
+        android:layout_marginBottom="6dip" />
 
     <!-- Rodapé: Botão de Comentários em Texto + Estrelas -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
@@ -73,15 +72,15 @@
         <Button
             android:id="@+id/btnComments"
             android:layout_width="wrap_content"
-            android:layout_height="28dp"
+            android:layout_height="28dip"
             android:text="Comments"
             android:textSize="11sp"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp" />
+            android:paddingLeft="8dip"
+            android:paddingRight="8dip" />
 
         <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
+            android:layout_width="0dip"
+            android:layout_height="1dip"
             android:layout_weight="1" />
 
         <TextView

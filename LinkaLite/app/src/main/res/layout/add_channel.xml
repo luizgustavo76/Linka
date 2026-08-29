@@ -5,15 +5,14 @@
     android:orientation="vertical"
     android:background="@drawable/bg_material_card">
     <EditText
-        android:id="@+id/edtCode"
+        android:id="@+id/edtName"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:hint="Code"
-        android:singleLine="true"
-        android:layout_marginTop="10dip"/>
+        android:hint="Name"
+        android:singleLine="true" />
     <Button
+        android:id="@+id/btnSend"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/btnSend"
-        android:text="Send!"/>
+        android:text="Send"/> 
 </LinearLayout>
