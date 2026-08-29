@@ -14,5 +14,5 @@
         android:id="@+id/btnSend"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="Send"/> 
+        android:text="Send" /> 
 </LinearLayout>

@@ -24,7 +24,8 @@
             android:id="@+id/txtHeaderTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="GlobalChat" />
+            android:text="GlobalChat" 
+        android:textColor="#FFFFFF" />
     </LinearLayout>
 
     <ScrollView

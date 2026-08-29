@@ -19,8 +19,8 @@
         android:paddingRight="18dip"
         android:paddingBottom="12dip"
         android:text="Exemplo de mensagem"
-        android:textColor="#1E1E1E"
         android:textSize="15sp"
-        android:typeface="sans" />
+        android:typeface="sans" 
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>

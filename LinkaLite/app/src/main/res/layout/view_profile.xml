@@ -28,7 +28,8 @@
                 <TextView
                     android:id="@+id/txtBio"
                     android:layout_width="fill_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content" 
+        android:textColor="#FFFFFF" />
             </LinearLayout>
             <LinearLayout
                 android:layout_width="0dip"
@@ -38,11 +39,13 @@
                 <TextView
                     android:id="@+id/txtUsername"
                     android:layout_width="fill_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content" 
+        android:textColor="#FFFFFF" />
                 <TextView
                     android:id="@+id/countFriends"
                     android:layout_width="fill_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content" 
+        android:textColor="#FFFFFF" />
             </LinearLayout>
         </LinearLayout>
         <LinearLayout

@@ -4,7 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:padding="8dip"
-    android:textColor="#a6adc8"
     android:textSize="12sp"
     android:textStyle="bold"
-    android:background="@drawable/bg_material_card" />
+    android:background="@drawable/bg_material_card" 
+        android:textColor="#FFFFFF" />

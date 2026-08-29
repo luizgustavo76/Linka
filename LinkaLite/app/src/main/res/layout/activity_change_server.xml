@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
+<LinearLayout
+    android:background="#121212" 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical"
-    android:background="@drawable/bg_material_card">
+    android:orientation="vertical">
     <EditText
         android:id="@+id/edtServer"
         android:layout_width="fill_parent"
@@ -15,7 +15,7 @@
         android:id="@+id/sendButton"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="Send"/>
+        android:text="Send" />
     <ImageButton
             android:id="@+id/btnHome"
             android:layout_width="0dip"

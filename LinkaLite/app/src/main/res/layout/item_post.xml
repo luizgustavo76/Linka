@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
+<LinearLayout
+    android:background="@drawable/card_item"
+    android:layout_marginBottom="4dip"
+    android:padding="10dip" 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="6dip"
-    android:background="@drawable/bg_material_card">
+    android:orientation="vertical">
 
     <!-- Cabeçalho: Avatar + Nome + Data -->
     <LinearLayout
@@ -27,17 +28,17 @@
             android:layout_weight="1"
             android:text="\@username"
             android:textStyle="bold"
-            android:textColor="#cdd6f4"
             android:textSize="13sp"
-            android:layout_marginLeft="6dip" />
+            android:layout_marginLeft="6dip" 
+        android:textColor="#FFFFFF" />
 
         <TextView
             android:id="@+id/postDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="12m"
-            android:textSize="10sp"
-            android:textColor="#a6adc8" />
+            android:textSize="10sp" 
+        android:textColor="#FFFFFF" />
     </LinearLayout>
 
     <!-- Imagem opcional -->
@@ -58,9 +59,9 @@
         android:layout_height="wrap_content"
         android:text="Text post"
         android:textSize="13sp"
-        android:textColor="#ffffff"
         android:layout_marginTop="4dip"
-        android:layout_marginBottom="6dip" />
+        android:layout_marginBottom="6dip" 
+        android:textColor="#FFFFFF" />
 
     <!-- Rodapé: Botão de Comentários em Texto + Estrelas -->
     <LinearLayout
@@ -88,8 +89,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="★ 0"
-            android:textColor="#f9e2af"
-            android:textSize="12sp" />
+            android:textSize="12sp" 
+        android:textColor="#FFFFFF" />
     </LinearLayout>
 
 </LinearLayout>

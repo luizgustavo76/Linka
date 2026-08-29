@@ -11,7 +11,8 @@
         android:layout_height="wrap_content"
         android:padding="16dip"
         android:text="External Chat"
-        android:textSize="18sp" />
+        android:textSize="18sp" 
+        android:textColor="#FFFFFF" />
 
     <EditText
         android:id="@+id/edtUrl"

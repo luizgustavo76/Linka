@@ -22,7 +22,8 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="20dip"
         android:scaleType="centerCrop"
-        android:padding="2dip"/>
+        android:padding="2dip"
+        android:textColor="#FFFFFF" />
     <Button
         android:id="@+id/btnEdit"
         android:layout_width="fill_parent"

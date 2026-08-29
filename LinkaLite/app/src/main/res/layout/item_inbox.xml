@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
+<LinearLayout
+    android:background="@drawable/card_item"
+    android:layout_marginBottom="4dip"
+    android:padding="10dip" 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:padding="10dip"
-    android:background="@drawable/bg_material_card">
+    android:gravity="center_vertical">
 
     <ImageView
         android:id="@+id/imgAvatar"
@@ -22,8 +23,8 @@
         android:layout_weight="1"
         android:text="@username"
         android:textStyle="bold"
-        android:textColor="#cdd6f4"
-        android:textSize="14sp" />
+        android:textSize="14sp" 
+        android:textColor="#FFFFFF" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -32,7 +33,8 @@
         <TextView
             android:id="@+id/message"
             android:layout_height="wrap_content"
-            android:layout_width="wrap_content"/>
+            android:layout_width="wrap_content"
+        android:textColor="#FFFFFF" />
         <Button
             android:id="@+id/btnAccept"
             android:layout_width="wrap_content"

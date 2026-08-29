@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    android:background="@drawable/card_item"
+    android:layout_marginBottom="4dip"
+    android:padding="10dip" xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="10dip">
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/txtChannelName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold" 
+        android:textColor="#FFFFFF" />
 
     <TextView
         android:id="@+id/txtChannelDescription"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="14sp" />
+        android:textSize="14sp" 
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>

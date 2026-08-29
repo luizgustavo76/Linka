@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    android:background="@drawable/card_item"
+    android:layout_marginBottom="4dip"
+    android:padding="10dip" xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="8dip"
-    android:background="@drawable/bg_material_card">
+    android:orientation="horizontal">
 
     <!-- Avatar do usuário -->
     <ImageView
@@ -26,16 +27,16 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textStyle="bold"
-            android:textSize="13sp"
-            android:textColor="#cdd6f4" /> 
+            android:textSize="13sp" 
+        android:textColor="#FFFFFF" /> 
 
         <TextView
             android:id="@+id/textComment"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textSize="13sp"
-            android:textColor="#a6adc8"
-            android:layout_marginTop="2dip" /> 
+            android:layout_marginTop="2dip" 
+        android:textColor="#FFFFFF" /> 
     </LinearLayout>
 
 </LinearLayout>

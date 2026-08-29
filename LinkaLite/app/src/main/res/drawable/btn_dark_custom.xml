@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressionado (Azul mais escuro) -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#3B82F6" />
+            <corners android:radius="6dip" />
+        </shape>
+    </item>
+
+    <!-- Normal (Azul Material Escuro vibrante) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#2563EB" />
+            <corners android:radius="6dip" />
+            <stroke android:width="1dip" android:color="#60A5FA" />
+        </shape>
+    </item>
+</selector>

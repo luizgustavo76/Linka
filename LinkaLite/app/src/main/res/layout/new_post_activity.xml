@@ -15,12 +15,12 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="New Post"
-            android:textColor="#ffffff"
             android:textSize="20sp"
             android:textStyle="bold"
             android:gravity="center"
             android:layout_marginTop="8dip"
-            android:layout_marginBottom="10dip" />
+            android:layout_marginBottom="10dip" 
+        android:textColor="#FFFFFF" />
 
         <EditText
             android:id="@+id/textPost"

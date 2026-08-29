@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
+<LinearLayout
+    android:background="#121212" 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical"
-    android:background="@drawable/bg_material_card">
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="Solicitations/ Inbox"
-        android:textColor="#cdd6f4"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:padding="16dip" />
+        android:padding="16dip" 
+        android:textColor="#FFFFFF" />
     <ListView
         android:id="@+id/lvInbox"
         android:layout_width="fill_parent"
