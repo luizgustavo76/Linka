@@ -7,6 +7,7 @@ with open(json_path, "r") as f:
     modules_flags = json.load(f)
 root_flags = modules_flags["modules-flags"]
 from flask_cors import CORS 
+from jobs import jobs_bp
 if root_flags["post"]:
     from post import post_bp
 if root_flags["chat"]:
@@ -278,6 +279,7 @@ if root_flags["sincronizer"]:
 if root_flags["friends"]:
     app.register_blueprint(friends_bp)
 app.register_blueprint(meta_bp)
+app.register_blueprint(jobs_bp)
 if root_flags["chat_global"]:
     app.register_blueprint(chat_global_bp)
 if root_flags["notifications"]:
