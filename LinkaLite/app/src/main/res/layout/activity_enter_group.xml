@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bg_material_card">
+    <EditText
+        android:id="@+id/edtCode"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="Code"
+        android:singleLine="true"
+        android:layout_marginTop="10dip"/>
+    <Button
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/btnSend"
+        android:text="Send!"/>
+</LinearLayout>

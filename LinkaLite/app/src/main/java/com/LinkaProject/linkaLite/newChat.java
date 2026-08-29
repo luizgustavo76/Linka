@@ -24,6 +24,7 @@ public class newChat extends Activity{
     private ImageButton btnChat;
     private ImageButton btnOptions;
     private ImageButton btnProfile;
+    private Button btnEnterGroup;
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);        
         setContentView(R.layout.activity_new_chat);
@@ -33,6 +34,14 @@ public class newChat extends Activity{
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+        btnEnterGroup = (Button) findViewById(R.id.btnEnterGroup);
+        btnEnterGroup.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(newChat.this, EnterGroup.class);
+                startActivity(intent);
+            }
+        });
         btnNewGroup.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){

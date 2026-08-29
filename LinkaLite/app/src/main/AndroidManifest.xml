@@ -107,5 +107,7 @@
             android:label="View profile"/>
         <activity android:name=".ChangeBiography" 
             android:label="Change biography"/>
+        <activity android:name=".EnterGroup" 
+            android:label="Enter group with code"/>
     </application>
 </manifest>

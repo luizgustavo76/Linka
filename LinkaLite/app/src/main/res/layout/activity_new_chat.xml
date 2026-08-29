@@ -13,7 +13,14 @@
         android:textStyle="bold"
         android:textColor="#000000"
         android:layout_margin="12dp" />
-
+    <Button
+        android:id="@+id/btnEnterGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Enter in a group with code"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:layout_margin="12dp" />
     <Button
         android:id="@+id/btnExternalServer"
         android:layout_width="match_parent"
@@ -22,8 +29,7 @@
         android:textStyle="bold"
         android:textColor="#000000"
         android:layout_margin="12dp" />
-
-    <!-- Espaçador flexível para empurrar a barra para o rodapé -->
+    
     <View
         android:layout_width="match_parent"
         android:layout_height="0dp"
