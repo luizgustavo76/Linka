@@ -1,4 +1,4 @@
-package com.linka.lite.adapter;
+package com.LinkaProject.linkaLite;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -8,8 +8,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import java.util.List;
-import com.linka.lite.R;
-import com.linka.lite.model.Member;
 
 public class MemberAdapter extends BaseAdapter {
 
