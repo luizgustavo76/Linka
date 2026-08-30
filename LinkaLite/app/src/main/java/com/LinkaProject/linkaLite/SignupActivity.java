@@ -9,6 +9,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONObject;
+import org.json.JSONException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -73,6 +74,8 @@ public class SignupActivity extends Activity {
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(SignupActivity.this, "config.cfg"));
             JSONObject server = jsonCfg.getJSONObject("SERVER");
             url = server.optString("url", "");
+        }catch(JSONException e){
+            e.printStackTrace();
         }
         config cfg = new config();
         final String baseUrl = url;
@@ -85,7 +88,7 @@ public class SignupActivity extends Activity {
         edtEmail = (EditText) findViewById(R.id.edtEmail);
         txtGoToSignin = (TextView) findViewById(R.id.txtGoToSignin);
         btnRegister = (Button) findViewById(R.id.btnRegister);
-        edtInvite = (EditText) findViewById(R.id.edtInvite)
+        edtInvite = (EditText) findViewById(R.id.edtInvite);
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

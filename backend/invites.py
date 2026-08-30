@@ -25,7 +25,7 @@ def create_db():
     conn.close()
 create_db()
 
-@invites_bp.route("/generate-invite", methods=["POST"])
+@invites_bp.route("/create-invite", methods=["POST"])
 def generate_invite():
     data = request.get_json()
     username = data.get("username")
