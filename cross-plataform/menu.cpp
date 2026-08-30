@@ -939,7 +939,7 @@ int main(int argc, char *argv[])
 
     if (url.isEmpty())
     {
-        config["SERVER"]["url"] = "http://192.168.0.17:5000";
+        config["SERVER"]["url"] = "http://linkaProject.pythonanywhere.com";
         url = QString::fromStdString(config["SERVER"]["url"]);
         saveConfig();
     }

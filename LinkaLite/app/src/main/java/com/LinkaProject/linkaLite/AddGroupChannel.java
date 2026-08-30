@@ -37,11 +37,16 @@ public class AddGroupChannel extends Activity{
             @Override
             public void onClick(View v){
                 try{
+                    Intent GetIntent = getIntent();
+                    int group_id = GetIntent.getIntExtra("group_id", -1);
                     JSONObject jsonAdd = new JSONObject();
                     jsonAdd.put("username", username);
                     jsonAdd.put("channel_name", edtName.getText().toString());
+                    jsonAdd.put("group_id", group_id);
+                    jsonAdd.put("type", "chat");
                     request.requestHTTP(url + "/new-channel", "post", jsonAdd, AddGroupChannel.this);
                     Intent intent = new Intent(AddGroupChannel.this, ChannelsGroupActivity.class);
+                    intent.putExtra("groupId", group_id);
                     startActivity(intent);
                 }catch(JSONException e){
                     e.printStackTrace();

@@ -21,6 +21,6 @@
         android:text="Exemplo de mensagem"
         android:textSize="15sp"
         android:typeface="sans" 
-        android:textColor="#FFFFFF" />
+        android:textColor="#000000" />
 
 </LinearLayout>

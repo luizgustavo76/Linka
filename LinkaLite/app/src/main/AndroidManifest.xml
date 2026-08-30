@@ -109,5 +109,7 @@
             android:label="Change biography"/>
         <activity android:name=".EnterGroup" 
             android:label="Enter group with code"/>
+        <activity android:name=".AddGroupChannel" 
+            android:label="Add group channel"/>
     </application>
 </manifest>

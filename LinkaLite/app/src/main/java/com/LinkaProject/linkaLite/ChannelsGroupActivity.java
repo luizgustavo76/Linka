@@ -65,7 +65,9 @@ public class ChannelsGroupActivity extends Activity {
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(ChannelsGroupActivity.this, AddGroupChannel.class));
+                Intent intent = new Intent(ChannelsGroupActivity.this, AddGroupChannel.class);
+                intent.putExtra("group_id", groupId);
+                startActivity(intent);
             }
         });
         btnHome.setOnClickListener(new View.OnClickListener() {

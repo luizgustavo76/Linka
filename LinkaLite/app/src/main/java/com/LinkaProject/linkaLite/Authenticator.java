@@ -23,7 +23,6 @@ public class Authenticator extends AbstractAccountAuthenticator {
                              String authTokenType, String[] requiredFeatures, Bundle options) 
                              throws NetworkErrorException {
         
-        // Cria a Intent para abrir a LoginActivity quando o usuário clicar em "Adicionar Conta" nas Configurações
         Intent intent = new Intent(context, LoginActivity.class);
         intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, accountType);
         intent.putExtra(AccountManager.KEY_AUTHTOKEN, authTokenType);
