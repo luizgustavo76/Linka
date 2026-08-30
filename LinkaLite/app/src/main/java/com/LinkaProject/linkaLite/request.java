@@ -1,24 +1,82 @@
 package com.LinkaProject.linkaLite;
-
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
 public class request {
-
+    public interface RequestCallback {
+        void onSuccess(String result);
+        void onError(Exception e);
+    }
+    public interface RequestBytesCallback {
+        void onSuccess(byte[] result);
+        void onError(Exception e);
+    }
+    public static void requestHTTPAsync(final String urlParam, final String method, final JSONObject json_body, final int status_code, final Context context, final RequestCallback callback) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final String result = requestHTTP(urlParam, method, json_body, status_code, context);
+                    if (callback != null) {
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.onSuccess(result);
+                            }
+                        });
+                    }
+                } catch (final Exception e) {
+                    if (callback != null) {
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.onError(e);
+                            }
+                        });
+                    }
+                }
+            }
+        }).start();
+    }
+    public static void requestBytesAsync(final String urlParam, final String method, final Context context, final RequestBytesCallback callback) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final byte[] result = requestBytes(urlParam, method, context);
+                    if (callback != null) {
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.onSuccess(result);
+                            }
+                        });
+                    }
+                } catch (final Exception e) {
+                    if (callback != null) {
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.onError(e);
+                            }
+                        });
+                    }
+                }
+            }
+        }).start();
+    }
     public static String requestHTTP(String urlParam, String method, JSONObject json_body) {
         return requestHTTP(urlParam, method, json_body, 0, null);
     }
-
     public static String requestHTTP(String urlParam, String method, JSONObject json_body, Context context) {
         return requestHTTP(urlParam, method, json_body, 0, context);
     }
-
     public static String requestHTTP(String urlParam, String method, JSONObject json_body, int status_code) {
         return requestHTTP(urlParam, method, json_body, status_code, null);
     }
@@ -28,10 +86,8 @@ public class request {
             System.setProperty("http.keepAlive", "false");
             URL url = new URL(urlParam);
             connection = (HttpURLConnection) url.openConnection();
-            
             method = method.toUpperCase();
             connection.setRequestMethod(method);
-            
             if (context != null) {
                 try {
                     config cfg = new config();
@@ -48,9 +104,7 @@ public class request {
                     }
                 } catch (Exception ignored) {}
             }
-
             int responseCode = connection.getResponseCode();
-
             if (responseCode == 403 && context != null) {
                 String newToken = tokenManager.newSession(context);
                 if (newToken != null && !newToken.isEmpty()) {
@@ -58,7 +112,6 @@ public class request {
                     cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "token_session", newToken);
                 }
             }
-
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 java.io.InputStream in = connection.getInputStream();
                 java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
@@ -85,13 +138,11 @@ public class request {
             System.setProperty("http.keepAlive", "false");
             URL url = new URL(urlParam);
             connection = (HttpURLConnection) url.openConnection();
-            
             method = method.toUpperCase();
-            connection.setConnectTimeout(8000); // Max 8s para conectar
+            connection.setConnectTimeout(8000); 
             connection.setReadTimeout(8000);
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
-            
             if (context != null) {
                 try {
                     config cfg = new config();
@@ -108,7 +159,6 @@ public class request {
                     }
                 } catch (Exception ignored) {}
             }
-
             if (method.equals("POST") || method.equals("PUT")) {
                 connection.setDoOutput(true);
                 OutputStream os = connection.getOutputStream();
@@ -118,10 +168,8 @@ public class request {
                 os.flush();
                 os.close();
             }
-
             int responseCode = connection.getResponseCode();
             status_code = responseCode;
-
             if (responseCode == 403 && context != null) {
                 String newToken = tokenManager.newSession(context);
                 if (newToken != null && !newToken.isEmpty()) {
@@ -129,7 +177,6 @@ public class request {
                     cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "token_session", newToken);
                 }
             }
-
             if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
                 StringBuilder response = new StringBuilder();
