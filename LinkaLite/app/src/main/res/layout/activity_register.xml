@@ -50,7 +50,25 @@
             android:hint="email(opcional)"
             android:singleLine="true"
             android:layout_marginTop="10dip" />
-
+        <EditText
+            android:id="@+id/edtInvite"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="Insert here your Invite"
+            android:password="false"
+            android:singleLine="true"
+            android:layout_marginTop="10dip" />
+        <TextView
+            android:id="@+id/txtInvite"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="What are invites? To keep Linka more controlled and exclusive, you need one to create your account; ask for an invitation in official Reddit posts or from users who are already on Linka."
+            android:gravity="center"
+            android:layout_marginTop="20dip"
+            android:padding="10dip"
+            android:focusable="true"
+            android:clickable="true" 
+        android:textColor="#FFFFFF" />
         <Button
             android:id="@+id/btnRegister"
             android:layout_width="fill_parent"

@@ -21,6 +21,8 @@ public class SignupActivity extends Activity {
     private EditText edtEmail;
     private TextView txtGoToSignin;
     private Button btnRegister;
+    private EditText edtInvite;
+    private String url = "";
     public String requestHTTP(String urlParam, String method, JSONObject json_body) {
         HttpURLConnection connection = null;
         try {
@@ -65,9 +67,15 @@ public class SignupActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        final String baseUrl = "http://linkaProject.pythonanywhere.com";
         super.onCreate(savedInstanceState);
+        try{
+            config cfg = new config();
+            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(SignupActivity.this, "config.cfg"));
+            JSONObject server = jsonCfg.getJSONObject("SERVER");
+            url = server.optString("url", "");
+        }
         config cfg = new config();
+        final String baseUrl = url;
         cfg.deleteFileLinka(SignupActivity.this, "config.cfg");
         cfg.createDefaultConfig(SignupActivity.this, "config.cfg");
         setContentView(R.layout.activity_register);
@@ -77,7 +85,7 @@ public class SignupActivity extends Activity {
         edtEmail = (EditText) findViewById(R.id.edtEmail);
         txtGoToSignin = (TextView) findViewById(R.id.txtGoToSignin);
         btnRegister = (Button) findViewById(R.id.btnRegister);
-        
+        edtInvite = (EditText) findViewById(R.id.edtInvite)
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -85,11 +93,13 @@ public class SignupActivity extends Activity {
                 String password = edtPassword.getText().toString();
                 String email = edtEmail.getText().toString();
                 String passwordRetyped = edtRetypePassword.getText().toString();
+                String invite = edtInvite.getText().toString();
                 try {
                     JSONObject json_register = new JSONObject();
                     json_register.put("username", username);
                     json_register.put("password", password);
                     json_register.put("email", email);
+                    json_register.put("invite_code", invite);
                     if (password.equals(passwordRetyped)) {
                         String response = requestHTTP(baseUrl + "/register", "post", json_register);
                         if (response.length() != 0) {
