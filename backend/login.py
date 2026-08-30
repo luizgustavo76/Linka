@@ -67,6 +67,9 @@ class Login:
         return self.senha_hash
     def verificar_hash(self, senha, hash):
         return check_password_hash(hash, senha)
+    def get_db_invites(self):
+        conn = sqlite3.connect(self.db_dir + "/invite.db")
+        return conn
 login_system = Login()
 
 def enviar_email(destino, assunto, mensagem_html):
@@ -97,6 +100,7 @@ def register():
         username = dados.get("username")
         password = dados.get("senha") or dados.get("password")
         email = dados.get("email")
+        invite_code = dados.get("invite_code")
         conn = login_system.get_db_login()
         cur = conn.cursor()
         cur.execute("SELECT username FROM login WHERE username = ?", (username,))
@@ -104,145 +108,27 @@ def register():
         conn.close()
         if resultado:
             return jsonify({"status":"username exists"}),400
-        if not username or not password or not email:
+        if not username or not password or not email or not invite_code:
             return jsonify({"status":"data is missing"}),401
         else:
             senha_com_hash = login_system.gerar_hash(password)
             conn = login_system.get_db_login()
             cur = conn.cursor()
-            cur.execute("""
-                INSERT INTO login (username, password, email) VALUES (?, ?, ?)""",(username, senha_com_hash, email))
-            conn.commit()
-            conn.close()
-            html_register = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-            <meta charset="UTF-8">
-            <title>Welcome to Linka</title>
-            </head>
-            <body style="margin:0; padding:0; background-color:#0b0b0f; font-family:Arial, sans-serif;">
-
-            <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0b0b0f; padding:30px 0;">
-                <tr>
-                <td align="center">
-
-                    <table width="600" cellpadding="0" cellspacing="0" style="
-                    background-color:#14141c;
-                    border-radius:18px;
-                    overflow:hidden;
-                    box-shadow:0px 0px 20px rgba(0,0,0,0.5);
-                    ">
-
-                    <!-- HEADER -->
-                    <tr>
-                        <td style="
-                        background: linear-gradient(90deg, #00ffcc, #00aaff);
-                        padding:20px;
-                        text-align:center;
-                        color:#0b0b0f;
-                        font-size:26px;
-                        font-weight:bold;
-                        ">
-                        🚀 Welcome to Linka
-                        </td>
-                    </tr>
-
-                    
-                    <!-- CONTENT -->
-                    <tr>
-                        <td style="padding:30px; color:#ffffff;">
-
-                        <h2 style="margin-top:0; font-size:22px; color:#00ffcc;">
-                            Hello, {username} 👋
-                        </h2>
-
-                        <p style="font-size:15px; line-height:1.6; color:#dcdcdc;">
-                            Welcome to <b>Linka</b> — a social network built for people who value freedom.
-                            Here, you are not just a user...
-                            <b>you are part of the system.</b>
-                        </p>
-
-                        <p style="font-size:15px; line-height:1.6; color:#dcdcdc;">
-                            Your account has been successfully created, and now you can:
-                        </p>
-
-                        <ul style="color:#dcdcdc; font-size:15px; line-height:1.7; padding-left:18px;">
-                            <li>📝 Create posts and share your ideas</li>
-                            <li>💬 Chat privately with other users</li>
-                            <li>👥 Make friends and build connections</li>
-                            <li>🌍 Join servers and federations</li>
-                        </ul>
-
-                        <div style="
-                            margin:30px 0;
-                            padding:18px;
-                            border:1px solid #2b2b35;
-                            border-radius:14px;
-                            background-color:#101018;
-                        ">
-                            <p style="margin:0; font-size:14px; color:#aaaaaa;">
-                            🔥 Quick tip:
-                            </p>
-                            <p style="margin:8px 0 0 0; font-size:15px; color:#ffffff;">
-                            Try exploring federations and see how Linka connects different worlds together.
-                            </p>
-                        </div>
-
-                        <p style="font-size:15px; line-height:1.6; color:#dcdcdc;">
-                            If you did not create this account, please ignore this message.
-                            But if you did...
-                            then get ready:
-                            <b>Linka is now your territory.</b>
-                        </p>
-
-                        <!-- BUTTON -->
-                        <div style="text-align:center; margin-top:35px;">
-                            <a href="{{link}}" style="
-                            display:inline-block;
-                            padding:14px 26px;
-                            background: linear-gradient(90deg, #00ffcc, #00aaff);
-                            color:#0b0b0f;
-                            text-decoration:none;
-                            font-weight:bold;
-                            border-radius:12px;
-                            font-size:16px;
-                            ">
-                            Enter Linka
-                            </a>
-                        </div>
-
-                        </td>
-                    </tr>
-
-                    <!-- FOOTER -->
-                    <tr>
-                        <td style="
-                        padding:18px;
-                        text-align:center;
-                        background-color:#0e0e14;
-                        color:#777777;
-                        font-size:12px;
-                        ">
-                        © 2026 Linka Project — Developed by Luiz Gustavo<br>
-                        <span style="color:#444;">Automated message • Please do not reply</span>
-                        </td>
-                    </tr>
-
-                    </table>
-
-                </td>
-                </tr>
-            </table>
-
-            </body>
-            </html>
-            """
-            try:
-                enviar_email(destino=email, assunto="Linka Login", mensagem_html=html_register)
+            conn_invite = login_system.get_db_invites()
+            cur_invite = conn_invite.cursor()
+            cur_invite.execute("SELECT invite_code FROM invites WHERE invite_code = ? AND status = 'NOT USED'")
+            result = cur_invite.fetchone()
+            conn_invite.close()
+            if result:
+                cur.execute("""
+                    INSERT INTO login (username, password, email) VALUES (?, ?, ?)""",(username, senha_com_hash, email))
+                conn.commit()
+                conn.close()
                 return jsonify({"status":"account created with sucess!"}), 201
-            except Exception:
-                return jsonify({"status":"account created with sucess but failed to sent email"})
+            else:
+                conn.close()
+                return jsonify({"status":"the invite code is invalid"}),401
+            
     except Exception as e:
         return jsonify({"status": "an error has occurred", "error": str(e)}),500
 @login_bp.route("/create-fast-login", methods=["POST"])
