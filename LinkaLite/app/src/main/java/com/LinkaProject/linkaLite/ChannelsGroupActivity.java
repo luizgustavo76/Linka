@@ -136,7 +136,7 @@ public class ChannelsGroupActivity extends Activity {
                         Channel selectedChannel = channelList.get(position);
                         Intent intent = new Intent(ChannelsGroupActivity.this, GroupChatActivity.class);
                         intent.putExtra("channel", selectedChannel.getName());
-                        intent.putExtra("groupId", groupId);
+                        intent.putExtra("group_id", groupId);
                         startActivity(intent);
                     }
                 });

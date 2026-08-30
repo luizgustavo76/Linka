@@ -29,6 +29,7 @@ public class GroupChatActivity extends Activity {
     private String url = "";
     private Handler autoUpdateHandler = new Handler();
     private Runnable autoUpdateRunnable;
+    private int groupId = -1;
     private static final int UPDATE_INTERVAL = 2000;
 
     @Override
@@ -36,19 +37,26 @@ public class GroupChatActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.global_chat);
 
+        Log.d(TAG, "GroupChatActivity onCreate iniciado");
+
         try {
             config cfg = new config();
             String rawCfg = cfg.loadCfgAsJson(this, "config.cfg");
+            Log.d(TAG, "Config bruto lido: " + rawCfg);
+
             if (rawCfg != null && !rawCfg.isEmpty()) {
                 JSONObject jsonCfg = new JSONObject(rawCfg);
-                JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-                JSONObject server = jsonCfg.getJSONObject("SERVER");
-                username = fastLogin.optString("username", "");
-                url = server.optString("url", "");
+                JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
+                JSONObject server = jsonCfg.optJSONObject("SERVER");
+
+                if (fastLogin != null) username = fastLogin.optString("username", "");
+                if (server != null) url = server.optString("url", "");
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error parsing config.cfg", e);
+            Log.e(TAG, "Erro ao ler/processar config.cfg", e);
         }
+
+        Log.d(TAG, "Config carregado -> Username: '" + username + "' | URL: '" + url + "'");
 
         btnHeaderImage = (ImageButton) findViewById(R.id.btnHeaderImage);
         txtHeaderTitle = (TextView) findViewById(R.id.txtHeaderTitle);
@@ -87,12 +95,14 @@ public class GroupChatActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume: iniciando polling de mensagens");
         autoUpdateHandler.post(autoUpdateRunnable);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        Log.d(TAG, "onPause: parando polling de mensagens");
         autoUpdateHandler.removeCallbacks(autoUpdateRunnable);
     }
 
@@ -100,12 +110,17 @@ public class GroupChatActivity extends Activity {
         @Override
         protected String doInBackground(Void... params) {
             try {
-                String fullUrl = url + "/view-group-message";
-                if (url == null || url.trim().isEmpty()) return null;
+                if (url == null || url.trim().isEmpty()) {
+                    Log.e(TAG, "FetchMessagesTask abortado: URL esta VAZIA ou NULA!");
+                    return null;
+                }
 
+                String fullUrl = url + "/view-group-message";
                 Intent intent = getIntent();
                 String channel = intent.getStringExtra("channel");
                 int groupId = intent.getIntExtra("group_id", -1);
+
+                Log.d(TAG, "FetchMessagesTask -> URL: " + fullUrl + " | GroupID: " + groupId + " | Channel: " + channel);
 
                 JSONObject jsonChat = new JSONObject();
                 jsonChat.put("id", 0);
@@ -113,42 +128,58 @@ public class GroupChatActivity extends Activity {
                 jsonChat.put("username", username);
                 jsonChat.put("group_id", groupId);
 
-                return request.requestHTTP(fullUrl, "post", jsonChat, GroupChatActivity.this);
+                Log.d(TAG, "FetchMessagesTask enviando JSON: " + jsonChat.toString());
+
+                String response = request.requestHTTP(fullUrl, "post", jsonChat, GroupChatActivity.this);
+                Log.d(TAG, "FetchMessagesTask resposta bruta: " + response);
+                return response;
+
             } catch (Exception e) {
-                Log.e(TAG, "Exception in FetchMessagesTask", e);
+                Log.e(TAG, "Excecao dentro de FetchMessagesTask doInBackground", e);
                 return null;
             }
         }
 
         @Override
         protected void onPostExecute(String response) {
-            if (response == null || response.trim().isEmpty()) return;
+            if (response == null || response.trim().isEmpty()) {
+                Log.e(TAG, "FetchMessagesTask onPostExecute: Resposta veio NULA ou VAZIA do servidor.");
+                return;
+            }
 
             try {
-                chatContainer.removeAllViews();
-                JSONArray jsonArray = new JSONArray(response);
+                JSONObject rootJson = new JSONObject(response);
 
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject obj = jsonArray.getJSONObject(i);
-                    String text = obj.optString("message", "");
-                    String sender = obj.optString("sender", "");
+                if (rootJson.has("messages")) {
+                    JSONArray jsonArray = rootJson.getJSONArray("messages");
+                    Log.d(TAG, "Mensagens recebidas: " + jsonArray.length() + " item(ns)");
 
-                    boolean isMe = sender.equalsIgnoreCase(username);
-                    String displayText = sender.isEmpty() ? text : sender + ": " + text;
+                    chatContainer.removeAllViews();
 
-                    ChatBubbleView bubble = new ChatBubbleView(GroupChatActivity.this, displayText, isMe);
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject obj = jsonArray.getJSONObject(i);
+                        String text = obj.optString("message", "");
+                        String sender = obj.optString("sender", "");
 
-                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    );
-                    params.setMargins(0, 6, 0, 6);
-                    bubble.setLayoutParams(params);
+                        boolean isMe = sender.equalsIgnoreCase(username);
+                        String displayText = sender.isEmpty() ? text : sender + ": " + text;
 
-                    chatContainer.addView(bubble);
+                        ChatBubbleView bubble = new ChatBubbleView(GroupChatActivity.this, displayText, isMe);
+
+                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                        );
+                        params.setMargins(0, 6, 0, 6);
+                        bubble.setLayoutParams(params);
+
+                        chatContainer.addView(bubble);
+                    }
+                } else {
+                    Log.e(TAG, "JSON do servidor nao contem a chave 'messages'. Resposta: " + response);
                 }
             } catch (JSONException e) {
-                Log.e(TAG, "JSON parsing error", e);
+                Log.e(TAG, "Erro de JSON ao processar resposta do servidor. Resposta foi: " + response, e);
             }
         }
     }
@@ -170,13 +201,19 @@ public class GroupChatActivity extends Activity {
 
                 jsonChat.put("message", messageToSend);
                 jsonChat.put("channel", channel);
+                jsonChat.put("sender", username);   // O Flask exige este campo em /send-group-message
                 jsonChat.put("username", username);
                 jsonChat.put("group_id", groupId);
 
-                request.requestHTTP(url + "/send-group-message", "post", jsonChat, GroupChatActivity.this);
-                return true;
+                String fullUrl = url + "/send-group-message";
+                Log.d(TAG, "SendMessageTask enviando mensagem para: " + fullUrl + " Payload: " + jsonChat.toString());
+
+                String res = request.requestHTTP(fullUrl, "post", jsonChat, GroupChatActivity.this);
+                Log.d(TAG, "SendMessageTask resposta: " + res);
+
+                return res != null && res.contains("success");
             } catch (Exception e) {
-                Log.e(TAG, "Error sending message", e);
+                Log.e(TAG, "Erro em SendMessageTask doInBackground", e);
                 return false;
             }
         }
@@ -184,8 +221,10 @@ public class GroupChatActivity extends Activity {
         @Override
         protected void onPostExecute(Boolean success) {
             if (success) {
+                Log.d(TAG, "Mensagem enviada com sucesso. Forcando atualizacao...");
                 new FetchMessagesTask().execute();
             } else {
+                Log.e(TAG, "Falha ao enviar mensagem.");
                 Toast.makeText(GroupChatActivity.this, "Error sending message", Toast.LENGTH_SHORT).show();
             }
         }
