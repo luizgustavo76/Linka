@@ -1,4 +1,4 @@
-package com.linka.lite.model;
+package com.LinkaProject.linkaLite;
 
 public class Member {
     private String username;

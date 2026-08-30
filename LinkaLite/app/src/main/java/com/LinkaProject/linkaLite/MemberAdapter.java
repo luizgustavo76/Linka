@@ -61,8 +61,6 @@ public class MemberAdapter extends BaseAdapter {
 
         if (member.getAvatarResourceId() != 0) {
             holder.imgAvatar.setImageResource(member.getAvatarResourceId());
-        } else {
-            holder.imgAvatar.setImageResource(R.drawable.default_avatar);
         }
 
         return convertView;
