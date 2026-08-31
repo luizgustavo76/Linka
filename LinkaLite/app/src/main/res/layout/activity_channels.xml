@@ -4,110 +4,125 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="#121212"
-    android:orientation="horizontal">
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="0dip"
-        android:layout_height="fill_parent"
-        android:layout_weight="2"
-        android:background="#121212"
-        android:orientation="vertical">
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="48dip"
-            android:background="#11111b"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="4dip">
-            <ImageButton
-                android:id="@+id/btnBack"
-                android:layout_width="40dip"
-                android:layout_height="40dip"
-                android:background="@android:color/transparent"
-                android:scaleType="centerInside"
-                android:src="@drawable/back" />
-
-            <TextView
-                android:id="@+id/textGroup"
-                android:layout_width="0dip"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:paddingLeft="8dip"
-                android:text="Group name"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp" />
-
-            <Button
-                android:id="@+id/btnAdd"
-                android:layout_width="40dip"
-                android:layout_height="40dip"
-                android:text="+" />
-
-            <Button
-                android:id="@+id/btnConfig"
-                android:layout_width="wrap_content"
-                android:layout_height="40dip"
-                android:text="config" />
-        </LinearLayout>
-        <ListView
-            android:id="@+id/listChannels"
-            android:layout_width="fill_parent"
-            android:layout_height="0dip"
-            android:layout_weight="1"
-            android:divider="#2b2b3b"
-            android:dividerHeight="1dip" />
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="48dip"
-            android:background="#11111b"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-            <ImageButton
-                android:id="@+id/btnHome"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:background="@android:color/transparent"
-                android:scaleType="centerInside"
-                android:src="@drawable/home" />
-            <ImageButton
-                android:id="@+id/btnChat"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:background="@android:color/transparent"
-                android:scaleType="centerInside"
-                android:src="@drawable/chat" />
-            <ImageButton
-                android:id="@+id/btnOptions"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:background="@android:color/transparent"
-                android:scaleType="centerInside"
-                android:src="@drawable/options" />
-            <ImageButton
-                android:id="@+id/btnProfile"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:background="@android:color/transparent"
-                android:scaleType="centerInside"
-                android:src="@drawable/account" />
-        </LinearLayout>
-    </LinearLayout>
-    <View
-        android:layout_width="1dip"
-        android:layout_height="fill_parent"
-        android:background="#2b2b3b" />
-    <ListView
-        android:id="@+id/listViewMembers"
-        android:layout_width="0dip"
-        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
         android:layout_weight="1"
-        android:background="#121212"
-        android:divider="#2a2a3c"
-        android:dividerHeight="1dip"
-        android:scrollingCache="false" />
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="2"
+            android:background="#121212"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="48dip"
+                android:background="#11111b"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="4dip">
+
+                <ImageButton
+                    android:id="@+id/btnBack"
+                    android:layout_width="40dip"
+                    android:layout_height="40dip"
+                    android:background="@android:color/transparent"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/back" />
+
+                <TextView
+                    android:id="@+id/textGroup"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingLeft="8dip"
+                    android:text="Group name"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp" />
+
+                <Button
+                    android:id="@+id/btnAdd"
+                    android:layout_width="40dip"
+                    android:layout_height="40dip"
+                    android:text="+" />
+
+                <Button
+                    android:id="@+id/btnConfig"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dip"
+                    android:text="config" />
+            </LinearLayout>
+
+            <ListView
+                android:id="@+id/listChannels"
+                android:layout_width="fill_parent"
+                android:layout_height="0dip"
+                android:layout_weight="1"
+                android:divider="#2b2b3b"
+                android:dividerHeight="1dip" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="1dip"
+            android:layout_height="fill_parent"
+            android:background="#2b2b3b" />
+        <ListView
+            android:id="@+id/listViewMembers"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:background="#121212"
+            android:divider="#2a2a3c"
+            android:dividerHeight="1dip"
+            android:scrollingCache="false" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="48dip"
+        android:background="#11111b"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:src="@drawable/home" />
+
+        <ImageButton
+            android:id="@+id/btnChat"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:src="@drawable/chat" />
+
+        <ImageButton
+            android:id="@+id/btnOptions"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:src="@drawable/options" />
+
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:src="@drawable/account" />
+    </LinearLayout>
 
 </LinearLayout>

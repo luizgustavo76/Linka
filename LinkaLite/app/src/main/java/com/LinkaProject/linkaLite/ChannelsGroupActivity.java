@@ -154,8 +154,9 @@ public class ChannelsGroupActivity extends Activity {
 
                 for (int i = 0; i < membersArray.length(); i++) {
                     String memberName = membersArray.getString(i);
+                    ImageView imageView = new ImageView(this);
                     ImageLoader Imageloader = new ImageLoader();
-                    memberList.add(new Member(memberName, 0));
+                    memberList.add(new Member(memberName, Imageloader.viewProfilePicture(ChannelsGroupActivity.this, memberName, imageView)));
                 }
 
                 MemberAdapter memberAdapter = new MemberAdapter(ChannelsGroupActivity.this, memberList);
