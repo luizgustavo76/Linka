@@ -32,7 +32,9 @@ public class ViewProfile extends Activity{
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(ViewProfile.this, "config.cfg"));
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
+            JSONObject server = jsonCfg.getJSONObject("SERVER");
             username = fastLogin.getString("username").toString();
+            url = server.optString("url", "");
         }catch(JSONException e){
             e.printStackTrace();
         }
@@ -40,7 +42,7 @@ public class ViewProfile extends Activity{
         String usernameProfile = intent.getStringExtra("usernameProfile");
         try{
             JSONObject jsonProfile = new JSONObject();
-            JSONObject response = new JSONObject(request.requestHTTP(url + "/view-profile/" + usernameProfile, "get", jsonProfile, ViewProfile.this));
+            JSONObject response = new JSONObject(request.requestHTTP(url + "/view_profile/" + usernameProfile, "get", jsonProfile, ViewProfile.this));
             biography = response.optString("bio", "");
         }catch(Exception e){
             e.printStackTrace();

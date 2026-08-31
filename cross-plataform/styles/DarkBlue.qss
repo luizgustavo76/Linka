@@ -35,25 +35,6 @@ QPushButton {
 QPushButton:hover { background-color: #222222; border: 1px solid #00e5ff; }
 QPushButton:pressed { background-color: #171717; border: 1px solid #00b8d4; }
 
-QPushButton[class="tab-button"] {
-    background-color: transparent; 
-    border: none;                  
-    color: #888888;                
-    font-size: 16px;
-    font-weight: bold;
-    padding-bottom: 8px;           
-    border-bottom: 2px solid transparent; 
-}
-QPushButton[class="tab-button"]:hover { color: #FFFFFF; }
-QPushButton[class="tab-button"][active="true"] {
-    color: #00e5ff;
-    border-bottom: 3px solid #00e5ff;
-    background-color: qlineargradient(x1:0, y1:1, x2:0, y2:0,
-                                      stop:0 rgba(0, 229, 255, 0.25),
-                                      stop:1 rgba(0, 0, 0, 0));
-    border-bottom-left-radius: 0px;
-    border-bottom-right-radius: 0px;
-}
 
 QScrollBar:vertical { background: transparent; width: 10px; }
 QScrollBar::handle:vertical { background: #2A2A2A; border-radius: 5px; min-height: 30px; }

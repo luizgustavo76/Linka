@@ -262,11 +262,6 @@ def view_channels():
     username = data.get("username")
     group_id = data.get("group_id")
 
-    # Debug: verifique no console do Flask o que está chegando
-    print(f"[DEBUG] payload username: {username} | g.username: {getattr(g, 'username', None)}")
-    print(f"[DEBUG] payload group_id: {group_id} (tipo: {type(group_id)})")
-
-    # 1. Validação do usuário
     if not username or username.strip() != str(getattr(g, "username", "")).strip():
         return jsonify({"status": "forbidden", "reason": "username mismatch"}), 403
 
