@@ -70,6 +70,9 @@ class Login:
     def get_db_invites(self):
         conn = sqlite3.connect(self.db_dir + "/invite.db")
         return conn
+    def get_db_profiles(self):
+        conn = sqlite3.connect(self.db_dir + "/profile.db")
+        return conn
 login_system = Login()
 
 def enviar_email(destino, assunto, mensagem_html):
@@ -95,84 +98,54 @@ def enviar_email(destino, assunto, mensagem_html):
 def register():
     try:
         dados = request.get_json()
-        if dados == None:
-            return jsonify({"data is missing"}),401
+        if not dados:
+            return jsonify({"status": "data is missing"}), 400
+
         username = dados.get("username")
         password = dados.get("senha") or dados.get("password")
         email = dados.get("email")
         invite_code = dados.get("invite_code")
-        conn = login_system.get_db_login()
-        cur = conn.cursor()
-        cur.execute("SELECT username FROM login WHERE username = ?", (username,))
-        resultado = cur.fetchone()
-        conn.close()
-        if resultado:
-            return jsonify({"status":"username exists"}),400
-        if not username or not password or not email or not invite_code:
-            return jsonify({"status":"data is missing"}),401
-        else:
-            senha_com_hash = login_system.gerar_hash(password)
-            conn = login_system.get_db_login()
-            cur = conn.cursor()
-            conn_invite = login_system.get_db_invites()
+
+        if not all([username, password, email, invite_code]):
+            return jsonify({"status": "data is missing"}), 400
+
+        with login_system.get_db_invites() as conn_invite:
             cur_invite = conn_invite.cursor()
-            cur_invite.execute("SELECT invite_code FROM invites WHERE invite_code = ? AND status = 'NOT USED'")
-            result = cur_invite.fetchone()
-            conn_invite.close()
-            if result:
-                cur.execute("""
-                    INSERT INTO login (username, password, email) VALUES (?, ?, ?)""",(username, senha_com_hash, email))
-                conn.commit()
-                conn.close()
-                return jsonify({"status":"account created with sucess!"}), 201
-            else:
-                conn.close()
-                return jsonify({"status":"the invite code is invalid"}),401
-            
+            cur_invite.execute(
+                "SELECT invite_code FROM invites WHERE invite_code = ? AND status = 'NOT USED'",
+                (invite_code,)
+            )
+            if not cur_invite.fetchone():
+                return jsonify({"status": "the invite code is invalid"}), 401
+
+        with login_system.get_db_login() as conn_login:
+            cur_login = conn_login.cursor()
+            cur_login.execute("SELECT username FROM login WHERE username = ?", (username,))
+            if cur_login.fetchone():
+                return jsonify({"status": "username exists"}), 400
+
+            senha_com_hash = login_system.gerar_hash(password)
+            cur_login.execute(
+                "INSERT INTO login (username, password, email) VALUES (?, ?, ?)",
+                (username, senha_com_hash, email)
+            )
+            conn_login.commit()
+
+        with login_system.get_db_profiles() as conn_profile:
+            cur_profile = conn_profile.cursor()
+            cur_profile.execute("SELECT username FROM profile WHERE username = ?", (username,))
+            if not cur_profile.fetchone():
+                biography = f"Hi! my name is {username}, let's be friends?"
+                cur_profile.execute(
+                    "INSERT INTO profile (username, bio) VALUES (?, ?)",
+                    (username, biography)
+                )
+                conn_profile.commit()
+
+
+        return jsonify({"status": "account created with success!"}), 201
     except Exception as e:
-        return jsonify({"status": "an error has occurred", "error": str(e)}),500
-@login_bp.route("/create-fast-login", methods=["POST"])
-def create_fast_login():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
-    conn = login_system.get_db_login()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM login WHERE username = ?", (username,))
-    result = cur.fetchone()
-    conn.close()
-    hash = result[1]
-    if not login_system.verificar_hash(password, hash):
-        return jsonify({"status":"the username or passowrd s incorret"}),401
-    else:
-        conn = login_system.get_db_fastlogin()
-        cur = conn.cursor()
-        token = secrets.token_hex(32)
-        cur.execute("INSERT INTO Fastlogin (username, token) VALUES (?, ?)", (username, token))
-        conn.commit()
-        conn.close()
-        return jsonify({"status":"the session has been created", "token":token}),200
-@login_bp.route("/fast-login", methods=["POST"])
-def fast_login():
-    data = request.get_json()
-    username = data.get("username")
-    token = data.get("token")
-    conn = login_system.get_db_fastlogin()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM Fastlogin WHERE username = ? AND token = ?", (username, token))
-    result = cur.fetchone()
-    conn.close()
-    try:
-        row = {
-            "username":result[0],
-            "token":result[1]
-        }
-        if None in (row["username"], row["token"]):
-            return jsonify({"status":"user dont have a session"}),401
-        else:
-            return jsonify({"status":"logged in with sucess"}),200
-    except:
-        return jsonify({"status":"user dont have a session"}),401
+        return jsonify({"status": "an error has occurred", "error": str(e)}), 500
 @login_bp.route("/login", methods=["POST"])
 def login():
     dados = request.get_json()
@@ -183,6 +156,19 @@ def login():
     cur.execute("SELECT username FROM login WHERE username = ?", (username,))
     resultado_username = cur.fetchone()
     conn.close()
+    conn_profile = login_system.get_db_profiles()
+    cur_profile = conn_profile.cursor()
+    cur_profile.execute("SELECT username FROM profile WHERE username = ?",(username,))
+    result_profile = cur_profile.fetchone()
+    if result_profile:
+        pass
+    else:
+        biography = f"Hi! my name is {username}, let's be friends?"
+        cur_profile.execute(
+            "INSERT INTO profile (username, bio) VALUES (?, ?)",
+            (username, biography)
+        )
+        conn_profile.commit()
     if not resultado_username:
         return jsonify({"status":"user not exists, please veriy the username"}), 401
     if resultado_username:
