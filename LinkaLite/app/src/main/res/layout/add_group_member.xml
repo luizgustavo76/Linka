@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:background="#121212" 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical">
+    <ListView
+        android:id="@+id/listViewFriends"
+        android:layout_width="0dip"
+        android:layout_height="fill_parent"
+        android:layout_weight="1"
+        android:background="#121212"
+        android:divider="#2a2a3c"
+        android:dividerHeight="1dip"
+        android:scrollingCache="false" />
+</LinearLayout>

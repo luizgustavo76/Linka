@@ -111,5 +111,7 @@
             android:label="Enter group with code"/>
         <activity android:name=".AddGroupChannel" 
             android:label="Add group channel"/>
+        <activity android:name=".AddGroupMember" 
+            android:label="Add group Member"/>
     </application>
 </manifest>

@@ -170,7 +170,7 @@ def login():
         )
         conn_profile.commit()
     if not resultado_username:
-        return jsonify({"status":"user not exists, please veriy the username"}), 401
+        return jsonify({"status":"user not exists, please verify the username"}), 401
     if resultado_username:
         conn = login_system.get_db_login()
         cur = conn.cursor()

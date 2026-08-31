@@ -13,7 +13,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.widget.Layout;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,10 +37,10 @@ public class ChannelsGroupActivity extends Activity {
     private String url = "";
     private String username = "";
     private int groupId = -1;
-
+    private Layout layoutCard;
     private List<Channel> channelList;
     private ChannelAdapter adapter;
-
+    private Button btnAddMember;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,8 +75,8 @@ public class ChannelsGroupActivity extends Activity {
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         listChannelsView = (ListView) findViewById(R.id.listChannels);
         listViewMembers = (ListView) findViewById(R.id.listViewMembers);
-
         channelList = new ArrayList<Channel>();
+        btnAddMember = (Button) findViewById(R.id.btnAddMember);
 
         new FetchMembersTask().execute();
         new FetchChannelsTask().execute();
@@ -98,7 +98,14 @@ public class ChannelsGroupActivity extends Activity {
                 startActivity(intent);
             }
         });
-
+        btnAddMember.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ChannelsGroupActivity.this, AddGroupMember.class);
+                intent.putExtra("group_id", groupId);
+                startActivity(intent);
+            }
+        });
         btnHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
