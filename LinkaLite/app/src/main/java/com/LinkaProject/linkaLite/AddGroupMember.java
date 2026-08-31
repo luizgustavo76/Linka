@@ -70,8 +70,8 @@ public class AddGroupMember extends Activity {
                 try{
                     JSONObject jsonInvite = new JSONObject();
                     Intent intentId = getIntent();
-                    int group_id = intentId.getIntExtra("group_id");
-                    jsonInvite.put("username", username);
+                    int group_id = intentId.getIntExtra("group_id", -1);
+                    jsonInvite.put("username", myUsername);
                     jsonInvite.put("acess_limit", 1);
                     jsonInvite.put("expire_at", "never expire");
                     jsonInvite.put("group_id", group_id);
@@ -79,7 +79,7 @@ public class AddGroupMember extends Activity {
                     String code = responseInvite.optString("code", "");
                     JSONObject jsonMessage = new JSONObject();
                     jsonMessage.put("receiver", friendName);
-                    jsonMessage.put("sender", username);
+                    jsonMessage.put("sender", myUsername);
                     jsonMessage.put("message", "[INVITE]" + code);
                     request.requestHTTP(url + "/send-message", "post", jsonMessage, AddGroupMember.this);
                 }catch(JSONException e){

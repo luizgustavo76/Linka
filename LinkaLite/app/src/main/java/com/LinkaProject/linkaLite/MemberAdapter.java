@@ -59,8 +59,9 @@ public class MemberAdapter extends BaseAdapter {
 
         holder.txtUsername.setText("@" + member.getUsername());
 
-        if (member.getAvatarResourceId() != 0) {
-            holder.imgAvatar.setImageResource(member.getAvatarResourceId());
+        // Verificação corrigida para usar o ImageView da classe Member
+        if (member.getAvatarImageView() != null && member.getAvatarImageView().getDrawable() != null) {
+            holder.imgAvatar.setImageDrawable(member.getAvatarImageView().getDrawable());
         }
 
         return convertView;

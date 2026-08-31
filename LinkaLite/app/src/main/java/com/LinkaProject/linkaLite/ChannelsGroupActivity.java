@@ -13,7 +13,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Layout;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,7 +36,6 @@ public class ChannelsGroupActivity extends Activity {
     private String url = "";
     private String username = "";
     private int groupId = -1;
-    private Layout layoutCard;
     private List<Channel> channelList;
     private ChannelAdapter adapter;
     private Button btnAddMember;
@@ -93,7 +91,7 @@ public class ChannelsGroupActivity extends Activity {
         btnAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(ChannelsGroupActivity.this, AddGroupChannel.class);
+                Intent intent = new Intent(ChannelsGroupActivity.this, AddGroupMember.class);
                 intent.putExtra("group_id", groupId);
                 startActivity(intent);
             }
@@ -161,9 +159,11 @@ public class ChannelsGroupActivity extends Activity {
 
                 for (int i = 0; i < membersArray.length(); i++) {
                     String memberName = membersArray.getString(i);
-                    ImageView imageView = new ImageView(this);
-                    ImageLoader Imageloader = new ImageLoader();
-                    memberList.add(new Member(memberName, Imageloader.viewProfilePicture(ChannelsGroupActivity.this, memberName, imageView)));
+                    ImageView imageView = new ImageView(ChannelsGroupActivity.this);
+                    ImageLoader imageLoader = new ImageLoader();
+                    imageLoader.viewProfilePicture(ChannelsGroupActivity.this, memberName, imageView);
+
+                    memberList.add(new Member(memberName, imageView));
                 }
 
                 MemberAdapter memberAdapter = new MemberAdapter(ChannelsGroupActivity.this, memberList);
