@@ -43,6 +43,11 @@
         android:scrollingCache="false"   
         android:divider="#2a2a3c"
         android:dividerHeight="1dip" />
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1" />
+
     <LinearLayout 
         android:layout_width="fill_parent"
         android:layout_height="40dip" 

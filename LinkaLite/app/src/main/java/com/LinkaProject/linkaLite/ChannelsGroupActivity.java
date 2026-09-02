@@ -78,7 +78,14 @@ public class ChannelsGroupActivity extends Activity {
 
         new FetchMembersTask().execute();
         new FetchChannelsTask().execute();
-
+        btnConfig.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(ChannelsGroupActivity.this, ConfigGroup.class);
+                intent.putExtra("groupId", groupId);
+                startActivity(intent);
+            }
+        });
         if (btnBack != null) {
             btnBack.setOnClickListener(new View.OnClickListener() {
                 @Override

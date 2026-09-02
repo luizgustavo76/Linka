@@ -14,10 +14,58 @@
         android:id="@+id/btnChangeName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="Change group name"/>
+        android:text="Change group name"/>
     <Button
         android:id="@+id/btnExit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="Exit group"/>
+        android:text="Exit group"/>
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="48dip"
+        android:background="#11111b"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:src="@drawable/home" />
+
+        <ImageButton
+            android:id="@+id/btnChat"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:src="@drawable/chat" />
+
+        <ImageButton
+            android:id="@+id/btnOptions"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:src="@drawable/options" />
+
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:src="@drawable/account" />
+    </LinearLayout>
 </LinearLayout>

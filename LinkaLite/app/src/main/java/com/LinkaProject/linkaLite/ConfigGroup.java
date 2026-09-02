@@ -24,7 +24,7 @@ public class ConfigGroup extends Activity{
     private Button btnChangeName;
     private Button btnExit;
     private String username="";
-    private Sttring url="";
+    private String url="";
     private int groupId = -1;
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -42,5 +42,6 @@ public class ConfigGroup extends Activity{
         }catch(JSONException e){
             e.printStackTrace();
         }
+
     }
 }
