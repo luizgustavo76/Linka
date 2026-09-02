@@ -1,15 +1,90 @@
-QWidget { background-color: #121212; color: #E6E6E6; font-family: "Segoe UI"; font-size: 14px; }
-QLabel { color: #E6E6E6; }
-QLabel#title { font-size: 22px; font-weight: 600; color: #FFFFFF; }
-QFrame#card { background-color: #36302C; border: 1px solid #453E3A; border-radius: 14px; }
-QFrame#bottomBar { background-color: #134F5C; border: none; border-radius: 0px; }
-QLineEdit, QTextEdit, QPlainTextEdit { background-color: #181818; color: #FFFFFF; border: 1px solid #2A2A2A; border-radius: 10px; padding: 8px 10px; }
-QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus { border: 1px solid #00e5ff; }
-QPushButton { background-color: #1C1C1C; color: #EAEAEA; border: 1px solid #2A2A2A; border-radius: 12px; padding: 10px 14px; font-weight: 600; max-width: 300px; }
-QPushButton:hover { background-color: #222222; border: 1px solid #00e5ff; }
-QPushButton:pressed { background-color: #171717; border: 1px solid #00b8d4; }
-QScrollBar:vertical { background: transparent; width: 10px; margin: 0px; }
-QScrollBar::handle:vertical { background: #2A2A2A; border-radius: 5px; min-height: 30px; }
-QScrollBar::handle:vertical:hover { background: #00e5ff; }
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { border: none; background: none; height: 0px; }
-QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: none; }
+QWidget {
+    background-color: #12181f;
+    color: #E6E6E6;
+    font-family: "Segoe UI";
+    font-size: 14px;
+}
+
+QLabel {
+    color: #E6E6E6;
+}
+
+QLabel#title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #FFFFFF;
+}
+
+/* Cards e barras em tons Dark / Grafite neutro */
+QFrame#card {
+    background-color: #1E1E1E;
+    border: 1px solid #2A2A2A;
+    border-radius: 14px;
+}
+
+QFrame#bottomBar {
+    background-color: #181818;
+    border: none;
+    border-radius: 0px;
+}
+
+/* Campos de texto retos em escuro neutro */
+QLineEdit, QTextEdit, QPlainTextEdit {
+    background-color: #181818;
+    color: #FFFFFF;
+    border: 1px solid #2A2A2A;
+    border-radius: 0px;
+    padding: 8px 10px;
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid #00E5FF;
+}
+
+/* Botões sem arredondamento em escuro neutro */
+QPushButton {
+    background-color: #1F1F1F;
+    color: #FFFFFF;
+    border: 1px solid #2A2A2A;
+    border-radius: 0px;
+    padding: 10px 14px;
+    font-weight: 600;
+    max-width: 300px;
+}
+
+QPushButton:hover {
+    background-color: #282828;
+    border: 1px solid #00E5FF;
+}
+
+QPushButton:pressed {
+    background-color: #141414;
+    border: 1px solid #00B8D4;
+}
+
+/* Barra de rolagem */
+QScrollBar:vertical {
+    background: transparent;
+    width: 10px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: #2A2A2A;
+    border-radius: 0px;
+    min-height: 30px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #00E5FF;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    border: none;
+    background: none;
+    height: 0px;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}

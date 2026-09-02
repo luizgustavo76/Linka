@@ -2314,11 +2314,10 @@ showfeed = [&]()
     {
         // Configura e inicia o timer de 2 minutos apenas uma vez
         if (!feedTimer) {
-            feedTimer = new QTimer(central); // central garante a destruição com a janela
+            feedTimer = new QTimer(central);
             feedTimer->setInterval(120000);   // 120.000 ms = 2 minutos
             
             QObject::connect(feedTimer, &QTimer::timeout, [&]() {
-                // Limpa o cache para forçar a requisição HTTP e renderizar os novos posts
                 cachedFeedArray = QJsonArray(); 
                 showfeed();
             });
@@ -2328,25 +2327,36 @@ showfeed = [&]()
 
         clearLayout(layout);
         fadeTransition(central);
+
+        // --- NAVEGAÇÃO SUPERIOR (TABS) ---
         QHBoxLayout *tabPages = new QHBoxLayout();
+        tabPages->setContentsMargins(12, 8, 12, 8);
+        tabPages->setSpacing(8);
+
         QPushButton *newer = new QPushButton(newer_text);
         QPushButton *trending = new QPushButton(trending_text);
         QPushButton *federations = new QPushButton(federations_text);
+
         newer->setProperty("class", "tab-button");
         trending->setProperty("class", "tab-button");
         federations->setProperty("class", "tab-button");
+
         newer->setProperty("active", true);
         trending->setProperty("active", false);
         federations->setProperty("active", false);
+
         tabPages->addWidget(newer);
         tabPages->addWidget(trending);
         tabPages->addWidget(federations);
         layout->addLayout(tabPages);
+
         QObject::connect(trending, &QPushButton::clicked, [=](){ trendingFeed(); });
         QObject::connect(federations, &QPushButton::clicked, [=](){ addFederationFeed(); });
 
+        // --- RENDERIZAÇÃO DA LISTA DE POSTS ---
         auto renderPostsList = [=](const QJsonArray &postsArray) {
             QList<QWidget*> labels;
+
             for (auto value : postsArray) {
                 if (!value.isObject()) continue;
                 QJsonObject post = value.toObject();
@@ -2358,46 +2368,48 @@ showfeed = [&]()
                 QStringList lines = textPost.split('\n');
                 QString urlImage;
 
-                QVBoxLayout *textLayout = new QVBoxLayout();
-                for (const QString &line : lines) {
-                    if (line.isEmpty()) continue;
-                    if (line.contains("[IMAGE]")) {
-                        urlImage = line;
-                        urlImage.remove("[IMAGE]");
-                        break;
-                    }
-                }
-                for (const QString &line : lines) {
-                    if (line.isEmpty() || line.contains("[IMAGE]")) continue;
-                    QLabel *textLabel = new QLabel(line);
-                    textLayout->addWidget(textLabel);
-                }
-                if (!urlImage.isEmpty()) {
-                    renderPostImage(urlImage, textLayout);
-                }
-
+                // Frame principal do Post (Card)
                 QFrame *frame = new QFrame();
-                frame->setStyleSheet(R"(
-                    QFrame {
-                        background-color: #1A1A1A;
-                        border: 1px solid #2F2F2F;
-                        border-radius: 14px;
-                        padding: 10px;
-                    }
-                )");
+                frame->setStyleSheet(
+                    "QFrame {"
+                    "   background-color: #0c1015;"
+                    "   border: 1px solid #282536;"
+                    "   border-radius: 8px;"
+                    "   margin-bottom: 4px;"
+                    "}"
+                );
 
                 QVBoxLayout *frameLayout = new QVBoxLayout(frame);
+                frameLayout->setContentsMargins(12, 12, 12, 12);
+                frameLayout->setSpacing(8);
+
+                // --- HEADER DO POST (Avatar, User, View Profile) ---
                 QHBoxLayout *usernameLayout = new QHBoxLayout();
+                usernameLayout->setSpacing(8);
+
+                QLabel *lblUser = new QLabel("@" + username);
+                lblUser->setStyleSheet("color: #FFFFFF; font-size: 14px; font-weight: bold; border: none;");
+
                 QPushButton *viewProfile = new QPushButton(view_profile);
+                viewProfile->setCursor(Qt::PointingHandCursor);
+                viewProfile->setStyleSheet(
+                    "QPushButton {"
+                    "   background-color: transparent;"
+                    "   color: #8A889D;"
+                    "   font-size: 11px;"
+                    "   border: 1px solid #343145;"
+                    "   border-radius: 4px;"
+                    "   padding: 2px 8px;"
+                    "}"
+                    "QPushButton:hover {"
+                    "   color: #FFFFFF;"
+                    "   background-color: #282536;"
+                    "}"
+                );
+
                 QObject::connect(viewProfile, &QPushButton::clicked, [=](){
                     otherProfilePage(username);
                 });
-
-                QLabel *lblUser = new QLabel(username);
-                QLabel *lblDate = new QLabel(datetime);
-                lblDate->setObjectName("postDate");
-                lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
-                lblDate->setStyleSheet("color: gray; font-size: 12px;");
 
                 viewProfilePicture(usernameLayout, username);
                 usernameLayout->addWidget(lblUser);
@@ -2405,15 +2417,45 @@ showfeed = [&]()
                 usernameLayout->addStretch();
 
                 frameLayout->addLayout(usernameLayout);
-                frameLayout->addLayout(textLayout);
-                frameLayout->addWidget(lblDate);
+
+                // --- CONTEÚDO DO POST (Texto + Mídia) ---
+                QVBoxLayout *contentLayout = new QVBoxLayout();
+                contentLayout->setSpacing(6);
+
+                for (const QString &line : lines) {
+                    if (line.isEmpty()) continue;
+                    if (line.contains("[IMAGE]")) {
+                        urlImage = line;
+                        urlImage.remove("[IMAGE]");
+                        urlImage = urlImage.trimmed();
+                        continue;
+                    }
+                    QLabel *textLabel = new QLabel(line);
+                    textLabel->setWordWrap(true);
+                    textLabel->setStyleSheet("color: #E2E1E8; font-size: 13px; border: none;");
+                    contentLayout->addWidget(textLabel);
+                }
+
+                if (!urlImage.isEmpty()) {
+                    renderPostImage(urlImage, contentLayout);
+                }
+
+                frameLayout->addLayout(contentLayout);
+
+                // --- FOOTER DO POST (Estrelas, Comentários e Data) ---
+                QHBoxLayout *footerLayout = new QHBoxLayout();
+                footerLayout->setContentsMargins(0, 4, 0, 0);
+                footerLayout->setSpacing(6);
+
                 QPushButton *iconButton = new QPushButton();
                 iconButton->setIcon(QIcon(":/assets/default_star.png"));
-                iconButton->setIconSize(QSize(24, 24));
-                iconButton->setFixedSize(30, 30);
-                iconButton->setStyleSheet("border: none;");
+                iconButton->setIconSize(QSize(18, 18));
+                iconButton->setFixedSize(24, 24);
+                iconButton->setCursor(Qt::PointingHandCursor);
+                iconButton->setStyleSheet("border: none; background: transparent;");
+
                 QLabel *starLabel = new QLabel();
-                starLabel->setStyleSheet("color: white; font-size: 14px;");
+                starLabel->setStyleSheet("color: #A09EAF; font-size: 12px; border: none;");
 
                 if (starCountCache.contains(postId)) {
                     starLabel->setText(starCountCache.value(postId));
@@ -2451,37 +2493,45 @@ showfeed = [&]()
                     iconButton->setIcon(QIcon(toggled ? ":/assets/star.png" : ":/assets/default_star.png"));
                 });
 
-                QHBoxLayout *starLayout = new QHBoxLayout();
                 QPushButton *commentsButton = new QPushButton(comments_text);
+                commentsButton->setCursor(Qt::PointingHandCursor);
+                commentsButton->setStyleSheet(
+                    "QPushButton {"
+                    "   background: transparent;"
+                    "   color: #A09EAF;"
+                    "   font-size: 12px;"
+                    "   border: none;"
+                    "}"
+                    "QPushButton:hover { color: #FFFFFF; }"
+                );
                 QObject::connect(commentsButton, &QPushButton::clicked, [=](){
                     commentsPage(postId);
                 });
-                starLayout->addWidget(iconButton);
-                starLayout->addWidget(starLabel);
-                starLayout->addWidget(commentsButton);
-                starLayout->addStretch();
 
-                frameLayout->addLayout(starLayout);
+                QLabel *lblDate = new QLabel(datetime);
+                lblDate->setObjectName("postDate");
+                lblDate->setStyleSheet("color: #6E6C7E; font-size: 11px; border: none;");
+
+                footerLayout->addWidget(iconButton);
+                footerLayout->addWidget(starLabel);
+                footerLayout->addSpacing(8);
+                footerLayout->addWidget(commentsButton);
+                footerLayout->addStretch();
+                footerLayout->addWidget(lblDate);
+
+                frameLayout->addLayout(footerLayout);
                 labels.append(frame);
             }
 
             scroll_area(layout, labels);
 
-            QHBoxLayout *search_layout = new QHBoxLayout();
-            QPushButton *btnBack = new QPushButton(back_text);
+            // Botão de ação inferior
             QPushButton *btnNewPost = new QPushButton(new_post_text);
-            QLineEdit *searchEntry = new QLineEdit();
-            searchEntry->setPlaceholderText(search_text);
-            QPushButton *sendButton = new QPushButton(send_text);
-
-            search_layout->addWidget(searchEntry);
-            search_layout->addWidget(sendButton);
-            layout->addLayout(search_layout);
+            btnNewPost->setProperty("class", "primary-button");
             layout->addWidget(btnNewPost);
 
             renderBottomBar("home");
 
-            QObject::connect(btnBack, &QPushButton::clicked, [=](){ initialPage(); });
             QObject::connect(btnNewPost, &QPushButton::clicked, [=](){ new_post(); });
         };
 
@@ -3605,11 +3655,9 @@ showfeed = [&]()
         });
         QJsonObject reqJson;
         reqJson["username"] = username;
-
         QString response_friends = requestHTTP(url + "/friends", "POST", reqJson);
         QString response_groups = requestHTTP(url + "/my-groups", "POST", reqJson);
         QString response_external = requestHTTP(url + "/external-contacts", "POST", reqJson);
-
         QJsonDocument doc_groups = QJsonDocument::fromJson(response_groups.toUtf8());
         QJsonObject obj_groups = doc_groups.object();
         if (obj_groups["status"].toString() == "success") {
@@ -3618,39 +3666,44 @@ showfeed = [&]()
                 QJsonObject groupObj = groups[i].toObject();
                 int groupId = groupObj["group_id"].toInt();
                 QString nameGroup = groupObj["group_name"].toString();
-
-                QPushButton *btn = new QPushButton("[Group] " + nameGroup);
+                QString role = groupObj["role"].toString();
+                if (role.isEmpty()) role = "admin";
+                QPushButton *btn = new QPushButton();
+                btn->setText(QString("[Group] %1\nPermission: %2").arg(nameGroup, role));
+                btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+                btn->setMinimumHeight(60);
+                btn->setStyleSheet("QPushButton { text-align: left; padding-left: 15px; font-weight: bold; font-size: 15px; background-color: #1A1A1A; color: #FFFFFF; border: none; border-bottom: 1px solid #282828; border-radius: 0px; } QPushButton:hover { background-color: #252525; } QPushButton:pressed { background-color: #121212; }");
                 QObject::connect(btn, &QPushButton::clicked, [=](){
                     viewChannelGroup(groupId);
                 });
                 widgets.append(btn);
             }
-        } else {
         }
-
         QJsonDocument doc_external = QJsonDocument::fromJson(response_external.toUtf8());
         if (doc_external.isArray()) {
             QJsonArray extArray = doc_external.array();
             for (int i = 0; i < extArray.size(); ++i) {
                 QJsonObject extObj = extArray[i].toObject();
-
                 QString contactId = extObj["username"].toString();
                 QString contactName = extObj["contact_name"].isNull() ? contactId : extObj["contact_name"].toString();
                 QString platform = extObj["url"].toString();
-                QPushButton *extBtn = new QPushButton(QString("[%1] %2").arg(platform.toUpper(), contactName));
+                QPushButton *extBtn = new QPushButton();
+                extBtn->setText(QString("%1\n%2").arg(contactName, platform.toUpper()));
+                extBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+                extBtn->setMinimumHeight(55);
+                extBtn->setStyleSheet("QPushButton { text-align: left; padding-left: 15px; font-weight: bold; font-size: 15px; background-color: #1A1A1A; color: #FFFFFF; border: none; border-bottom: 1px solid #282828; border-radius: 0px; } QPushButton:hover { background-color: #252525; }");
                 QObject::connect(extBtn, &QPushButton::clicked, [=](){
                     chatExternal(contactName, platform);
                 });
                 widgets.append(extBtn);
             }
         }
-
         QJsonDocument doc_friends = QJsonDocument::fromJson(response_friends.toUtf8());
         QJsonObject obj_friends = doc_friends.object();
         QJsonArray friends = obj_friends["friends"].toArray();
-
         if (friends.isEmpty() && doc_external.array().isEmpty()) {
             QLabel *label_error = new QLabel("No Friends or External Contacts....");
+            label_error->setStyleSheet("color: #888888; padding: 15px;");
             widgets.append(label_error);
         } else {
             for(int i = 0; i < friends.size(); i++){
@@ -3658,17 +3711,21 @@ showfeed = [&]()
                 QString receiver = row[0].toString();
                 QString remittee = row[1].toString();
                 QString friendName = (receiver == username) ? remittee : receiver;
-
                 QWidget *containerWidget = new QWidget();
-                QPushButton *user = new QPushButton(friendName);
-                QHBoxLayout *buttonLayout = new QHBoxLayout();
-
-                viewProfilePicture(buttonLayout, username);
-                buttonLayout->addWidget(user);
-                buttonLayout->addStretch();
-                containerWidget->setLayout(buttonLayout);
-
-                QObject::connect(user, &QPushButton::clicked, [=]() mutable{
+                containerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+                containerWidget->setFixedHeight(60);
+                containerWidget->setStyleSheet("background-color: #1A1A1A; border-bottom: 1px solid #282828;");
+                QHBoxLayout *rowLayout = new QHBoxLayout(containerWidget);
+                rowLayout->setContentsMargins(15, 0, 15, 0);
+                rowLayout->setSpacing(12);
+                viewProfilePicture(rowLayout, friendName);
+                QPushButton *userBtn = new QPushButton();
+                userBtn->setText(QString("%1\nDM").arg(friendName));
+                userBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+                userBtn->setStyleSheet("QPushButton { text-align: left; font-weight: bold; font-size: 15px; color: #FFFFFF; background: transparent; border: none; }");
+                rowLayout->addWidget(userBtn);
+                rowLayout->addStretch();
+                QObject::connect(userBtn, &QPushButton::clicked, [=]() mutable{
                     QTimer::singleShot(0, [=](){
                         chat(friendName);
                     });
@@ -3676,7 +3733,6 @@ showfeed = [&]()
                 widgets.append(containerWidget);
             }
         }
-
         widgets.append(ChatGlobalButton);
         scroll_area(layout, widgets);
         renderBottomBar("chat");
@@ -3687,7 +3743,8 @@ showfeed = [&]()
 
         QWidget *bottomBar = new QWidget(central);
         bottomBar->setFixedHeight(74);
-
+        QWidget *container = new QWidget();
+        bottomBar->setStyleSheet("background-color: #11111b; border: none;");
         QPushButton *btnHome = new QPushButton(bottomBar);
         QPushButton *btnChat = new QPushButton(bottomBar);
         QPushButton *btnProfile = new QPushButton(bottomBar);
