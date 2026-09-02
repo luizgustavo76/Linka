@@ -32,16 +32,26 @@ public class ConfigGroup extends Activity{
         btnBanUser = (Button) findViewById(R.id.btnBanUser);
         btnChangeName = (Button) findViewById(R.id.btnChangeName);
         btnExit = (Button) findViewById(R.id.btnExit);
+        Intent intentGroup = getIntent();
+        groupId = intentGroup.getIntExtra("groupId", -1);
+        Log.d("ConfigGroup", "LinkaG: " + groupId);
         try{
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(ConfigGroup.this, "config.cfg"));
             JSONObject server = jsonCfg.getJSONObject("SERVER");
-            JSONObject fastLogin = jsonCfg.getJSONObject("FAST-LOGIN");
+            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             url = server.optString("url", "");
             username = fastLogin.optString("username", "");
         }catch(JSONException e){
             e.printStackTrace();
         }
-
+        btnBanUser.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(ConfigGroup.this, BanUserGroup.class);
+                intent.putExtra("groupId", groupId);
+                startActivity(intent);
+            }
+        });
     }
 }

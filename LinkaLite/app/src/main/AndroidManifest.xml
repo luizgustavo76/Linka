@@ -115,5 +115,7 @@
             android:label="Add group Member"/>
         <activity android:name=".ConfigGroup" 
             android:label="Config group"/>
+        <activity android:name=".BanUserGroup" 
+            android:label="Ban user"/>
     </application>
 </manifest>
