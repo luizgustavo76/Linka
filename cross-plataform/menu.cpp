@@ -2356,7 +2356,6 @@ showfeed = [&]()
         QObject::connect(trending, &QPushButton::clicked, [=](){ trendingFeed(); });
         QObject::connect(federations, &QPushButton::clicked, [=](){ addFederationFeed(); });
 
-        // --- RENDERIZAÇÃO DA LISTA DE POSTS ---
         auto renderPostsList = [=](const QJsonArray &postsArray) {
             QList<QWidget*> labels;
 

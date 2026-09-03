@@ -34,7 +34,6 @@ public class ConfigGroup extends Activity{
         btnExit = (Button) findViewById(R.id.btnExit);
         Intent intentGroup = getIntent();
         groupId = intentGroup.getIntExtra("groupId", -1);
-        Log.d("ConfigGroup", "LinkaG: " + groupId);
         try{
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(ConfigGroup.this, "config.cfg"));
@@ -45,6 +44,21 @@ public class ConfigGroup extends Activity{
         }catch(JSONException e){
             e.printStackTrace();
         }
+        btnExit.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                try{
+                    JSONObject jsonExit = new JSONObject();
+                    jsonExit.put("username", username);
+                    jsonExit.put("group_id", groupId);
+                    request.requestHTTP(url + "/exit-group", "post", jsonExit, ConfigGroup.this);
+                    Intent intent = new Intent(ConfigGroup.this, chatActivity.class);
+                    startActivity(intent);
+                }catch(JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        });
         btnBanUser.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
