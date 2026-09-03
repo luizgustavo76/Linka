@@ -2344,7 +2344,10 @@ showfeed = [&]()
         newer->setProperty("active", true);
         trending->setProperty("active", false);
         federations->setProperty("active", false);
-
+        QPushButton *btnNewPost = new QPushButton("+");
+        btnNewPost->setProperty("class", "primary-button");
+        QObject::connect(btnNewPost, &QPushButton::clicked, [=](){ new_post(); });
+        tabPages->addWidget(btnNewPost);
         tabPages->addWidget(newer);
         tabPages->addWidget(trending);
         tabPages->addWidget(federations);
@@ -2525,14 +2528,9 @@ showfeed = [&]()
 
             scroll_area(layout, labels);
 
-            // Botão de ação inferior
-            QPushButton *btnNewPost = new QPushButton(new_post_text);
-            btnNewPost->setProperty("class", "primary-button");
-            layout->addWidget(btnNewPost);
-
             renderBottomBar("home");
 
-            QObject::connect(btnNewPost, &QPushButton::clicked, [=](){ new_post(); });
+           
         };
 
         if (!cachedFeedArray.isEmpty()) {

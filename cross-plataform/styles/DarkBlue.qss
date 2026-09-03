@@ -43,8 +43,8 @@ QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
 
 /* Botões sem arredondamento em escuro neutro */
 QPushButton {
-    background-color: #1F1F1F;
-    color: #FFFFFF;
+    background-color: #d6d6d6;
+    color: #1F1F1F;
     border: 1px solid #2A2A2A;
     border-radius: 0px;
     padding: 10px 14px;
@@ -52,11 +52,27 @@ QPushButton {
     max-width: 300px;
 }
 
-QPushButton:hover {
-    background-color: #282828;
-    border: 1px solid #00E5FF;
+QPushButton[class="tab-button"] {
+    background: transparent;
+    color: #8A889D;
+    font-weight: bold;
+    font-size: 13px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 8px 16px;
 }
 
+QPushButton[class="tab-button"]:hover {
+    color: #FFFFFF;
+}
+
+/* Tab selecionada: Fundo cinza bem discreto + linha inferior */
+QPushButton[class="tab-button"][active="true"] {
+    color: #FFFFFF;
+    background-color: #1D1B26;
+    border-bottom: 2px solid #D1D1D6; /* Ou a cor de acento do seu app */
+    border-radius: 4px 4px 0px 0px;
+}
 QPushButton:pressed {
     background-color: #141414;
     border: 1px solid #00B8D4;
