@@ -6,35 +6,37 @@
     android:orientation="vertical"
     android:padding="6dip"
     android:background="@drawable/bg_material_card">
+
     <ImageView
         android:id="@+id/imgProfilePicture"
         android:layout_width="120dip"
         android:layout_height="120dip"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="20dip"
-        android:background="@layout/bg_profile_border"
         android:scaleType="centerCrop"
-        android:padding="2dip"/>
+        android:padding="2dip" />
+
     <TextView
         android:id="@+id/username"
-        android:layout_width="120dip"
-        android:layout_height="120dip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="20dip"
-        android:scaleType="centerCrop"
+        android:layout_marginTop="10dip"
         android:padding="2dip"
         android:textColor="#FFFFFF" />
+
     <Button
         android:id="@+id/btnEdit"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="edit"
         android:layout_marginTop="20dip" />
+
     <Button
         android:id="@+id/btnExit"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="exit account"
-        android:layout_marginTop="20dip" />
+        android:layout_marginTop="10dip" />
 
 </LinearLayout>
