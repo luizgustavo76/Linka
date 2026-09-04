@@ -44,6 +44,14 @@ public class ConfigGroup extends Activity{
         }catch(JSONException e){
             e.printStackTrace();
         }
+        btnChangeName.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(ConfigGroup.this, ChangeGroupName.class);
+                intent.putExtra("groupId", groupId);
+                startActivity(intent);
+            }
+        });
         btnExit.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
