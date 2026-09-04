@@ -148,7 +148,7 @@ def rename_group():
         cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ? AND permissions = 'admin'",(username, group_id))
         result = cur.fetchone()
         if result:
-            cur.execute("UPDATE meta SET name = ? WHERE group_id = ?",(new_name, group_id))
+            cur.execute("UPDATE meta SET name = ? WHERE id = ?", (new_name, group_id))
             conn.commit()
             conn.close()
         else:

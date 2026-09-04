@@ -45,11 +45,12 @@ public class ChangeGroupName extends Activity {
                     JSONObject jsonRequest = new JSONObject();
                     jsonRequest.put("username", username);
                     jsonRequest.put("group_id", groupId);
-                    jsonRequest.put("name_group", edtName.getText().toString().trim());
+                    jsonRequest.put("new_name", edtName.getText().toString().trim());
                     
                     request.requestHTTP(url + "/rename-group", "post", jsonRequest, ChangeGroupName.this);
                     
                     Intent intentGroup = new Intent(ChangeGroupName.this, ChannelsGroupActivity.class);
+                    intentGroup.putExtra("groupId", groupId);
                     startActivity(intentGroup);
                     finish(); 
                 } catch (JSONException e) {
