@@ -137,7 +137,6 @@ public_routes = [
     "meta.return_version",
     "new_session",
     "search.search",
-    "profile.view_profile",
     "post.view_comments",
     "login.register",
     "login.login",
@@ -152,7 +151,7 @@ public_routes = [
 def valide():
     if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post"]:
         return None
-    if request.method == "GET":
+    if request.method == "GET" and request.path not in public_routes:
         return None
     if request.endpoint in public_routes:
         return None

@@ -13,11 +13,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ToggleButton;
-
+import android.widget.CompoundButton;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -27,9 +26,11 @@ public class ViewProfile extends Activity {
     private String username = "";
     private String url = "";
     private String biography = "";
+    private boolean isFriend = false;
     private TextView txtUsername;
     private TextView txtBio;
     private LinearLayout postsContainer;
+    private ToggleButton btnToggleFriend;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,13 +47,13 @@ public class ViewProfile extends Activity {
             e.printStackTrace();
         }
 
-        Intent intent = getIntent();
-        String usernameProfile = intent.getStringExtra("usernameProfile");
+        final String usernameProfile = getIntent().getStringExtra("usernameProfile");
 
         try {
             JSONObject jsonProfile = new JSONObject();
             JSONObject response = new JSONObject(request.requestHTTP(url + "/view_profile/" + usernameProfile, "get", jsonProfile, ViewProfile.this));
             biography = response.optString("bio", "");
+            isFriend = response.optBoolean("is_friend", false);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -61,12 +62,28 @@ public class ViewProfile extends Activity {
         txtUsername = (TextView) findViewById(R.id.txtUsername);
         txtBio = (TextView) findViewById(R.id.txtBio);
         postsContainer = (LinearLayout) findViewById(R.id.postsContainer);
+        btnToggleFriend = (ToggleButton) findViewById(R.id.btnFriendToggle);
 
         txtUsername.setText(usernameProfile);
         txtBio.setText(biography);
 
+        btnToggleFriend.setChecked(isFriend);
+
         ImageLoader imageLoader = new ImageLoader();
         imageLoader.viewProfilePicture(ViewProfile.this, usernameProfile, imgProfilePicture);
+
+        btnToggleFriend.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                try {
+                    JSONObject jsonToggle = new JSONObject();
+                    jsonToggle.put("sender", username);
+                    jsonToggle.put("receiver", usernameProfile);
+                    request.requestHTTP(url + "/toggle-friend", "post", jsonToggle, ViewProfile.this);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }            
+            }
+        });
 
         loadPosts(usernameProfile);
     }

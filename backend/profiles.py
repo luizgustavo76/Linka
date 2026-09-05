@@ -22,6 +22,13 @@ def get_db():
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.execute("PRAGMA cache_size=-10000;")
     return conn
+def get_db_friends():
+    conn = sqlite3.connect(db_dir + "/friends.db")
+    cursor = conn.cursor()
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA cache_size=-10000;")
+    return conn
 def create_table():
     conn = get_db()
     cur = conn.cursor()
@@ -87,10 +94,24 @@ def view(username):
     cur = conn.cursor()
     cur.execute("SELECT * FROM profile WHERE username = ?",(username,))
     response = cur.fetchone()
+    conn_friends = get_db_friends()
+    cur_friends = conn_friends.cursor()
+    is_friend = False
+    cur_friends.execute("""
+        SELECT 1 FROM friends 
+        WHERE (remittee = ? AND receiver = ?) 
+        OR (remittee = ? AND receiver = ?)
+    """, (username, g.username, g.username, username))
+    result = cur_friends.fetchone()
+    if result:
+        is_friend = True
+    else:
+        pass
     conn.close()
     row = {
         "username":response[0],
-        "bio":response[1]
+        "bio":response[1],
+        "is_friend":is_friend
     }
     return jsonify(row), 200
 UPLOAD_FOLDER = "../profile-pictures"
