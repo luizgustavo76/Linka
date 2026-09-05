@@ -88,6 +88,25 @@ def accept():
     conn.commit()
     conn.close()
     return jsonify({"status":"friend add"}),200
+@friends_bp.route("/toggle-friend", methods=["POST"])
+def toggle_friend():
+    data = request.get_data()
+    sender = data.get("sender")
+    receiver = data.get("receiver")
+    if sender == g.username:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT remittee WHERE remittee = ? AND receiver = ?",(sender, receiver))
+        result = cur.fetchone()
+        if result:
+            cur.execute("DELETE FROM friends WHERE remittee = ? AND receiver = ?",(sender, receiver))
+        else:
+            cur.execute("INSERT INTO friends (remittee, receiver) VALUES(?,?)",(sender, receiver))
+        conn.commit()
+        conn.close()
+        return jsonify({"status":"added/remove the friend!"}),200
+    else:
+        return jsonify({"status":"forbidden"}),403
 @friends_bp.route("/unfriend", methods=["POST"])
 def unfriend():
     data = request.get_json()
