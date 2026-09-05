@@ -101,7 +101,7 @@ def toggle_friend():
         if result:
             cur.execute("DELETE FROM friends WHERE remittee = ? AND receiver = ?",(sender, receiver))
         else:
-            cur.execute("INSERT INTO friends (remittee, receiver) VALUES(?,?)",(sender, receiver))
+            cur.execute("INSERT INTO inbox (sender, receiver) VALUES(?,?)",(sender, receiver))
         conn.commit()
         conn.close()
         return jsonify({"status":"added/remove the friend!"}),200
