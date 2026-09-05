@@ -30,7 +30,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 public class optionActivity extends Activity{
-    private Button btnConfigurations;
     private Button btnInbox;
     private Button btnFriends;
     private Button btnChangeServer;
@@ -42,7 +41,6 @@ public class optionActivity extends Activity{
     public void onCreate(Bundle savedInstanceState){        
         super.onCreate(savedInstanceState);        
         setContentView(R.layout.activity_options);
-        btnConfigurations = (Button) findViewById(R.id.btnConfigurations);
         btnInbox = (Button) findViewById(R.id.btnInbox);
         btnFriends = (Button) findViewById(R.id.btnFriends);
         btnChangeServer = (Button) findViewById(R.id.btnChangeServer);
