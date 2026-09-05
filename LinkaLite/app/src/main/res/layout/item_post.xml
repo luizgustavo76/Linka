@@ -58,6 +58,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="Text post"
+        android:autoLink="web|email"
         android:textSize="13sp"
         android:layout_marginTop="4dip"
         android:layout_marginBottom="6dip" 
