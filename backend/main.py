@@ -151,56 +151,33 @@ public_routes = [
 def valide():
     if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post"]:
         return None
-    if request.method == "GET" and request.path not in public_routes:
-        return None
-    if request.endpoint in public_routes:
-        return None
-    print(request.endpoint)
-    data = request.get_json(silent=True) or {}
-    username = data.get("username")
-    
-    
-    if username: 
-        conn = get_db_banned()
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM banned WHERE username = ?", (username,))
-        result_banned = cur.fetchone() 
-        conn.close()
-        
-        if result_banned:
-            json_banned = {
-                "status": "banned",
-                "reason": result_banned[2],
-                "time": result_banned[1]
-            }
-            return jsonify(json_banned), 403
 
-    
     token = request.headers.get("Authorization")
+
+ 
+    if (request.endpoint in public_routes or request.method == "GET") and not token:
+        g.username = None
+        return None
+
     if token is None:
         return jsonify({"status": "the token is empty"}), 403
-    
-    token = token.replace("Bearer ", "")
-    
+    token = token.replace("Bearer ", "").strip()
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT username, expire_date, token FROM tokens WHERE token = ?", (token,))
-    result = cur.fetchone() 
+    result = cur.fetchone()
     conn.close()
-    
+
     if not result:
         return jsonify({"status": "invalid token"}), 403
-
     token_db = result["token"]
-    g.username = username = result["username"]
-
-    
+    g.username = result["username"]
     conn = get_db_banned()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM banned WHERE username = ?", (result["username"],))
-    result_user_banned = cur.fetchone() 
+    cur.execute("SELECT * FROM banned WHERE username = ?", (g.username,))
+    result_user_banned = cur.fetchone()
     conn.close()
-    
     if result_user_banned:
         json_banned = {
             "status": "BANNED",
@@ -208,21 +185,11 @@ def valide():
             "time": result_user_banned[1]
         }
         return jsonify(json_banned), 403
-
-    
-    if result["expire_date"] is None:
-        return None
-    
-    expire_date = result["expire_date"]
-    expire_date = datetime.fromisoformat(expire_date)
-    
-    if token_db == token:
+    if result["expire_date"]:
+        expire_date = datetime.fromisoformat(result["expire_date"])
         if datetime.now() > expire_date:
             return jsonify({"status": "the token has been expired"}), 403
-        else:
-            return None
-    else:
-        return jsonify({"status": "the token is invalid"}), 403
+    return None
 @app.route("/valide-session", methods=["POST"])
 def valideManual():
     public_paths = ["/login", "/register", "/new-session", "/create-profile"]
