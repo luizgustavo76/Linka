@@ -26,12 +26,14 @@ public class ConfigGroup extends Activity{
     private String username="";
     private String url="";
     private int groupId = -1;
+    private Button btnRemoveChannel;
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.config_group);
         btnBanUser = (Button) findViewById(R.id.btnBanUser);
         btnChangeName = (Button) findViewById(R.id.btnChangeName);
         btnExit = (Button) findViewById(R.id.btnExit);
+        btnRemoveChannel = (Button) findViewById(R.id.btnRemoveChannel);
         Intent intentGroup = getIntent();
         groupId = intentGroup.getIntExtra("groupId", -1);
         try{
@@ -48,6 +50,14 @@ public class ConfigGroup extends Activity{
             @Override
             public void onClick(View v){
                 Intent intent = new Intent(ConfigGroup.this, ChangeGroupName.class);
+                intent.putExtra("groupId", groupId);
+                startActivity(intent);
+            }
+        });
+        btnRemoveChannel.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(ConfigGroup.this, RemoveGroupChannel.class);
                 intent.putExtra("groupId", groupId);
                 startActivity(intent);
             }

@@ -119,5 +119,7 @@
             android:label="Ban user"/>
         <activity android:name=".ChangeGroupName" 
             android:label="Change name Group"/>
+        <activity android:name=".RemoveGroupChannel" 
+            android:label="Remove channel"/>
     </application>
 </manifest>
