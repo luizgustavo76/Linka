@@ -57,5 +57,35 @@ public class ChangeServer extends Activity{
                 }
             }
         });
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ChangeServer.this, HomeActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        btnOptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ChangeServer.this, optionActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        btnProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ChangeServer.this, profile.class);
+                startActivity(intent);
+            }
+        });
+        btnChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ChangeServer.this, chatActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 }

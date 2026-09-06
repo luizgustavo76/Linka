@@ -4,8 +4,11 @@ import android.os.Bundle;
 import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
+import android.widget.ImageButton;
 import org.json.JSONObject;
 import org.json.JSONArray;
+import android.view.View;
+import android.content.Intent;
 import org.json.JSONException;
 public class InboxActivity extends Activity {
     private ListView lvInbox;
@@ -13,12 +16,20 @@ public class InboxActivity extends Activity {
     private List<InboxItem> itemList;
     private String url = "";
     private String username = "";
+    private ImageButton btnHome;
+    private ImageButton btnChat;
+    private ImageButton btnOptions;
+    private ImageButton btnProfile;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inbox);
         lvInbox = (ListView) findViewById(R.id.lvInbox);
         itemList = new ArrayList<InboxItem>();
+        btnHome = (ImageButton) findViewById(R.id.btnHome);
+        btnChat = (ImageButton) findViewById(R.id.btnChat);
+        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(InboxActivity.this, "config.cfg"));
@@ -51,5 +62,33 @@ public class InboxActivity extends Activity {
         }
         adapter = new InboxAdapter(this, itemList);
         lvInbox.setAdapter(adapter);
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(InboxActivity.this, HomeActivity.class);
+                startActivity(intent);
+            }
+        });
+        btnChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(InboxActivity.this, chatActivity.class);
+                startActivity(intent);
+            }
+        });
+        btnOptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(InboxActivity.this, optionActivity.class);
+                startActivity(intent);
+            }
+        });
+        btnProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(InboxActivity.this, profile.class);
+                startActivity(intent);
+            }
+        });
     }
 }

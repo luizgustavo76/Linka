@@ -14,11 +14,57 @@
         android:textStyle="bold"
         android:padding="16dip" 
         android:textColor="#FFFFFF" />
+
     <ListView
         android:id="@+id/lvInbox"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1"
         android:divider="#2a2a3c"
         android:dividerHeight="1dip" />
 
+    <LinearLayout 
+        android:layout_width="fill_parent"
+        android:layout_height="40dip" 
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#11111b">
+
+        <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/home"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnChat"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/chat"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnOptions"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/options"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/account"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+    </LinearLayout>
 </LinearLayout>
