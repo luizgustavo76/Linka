@@ -29,6 +29,7 @@ public class profile extends Activity {
     private TextView txtUsername;
     private TextView txtBio;
     private LinearLayout postsContainer;
+    private Button btnEdit;
     private String usernameProfile = "";
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,11 +62,25 @@ public class profile extends Activity {
 
         txtUsername.setText(usernameProfile);
         txtBio.setText(biography);
-
-
+        btnEdit = (Button) findViewById(R.id.btnEdit);
         ImageLoader imageLoader = new ImageLoader();
         imageLoader.viewProfilePicture(profile.this, usernameProfile, imgProfilePicture);
-
+        imgProfilePicture.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(profile.this, ViewPicture.class);
+                intent.putExtra("type", "profile picture");
+                intent.putExtra("username", usernameProfile);
+                startActivity(intent);
+            }
+        });
+        btnEdit.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(profile.this, EditAccount.class);
+                startActivity(intent);
+            }
+        });
         loadPosts(usernameProfile);
     }
 

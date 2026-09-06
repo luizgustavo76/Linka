@@ -121,5 +121,7 @@
             android:label="Change name Group"/>
         <activity android:name=".RemoveGroupChannel" 
             android:label="Remove channel"/>
+        <activity android:name=".ViewPicture" 
+            android:label="picture"/>
     </application>
 </manifest>
