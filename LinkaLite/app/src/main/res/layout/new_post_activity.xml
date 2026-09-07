@@ -39,6 +39,24 @@
             android:text="Send!"
             android:textSize="14sp"
             android:layout_marginTop="10dip" />
+        <Button
+            android:id="@+id/btnImage"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Enter a image"
+            android:textSize="14sp"
+            android:layout_marginTop="10dip" />
+        <TextView
+            android:id="@+id/newPostText"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Links are supported now"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginTop="8dip"
+            android:layout_marginBottom="10dip" 
+        android:textColor="#FFFFFF" />  
+            
 
     </LinearLayout>
 </ScrollView>
