@@ -5,6 +5,7 @@ from datetime import datetime
 import notificationsModule
 import re
 import linkosModule
+import mentions_module
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 post_dir = os.path.join(db_dir, "post.db")
@@ -74,7 +75,7 @@ def view_profile_posts():
             "text_post": single_posts[2],
             "datetime": single_posts[3]
         })
-    return jsonify(posts)   
+    return jsonify(posts)
 @post_bp.route("/view-post", methods=["POST"])
 def view_post():
     data = request.get_json()
@@ -109,6 +110,7 @@ def new_comment():
         date = datetime.now()
         if post_owner:
             notificationsModule.CreateNotification(username, post_owner, date, "comment", text_comment)
+            mentions_module.createMention(op, username, text_comment, None, None, "comment")
         return jsonify({"status": "the comment has been created with sucess!"}), 200
     else:
         return jsonify({"status": "forbidden"}), 403
@@ -147,6 +149,8 @@ def new_post():
                 for user in users_mention:
                     date = datetime.now()
                     notificationsModule.CreateNotification(username, user, date, "mention", f"{username} mentioned you in a post")
+                    mentions_module.createMention(username, user, text_post, None, None, "post")
+
             if not username:
                 return jsonify({"status": "username not send"}), 400
 
