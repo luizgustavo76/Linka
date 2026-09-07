@@ -32,7 +32,7 @@ class LinkaBotSdk:
         except Exception as e:
             print(f"[SDK Error] Failed to get last interaction with {receiver}: {e}")
             return None
-    def view_mentions(self):
+    def mentions(self):
         my_name = str(self.name) if self.name else ""
         token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
         payload = {
@@ -42,7 +42,18 @@ class LinkaBotSdk:
         response = requests.post(self.url + "/view-mentions", json=payload, headers=headers)
         response_json = response.json()
         return response_json
-    def view_inbox(self):
+    def accept_group(self, code):
+        my_name = str(self.name) if self.name else ""
+        token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
+        payload = {
+            "username":my_name,
+            "code":code
+        }
+        headers = {"Authorization":"Bearer " + token_str}
+        response = requests.post(self.url + "/join-group", json=payload, headers=headers)
+        response_json = response.json()
+        return response_json
+    def inbox(self):
         my_name = str(self.name) if self.name else ""
         token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
         payload = {
