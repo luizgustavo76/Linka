@@ -2,7 +2,7 @@ import json
 import os
 import requests
 import setup
-import token_manager
+from . import token_manager
 class LinkaBotSdk:
     def __init__(self):
         if not os.path.exists("config-login.json"):
@@ -32,6 +32,37 @@ class LinkaBotSdk:
         except Exception as e:
             print(f"[SDK Error] Failed to get last interaction with {receiver}: {e}")
             return None
+    def view_mentions(self):
+        my_name = str(self.name) if self.name else ""
+        token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
+        payload = {
+            "username":my_name
+        }
+        headers = {"Authorization":"Bearer " + token_str}
+        response = requests.post(self.url + "/view-mentions", json=payload, headers=headers)
+        response_json = response.json()
+        return response_json
+    def view_inbox(self):
+        my_name = str(self.name) if self.name else ""
+        token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
+        payload = {
+            "username":my_name
+        }
+        headers = {"Authorization":"Bearer " + token_str}
+        response = requests.post(self.url + "/inbox", json=payload, headers=headers)
+        response_json = response.json()
+        return response_json
+    def accept_invite(self, receiver, sender):
+        my_name = str(self.name) if self.name else ""
+        token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
+        payload = {
+            "receiver":my_name,
+            "remittee":sender
+        }
+        headers = {"Authorization":"Bearer " + token_str}
+        response = requests.post(self.url + "/accept", json=payload, headers=headers)
+        response_json = response.json()
+        return response_json
     def view_friends(self) -> list:
         try:
             my_name = str(self.name) if self.name else ""

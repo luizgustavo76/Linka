@@ -21,7 +21,7 @@ def create_db():
     conn.commit()
     conn.close()
 create_db()
-@mentions_bp.route("/view-mentios", methods=["POST"])
+@mentions_bp.route("/view-mentions", methods=["POST"])
 def view_mentios():
     data = request.get_json()
     username = data.get("username")
@@ -35,9 +35,9 @@ def view_mentios():
             result = [dict(row) for row in rows]
             return jsonify(result),200
         else:
-            cur.execute("SELECT * FROM mentions WHERE username = ?", (username))
+            cur.execute("SELECT * FROM mentions WHERE username = ?", (username,))
             rows = cur.fetchall()
             result = [dict(row) for row in rows]
             return jsonify(result),200
     else:
-        return jsonify({"status":"forbidden"}),200
+        return jsonify({"status":"forbidden"}),403
