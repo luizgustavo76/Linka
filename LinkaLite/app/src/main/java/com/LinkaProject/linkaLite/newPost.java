@@ -94,8 +94,20 @@ public class newPost extends Activity {
         protected void onPostExecute(String result) {
             btnImage.setEnabled(true);
             if (result != null && !result.isEmpty()) {
-                textPost.append("\n" + result.trim());
-                Toast.makeText(newPost.this, "Image uploaded!", Toast.LENGTH_SHORT).show();
+                try {
+                    JSONObject jsonResponse = new JSONObject(result);
+                    String imageUrl = jsonResponse.optString("image_url", "");
+
+                    if (!imageUrl.isEmpty()) {
+                        textPost.append("\n[IMAGE]" + imageUrl);
+                        Toast.makeText(newPost.this, "Image uploaded!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(newPost.this, "Invalid response format", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(newPost.this, "Error parsing server response", Toast.LENGTH_SHORT).show();
+                }
             } else {
                 Toast.makeText(newPost.this, "Error in upload image", Toast.LENGTH_SHORT).show();
             }
