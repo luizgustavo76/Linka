@@ -266,7 +266,8 @@ void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
 void renderAvatarImage(QString urlImage, QBoxLayout *postLayout, int size = 40) {
     QLabel *imageLabel = new QLabel();
     imageLabel->setAlignment(Qt::AlignCenter);
-    imageLabel->setFixedSize(50, 50);
+    
+    imageLabel->setFixedSize(size, size);
     imageLabel->setScaledContents(true);
 
     imageLabel->setContextMenuPolicy(Qt::NoContextMenu);
@@ -276,6 +277,7 @@ void renderAvatarImage(QString urlImage, QBoxLayout *postLayout, int size = 40) 
     QNetworkAccessManager *manager = new QNetworkAccessManager(imageLabel);
     QNetworkRequest request((QUrl(urlImage)));
     QNetworkReply *reply = manager->get(request);
+
     QObject::connect(reply, &QNetworkReply::finished, imageLabel, [=]() {
         if (reply->error() == QNetworkReply::NoError) {
             QByteArray dataImage = reply->readAll();
@@ -283,7 +285,12 @@ void renderAvatarImage(QString urlImage, QBoxLayout *postLayout, int size = 40) 
             pixmap.loadFromData(dataImage);
 
             if (!pixmap.isNull()) {
-                QPixmap imagemRedimension = pixmap.scaled(50, 50, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+                QPixmap imagemRedimension = pixmap.scaled(
+                    size, 
+                    size, 
+                    Qt::KeepAspectRatioByExpanding, 
+                    Qt::SmoothTransformation
+                );
 
                 imageLabel->setText("");
                 imageLabel->setPixmap(imagemRedimension);
@@ -292,7 +299,7 @@ void renderAvatarImage(QString urlImage, QBoxLayout *postLayout, int size = 40) 
             }
         } else {
             imageLabel->setText("Err");
-            qDebug() << urlImage;
+            qDebug() << "Erro ao carregar imagem:" << urlImage;
         }
         reply->deleteLater();
     });
