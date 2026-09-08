@@ -263,7 +263,7 @@ void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
         reply->deleteLater();
     });
 }
-void renderAvatarImage(QString urlImage, QBoxLayout *postLayout) {
+void renderAvatarImage(QString urlImage, QBoxLayout *postLayout, int size = 40) {
     QLabel *imageLabel = new QLabel();
     imageLabel->setAlignment(Qt::AlignCenter);
     imageLabel->setFixedSize(50, 50);
@@ -1085,7 +1085,7 @@ int main(int argc, char *argv[])
     std::function<void()> trendingFeed;
     std::function<void(QString)> renderBottomBar;
     std::function<void(QString, QString)> profilePicturePage;
-    std::function<void(QBoxLayout*, QString)> viewProfilePicture;
+    std::function<void(QBoxLayout*, QString, int)> viewProfilePicture;
     std::function<void()> addFederationFeed;
     std::function<void(QString)> federationFeedPage;
     std::function<void(int)> addChannelPage;
@@ -1537,28 +1537,22 @@ int main(int argc, char *argv[])
         );
     };
 
-    otherProfilePage = [&](QString usernameProfile){ // Mantém o [&] para pegar o layout e as variáveis de fora
+    otherProfilePage = [&](QString usernameProfile){ 
         clearLayout(layout);
-
-        // 1. Elementos principais da UI
+        QHBoxLayout *header = new QHBoxLayout();
+        viewProfilePicture(header, usernameProfile, 240);
         QLabel *titleUsername = new QLabel(usernameProfile);
         titleUsername->setStyleSheet("font-size: 16px; font-weight: bold; color: #333333;");
-
-        QLabel *biography = new QLabel(); // Começa vazio
-
+        QLabel *biography = new QLabel(); 
         QPushButton *sentAFriend = new QPushButton(sent_friend_text);
         QPushButton *unFriend = new QPushButton(un_friend_text);
         QPushButton *back_button = new QPushButton(back_text);
 
-        // 2. Requisição HTTP da Bio (Atualizando o texto na ordem certa)
         QString response_bio = requestHTTP(url + "view_profile/" + usernameProfile, "GET", QJsonObject());
         QJsonDocument doc_bio = QJsonDocument::fromJson(response_bio.toUtf8());
         QJsonObject json_response_bio = doc_bio.object();
 
         QString bio = json_response_bio["bio"].toString();
-        biography->setText(bio); // Agora o texto entra no label de verdade
-
-        // 3. Requisição de Amigos e Lógica de Checagem Sem Duplicar Botão
         QJsonObject isFriend;
         isFriend["username"] = username;
 
@@ -1582,7 +1576,8 @@ int main(int argc, char *argv[])
             }
         }
 
-        layout->addWidget(titleUsername);
+        header->addWidget(titleUsername);
+        layout->addLayout(header);
         layout->addWidget(biography);
 
         if (jaEAmigo) {
@@ -1856,8 +1851,9 @@ int main(int argc, char *argv[])
         saveConfig();
         loginPage();
     };
-    QHash<QString, QString> profilePictureCache;
-    viewProfilePicture = [&](QBoxLayout *picLayout, QString username){
+   QHash<QString, QString> profilePictureCache;
+
+    viewProfilePicture = [&](QBoxLayout *picLayout, QString username, int size = 40){
         if(username.isEmpty()){
             return;
         }
@@ -1865,7 +1861,7 @@ int main(int argc, char *argv[])
             qDebug() << "[CACHE HIT] Usando foto do cache para:" << username;
             QString cachedPic = profilePictureCache[username];
             if(cachedPic != "NO_IMAGE") {
-                renderAvatarImage(cachedPic, picLayout);
+                renderAvatarImage(cachedPic, picLayout, size);
             }
             return;
         }
@@ -1888,7 +1884,7 @@ int main(int argc, char *argv[])
         if(!profile_picture.isEmpty()) {
             profilePictureCache[username] = profile_picture;
             qDebug() << "entrando no renderizador de foto" + profile_picture;
-            renderAvatarImage(profile_picture, picLayout);
+            renderAvatarImage(profile_picture, picLayout, size);
         } else {
             profilePictureCache[username] = "NO_IMAGE";
         }
@@ -1897,7 +1893,7 @@ int main(int argc, char *argv[])
         clearLayout(layout);
         fadeTransition(central);
         QHBoxLayout *layoutProfile = new QHBoxLayout();
-        viewProfilePicture(layoutProfile, username);
+        viewProfilePicture(layoutProfile, username, 120);
         QLabel *label_username = new QLabel(username);
         label_username->resize(300, 50);
         label_username->setFixedSize(600, 100);
@@ -2211,7 +2207,7 @@ int main(int argc, char *argv[])
                 QWidget *containerWidget = new QWidget();
                 QPushButton *user = new QPushButton(friendName);
                 QHBoxLayout *buttonLayout = new QHBoxLayout();
-                viewProfilePicture(buttonLayout, username);
+                viewProfilePicture(buttonLayout, username, 40);
                 buttonLayout->addWidget(user);
                 buttonLayout->addStretch();
                 containerWidget->setLayout(buttonLayout);
@@ -2265,7 +2261,7 @@ int main(int argc, char *argv[])
             QString usernameComment = item["username"].toString();
             QHBoxLayout *lineLayout = new QHBoxLayout();
             lineLayout->setAlignment(Qt::AlignTop);
-            viewProfilePicture(lineLayout, usernameComment);
+            viewProfilePicture(lineLayout, usernameComment, 40);
             QVBoxLayout *contentLayout = new QVBoxLayout();
             QLabel *usernameLabel = new QLabel(usernameComment);
             usernameLabel->setStyleSheet("font-weight: bold;");
@@ -2413,7 +2409,7 @@ showfeed = [&]()
                     otherProfilePage(username);
                 });
 
-                viewProfilePicture(usernameLayout, username);
+                viewProfilePicture(usernameLayout, username, 40);
                 usernameLayout->addWidget(lblUser);
                 usernameLayout->addWidget(viewProfile);
                 usernameLayout->addStretch();
@@ -2641,7 +2637,7 @@ showfeed = [&]()
                     usernameLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
                     headerLayout->addStretch();
                     headerLayout->addWidget(usernameLabel);
-                    viewProfilePicture(headerLayout, username);
+                    viewProfilePicture(headerLayout, username, 40);
                     bubbleBlock->addLayout(headerLayout);
                     bubbleBlock->addWidget(bubble);
                     line->addStretch();
@@ -2649,7 +2645,7 @@ showfeed = [&]()
                 }
                 else {
                     usernameLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-                    viewProfilePicture(headerLayout, sender);
+                    viewProfilePicture(headerLayout, sender, 40);
                     headerLayout->addWidget(usernameLabel);
                     headerLayout->addStretch();
                     bubbleBlock->addLayout(headerLayout);
@@ -2802,7 +2798,7 @@ showfeed = [&]()
                 QWidget *containerWidget = new QWidget();
                 QPushButton *user = new QPushButton(friendName);
                 QHBoxLayout *buttonLayout = new QHBoxLayout();
-                viewProfilePicture(buttonLayout, username);
+                viewProfilePicture(buttonLayout, username, 40);
                 buttonLayout->addWidget(user);
                 buttonLayout->addStretch();
                 containerWidget->setLayout(buttonLayout);
@@ -2868,7 +2864,7 @@ showfeed = [&]()
                 QWidget *containerWidget = new QWidget();
                 QPushButton *user = new QPushButton(friendName);
                 QHBoxLayout *buttonLayout = new QHBoxLayout();
-                viewProfilePicture(buttonLayout, username);
+                viewProfilePicture(buttonLayout, username, 40);
                 buttonLayout->addWidget(user);
                 buttonLayout->addStretch();
                 containerWidget->setLayout(buttonLayout);
@@ -2953,7 +2949,7 @@ showfeed = [&]()
                     usernameLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
                     headerLayout->addStretch();
                     headerLayout->addWidget(usernameLabel);
-                    viewProfilePicture(headerLayout, username);
+                    viewProfilePicture(headerLayout, username, 40);
                     bubbleBlock->addLayout(headerLayout);
                     bubbleBlock->addWidget(bubble);
                     line->addStretch();
@@ -2961,7 +2957,7 @@ showfeed = [&]()
                 }
                 else {
                     usernameLabel->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-                    viewProfilePicture(headerLayout, sender);
+                    viewProfilePicture(headerLayout, sender, 40);
                     headerLayout->addWidget(usernameLabel);
                     headerLayout->addStretch();
                     bubbleBlock->addLayout(headerLayout);
@@ -3135,7 +3131,7 @@ showfeed = [&]()
             otherProfilePage(author);
         });
 
-        viewProfilePicture(usernameLayout, displayAuthor);
+        viewProfilePicture(usernameLayout, displayAuthor, 40);
         usernameLayout->addWidget(lblUser);
         usernameLayout->addWidget(viewProfile);
         usernameLayout->addStretch();
@@ -3163,7 +3159,7 @@ showfeed = [&]()
         QLabel *usernameLabel = new QLabel(user);
 
         header->addWidget(backButton);
-        viewProfilePicture(header, user);
+        viewProfilePicture(header, user, 40);
         header->addWidget(usernameLabel);
         header->addStretch();
         layout->addLayout(header);
@@ -3338,7 +3334,7 @@ showfeed = [&]()
         QObject::connect(backButton, &QPushButton::clicked, [=](){
             chatPage();
         });
-        viewProfilePicture(header, user);
+        viewProfilePicture(header, user, 40);
         header->addWidget(usernameLabel);
         layout->addLayout(header);
         header->addStretch();
@@ -3641,20 +3637,29 @@ showfeed = [&]()
         clearLayout(layout);
         fadeTransition(central);
         QList<QWidget*> widgets;
+
         QPushButton *ChatGlobalButton = new QPushButton("Chat Global");
         QPushButton *newChatButton = new QPushButton("new chat");
+        ChatGlobalButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        newChatButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         QObject::connect(newChatButton, &QPushButton::clicked, [=](){
             new_chat();
         });
-        layout->addWidget(newChatButton);
+        
+        newChatButton->setFixedHeight(40);
+        widgets.append(newChatButton);
+        ChatGlobalButton->setFixedHeight(50);
+        widgets.append(ChatGlobalButton);
         QObject::connect(ChatGlobalButton, &QPushButton::clicked, [=]() mutable{
             chatGlobal();
         });
+
         QJsonObject reqJson;
         reqJson["username"] = username;
         QString response_friends = requestHTTP(url + "/friends", "POST", reqJson);
         QString response_groups = requestHTTP(url + "/my-groups", "POST", reqJson);
         QString response_external = requestHTTP(url + "/external-contacts", "POST", reqJson);
+
         QJsonDocument doc_groups = QJsonDocument::fromJson(response_groups.toUtf8());
         QJsonObject obj_groups = doc_groups.object();
         if (obj_groups["status"].toString() == "success") {
@@ -3665,17 +3670,20 @@ showfeed = [&]()
                 QString nameGroup = groupObj["group_name"].toString();
                 QString role = groupObj["role"].toString();
                 if (role.isEmpty()) role = "admin";
+
                 QPushButton *btn = new QPushButton();
                 btn->setText(QString("[Group] %1\nPermission: %2").arg(nameGroup, role));
                 btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-                btn->setMinimumHeight(60);
-                btn->setStyleSheet("QPushButton { text-align: left; padding-left: 15px; font-weight: bold; font-size: 15px; background-color: #1A1A1A; color: #FFFFFF; border: none; border-bottom: 1px solid #282828; border-radius: 0px; } QPushButton:hover { background-color: #252525; } QPushButton:pressed { background-color: #121212; }");
+                btn->setFixedHeight(60);
+                btn->setStyleSheet("QPushButton { text-align: left; padding-left: 15px; font-weight: bold; font-size: 15px; background-color: #1B1B1E; color: #FFFFFF; border: none; border-bottom: 1px solid #282828; border-radius: 0px; } QPushButton:hover { background-color: #252525; } QPushButton:pressed { background-color: #121212; }");
+                
                 QObject::connect(btn, &QPushButton::clicked, [=](){
                     viewChannelGroup(groupId);
                 });
                 widgets.append(btn);
             }
         }
+
         QJsonDocument doc_external = QJsonDocument::fromJson(response_external.toUtf8());
         if (doc_external.isArray()) {
             QJsonArray extArray = doc_external.array();
@@ -3684,20 +3692,24 @@ showfeed = [&]()
                 QString contactId = extObj["username"].toString();
                 QString contactName = extObj["contact_name"].isNull() ? contactId : extObj["contact_name"].toString();
                 QString platform = extObj["url"].toString();
+
                 QPushButton *extBtn = new QPushButton();
                 extBtn->setText(QString("%1\n%2").arg(contactName, platform.toUpper()));
                 extBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-                extBtn->setMinimumHeight(55);
-                extBtn->setStyleSheet("QPushButton { text-align: left; padding-left: 15px; font-weight: bold; font-size: 15px; background-color: #1A1A1A; color: #FFFFFF; border: none; border-bottom: 1px solid #282828; border-radius: 0px; } QPushButton:hover { background-color: #252525; }");
+                extBtn->setFixedHeight(60); 
+                extBtn->setStyleSheet("QPushButton { text-align: left; padding-left: 15px; font-weight: bold; font-size: 15px; background-color: #1B1B1E; color: #FFFFFF; border: none; border-bottom: 1px solid #282828; border-radius: 0px; } QPushButton:hover { background-color: #252525; }");
+                
                 QObject::connect(extBtn, &QPushButton::clicked, [=](){
                     chatExternal(contactName, platform);
                 });
                 widgets.append(extBtn);
             }
         }
+
         QJsonDocument doc_friends = QJsonDocument::fromJson(response_friends.toUtf8());
         QJsonObject obj_friends = doc_friends.object();
         QJsonArray friends = obj_friends["friends"].toArray();
+
         if (friends.isEmpty() && doc_external.array().isEmpty()) {
             QLabel *label_error = new QLabel("No Friends or External Contacts....");
             label_error->setStyleSheet("color: #888888; padding: 15px;");
@@ -3708,20 +3720,26 @@ showfeed = [&]()
                 QString receiver = row[0].toString();
                 QString remittee = row[1].toString();
                 QString friendName = (receiver == username) ? remittee : receiver;
+
                 QWidget *containerWidget = new QWidget();
                 containerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
                 containerWidget->setFixedHeight(60);
-                containerWidget->setStyleSheet("background-color: #1A1A1A; border-bottom: 1px solid #282828;");
+                containerWidget->setStyleSheet("background-color: #1B1B1E; border-bottom: 1px solid #282828;");
+
                 QHBoxLayout *rowLayout = new QHBoxLayout(containerWidget);
                 rowLayout->setContentsMargins(15, 0, 15, 0);
                 rowLayout->setSpacing(12);
-                viewProfilePicture(rowLayout, friendName);
+
+                viewProfilePicture(rowLayout, friendName, 40);
+
                 QPushButton *userBtn = new QPushButton();
                 userBtn->setText(QString("%1\nDM").arg(friendName));
                 userBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
                 userBtn->setStyleSheet("QPushButton { text-align: left; font-weight: bold; font-size: 15px; color: #FFFFFF; background: transparent; border: none; }");
+
                 rowLayout->addWidget(userBtn);
                 rowLayout->addStretch();
+
                 QObject::connect(userBtn, &QPushButton::clicked, [=]() mutable{
                     QTimer::singleShot(0, [=](){
                         chat(friendName);
@@ -3730,8 +3748,23 @@ showfeed = [&]()
                 widgets.append(containerWidget);
             }
         }
-        widgets.append(ChatGlobalButton);
-        scroll_area(layout, widgets);
+
+
+        
+        QWidget *listContainer = new QWidget();
+        QVBoxLayout *listLayout = new QVBoxLayout(listContainer);
+        listLayout->setContentsMargins(0, 0, 0, 0);
+        listLayout->setSpacing(0); // Tira o espaço entre cada item
+        listLayout->setAlignment(Qt::AlignTop); // Coloca tudo no topo
+
+        for (QWidget *w : widgets) {
+            listLayout->addWidget(w);
+        }
+
+        QList<QWidget*> wrappedWidget;
+        wrappedWidget.append(listContainer);
+
+        scroll_area(layout, wrappedWidget);
         renderBottomBar("chat");
     };
     
@@ -3990,7 +4023,7 @@ showfeed = [&]()
                 lblDate->setStyleSheet("color: gray; font-size: 12px;");
                 lblText->setWordWrap(true);
                 lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
-                viewProfilePicture(usernameLayout, username);
+                viewProfilePicture(usernameLayout, username, 40);
                 usernameLayout->addWidget(lblUser);
                 usernameLayout->addWidget(viewProfile);
                 usernameLayout->addStretch();

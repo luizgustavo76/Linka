@@ -1,5 +1,5 @@
 QWidget {
-    background-color: #12181f;
+    background-color: #0E0E10;
     color: #E6E6E6;
     font-family: "Segoe UI";
     font-size: 14px;
@@ -49,7 +49,6 @@ QPushButton {
     border-radius: 0px;
     padding: 10px 14px;
     font-weight: 600;
-    max-width: 300px;
 }
 
 QPushButton[class="tab-button"] {
