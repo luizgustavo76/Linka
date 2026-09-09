@@ -30,6 +30,7 @@ public class profile extends Activity {
     private TextView txtBio;
     private LinearLayout postsContainer;
     private Button btnEdit;
+    private Button btnExit;
     private String usernameProfile = "";
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,12 +60,22 @@ public class profile extends Activity {
         txtUsername = (TextView) findViewById(R.id.txtUsername);
         txtBio = (TextView) findViewById(R.id.txtBio);
         postsContainer = (LinearLayout) findViewById(R.id.postsContainer);
-
+        btnExit = (Button) findViewById(R.id.btnExit);
         txtUsername.setText(usernameProfile);
         txtBio.setText(biography);
         btnEdit = (Button) findViewById(R.id.btnEdit);
         ImageLoader imageLoader = new ImageLoader();
         imageLoader.viewProfilePicture(profile.this, usernameProfile, imgProfilePicture);
+        btnExit.setOnClickListener(new View.OnClickListener()){
+            @Override
+            public void onClick(View v){
+                config cfg = new config();
+                cfg.updateCfg(profile.this, "config.cfg", "FAST_LOGIN", "username", "");
+                cfg.updateCfg(profile.this, "config.cfg", "FAST_LOGIN", "password", "");
+                Intent intent = new Intent(profile.this, LoginActivity.class);
+                startActivity(intent);
+            }
+        }
         imgProfilePicture.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
