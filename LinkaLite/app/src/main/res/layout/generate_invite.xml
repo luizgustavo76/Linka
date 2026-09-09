@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    android:background="#121212" 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical">
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:text="Generate a invite"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginTop="8dip"
+        android:layout_marginBottom="10dip" />
+    <Button
+        android:id="@+id/btnGenerate"
+        android:text="Generate invite!"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"/>
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:text="Basically, invites are a way to make access more exclusive; entry is granted to those who have one—whether by asking an existing user or by interacting within the subreddit or official Discord server."
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginTop="8dip"
+        android:layout_marginBottom="10dip" />
+    <ListView
+        android:id="@+id/listInvites"
+        android:layout_height="0dip"
+        android:layout_weight="1"
+        android:divider="#2a2a3c"
+        android:dividerHeight="1dip"/>
+     <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="40dip" 
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#11111b">
+
+        <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/home"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnChat"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/chat"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnOptions"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/options"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/account"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+    </LinearLayout>
+</LinearLayout>
