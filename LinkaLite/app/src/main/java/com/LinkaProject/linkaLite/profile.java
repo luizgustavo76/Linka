@@ -66,7 +66,7 @@ public class profile extends Activity {
         btnEdit = (Button) findViewById(R.id.btnEdit);
         ImageLoader imageLoader = new ImageLoader();
         imageLoader.viewProfilePicture(profile.this, usernameProfile, imgProfilePicture);
-        btnExit.setOnClickListener(new View.OnClickListener()){
+        btnExit.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
                 config cfg = new config();
@@ -75,7 +75,7 @@ public class profile extends Activity {
                 Intent intent = new Intent(profile.this, LoginActivity.class);
                 startActivity(intent);
             }
-        }
+        });
         imgProfilePicture.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){

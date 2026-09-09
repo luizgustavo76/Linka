@@ -37,6 +37,7 @@ public class optionActivity extends Activity{
     private ImageButton btnChat;
     private ImageButton btnProfile;
     private ImageButton btnOptions;
+    private Button btnGenerateInvite;
     @Override
     public void onCreate(Bundle savedInstanceState){        
         super.onCreate(savedInstanceState);        
@@ -48,6 +49,14 @@ public class optionActivity extends Activity{
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+        btnGenerateInvite = (Button) findViewById(R.id.btnGenerateInvite);
+        btnGenerateInvite.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(optionActivity.this, GenerateInvite.class);
+                startActivity(intent);
+            }
+        });
         btnHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){

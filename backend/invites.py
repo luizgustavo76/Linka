@@ -24,7 +24,32 @@ def create_db():
     conn.commit()
     conn.close()
 create_db()
+from flask import jsonify, request, g
 
+@invites_bp.route("/view-invites", methods=["POST"])
+def view_invites():
+    data = request.get_json() or {}
+    username = data.get("username")
+
+    if username == g.username:
+        conn = get_db()
+        conn.row_factory = sqlite3.Row 
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM activies_invites WHERE username = ?", (username,))
+        rows = cur.fetchall()
+        
+        result = [dict(row) for row in rows]
+        
+        cur.close()
+        conn.close()
+
+        return jsonify({
+            "status": "success",
+            "invites": result
+        }), 200
+
+    return jsonify({"status":"forbidden"}),403
 @invites_bp.route("/create-invite", methods=["POST"])
 def generate_invite():
     data = request.get_json()

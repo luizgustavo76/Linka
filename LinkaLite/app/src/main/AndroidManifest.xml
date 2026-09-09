@@ -123,5 +123,7 @@
             android:label="Remove channel"/>
         <activity android:name=".ViewPicture" 
             android:label="picture"/>
+        <activity android:name=".GenerateInvite" 
+            android:label="Generate invite"/>
     </application>
 </manifest>

@@ -28,9 +28,23 @@ public class GenerateInvite extends Activity{
     private ImageButton btnOptions;
     private ImageButton btnChat;
     private Button btnGenerate;
+    private String url = "";
+    private String username = "";
     private ListView listInvite;
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.generate_invite);
+        try{
+            config cfg = new config();
+            JSONObject jsonCfg = new jsonObject(cfg.loadCfgAsJson(GenerateInvite.this, "config.cfg"));
+            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
+            JSONObject server = jsonCfg.getJSONObject("SERVER");
+            username = fastLogin.optString("username", "");
+            url = server.optString("url", "";)
+        }catch(JSONException e){
+            e.printStackTrace();
+        }
+        btnGenerate = (Button) findViewById(R.id.btnGenerate);
+        listInvite = (ListView) findViewById(R.id.listInvite);
     }
 }
