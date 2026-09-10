@@ -44,7 +44,6 @@ public class GenerateInvite extends Activity {
 
         adapter = new InviteAdapter(GenerateInvite.this, inviteList);
         listInvite.setAdapter(adapter);
-
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(GenerateInvite.this, "config.cfg"));
