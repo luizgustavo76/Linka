@@ -22,6 +22,7 @@ if root_flags["search"]:
 if root_flags["status"]:
     from status import status_bp
 from meta import meta_bp
+from invites import invites_bp
 if root_flags["chat_global"]:
     from chat_global import chat_global_bp
 if root_flags["federations"]:
@@ -246,6 +247,7 @@ if root_flags["friends"]:
     app.register_blueprint(friends_bp)
 app.register_blueprint(meta_bp)
 app.register_blueprint(jobs_bp)
+app.register_blueprint(invites_bp)
 if root_flags["chat_global"]:
     app.register_blueprint(chat_global_bp)
 if root_flags["notifications"]:
