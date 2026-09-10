@@ -23,7 +23,6 @@ def create_db():
         invite_code TEXT UNIQUE,
         status TEXT DEFAULT 'NOT USED')""")
     
-    # Alterado DEFAULT para INTEGER 10
     cur.execute("""CREATE TABLE IF NOT EXISTS invites_remaining(
         username TEXT UNIQUE,
         remaining INTEGER DEFAULT 10)""")
@@ -78,14 +77,19 @@ def generate_invite():
             conn.commit()
             remaining_count = 10
         else:
-            remaining_count = result[0]
+            try:
+                remaining_count = int(result[0])
+            except (ValueError, TypeError):
+                remaining_count = 0
 
         if remaining_count > 0:
             invite = secrets.token_hex(8)
             
             cur.execute("INSERT INTO activies_invites (username, invite_code) VALUES (?, ?)", (username, invite))
             cur.execute("INSERT INTO invites (invite_code, status) VALUES (?, 'NOT USED')", (invite,))
-            cur.execute("UPDATE invites_remaining SET remaining = remaining - 1 WHERE username = ?", (username,))
+            
+            # Garante a atualização matemática limpa
+            cur.execute("UPDATE invites_remaining SET remaining = ? WHERE username = ?", (remaining_count - 1, username))
             conn.commit()
             conn.close()
             

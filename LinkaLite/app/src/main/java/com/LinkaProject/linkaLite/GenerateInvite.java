@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,21 +41,11 @@ public class GenerateInvite extends Activity {
         inviteList = new ArrayList<String>();
         
         btnGenerate = (Button) findViewById(R.id.btnGenerate);
-        listInvite = (ListView) findViewById(R.id.listInvite); // ID alinhado com o XML
-        btnGenerate.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                try{
-                    JSONObject jsonNew = new JSONObject();
-                    jsonNew.put("username", username);
-                    request.requestHTTP(url + "/create-invite", "post", jsonNew, GenerateInvite.this);
-                }catch(JSONException e){
-                    e.printStackTrace();
-                }
-            }
-        });
+        listInvite = (ListView) findViewById(R.id.listInvite);
+
         adapter = new InviteAdapter(GenerateInvite.this, inviteList);
         listInvite.setAdapter(adapter);
+
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(GenerateInvite.this, "config.cfg"));
@@ -71,7 +62,50 @@ public class GenerateInvite extends Activity {
             e.printStackTrace();
         }
 
-        carregarConvites();
+        btnGenerate.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                if (username.equals("") || url.equals("")) {
+                    Toast.makeText(GenerateInvite.this, "Erro de configuração!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            JSONObject jsonNew = new JSONObject();
+                            jsonNew.put("username", username);
+                            
+                            String resp = request.requestHTTP(url + "/create-invite", "post", jsonNew, GenerateInvite.this);
+                            
+                            if (resp != null && !resp.trim().equals("")) {
+                                JSONObject jsonResp = new JSONObject(resp);
+                                String status = jsonResp.optString("status", "");
+                                
+                                if ("invite created!".equals(status)) {
+                                    carregarConvites();
+                                } else {
+                                    final String msg = jsonResp.optString("status", "Erro ao criar convite");
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(GenerateInvite.this, msg, Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+            }
+        });
+
+        if (!username.equals("") && !url.equals("")) {
+            carregarConvites();
+        }
     }
 
     private void carregarConvites() {
@@ -79,11 +113,9 @@ public class GenerateInvite extends Activity {
             @Override
             public void run() {
                 try {
-                    // Declaração do jsonInvite DENTRO da Thread onde ele é usado
                     JSONObject jsonInvite = new JSONObject();
                     jsonInvite.put("username", username);
 
-                    // A variavel jsonInvite é visivel aqui no mesmo escopo
                     String response = request.requestHTTP(url + "/view-invites", "post", jsonInvite, GenerateInvite.this);
 
                     if (response != null && !response.trim().equals("")) {
@@ -92,15 +124,16 @@ public class GenerateInvite extends Activity {
 
                         if ("success".equals(status)) {
                             JSONArray invitesArray = jsonResponse.optJSONArray("invites");
-                            inviteList.clear();
+                            
+                            final List<String> novasList = new ArrayList<String>();
 
                             if (invitesArray != null) {
                                 for (int i = 0; i < invitesArray.length(); i++) {
                                     JSONObject item = invitesArray.optJSONObject(i);
                                     if (item != null) {
-                                        String code = item.optString("code", item.optString("invite_code", ""));
+                                        String code = item.optString("invite_code", item.optString("code", ""));
                                         if (!code.equals("")) {
-                                            inviteList.add(code);
+                                            novasList.add(code);
                                         }
                                     }
                                 }
@@ -109,6 +142,8 @@ public class GenerateInvite extends Activity {
                             handler.post(new Runnable() {
                                 @Override
                                 public void run() {
+                                    inviteList.clear();
+                                    inviteList.addAll(novasList);
                                     adapter.notifyDataSetChanged();
                                 }
                             });
