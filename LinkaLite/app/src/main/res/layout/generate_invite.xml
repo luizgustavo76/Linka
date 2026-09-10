@@ -32,7 +32,7 @@
         android:layout_marginBottom="10dip" />
 
     <ListView
-        android:id="@+id/listInvites"
+        android:id="@+id/listInvite"
         android:layout_width="match_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
