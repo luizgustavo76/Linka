@@ -41,7 +41,18 @@ public class GenerateInvite extends Activity {
         
         btnGenerate = (Button) findViewById(R.id.btnGenerate);
         listInvite = (ListView) findViewById(R.id.listInvite); // ID alinhado com o XML
-
+        btnGenerate.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                try{
+                    JSONObject jsonNew = new JSONObject();
+                    jsonNew.put("username", username);
+                    request.requestHTTP(url + "/create-invite", "post", jsonNew, GenerateInvite.this);
+                }catch(JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        });
         adapter = new InviteAdapter(GenerateInvite.this, inviteList);
         listInvite.setAdapter(adapter);
         try {
