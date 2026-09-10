@@ -11,4 +11,4 @@ public class Group {
     public int getId() { return id; }
     public String getName() { return name; }
     public String getPermissions() { return permissions; }
-}g
+}
