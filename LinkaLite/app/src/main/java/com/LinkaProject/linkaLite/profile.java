@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -32,10 +33,45 @@ public class profile extends Activity {
     private Button btnEdit;
     private Button btnExit;
     private String usernameProfile = "";
+    private ImageButton btnHome;
+    private ImageButton btnChat;
+    private ImageButton btnOptions;
+    private ImageButton btnProfile;
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.my_profile);
-
+        btnHome = (ImageButton) findViewById(R.id.btnHome);
+        btnChat = (ImageButton) findViewById(R.id.btnChat);
+        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(profile.this, HomeActivity.class);
+                startActivity(intent);
+            }
+        });
+        btnOptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(profile.this, optionActivity.class);
+                startActivity(intent);
+            }
+        });
+        btnProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(profile.this, profile.class);
+                startActivity(intent);
+            }
+        });
+        btnChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(profile.this, chatActivity.class);
+                startActivity(intent);
+            }
+        });
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(profile.this, "config.cfg"));

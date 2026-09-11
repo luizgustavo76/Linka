@@ -241,6 +241,16 @@ public class HomeActivity extends Activity {
                             if (!newUrl.isEmpty()) {
                                 imgPost.setVisibility(View.VISIBLE);
                                 String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + newUrl;
+                                imgPost.setOnClickListener(new View.OnClickListener(){
+                                    @Override
+                                    public void onClick(View v){
+                                        Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
+                                        intent.putExtra("type", "Image");
+                                        intent.putExtra("url", urlProxy);
+                                        startActivity(intent);
+                                    }
+                                });
+                
                                 new ImageLoader().LoadImageUrl(urlProxy, imgPost);
                                 textPost.replace(line, "");
                                 break;

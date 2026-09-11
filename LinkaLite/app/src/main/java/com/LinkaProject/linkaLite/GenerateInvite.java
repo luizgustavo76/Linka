@@ -8,7 +8,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
-
+import android.content.Intent;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,10 +42,40 @@ public class GenerateInvite extends Activity {
         
         btnGenerate = (Button) findViewById(R.id.btnGenerate);
         listInvite = (ListView) findViewById(R.id.listInvite);
-
+        btnHome = (ImageButton) findViewById(R.id.btnHome);
+        btnChat = (ImageButton) findViewById(R.id.btnChat);
+        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         adapter = new InviteAdapter(GenerateInvite.this, inviteList);
         listInvite.setAdapter(adapter);
-
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(GenerateInvite.this, HomeActivity.class);
+                startActivity(intent);
+            }
+        });
+        btnOptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(GenerateInvite.this, optionActivity.class);
+                startActivity(intent);
+            }
+        });
+        btnProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(GenerateInvite.this, profile.class);
+                startActivity(intent);
+            }
+        });
+        btnChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(GenerateInvite.this, chatActivity.class);
+                startActivity(intent);
+            }
+        });
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(GenerateInvite.this, "config.cfg"));

@@ -64,19 +64,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Esta é a bio do usuário..."
+                    android:text="This is the user biography..."
                     android:textColor="#FFFFFF"
                     android:textSize="14sp" />
 
-                <!-- Contador de Amigos (Opcional/Mantido) -->
-                <TextView
-                    android:id="@+id/countFriends"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="0 Amigos"
-                    android:textColor="#CCCCCC"
-                    android:textSize="12sp" />
 
             </LinearLayout>
 

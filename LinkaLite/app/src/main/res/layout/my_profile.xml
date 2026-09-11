@@ -108,14 +108,6 @@
                         android:textColor="#FFFFFF"
                         android:textSize="14sp" />
 
-                    <TextView
-                        android:id="@+id/countFriends"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="0 friends"
-                        android:textColor="#CCCCCC"
-                        android:textSize="12sp" />
 
                     <Button
                         android:id="@+id/btnEdit"
