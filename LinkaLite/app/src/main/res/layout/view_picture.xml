@@ -1,27 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:padding="10dp">
+    android:layout_height="fill_parent">
 
-    <Button
-        android:id="@+id/btnDownload"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:text="Download image"
-        android:layout_marginTop="8dp" />
-
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_alignParentTop="true"
-        android:layout_above="@id/btnDownload"
-        android:scaleType="fitCenter" />
     <LinearLayout 
+        android:id="@+id/bottomBar"
         android:layout_width="fill_parent"
         android:layout_height="50dip" 
+        android:layout_alignParentBottom="true"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="#11111b">
@@ -63,4 +49,25 @@
             android:background="@android:color/transparent" />
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btnDownload"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/bottomBar"
+        android:text="Download image"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="6dp"
+        android:layout_marginTop="6dp" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentTop="true"
+        android:layout_above="@id/btnDownload"
+        android:padding="10dp"
+        android:scaleType="fitCenter" />
+
 </RelativeLayout>
