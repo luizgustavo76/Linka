@@ -67,12 +67,10 @@
 void groupButtons(const QString &jsonString, QList<QWidget*> &listaWidgets) {
     QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonString.toUtf8());
     QJsonArray arrayPrincipal;
-
     if (jsonDoc.isArray()) {
         arrayPrincipal = jsonDoc.array();
     } else if (jsonDoc.isObject()) {
         QJsonObject objRaiz = jsonDoc.object();
-
         // Se o back-end envelopar a lista em uma chave chamada "groups" ou "my-groups"
         if (objRaiz.contains("groups") && objRaiz["groups"].isArray()) {
             arrayPrincipal = objRaiz["groups"].toArray();
@@ -84,7 +82,6 @@ void groupButtons(const QString &jsonString, QList<QWidget*> &listaWidgets) {
             miniGrupo.append(objRaiz["name_group"].toString());        // Nome
             miniGrupo.append("");                                      // Data (fallback)
             miniGrupo.append("");                                      // Tipo (fallback)
-
             arrayPrincipal.append(miniGrupo);
         }
     } else {
@@ -94,26 +91,20 @@ void groupButtons(const QString &jsonString, QList<QWidget*> &listaWidgets) {
     for (const QJsonValue &valorInterno : arrayPrincipal) {
         if (valorInterno.isArray()) {
             QJsonArray dadosDoGrupo = valorInterno.toArray();
-
             // Garantia de segurança contra Nulls e falta de parâmetros
             if (dadosDoGrupo.size() >= 2) {
                 int idGrupo = dadosDoGrupo.at(0).toInt();
                 QString nomeGrupo = dadosDoGrupo.at(1).toString();
-
                 // Trata nulos sem quebrar a execução
                 QString dataCriacao = dadosDoGrupo.at(2).isNull() ? "" : dadosDoGrupo.at(2).toString();
                 QString tipoUsuario = dadosDoGrupo.at(3).isNull() ? "" : dadosDoGrupo.at(3).toString();
-
                 // 3. Cria o QPushButton dinamicamente
                 QPushButton *btnGrupo = new QPushButton(nomeGrupo);
-
-
                 // 4. Conexão do clique do botão do grupo
                 QObject::connect(btnGrupo, &QPushButton::clicked, [idGrupo, nomeGrupo]() {
                     qDebug() << "Abriu o grupo de ID:" << idGrupo << "Nome:" << nomeGrupo;
                     // chatGroup(idGrupo);
                 });
-
                 // 5. Em vez de enfiar no layout, joga na lista de widgets recebida por referência!
                 listaWidgets.append(btnGrupo);
             }
@@ -121,7 +112,6 @@ void groupButtons(const QString &jsonString, QList<QWidget*> &listaWidgets) {
     }
 }
 #include <QDebug>
-
 #if defined(Q_OS_ANDROID)
 #include <QtAndroidExtras>
 #include <QAndroidJniObject>
@@ -130,73 +120,59 @@ void groupButtons(const QString &jsonString, QList<QWidget*> &listaWidgets) {
 #include <QSystemTrayIcon>
 #include <QIcon>
 #endif
-
 void sendSystemNotification(const QString &title, const QString &message) {
 #if defined(Q_OS_ANDROID)
-
     // 1. Pega o Contexto nativo do Android 5 via QtAndroid
     QAndroidJniObject context = QtAndroid::androidContext();
     if (!context.isValid()) {
         qWarning() << "Erro ao obter o contexto do Android";
         return;
     }
-
     // 2. Instancia o Builder usando a API do Android 5 (Lollipop - API 21)
     // O construtor aceita APENAS (android.content.Context)
     QAndroidJniObject builder("android/app/Notification$Builder",
                               "(Landroid/content/Context;)V",
                               context.object<jobject>());
-
     if (!builder.isValid()) {
         qWarning() << "Erro ao instanciar o Notification.Builder";
         return;
     }
-
     // 3. Pega o ícone padrão do sistema
     jint defaultIconId = QAndroidJniObject::getStaticField<jint>("android/R$drawable", "sym_def_app_icon");
-
     // 4. Configura o Título
     QAndroidJniObject jTitle = QAndroidJniObject::fromString(title);
     builder.callObjectMethod("setContentTitle",
                              "(Ljava/lang/CharSequence;)Landroid/app/Notification$Builder;",
                              jTitle.object<jstring>());
-
     // 5. Configura a Mensagem
     QAndroidJniObject jMessage = QAndroidJniObject::fromString(message);
     builder.callObjectMethod("setContentText",
                              "(Ljava/lang/CharSequence;)Landroid/app/Notification$Builder;",
                              jMessage.object<jstring>());
-
     // 6. Configura o Ícone
     builder.callObjectMethod("setSmallIcon",
                              "(I)Landroid/app/Notification$Builder;",
                              defaultIconId);
-
     // 7. Define prioridade para mostrar o banner (no Android 5 usa-se setPriority)
     // 1 = Notification.PRIORITY_HIGH (faz a notificação "saltar" no topo da tela)
     jint priorityHigh = 1;
     builder.callObjectMethod("setPriority",
                              "(I)Landroid/app/Notification$Builder;",
                              priorityHigh);
-
     // 8. Pega o NotificationManager do Android
     QAndroidJniObject notificationServiceString = QAndroidJniObject::getStaticObjectField(
         "android/content/Context",
         "NOTIFICATION_SERVICE",
         "Ljava/lang/String;"
         );
-
     QAndroidJniObject notificationManager = context.callObjectMethod(
         "getSystemService",
         "(Ljava/lang/String;)Ljava/lang/Object;",
         notificationServiceString.object<jstring>()
         );
-
     if (!notificationManager.isValid()) return;
-
     // 9. Constrói a Notificação (Usando o método .build() do Lollipop)
     QAndroidJniObject notification = builder.callObjectMethod("build", "()Landroid/app/Notification;");
-
     // 10. Dispara a Notificação
     if (notification.isValid()) {
         jint notificationId = 1001;
@@ -205,7 +181,6 @@ void sendSystemNotification(const QString &title, const QString &message) {
                                              notificationId,
                                              notification.object<jobject>());
     }
-
 // ==========================================
 // DESKTOP IMPLEMENTATION (Linux, Windows, macOS)
 // ==========================================
@@ -213,15 +188,12 @@ void sendSystemNotification(const QString &title, const QString &message) {
     if (!QSystemTrayIcon::isSystemTrayAvailable()) {
         return;
     }
-
     static QSystemTrayIcon *trayIcon = nullptr;
-
     if (!trayIcon) {
         trayIcon = new QSystemTrayIcon();
         trayIcon->setIcon(QIcon::fromTheme("dialog-information", QIcon(":/assets/icon.png")));
         trayIcon->show();
     }
-
     trayIcon->showMessage(
         title,
         message,
@@ -237,20 +209,16 @@ void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
     imageLabel->setContextMenuPolicy(Qt::NoContextMenu);
     imageLabel->setText("Loading image...");
     postLayout->addWidget(imageLabel);
-
     QNetworkAccessManager *manager = new QNetworkAccessManager(imageLabel);
     QNetworkRequest request((QUrl(urlImage)));
     QNetworkReply *reply = manager->get(request);
-
     QObject::connect(reply, &QNetworkReply::finished, imageLabel, [=]() {
         if (reply->error() == QNetworkReply::NoError) {
             QByteArray dataImage = reply->readAll();
             QPixmap pixmap;
             pixmap.loadFromData(dataImage);
-
             if (!pixmap.isNull()) {
                 QPixmap imagemRedimension = pixmap.scaledToWidth(400, Qt::SmoothTransformation);
-
                 imageLabel->setText("");
                 imageLabel->setPixmap(imagemRedimension);
             } else {
@@ -266,24 +234,19 @@ void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
 void renderAvatarImage(QString urlImage, QBoxLayout *postLayout, int size = 40) {
     QLabel *imageLabel = new QLabel();
     imageLabel->setAlignment(Qt::AlignCenter);
-    
     imageLabel->setFixedSize(size, size);
     imageLabel->setScaledContents(true);
-
     imageLabel->setContextMenuPolicy(Qt::NoContextMenu);
     imageLabel->setText("...");
     postLayout->addWidget(imageLabel);
-
     QNetworkAccessManager *manager = new QNetworkAccessManager(imageLabel);
     QNetworkRequest request((QUrl(urlImage)));
     QNetworkReply *reply = manager->get(request);
-
     QObject::connect(reply, &QNetworkReply::finished, imageLabel, [=]() {
         if (reply->error() == QNetworkReply::NoError) {
             QByteArray dataImage = reply->readAll();
             QPixmap pixmap;
             pixmap.loadFromData(dataImage);
-
             if (!pixmap.isNull()) {
                 QPixmap imagemRedimension = pixmap.scaled(
                     size, 
@@ -291,7 +254,6 @@ void renderAvatarImage(QString urlImage, QBoxLayout *postLayout, int size = 40) 
                     Qt::KeepAspectRatioByExpanding, 
                     Qt::SmoothTransformation
                 );
-
                 imageLabel->setText("");
                 imageLabel->setPixmap(imagemRedimension);
             } else {
@@ -308,12 +270,10 @@ void fadeTransition(QWidget *widget)
 {
     QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(widget);
     widget->setGraphicsEffect(effect);
-
     QPropertyAnimation *anim = new QPropertyAnimation(effect, "opacity");
     anim->setDuration(300);
     anim->setStartValue(0);
     anim->setEndValue(1);
-
     anim->start(QAbstractAnimation::DeleteWhenStopped);
 }
 class ChatBubble : public QWidget {
@@ -325,17 +285,13 @@ public:
         setMaximumWidth(550);
         setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     };
-
 protected:
     void paintEvent(QPaintEvent *event) override {
         QPainter painter(this);
         painter.setRenderHint(QPainter::Antialiasing);
-
         QRect bubbleRect = rect().adjusted(10, 5, -10, -5);
-
         QColor bubbleColor;
         QColor textColor;
-
         if (mine) {
             bubbleColor = QColor(173, 216, 230); // Azul-bebê (Light Blue)
             textColor = QColor(30, 30, 30);      // Texto escuro para contrastar no azul claro
@@ -343,16 +299,12 @@ protected:
             bubbleColor = QColor(255, 255, 255); // Branco puro
             textColor = QColor(30, 30, 30);      // Texto escuro para contrastar no branco
         }
-
         painter.setBrush(bubbleColor);
         painter.setPen(Qt::NoPen);
-
         // Raio reduzido de 18 para 6 para deixar o balão bem mais retangular
         painter.drawRoundedRect(bubbleRect, 6, 6);
-
         painter.setPen(textColor);
         painter.setFont(QFont("Arial", 11));
-
         // Ajuste do texto acompanhando o novo padding
         painter.drawText(
             bubbleRect.adjusted(18, 12, -18, -12),
@@ -360,16 +312,13 @@ protected:
             message
         );
     };
-
     QSize sizeHint() const override {
         QFontMetrics fm(QFont("Arial", 11));
         // Largura base do texto aumentada para 450 para o retângulo espalhar mais na tela
         QRect r = fm.boundingRect(0, 0, 450, 1000, Qt::TextWordWrap, message);
-
         // Adicionado mais padding (+80 na largura, +40 na altura) para o balão parecer maior e mais robusto
         return QSize(r.width() + 80, r.height() + 40);
     };
-
 private:
     QString message;
     bool mine;
@@ -379,10 +328,8 @@ std::string trim(const std::string &s)
 {
     size_t start = s.find_first_not_of(" \t\r\n");
     size_t end = s.find_last_not_of(" \t\r\n");
-
     if(start == std::string::npos)
         return "";
-
     return s.substr(start, end - start + 1);
 }
 std::map<std::string, std::map<std::string, std::string>> config;
@@ -395,56 +342,41 @@ void loadConfig()
 {
     QString path = configPath();
     qDebug() << "Caminho config:" << path;
-
     // Se não existe, copia do resource
     if (!QFile::exists(path))
     {
         qDebug() << "Config não existe, copiando do resource...";
-
         QFile res(":/config-login.cfg");
-
         if (!res.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             qDebug() << "ERRO: não conseguiu abrir o resource :/config-login.cfg";
             return;
         }
-
         QFile out(path);
-
         if (!out.open(QIODevice::WriteOnly | QIODevice::Text))
         {
             qDebug() << "ERRO: não conseguiu criar config em:" << path;
             res.close();
             return;
         }
-
         out.write(res.readAll());
-
         out.close();
         res.close();
-
         qDebug() << "Config copiada com sucesso!";
     }
-
     QFile file(path);
-
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         qDebug() << "ERRO ao abrir config-login.cfg no caminho:" << path;
         return;
     }
-
     QTextStream in(&file);
-
     std::string section;
     QString line;
-
     while (!in.atEnd())
     {
         line = in.readLine().trimmed();
-
         if (line.isEmpty()) continue;
-
         if (line.startsWith("[") && line.contains("]"))
         {
             section = line.toStdString();
@@ -453,38 +385,27 @@ void loadConfig()
         else
         {
             int pos = line.indexOf('=');
-
             if (pos != -1)
             {
                 QString key = line.left(pos).trimmed();
                 QString value = line.mid(pos + 1).trimmed();
-
                 config[section][key.toStdString()] = value.toStdString();
             }
         }
     }
-
     file.close();
-
     qDebug() << "Config carregada com sucesso!";
 }
 void saveConfig() {
-
     QString dirPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     QDir().mkpath(dirPath);
-
     QString filePath = dirPath + "/config-login.cfg";
-
     qDebug() << "Salvando config em:" << filePath;
-
     std::ofstream file(filePath.toStdString());
-
     file << "[SERVER]\n";
     file << "url = " << config["SERVER"]["url"] << "\n\n";
-
     file << "[LANG]\n";
     file << "lang = " << config["LANG"]["lang"] << "\n\n";
-
     file << "[FAST-LOGIN]\n";
     file << "username = " << config["FAST-LOGIN"]["username"] << "\n";
     file << "token = " << config["FAST-LOGIN"]["token"] << "\n";
@@ -492,10 +413,8 @@ void saveConfig() {
     file << "token_session = " << config["FAST-LOGIN"]["token_session"] << "\n\n";
     file << "[FEDERATIONS]\n";
     file << "url = " << config["FEDERATIONS"]["url"] << "\n\n";
-
     file << "[THEMES]\n";
     file << "theme = " << config["THEMES"]["theme"] << "\n";
-
     file.close();
 }
 QString requestHTTP(
@@ -508,108 +427,81 @@ QString requestHTTP(
 QString newSession(QString username, QString password)
 {
     loadConfig();
-
     QString url =
         QString::fromStdString(
             config["SERVER"]["url"]
         );
-
     QNetworkAccessManager manager;
-
     QJsonObject json;
     json["username"] = username;
     json["password"] = password;
-
     QNetworkRequest request;
     request.setUrl(QUrl(url + "/new-session"));
-
     request.setHeader(
         QNetworkRequest::ContentTypeHeader,
         "application/json"
     );
-
     QByteArray data =
         QJsonDocument(json).toJson();
-
     QNetworkReply *reply =
         manager.post(request, data);
-
     QEventLoop loop;
-
     QObject::connect(
         reply,
         &QNetworkReply::finished,
         &loop,
         &QEventLoop::quit
     );
-
     loop.exec();
-
     QString response =
         reply->readAll();
-
     reply->deleteLater();
-
     QJsonDocument doc =
         QJsonDocument::fromJson(
             response.toUtf8()
         );
-
     if(!doc.isObject())
     {
         qDebug() << "Resposta inválida:" << response;
         return "";
     }
-
     QJsonObject obj = doc.object();
-
     QString token =
         obj["token"].toString();
-
     return token;
 }
 QString renoveToken() {
     loadConfig();
-
     QString url = QString::fromStdString(config["SERVER"]["url"]);
-
     // Criamos um manager exclusivo e isolado para esta renovação
     QNetworkAccessManager isolatorManager;
     QNetworkRequest request;
     request.setUrl(QUrl(url + "/new-session"));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
     // Montando o payload usando nlohmann::json (C++ antigo compatível)
     json newTokenJson;
     newTokenJson["username"] = config["FAST-LOGIN"]["username"];
     newTokenJson["password"] = config["FAST-LOGIN"]["password"];
-
     QByteArray data = QByteArray::fromStdString(newTokenJson.dump());
-
     // Faz o POST direto pelas entranhas do Qt Network
     QNetworkReply *reply = isolatorManager.post(request, data);
-
     // EventLoop local para travar a execução até responder (Síncrono)
     QEventLoop loop;
     QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
     loop.exec();
-
     // Lê a resposta bruta do servidor
     QString response = reply->readAll();
     int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     reply->deleteLater();
-
     // Se a renovação de token falhar ou der erro de credenciais (ex: 401 ou 400)
     // nós paramos aqui para evitar loops com o servidor
     if (code != 200 && code != 201) {
         qDebug() << "Falha critica ao renovar token. Status:" << code;
         return "";
     }
-
     try {
         json doc = json::parse(response.toStdString());
         std::string newToken = doc.value("token", "");
-
         if (!newToken.empty()) {
             config["FAST-LOGIN"]["token_session"] = newToken;
             saveConfig();
@@ -619,11 +511,8 @@ QString renoveToken() {
     } catch (...) {
         qDebug() << "Erro ao parsear JSON na renovacao de token.";
     }
-
     return "";
 }
-
-
 QString requestHTTP(const QString &url,
                     const QString &method,
                     const QJsonObject &json,
@@ -633,21 +522,17 @@ QString requestHTTP(const QString &url,
     QNetworkAccessManager manager;
     QNetworkRequest request;
     request.setUrl(QUrl(url));
-
     QString m = method.toUpper();
     if (m != "GET") {
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     }
-
     loadConfig();
     QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
     if (!token.isEmpty()) {
         request.setRawHeader("Authorization", QString("Bearer %1").arg(token).toUtf8());
     }
-
     QNetworkReply *reply = nullptr;
     QByteArray jsonData = QJsonDocument(json).toJson();
-
     if (m == "GET") { reply = manager.get(request); }
     else if (m == "POST") { reply = manager.post(request, jsonData); }
     else if (m == "PUT") { reply = manager.put(request, jsonData); }
@@ -656,30 +541,24 @@ QString requestHTTP(const QString &url,
         if (statusCode) *statusCode = -1;
         return "ERROR: invalid method";
     }
-
     QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);
-
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-
     timer.start(timeoutMs);
     loop.exec(); // Executa o loop com segurança dentro da UI
-
     if (!timer.isActive()) {
         reply->abort();
         if (statusCode) *statusCode = 408;
         reply->deleteLater();
         return "ERRO: Timeout";
     }
-
     int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode) *statusCode = code;
     if (code == 403) {
         renoveToken();
     }
-
     QString response = reply->readAll();
     reply->deleteLater();
     return response;
@@ -692,14 +571,12 @@ QString requestMultipart(const QString &url,
     QNetworkAccessManager manager;
     QNetworkRequest request;
     request.setUrl(QUrl(url));
-
     // Carrega o token das configurações
     loadConfig();
     QString token = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
     if (!token.isEmpty()) {
         request.setRawHeader("Authorization", QString("Bearer %1").arg(token).toUtf8());
     }
-
     // Abre o arquivo para envio
     QFile *file = new QFile(filePath);
     if (!file->open(QIODevice::ReadOnly)) {
@@ -707,33 +584,26 @@ QString requestMultipart(const QString &url,
         delete file;
         return "ERROR: Could not open file";
     }
-
     // Prepara o formulário Multipart
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
     QHttpPart imagePart;
     QFileInfo fileInfo(filePath);
-
     imagePart.setHeader(QNetworkRequest::ContentDispositionHeader,
         QVariant(QString("form-data; name=\"image\"; filename=\"%1\"").arg(fileInfo.fileName())));
     imagePart.setBodyDevice(file);
     file->setParent(multiPart); // O arquivo será deletado junto com o multiPart
     multiPart->append(imagePart);
-
     // Envia a requisição POST
     QNetworkReply *reply = manager.post(request, multiPart);
     multiPart->setParent(reply); // O multiPart será deletado junto com a reply
-
     // Controla a espera da resposta (Síncrono sem bloquear a UI)
     QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);
-
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-
     timer.start(timeoutMs);
     loop.exec(); // Aguarda a requisição terminar ou estourar o timeout
-
     // Tratamento de Timeout
     if (!timer.isActive()) {
         reply->abort();
@@ -741,29 +611,23 @@ QString requestMultipart(const QString &url,
         reply->deleteLater();
         return "ERRO: Timeout";
     }
-
     // Processa o resultado HTTP
     int code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode) *statusCode = code;
     if (code == 403) {
         renoveToken();
     }
-
     QString response = reply->readAll();
     reply->deleteLater();
-
     return response;
 }
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-
 #endif
-
 void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
 {
     QScrollArea *scroll = new QScrollArea();
     scroll->setWidgetResizable(true);
     scroll->setFrameShape(QFrame::NoFrame);
-
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QScroller::grabGesture(scroll, QScroller::LeftMouseButtonGesture);
     scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -783,13 +647,10 @@ void scroll_area(QVBoxLayout *layout, const QList<QWidget*> &widgets)
     scroll->setWidget(container);
     layout->addWidget(scroll);
 }
-
 void loadStyle()
 {
     loadConfig();
-
     QString themePath = QString::fromStdString(config["THEMES"]["theme"]).trimmed();
-
     if (themePath.isEmpty()) {
         themePath = ":/styles/DarkBlue.qss";
     }
@@ -797,26 +658,20 @@ void loadStyle()
         QDir appDir(QCoreApplication::applicationDirPath());
         themePath = appDir.filePath(themePath);
     }
-
     QFile file(themePath);
-
     if (!file.exists()) {
         qDebug() << "QSS não encontrado em:" << themePath;
         return;
     }
-
     if (!file.open(QFile::ReadOnly | QFile::Text)) {
         qDebug() << "QSS FAILED:" << file.errorString();
         return;
     }
-
     QString qss = QString::fromUtf8(file.readAll());
-
     if (qss.isEmpty()) {
         qDebug() << "QSS arquivo vazio!";
         return;
     }
-
     if (qApp) {
         qApp->setStyleSheet(qss);
         qDebug() << "QSS carregado com sucesso de:" << themePath;
@@ -826,7 +681,6 @@ void loadStyle()
 }
 void clearLayout(QLayout *layout) {
     if (!layout) return;
-
     QLayoutItem *item;
     while ((item = layout->takeAt(0))) {
         if (item->layout()) {
@@ -856,7 +710,6 @@ int main(int argc, char *argv[])
     QString token_session = QString::fromStdString(config["FAST-LOGIN"]["token_session"]);
     QtConcurrent::run([&]() {
          QNetworkAccessManager manager;
-
         while (true) {
             if (!username.isEmpty()) {
                 QUrl notifUrl(url + "/notifications");
@@ -867,26 +720,20 @@ int main(int argc, char *argv[])
                 QJsonObject json_notifications;
                 json_notifications["username"] = username;
                 QByteArray data = QJsonDocument(json_notifications).toJson();
-
                 QNetworkReply *reply = manager.post(request, data);
-
                 QEventLoop loop;
                 QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
                 loop.exec();
-
                 if (reply->error() == QNetworkReply::NoError) {
                     QByteArray responseData = reply->readAll();
                     QJsonDocument doc = QJsonDocument::fromJson(responseData);
-
                     if (doc.isArray()) {
                         QJsonArray notificationsArray = doc.array();
-
                         for (const QJsonValue &val : notificationsArray) {
                             QJsonObject notifObj = val.toObject();
                             QString from_user = notifObj["from_user"].toString();
                             QString content = notifObj["content"].toString();
                             int notifId = notifObj["id"].toInt();
-
                             // Envia a notificação no SO
                             sendSystemNotification(from_user, content);
                             QUrl readUrl(url + "/set-read-notification");
@@ -905,10 +752,8 @@ int main(int argc, char *argv[])
                 } else {
                     qDebug() << "Erro HTTP na Thread:" << reply->errorString();
                 }
-
                 reply->deleteLater();
             }
-
             QThread::sleep(3);
         }
     });
@@ -926,24 +771,20 @@ int main(int argc, char *argv[])
         config["FAST-LOGIN"]["token_session"] = new_token.toStdString();
         saveConfig();
     }
-
     if (config["LANG"]["lang"] == "pt-br"){
         if (translator->load(":/translations/pt-br-main-page.qm")) {
             app.installTranslator(translator);
         }
     };
-
     app.setStyle(QStyleFactory::create("breeze"));
     loadConfig();
     loadStyle();
-
     for (auto &sec : config) {
         std::cout << "[" << sec.first << "]\n";
         for (auto &kv : sec.second) {
             std::cout << "  " << kv.first << " = " << kv.second << "\n";
         }
     }
-
     if (url.isEmpty())
     {
         config["SERVER"]["url"] = "http://linkaProject.pythonanywhere.com";
@@ -951,7 +792,6 @@ int main(int argc, char *argv[])
         saveConfig();
     }
     qDebug() << "url" << url;
-
     QFont fonteGlobal = app.font();
     app.setFont(fonteGlobal);
     QMainWindow window;
@@ -1020,18 +860,14 @@ int main(int argc, char *argv[])
     QString add_external_chat = QCoreApplication::translate("chat", "add external name");
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
-
     window.setCentralWidget(central);
-
     QNetworkAccessManager *manager = new QNetworkAccessManager(&window);
-
     auto entry = [&](QString text) -> QLineEdit* {
         QLineEdit *input = new QLineEdit();
         input->setPlaceholderText(text);
         layout->addWidget(input);
         return input;
     };
-
     auto renderTopBar = [&](QString title, std::function<void()> onBack) {
         QHBoxLayout *headerLayout = new QHBoxLayout();
         QLabel *titleLabel = new QLabel(title);
@@ -1097,6 +933,7 @@ int main(int argc, char *argv[])
     std::function<void(QString)> federationFeedPage;
     std::function<void(int)> addChannelPage;
     std::function<void(int)> viewChannelGroup;
+    std::function<void()> generateInvitePage;
     loginPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1133,7 +970,6 @@ int main(int argc, char *argv[])
         QObject::connect(send_button, &QPushButton::clicked, [=, &token_session, &username]() mutable {
             QString userTxt = usernameEntry->text();
             QString passTxt = passwordEntry->text();
-
             QString token_gerado = newSession(userTxt, passTxt);
             if (!token_gerado.isEmpty()){
                 loadConfig();
@@ -1189,17 +1025,14 @@ int main(int argc, char *argv[])
     QByteArray byteArray = response_version.toUtf8();
     QJsonDocument doc = QJsonDocument::fromJson(byteArray);
     QJsonObject jsonObject = doc.object();
-
     QString min_ver_str = jsonObject["minim-version"].toString().trimmed();
     QString linkUpdate = jsonObject["url"].toString();
     QString cur_ver_str = current_version.trimmed();
-
     double min_version_num = min_ver_str.toDouble();
     double cur_version_num = cur_ver_str.toDouble();
     qDebug() << "--- CHECAGEM DE VERSÃO ---";
     qDebug() << "Do Servidor (string):" << min_ver_str << " -> (número):" << min_version_num;
     qDebug() << "No App Local (string):" << cur_ver_str << " -> (número):" << cur_ver_str;
-
     // 3. Faça a comparação numérica pura. Não tem como o C++ errar que 2.0 > 1.0!
     if (min_version_num > cur_version_num){
         qDebug() << "Bloqueando o app! Indo para a tela de atualização...";
@@ -1230,7 +1063,6 @@ int main(int argc, char *argv[])
     {
         QPushButton *btn = new QPushButton(text);
         layout->addWidget(btn);
-
         QObject::connect(btn, &QPushButton::clicked, [func]() {
             func();
         });
@@ -1249,7 +1081,6 @@ int main(int argc, char *argv[])
             post
         );
         initialPage();
-
     };
     auto new_post = [&](){
         clearLayout(layout);
@@ -1275,7 +1106,6 @@ int main(int argc, char *argv[])
                 "",
                 "Images (*.png *.jpg *.jpeg *.webp)"
             );
-
             if (!filePath.isEmpty()) {
                 int statusCode = 0;
                 QString response = requestMultipart(
@@ -1286,14 +1116,11 @@ int main(int argc, char *argv[])
                 );
                 QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
                 QJsonObject obj = doc.object();
-
                 *urlImage = obj["image_url"].toString();
-
                 qDebug() << response;
                 qDebug() << *urlImage;
             }
         });
-
         QObject::connect(sendButton, &QPushButton::clicked, [=](){
             if (!urlImage->isEmpty()){
                 new_post_request(textPost->toPlainText() + "\n" + "[IMAGE]" + *urlImage + "\n", username);
@@ -1302,12 +1129,10 @@ int main(int argc, char *argv[])
             }
             delete urlImage;
         });
-
         QObject::connect(backButton, &QPushButton::clicked, [=](){
             initialPage();
         });
     };
-
     friendsPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
@@ -1369,7 +1194,6 @@ int main(int argc, char *argv[])
                     );
                 });
             });
-
         };
         scroll_area(layout, notifications);
         QPushButton *back_button = new QPushButton(back_text);
@@ -1392,30 +1216,20 @@ int main(int argc, char *argv[])
         layout->addWidget(buttonAdd);
         layout->addWidget(button_back);
         QObject::connect(buttonAdd, &QPushButton::clicked, [=]() mutable {
-
             qDebug() << "Caminho config:" << QFileInfo("config-login.cfg").absoluteFilePath();
             qDebug() << "Digitado:" << urlEntry->text();
-
             QString raw = QString::fromStdString(config["FEDERATIONS"]["url"]);
-
             if(raw.trimmed().isEmpty())
                 raw = "[]";
-
             QJsonDocument doc = QJsonDocument::fromJson(raw.toUtf8());
             QJsonArray arr;
-
             if(doc.isArray())
                 arr = doc.array();
-
             arr.append(urlEntry->text());
-
             QJsonDocument newDoc(arr);
-
             config["FEDERATIONS"]["url"] =
                 newDoc.toJson(QJsonDocument::Compact).toStdString();
-
             saveConfig();
-
         });
         renderBottomBar("options");
     };
@@ -1449,15 +1263,12 @@ int main(int argc, char *argv[])
         QObject::connect(DarkBlueButton, &QPushButton::clicked, [=](){
             applyTheme(":/styles/DarkBlue.qss", "styles/DarkBlue.qss");
         });
-
         QObject::connect(DarkGreenButton, &QPushButton::clicked, [=](){
             applyTheme(":/styles/DarkGreen.qss", "styles/DarkGreen.qss");
         });
-
         QObject::connect(DarkMaroonButton, &QPushButton::clicked, [=](){
             applyTheme(":/styles/DarkMaroon.qss", "styles/DarkMaroon.qss");
         });
-
         QObject::connect(DarkPurpleButton, &QPushButton::clicked, [=](){
             applyTheme(":/styles/DarkPurple.qss", "styles/DarkPurple.qss");
         });
@@ -1469,19 +1280,16 @@ int main(int argc, char *argv[])
                         QDir::homePath(),
                         "All the files (*.*)"
                     );
-
                     if(filePath.isEmpty())
                     {
                         return;
                     }
                     QFile file(filePath);
-
                     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
                     {
                         QMessageBox::critical(nullptr, "Error", "Cannot open the file!");
                         return;
                     }
-
                     QTextStream in(&file);
                     QString content = in.readAll();
                     file.close();
@@ -1492,19 +1300,15 @@ int main(int argc, char *argv[])
                             return;
                         }
                         QJsonObject inputJsonObj = inputDoc.object();
-
                         QJsonObject theme_payload;
                         theme_payload["input"] = inputJsonObj;
                         theme_payload["output"] = "qss";
-
                         QString response_theme = requestHTTP(
                             url + "/convert-theme",
                             "POST",
                             theme_payload
                         );
-
                         if (!response_theme.isEmpty() && !response_theme.contains("Error")) {
-
                             qApp->setStyleSheet(response_theme);
                         }
                     }else{
@@ -1543,7 +1347,6 @@ int main(int argc, char *argv[])
             &status_code
         );
     };
-
     otherProfilePage = [&](QString usernameProfile){ 
         clearLayout(layout);
         QHBoxLayout *header = new QHBoxLayout();
@@ -1554,62 +1357,48 @@ int main(int argc, char *argv[])
         QPushButton *sentAFriend = new QPushButton(sent_friend_text);
         QPushButton *unFriend = new QPushButton(un_friend_text);
         QPushButton *back_button = new QPushButton(back_text);
-
         QString response_bio = requestHTTP(url + "view_profile/" + usernameProfile, "GET", QJsonObject());
         QJsonDocument doc_bio = QJsonDocument::fromJson(response_bio.toUtf8());
         QJsonObject json_response_bio = doc_bio.object();
-
         QString bio = json_response_bio["bio"].toString();
         QJsonObject isFriend;
         isFriend["username"] = username;
-
         QString response = requestHTTP(url + "/friends", "POST", isFriend);
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
         QJsonObject json_response = doc.object();
         QJsonArray friendsArray = json_response["friends"].toArray();
-
         bool jaEAmigo = false;
-
         for (int i = 0; i < friendsArray.size(); ++i) {
             QJsonArray subArray = friendsArray[i].toArray();
             if (subArray.size() >= 2) {
                 QString friendCheck1 = subArray[0].toString();
                 QString friendCheck2 = subArray[1].toString();
-
                 if (friendCheck1 == usernameProfile || friendCheck2 == usernameProfile) {
                     jaEAmigo = true;
                     break;
                 }
             }
         }
-
         header->addWidget(titleUsername);
         layout->addLayout(header);
         layout->addWidget(biography);
-
         if (jaEAmigo) {
             layout->addWidget(unFriend);
-
             QObject::connect(unFriend, &QPushButton::clicked, [=](){
                 sentUnFriendRequest(usernameProfile);
             });
-
             delete sentAFriend;
         } else {
             layout->addWidget(sentAFriend);
-
             QObject::connect(sentAFriend, &QPushButton::clicked, [=](){
                 sentFriendRequest(usernameProfile);
             });
-
             delete unFriend;
         }
-
         layout->addWidget(back_button);
         QObject::connect(back_button, &QPushButton::clicked, [=](){
             initialPage();
         });
-
         renderBottomBar("profile");
     };
     changeLangPage = [&](){
@@ -1670,7 +1459,6 @@ int main(int argc, char *argv[])
         QObject::connect(button_change_lang, &QPushButton::clicked, [=](){
                 changeLangPage();
         });
-
         buttons.append(button_back);
         buttons.append(button_add_theme);
         buttons.append(button_add_federation);
@@ -1700,15 +1488,47 @@ int main(int argc, char *argv[])
         });
         renderBottomBar("options");
     };
+    generateInvitePage = [&]() {
+        clearLayout(layout);
+        fadeTransition(central);
+        QList<QWidget*> widgets;
+        QPushButton *generateButton = new QPushButton("Generate invite");
+        QObject::connect(generateButton, &QPushButton::clicked, [&]() {
+            QJsonObject jsonNew;
+            jsonNew["username"] = username;
+            requestHTTP(url + "/create-invite", "POST", jsonNew);
+        });
+        layout->addWidget(generateButton);
+        QJsonObject jsonView;
+        jsonView["username"] = username;
+        QByteArray viewData = QJsonDocument(jsonView).toJson();
+        QString responseStr = requestHTTP(url + "/view-invites", "POST", jsonView);
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(responseStr.toUtf8());
+        QJsonObject response = jsonDoc.object();
+        QJsonArray invitesArray = response["invites"].toArray();
+        for (const QJsonValue &value : invitesArray) {
+            QJsonObject inviteObj = value.toObject();
+            QString inviteCode = inviteObj["invite_code"].toString();
+            QString inviteUser = inviteObj["username"].toString();
+            QLabel *inviteLabel = new QLabel(QString("Code: %1 (Create: %2)")
+                                            .arg(inviteCode)
+                                            .arg(inviteUser));
+            widgets.append(inviteLabel);
+        }
+        scroll_area(layout, widgets);
+        renderBottomBar("options");
+    };
     options = [&]()
     {
         clearLayout(layout);
         fadeTransition(central);
         QList<QWidget*> buttons;
+        QPushButton *generateInvite = new QPushButton("Generate invite");
         QPushButton *friends = new QPushButton(friends_text);
         QPushButton *inbox = new QPushButton(inbox_text);
         QPushButton *button_options = new QPushButton(options_text);
         QPushButton *button_change_url = new QPushButton(url);
+        buttons.append(generateInvite);
         buttons.append(button_options);
         buttons.append(inbox);
         buttons.append(friends);
@@ -1717,6 +1537,9 @@ int main(int argc, char *argv[])
                 QTimer::singleShot(0, [optionsPage](){
                     if (optionsPage) optionsPage();
                 });
+        });
+        QObject::connect(generateInvite, &QPushButton::clicked, [=](){
+            generateInvitePage();
         });
         QObject::connect(inbox, &QPushButton::clicked, [=](){
                 QTimer::singleShot(0, [inboxPage](){
@@ -1764,9 +1587,7 @@ int main(int argc, char *argv[])
         clearLayout(layout);
         fadeTransition(central);
         renderPostImage(actualImage, layout);
-
         QPushButton *newPicture = new QPushButton(profile_picture_text);
-
         // Capturamos apenas por valor [=], garantindo total segurança de memória
         QObject::connect(newPicture, &QPushButton::clicked, [=]() mutable {
             QString filePath = QFileDialog::getOpenFileName(
@@ -1775,7 +1596,6 @@ int main(int argc, char *argv[])
                 "",
                 "Images (*.png *.jpg *.jpeg *.webp)"
             );
-
             if (!filePath.isEmpty()) {
                 int statusCode = 0;
                 QString response = requestMultipart(
@@ -1786,26 +1606,19 @@ int main(int argc, char *argv[])
                 );
                 QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
                 QJsonObject obj = doc.object();
-
                 // 1. Pegamos a string real da URL vinda do JSON
                 QString linkUrl = obj["image_url"].toString();
-
                 qDebug() << "Resposta do servidor:" << response;
                 qDebug() << "Link da URL obtido:" << linkUrl;
-
                 // 2. Guardamos o texto com segurança dentro do próprio botão
                 newPicture->setProperty("saved_url", linkUrl);
-
                 clearLayout(layout);
-
                 // 3. Recuperamos a string guardada e passamos para a função renderizar
                 QString urlParaRenderizar = newPicture->property("saved_url").toString();
                 renderPostImage(urlParaRenderizar, layout);
-
                 renderBottomBar("profile");
             }
         });
-
         layout->addWidget(newPicture);
         renderBottomBar("profile");
     };
@@ -1859,7 +1672,6 @@ int main(int argc, char *argv[])
         loginPage();
     };
    QHash<QString, QString> profilePictureCache;
-
     viewProfilePicture = [&](QBoxLayout *picLayout, QString username, int size = 40){
         if(username.isEmpty()){
             return;
@@ -1872,22 +1684,17 @@ int main(int argc, char *argv[])
             }
             return;
         }
-
         qDebug() << "[CACHE MISS] Baixando foto da rede para:" << username;
-
         QJsonObject json_profile;
         json_profile["username"] = username;
-
         QString response_profile = requestHTTP(
             url + "/view-profile-picture",
             "POST",
             json_profile
         );
-
         QJsonDocument doc = QJsonDocument::fromJson(response_profile.toUtf8());
         QJsonObject json_response = doc.object();
         QString profile_picture = json_response["profile-picture"].toString();
-
         if(!profile_picture.isEmpty()) {
             profilePictureCache[username] = profile_picture;
             qDebug() << "entrando no renderizador de foto" + profile_picture;
@@ -1932,7 +1739,6 @@ int main(int argc, char *argv[])
                 logout();
         });
         renderBottomBar("profile");
-
     };
     fast_login = [&]()
     {
@@ -1986,35 +1792,25 @@ int main(int argc, char *argv[])
         QNetworkReply *reply = manager->get(request);
         QHBoxLayout *search_layout = new QHBoxLayout();
         QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
-
-
             QByteArray responseData = reply->readAll();
             reply->deleteLater();
-
             QJsonDocument doc = QJsonDocument::fromJson(responseData);
-
             if(!doc.isArray())
             {
                 QLabel *err = new QLabel("Invalid response from server!");
                 layout->addWidget(err);
                 return;
             }
-
             QJsonArray postsArray = doc.array();
-
             QList<QWidget*> labels;
-
             for(auto value : postsArray)
             {
                 if(!value.isObject()) continue;
-
                 QJsonObject post = value.toObject();
-
                 int postId = post["id"].toInt();
                 QString username = post["username"].toString();
                 QString textPost = post["text_post"].toString();
                 QString datetime = post["datetime"].toString();
-
                 // ===== FRAME =====
                 QFrame *frame = new QFrame();
                 frame->setStyleSheet(R"(
@@ -2025,63 +1821,48 @@ int main(int argc, char *argv[])
                         padding: 10px;
                     }
                 )");
-
                 QVBoxLayout *frameLayout = new QVBoxLayout(frame);
                 QHBoxLayout *usernameLayout = new QHBoxLayout();
                 QHBoxLayout *starLayout = new QHBoxLayout(); // Layout horizontal para a barra de ações/bottom
-
                 QLabel *lblUser = new QLabel(username);
                 QPushButton *viewProfile = new QPushButton(view_profile);
                 QObject::connect(viewProfile, &QPushButton::clicked, [=](){
                     otherProfilePage(username);
                 });
-
                 lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
-
                 usernameLayout->addWidget(lblUser);
                 usernameLayout->addWidget(viewProfile);
                 usernameLayout->addStretch();
-
                 QLabel *lblText = new QLabel(textPost);
                 lblText->setObjectName("postText");
                 lblText->setStyleSheet("color: white; font-size: 14px;");
                 lblText->setWordWrap(true);
                 lblText->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
-
                 QLabel *lblDate = new QLabel(datetime);
                 lblDate->setObjectName("postDate");
                 lblDate->setStyleSheet("color: gray; font-size: 12px;");
-
                 QPushButton *iconButton = new QPushButton();
                 QLabel *starLabel = new QLabel("...");
-
-
                 starLayout->addWidget(iconButton);
                 starLayout->addWidget(starLabel);
                 starLayout->addStretch();
-
                 frameLayout->addLayout(usernameLayout);
                 frameLayout->addWidget(lblText);
                 frameLayout->addWidget(lblDate);
                 frameLayout->addLayout(starLayout);
-
                 iconButton->setIcon(QIcon(":/assets/default_star.png"));
                 iconButton->setIconSize(QSize(24, 24));
                 iconButton->setFixedSize(30, 30);
                 iconButton->setStyleSheet("border: none;");
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
                 QPointer<QLabel> safeStarLabel = starLabel;
-
                 QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
                 QNetworkReply *starsReply = manager->get(starsReq);
-
                 QObject::connect(starsReply, &QNetworkReply::finished, [=]() mutable {
-
                     if (!safeStarLabel) {
                         starsReply->deleteLater();
                         return;
                     }
-
                     if(starsReply->error() == QNetworkReply::NoError)
                     {
                         QString starsText = QString(starsReply->readAll()).trimmed();
@@ -2092,10 +1873,8 @@ int main(int argc, char *argv[])
                     {
                         safeStarLabel->setText("0");
                     }
-
                     starsReply->deleteLater();
                 });
-
                 QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
                     QJsonObject star_json;
                     star_json["username"] = username;
@@ -2118,19 +1897,14 @@ int main(int argc, char *argv[])
                     }else{
                         iconButton->setIcon(QIcon(":/assets/default_star.png"));
                     };
-
                 });
                 starLayout->addWidget(iconButton);
                 starLayout->addWidget(starLabel);
                 starLayout->addStretch();
-
                 frameLayout->addLayout(starLayout);
-
                 labels.append(frame);
             }
-
             scroll_area(layout, labels);
-
             QPushButton *btnBack = new QPushButton(back_text);
             QPushButton *btnNewPost = new QPushButton(new_post_text);
             QObject::connect(btnBack, &QPushButton::clicked, [=](){
@@ -2148,7 +1922,6 @@ int main(int argc, char *argv[])
             QObject::connect(btnNewPost, &QPushButton::clicked, [=](){
                 new_post();
             });
-
         });
     };
     auto sharePost = [&](int post_id, QString federation_url){
@@ -2172,21 +1945,16 @@ int main(int argc, char *argv[])
         );
         QJsonDocument doc_groups = QJsonDocument::fromJson(response_groups.toUtf8());
         QJsonObject obj_groups = doc_groups.object();
-
         if (obj_groups["status"].toString() == "success") {
             QJsonArray groups = obj_groups["groups"].toArray();
             for(int i = 0; i < groups.size(); i++){
                 QJsonObject groupObj = groups[i].toObject();
-
                 int idGrupo = groupObj["group_id"].toInt();
                 QString nomeGrupo = groupObj["group_name"].toString();
-
                 QPushButton *btn = new QPushButton(nomeGrupo);
-
                 QObject::connect(btn, &QPushButton::clicked, [=](){
                     qDebug() << "Clicou no grupo ID: " << idGrupo << " Nome: " << nomeGrupo;
                 });
-
                 layout->addWidget(btn);
             }
         } else {
@@ -2247,23 +2015,18 @@ int main(int argc, char *argv[])
         clearLayout(layout);
         fadeTransition(central);
         QList<QWidget*> widgets;
-
         QJsonObject jsonComments;
         jsonComments["post_id"] = postId;
-
         QString response = requestHTTP(
             url + "/view-comments",
             "POST",
             jsonComments
         );
-
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
         QJsonObject obj = doc.object();
         QJsonArray comments = obj["comments"].toArray();
-
         for (int i = 0; i < comments.size(); ++i) {
             QJsonObject item = comments[i].toObject();
-
             QString textComment = item["text_comment"].toString();
             QString usernameComment = item["username"].toString();
             QHBoxLayout *lineLayout = new QHBoxLayout();
@@ -2274,16 +2037,12 @@ int main(int argc, char *argv[])
             usernameLabel->setStyleSheet("font-weight: bold;");
             QLabel *commentLabel = new QLabel(textComment);
             commentLabel->setWordWrap(true);
-
             contentLayout->addWidget(usernameLabel);
             contentLayout->addWidget(commentLabel);
             contentLayout->setSpacing(2);
-
             lineLayout->addLayout(contentLayout, 1);
-
             QWidget *lineContainer = new QWidget();
             lineContainer->setLayout(lineLayout);
-
             widgets.append(lineContainer);
         }
         QHBoxLayout *HLayoutComment = new QHBoxLayout();
@@ -2309,41 +2068,32 @@ int main(int argc, char *argv[])
         layout->addLayout(HLayoutComment);
         renderBottomBar("home");
     };
-
     // Defina o timer fora do lambda (pode ser membro da classe, estático ou capturado no escopo)
 static QTimer *feedTimer = nullptr;
-
 showfeed = [&]()
     {
         // Configura e inicia o timer de 2 minutos apenas uma vez
         if (!feedTimer) {
             feedTimer = new QTimer(central);
             feedTimer->setInterval(120000);   // 120.000 ms = 2 minutos
-            
             QObject::connect(feedTimer, &QTimer::timeout, [&]() {
                 cachedFeedArray = QJsonArray(); 
                 showfeed();
             });
-            
             feedTimer->start();
         }
-
         clearLayout(layout);
         fadeTransition(central);
-
         // --- NAVEGAÇÃO SUPERIOR (TABS) ---
         QHBoxLayout *tabPages = new QHBoxLayout();
         tabPages->setContentsMargins(12, 8, 12, 8);
         tabPages->setSpacing(8);
-
         QPushButton *newer = new QPushButton(newer_text);
         QPushButton *trending = new QPushButton(trending_text);
         QPushButton *federations = new QPushButton(federations_text);
-
         newer->setProperty("class", "tab-button");
         trending->setProperty("class", "tab-button");
         federations->setProperty("class", "tab-button");
-
         newer->setProperty("active", true);
         trending->setProperty("active", false);
         federations->setProperty("active", false);
@@ -2355,24 +2105,19 @@ showfeed = [&]()
         tabPages->addWidget(trending);
         tabPages->addWidget(federations);
         layout->addLayout(tabPages);
-
         QObject::connect(trending, &QPushButton::clicked, [=](){ trendingFeed(); });
         QObject::connect(federations, &QPushButton::clicked, [=](){ addFederationFeed(); });
-
         auto renderPostsList = [=](const QJsonArray &postsArray) {
             QList<QWidget*> labels;
-
             for (auto value : postsArray) {
                 if (!value.isObject()) continue;
                 QJsonObject post = value.toObject();
-
                 int postId = post["id"].toInt();
                 QString username = post["username"].toString();
                 QString textPost = post["text_post"].toString();
                 QString datetime = post["datetime"].toString();
                 QStringList lines = textPost.split('\n');
                 QString urlImage;
-
                 // Frame principal do Post (Card)
                 QFrame *frame = new QFrame();
                 frame->setStyleSheet(
@@ -2383,18 +2128,14 @@ showfeed = [&]()
                     "   margin-bottom: 4px;"
                     "}"
                 );
-
                 QVBoxLayout *frameLayout = new QVBoxLayout(frame);
                 frameLayout->setContentsMargins(12, 12, 12, 12);
                 frameLayout->setSpacing(8);
-
                 // --- HEADER DO POST (Avatar, User, View Profile) ---
                 QHBoxLayout *usernameLayout = new QHBoxLayout();
                 usernameLayout->setSpacing(8);
-
                 QLabel *lblUser = new QLabel("@" + username);
                 lblUser->setStyleSheet("color: #FFFFFF; font-size: 14px; font-weight: bold; border: none;");
-
                 QPushButton *viewProfile = new QPushButton(view_profile);
                 viewProfile->setCursor(Qt::PointingHandCursor);
                 viewProfile->setStyleSheet(
@@ -2411,22 +2152,17 @@ showfeed = [&]()
                     "   background-color: #282536;"
                     "}"
                 );
-
                 QObject::connect(viewProfile, &QPushButton::clicked, [=](){
                     otherProfilePage(username);
                 });
-
                 viewProfilePicture(usernameLayout, username, 40);
                 usernameLayout->addWidget(lblUser);
                 usernameLayout->addWidget(viewProfile);
                 usernameLayout->addStretch();
-
                 frameLayout->addLayout(usernameLayout);
-
                 // --- CONTEÚDO DO POST (Texto + Mídia) ---
                 QVBoxLayout *contentLayout = new QVBoxLayout();
                 contentLayout->setSpacing(6);
-
                 for (const QString &line : lines) {
                     if (line.isEmpty()) continue;
                     if (line.contains("[IMAGE]")) {
@@ -2440,28 +2176,22 @@ showfeed = [&]()
                     textLabel->setStyleSheet("color: #E2E1E8; font-size: 13px; border: none;");
                     contentLayout->addWidget(textLabel);
                 }
-
                 if (!urlImage.isEmpty()) {
                     renderPostImage(urlImage, contentLayout);
                 }
-
                 frameLayout->addLayout(contentLayout);
-
                 // --- FOOTER DO POST (Estrelas, Comentários e Data) ---
                 QHBoxLayout *footerLayout = new QHBoxLayout();
                 footerLayout->setContentsMargins(0, 4, 0, 0);
                 footerLayout->setSpacing(6);
-
                 QPushButton *iconButton = new QPushButton();
                 iconButton->setIcon(QIcon(":/assets/default_star.png"));
                 iconButton->setIconSize(QSize(18, 18));
                 iconButton->setFixedSize(24, 24);
                 iconButton->setCursor(Qt::PointingHandCursor);
                 iconButton->setStyleSheet("border: none; background: transparent;");
-
                 QLabel *starLabel = new QLabel();
                 starLabel->setStyleSheet("color: #A09EAF; font-size: 12px; border: none;");
-
                 if (starCountCache.contains(postId)) {
                     starLabel->setText(starCountCache.value(postId));
                 } else {
@@ -2483,21 +2213,17 @@ showfeed = [&]()
                         starsReply->deleteLater();
                     });
                 }
-
                 QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
                     QJsonObject star_json;
                     star_json["username"] = username;
                     star_json["post_id"] = postId;
-
                     QNetworkRequest req(QUrl(url + "/star"));
                     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
                     manager->post(req, QJsonDocument(star_json).toJson());
-
                     static bool toggled = false;
                     toggled = !toggled;
                     iconButton->setIcon(QIcon(toggled ? ":/assets/star.png" : ":/assets/default_star.png"));
                 });
-
                 QPushButton *commentsButton = new QPushButton(comments_text);
                 commentsButton->setCursor(Qt::PointingHandCursor);
                 commentsButton->setStyleSheet(
@@ -2512,47 +2238,34 @@ showfeed = [&]()
                 QObject::connect(commentsButton, &QPushButton::clicked, [=](){
                     commentsPage(postId);
                 });
-
                 QLabel *lblDate = new QLabel(datetime);
                 lblDate->setObjectName("postDate");
                 lblDate->setStyleSheet("color: #6E6C7E; font-size: 11px; border: none;");
-
                 footerLayout->addWidget(iconButton);
                 footerLayout->addWidget(starLabel);
                 footerLayout->addSpacing(8);
                 footerLayout->addWidget(commentsButton);
                 footerLayout->addStretch();
                 footerLayout->addWidget(lblDate);
-
                 frameLayout->addLayout(footerLayout);
                 labels.append(frame);
             }
-
             scroll_area(layout, labels);
-
             renderBottomBar("home");
-
-           
         };
-
         if (!cachedFeedArray.isEmpty()) {
             renderPostsList(cachedFeedArray);
             return;
         }
-
         QString url_feed = url + "/feed";
         QNetworkRequest request{QUrl(url_feed)};
         QNetworkReply *reply = manager->get(request);
-
         QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
             QByteArray responseData = reply->readAll();
             reply->deleteLater();
-
             QJsonDocument doc = QJsonDocument::fromJson(responseData);
             if (!doc.isArray()) return;
-
             QJsonArray newPosts = doc.array();
-
             if (newPosts != cachedFeedArray) {
                 cachedFeedArray = newPosts;
                 clearLayout(layout);
@@ -2572,74 +2285,49 @@ showfeed = [&]()
         );
     };
     chatGlobal = [&](){
-
         clearLayout(layout);
-
         QScrollArea *scroll = new QScrollArea();
         scroll->setWidgetResizable(true);
-
         QWidget *containerScroll = new QWidget();
         QVBoxLayout *containerLayout = new QVBoxLayout(containerScroll);
-
         scroll->setWidget(containerScroll);
-
         layout->addWidget(scroll);
-
         int *lastId = new int(0);
-
         QTimer *timer = new QTimer();
-
         auto updateChat = [=]() mutable {
-
             QJsonObject view_chat;
             view_chat["id"] = *lastId;
-
             QString chat_message = requestHTTP(
                 url + "/view-global-message",
                 "POST",
                 view_chat
             );
-
             QJsonDocument doc =
                 QJsonDocument::fromJson(
                     chat_message.toUtf8()
                 );
-
             if (!doc.isArray())
                 return;
-
             QJsonArray msgs = doc.array();
-
             for (int i = 0; i < msgs.size(); i++)
             {
                 QJsonObject msg =
                     msgs[i].toObject();
-
                 QString sender =
                     msg["sender"].toString();
-
                 QString text =
                     msg["message"].toString();
-
                 int id =
                     msg["id"].toInt();
-
                 if (id > *lastId)
                     *lastId = id;
-
                 bool isMe =
                     (sender == username);
-
                 ChatBubble *bubble = new ChatBubble(text, isMe);
-
                 QHBoxLayout *line = new QHBoxLayout();
-
                 QVBoxLayout *bubbleBlock = new QVBoxLayout();
-
                 QHBoxLayout *headerLayout = new QHBoxLayout();
-
                 QLabel *usernameLabel = new QLabel(sender);
-
                 if (isMe) {
                     usernameLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
                     headerLayout->addStretch();
@@ -2660,113 +2348,81 @@ showfeed = [&]()
                     line->addLayout(bubbleBlock);
                     line->addStretch();
                 }
-
                 QWidget *lineWidget =
                     new QWidget();
-
                 lineWidget->setLayout(line);
-
                 containerLayout->addWidget(
                     lineWidget
                 );
             }
-
             if (!msgs.isEmpty())
             {
                 QTimer::singleShot(
                     50,
                     [=](){
-
                         scroll->verticalScrollBar()->setValue(
                             scroll->verticalScrollBar()->maximum()
                         );
-
                     }
                 );
             }
         };
-
         QObject::connect(
             timer,
             &QTimer::timeout,
             updateChat
         );
-
         updateChat();
-
         timer->start(100);
-
         QLineEdit *message_box = new QLineEdit();
         message_box->setPlaceholderText(type_text);
-
         QPushButton *send_button =
             new QPushButton(send_text);
-
         QHBoxLayout *entryBox =
             new QHBoxLayout();
-
         entryBox->addWidget(message_box);
         entryBox->addWidget(send_button);
-
         QWidget *container =
             new QWidget();
-
         container->setLayout(entryBox);
-
         QPushButton *back_button =
             new QPushButton(back_text);
-
         QObject::connect(
             back_button,
             &QPushButton::clicked,
             [=]() mutable {
-
                 timer->stop();
                 timer->deleteLater();
-
                 delete lastId;
-
                 initialPage();
-
             }
         );
-
         QObject::connect(
             send_button,
             &QPushButton::clicked,
             [=]() mutable {
-
                 QString text =
                     message_box->text();
-
                 if (text.isEmpty())
                     return;
-
                 QJsonObject json;
-
                 json["sender"] = username;
                 json["message"] = text;
-
                 requestHTTP(
                     url + "/send-global-message",
                     "POST",
                     json
                 );
-
                 message_box->clear();
             }
         );
-
         QObject::connect(
             message_box,
             &QLineEdit::returnPressed,
             [=]() mutable {
-
                 send_button->click();
-
             }
         );
-
         layout->addWidget(container);
         layout->addWidget(back_button);
         renderBottomBar("chat");
@@ -2897,61 +2553,46 @@ showfeed = [&]()
     };
     auto groupChat = [&](int group_id, QString channel){
         clearLayout(layout);
-
         QScrollArea *scroll = new QScrollArea();
         scroll->setWidgetResizable(true);
-
         QWidget *containerScroll = new QWidget();
         QVBoxLayout *containerLayout = new QVBoxLayout(containerScroll);
         scroll->setWidget(containerScroll);
         layout->addWidget(scroll);
         auto lastId = std::make_shared<int>(0);
         QTimer *timer = new QTimer(scroll);
-
         auto updateChat = [=]() mutable {
-
             QJsonObject view_chat;
             view_chat["username"] = username;
             view_chat["id"] = *lastId;
             view_chat["channel"] = channel;
             view_chat["group_id"] = group_id;
-
             QString chat_message = requestHTTP(
                 url + "/view-group-message",
                 "POST",
                 view_chat
             );
-
             QJsonDocument doc = QJsonDocument::fromJson(chat_message.toUtf8());
             if (!doc.isObject())
                 return;
-
             QJsonObject rootObj = doc.object();
             if (!rootObj.contains("messages") || !rootObj["messages"].isArray())
                 return;
-
             QJsonArray msgs = rootObj["messages"].toArray();
-
             for (int i = 0; i < msgs.size(); i++)
             {
                 QJsonObject msg = msgs[i].toObject();
-
                 QString sender = msg["sender"].toString();
                 QString text   = msg["message"].toString();
                 int id         = msg["id"].toInt();
-
                 if (id > *lastId)
                     *lastId = id;
-
                 bool isMe = (sender == username);
-
                 ChatBubble *bubble = new ChatBubble(text, isMe);
                 QHBoxLayout *line  = new QHBoxLayout();
                 QVBoxLayout *bubbleBlock = new QVBoxLayout();
                 QHBoxLayout *headerLayout = new QHBoxLayout();
-
                 QLabel *usernameLabel = new QLabel(sender);
-
                 if (isMe) {
                     usernameLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
                     headerLayout->addStretch();
@@ -2972,12 +2613,10 @@ showfeed = [&]()
                     line->addLayout(bubbleBlock);
                     line->addStretch();
                 }
-
                 QWidget *lineWidget = new QWidget();
                 lineWidget->setLayout(line);
                 containerLayout->addWidget(lineWidget);
             }
-
             if (!msgs.isEmpty())
             {
                 QTimer::singleShot(
@@ -2990,26 +2629,18 @@ showfeed = [&]()
                 );
             }
         };
-
         QObject::connect(timer, &QTimer::timeout, updateChat);
-
         updateChat();
         timer->start(1000);
-
         QLineEdit *message_box = new QLineEdit();
         message_box->setPlaceholderText(type_text);
-
         QPushButton *send_button = new QPushButton(send_text);
         QHBoxLayout *entryBox = new QHBoxLayout();
-
         entryBox->addWidget(message_box);
         entryBox->addWidget(send_button);
-
         QWidget *container = new QWidget();
         container->setLayout(entryBox);
-
         QPushButton *back_button = new QPushButton(back_text);
-
         QObject::connect(
             back_button,
             &QPushButton::clicked,
@@ -3018,7 +2649,6 @@ showfeed = [&]()
                 initialPage();
             }
         );
-
         QObject::connect(
             send_button,
             &QPushButton::clicked,
@@ -3026,23 +2656,19 @@ showfeed = [&]()
                 QString text = message_box->text();
                 if (text.isEmpty())
                     return;
-
                 QJsonObject json;
                 json["sender"]   = username;
                 json["message"]  = text;
                 json["group_id"] = group_id;
                 json["channel"]  = channel;
-
                 requestHTTP(
                     url + "/send-group-message",
                     "POST",
                     json
                 );
-
                 message_box->clear();
             }
         );
-
         QObject::connect(
             message_box,
             &QLineEdit::returnPressed,
@@ -3050,7 +2676,6 @@ showfeed = [&]()
                 send_button->click();
             }
         );
-
         layout->addWidget(container);
         layout->addWidget(back_button);
         renderBottomBar("chat");
@@ -3059,42 +2684,33 @@ showfeed = [&]()
         if (targetUrl.isEmpty()) {
             targetUrl = url;
         }
-
         if (targetUrl.startsWith("http://")) {
             targetUrl.replace("http://", "https://");
         } else if (!targetUrl.startsWith("https://")) {
             targetUrl = "https://" + targetUrl;
         }
-
         if (targetUrl.endsWith("/")) {
             targetUrl.chop(1);
         }
         QUrl fedUrl(targetUrl + "/view-post");
         qDebug() << "[DEBUG] Disparando view_single_post para:" << fedUrl.toString();
-
         QJsonObject jsonViewPost;
         jsonViewPost["post_id"] = post_id;
-
         QNetworkRequest request(fedUrl);
         QByteArray bearerToken = "Bearer " + token_session.toUtf8();
         request.setRawHeader("Authorization", bearerToken);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
         request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
-
         QNetworkAccessManager manager;
         QNetworkReply *reply = manager.post(request, QJsonDocument(jsonViewPost).toJson());
-
         QEventLoop loop;
         QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
         loop.exec();
-
         QJsonObject result;
         if (reply->error() == QNetworkReply::NoError) {
             QByteArray responseData = reply->readAll();
             QJsonParseError error;
             QJsonDocument doc = QJsonDocument::fromJson(responseData, &error);
-
             if (error.error == QJsonParseError::NoError) {
                 if (doc.isArray() && !doc.array().isEmpty()) {
                     result = doc.array().at(0).toObject();
@@ -3105,39 +2721,29 @@ showfeed = [&]()
         } else {
             qDebug() << "[ERRO NETWORK] Falha em view_single_post:" << reply->errorString();
         }
-
         reply->deleteLater();
         return result;
     };
-
     auto renderSinglePost = [&](QString author, QString text_post, QString datetime, int postId) -> void {
         QList<QWidget*> labsList;
         Q_UNUSED(postId);
-
         qDebug() << "--- RENDER POST ---";
         qDebug() << "Author:" << author;
         qDebug() << "Text:" << text_post;
         qDebug() << "Date:" << datetime;
-
-
         clearLayout(layout);
         fadeTransition(central);
-
         QFrame *frame = new QFrame();
         frame->setStyleSheet("QFrame { background-color: #1e1e1e; border-radius: 8px; padding: 10px; }");
         QVBoxLayout *frameLayout = new QVBoxLayout(frame);
-
         QHBoxLayout *usernameLayout = new QHBoxLayout();
-
         QString displayAuthor = author.isEmpty() ? "Usuário Desconhecido" : author;
         QLabel *lblUser = new QLabel(displayAuthor);
         lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
-
         QPushButton *viewProfile = new QPushButton("View profile");
         QObject::connect(viewProfile, &QPushButton::clicked, [=]() {
             otherProfilePage(author);
         });
-
         viewProfilePicture(usernameLayout, displayAuthor, 40);
         usernameLayout->addWidget(lblUser);
         usernameLayout->addWidget(viewProfile);
@@ -3164,34 +2770,26 @@ showfeed = [&]()
         QPushButton *backButton = new QPushButton(QIcon(":/assets/back.png"), "");
         backButton->setIconSize(QSize(32, 32));
         QLabel *usernameLabel = new QLabel(user);
-
         header->addWidget(backButton);
         viewProfilePicture(header, user, 40);
         header->addWidget(usernameLabel);
         header->addStretch();
         layout->addLayout(header);
-
         QScrollArea *scroll = new QScrollArea();
         scroll->setWidgetResizable(true);
-
         QWidget *containerScroll = new QWidget();
         QVBoxLayout *containerLayout = new QVBoxLayout(containerScroll);
         scroll->setWidget(containerScroll);
         layout->addWidget(scroll);
-
         QObject::connect(backButton, &QPushButton::clicked, [=](){
             chatPage();
         });
-
         QTimer *timer = new QTimer(containerScroll);
-
         auto currentMessageCount = std::make_shared<int>(0);
-
         QObject::connect(timer, &QTimer::timeout, [=]() mutable {
             QJsonObject view_chat;
             view_chat["user1"] = username;
             view_chat["user2"] = user;
-
             QJsonObject federationJson;
             federationJson["url"] = federation_url;
             federationJson["route"] = "/view";
@@ -3205,10 +2803,8 @@ showfeed = [&]()
                 "POST",
                 federationJson
             );
-
             QJsonDocument doc = QJsonDocument::fromJson(chat_message.toUtf8());
             if (!doc.isObject()) return;
-
             QJsonObject obj = doc.object();
             if (!obj.contains("messages")) return;
             QJsonArray msgs = obj["messages"].toArray();
@@ -3221,7 +2817,6 @@ showfeed = [&]()
                     if (child->widget()) delete child->widget();
                     delete child;
                 }
-
                 for (int i = 0; i < msgs.size(); i++)
                 {
                     QJsonObject msg = msgs[i].toObject();
@@ -3229,15 +2824,12 @@ showfeed = [&]()
                     QString text = msg["message"].toString();
                     bool shared = false;
                     QString code;
-
                     if (text.startsWith("[INVITE]")) {
                         code = QString(text).remove("[INVITE]");
                         shared = true;
                     }
-
                     bool isMe = (sender == username);
                     QHBoxLayout *line = new QHBoxLayout();
-
                     if (!shared) {
                         ChatBubble *bubble = new ChatBubble(text, isMe);
                         if (isMe) {
@@ -3252,18 +2844,15 @@ showfeed = [&]()
                         QWidget *sharedWidget = new QWidget();
                         QLabel *labelGroup = new QLabel(sender + " invited you to enter in a group");
                         QPushButton *enterButton = new QPushButton("Accept invite");
-
                         QObject::connect(enterButton, &QPushButton::clicked, [=](){
                             QJsonObject jsonAccept;
                             jsonAccept["username"] = username;
                             jsonAccept["code"] = code;
                             requestHTTP(url + "/join-group", "POST", jsonAccept);
                         });
-
                         collun->addWidget(labelGroup);
                         collun->addWidget(enterButton);
                         sharedWidget->setLayout(collun);
-
                         if (isMe) {
                             line->addStretch();
                             line->addWidget(sharedWidget);
@@ -3272,12 +2861,10 @@ showfeed = [&]()
                             line->addStretch();
                         }
                     }
-
                     QWidget *lineWidget = new QWidget();
                     lineWidget->setLayout(line);
                     containerLayout->addWidget(lineWidget);
                 }
-
                 bool lastMsgIsMe = (msgs.size() > 0) && (msgs.last().toObject()["sender"].toString() == username);
                 if (oldSize == 0 || lastMsgIsMe) {
                     QTimer::singleShot(50, [=](){
@@ -3286,30 +2873,22 @@ showfeed = [&]()
                 }
             }
         });
-
         timer->start(100);
-
         QLineEdit *message_box = new QLineEdit();
         message_box->setPlaceholderText(type_text);
-
         QHBoxLayout *entryBox = new QHBoxLayout();
         QPushButton *send_button = new QPushButton(send_text);
-
         entryBox->addWidget(message_box);
         entryBox->addWidget(send_button);
-
         QWidget *container = new QWidget();
         container->setLayout(entryBox);
-
         auto fnSendMessage = [=]() {
             QString text = message_box->text().trimmed();
             if (text.isEmpty()) return;
-
             QJsonObject msgPayload;
             msgPayload["sender"] = username;
             msgPayload["receiver"] = user;
             msgPayload["message"] = text;
-
             QJsonObject federationJson;
             federationJson["url"] = federation_url;
             federationJson["route"] = "/send";
@@ -3318,14 +2897,11 @@ showfeed = [&]()
             QJsonObject reqHeaders;
             reqHeaders["Authorization"] = "Bearer " + token;
             federationJson["headers"] = reqHeaders;
-
             requestHTTP(url + "/send-request", "POST", federationJson);
             message_box->clear();
         };
-
         QObject::connect(send_button, &QPushButton::clicked, fnSendMessage);
         QObject::connect(message_box, &QLineEdit::returnPressed, fnSendMessage);
-
         layout->addWidget(container);
         renderBottomBar("chat");
     };
@@ -3347,38 +2923,26 @@ showfeed = [&]()
         header->addStretch();
         QScrollArea *scroll = new QScrollArea();
         scroll->setWidgetResizable(true);
-
         QWidget *containerScroll = new QWidget();
         QVBoxLayout *containerLayout = new QVBoxLayout(containerScroll);
-
         scroll->setWidget(containerScroll);
         layout->addWidget(scroll);
-
-
         QTimer *timer = new QTimer();
-
-
         int *currentMessageCount = new int(0);
-
         QObject::connect(timer, &QTimer::timeout, [=]() mutable {
             QJsonObject view_chat;
             view_chat["user1"] = username;
             view_chat["user2"] = user;
-
             QString chat_message = requestHTTP(
                 url + "/view",
                 "POST",
                 view_chat
             );
-
             QJsonDocument doc = QJsonDocument::fromJson(chat_message.toUtf8());
             if (!doc.isObject()) return;
-
             QJsonObject obj = doc.object();
             if (!obj.contains("messages")) return;
-
             QJsonArray msgs = obj["messages"].toArray();
-
             if (msgs.size() != *currentMessageCount)
             {
                 int oldSize = *currentMessageCount;
@@ -3395,7 +2959,6 @@ showfeed = [&]()
                 for (int i = 0; i < msgs.size(); i++)
                 {
                     QJsonObject msg = msgs[i].toObject();
-
                     QString sender = msg["sender"].toString();
                     QString text = msg["message"].toString();
                     bool shared = false;
@@ -3408,7 +2971,6 @@ showfeed = [&]()
                     bool isMe = (sender == username);
                     ChatBubble *bubble = new ChatBubble(text, isMe);
                     QHBoxLayout *line = new QHBoxLayout();
-
                     if (!shared) {
                         if (isMe) {
                             line->addStretch();
@@ -3443,18 +3005,14 @@ showfeed = [&]()
                             line->addStretch();
                         }
                     }
-
                     QWidget *lineWidget = new QWidget();
                     lineWidget->setLayout(line);
                     containerLayout->addWidget(lineWidget);
-
                 }
-
                 bool lastMsgIsMe = false;
                 if (msgs.size() > 0) {
                     lastMsgIsMe = (msgs[msgs.size() - 1].toObject()["sender"].toString() == username);
                 }
-
                 if (oldSize == 0 || lastMsgIsMe)
                 {
                     QTimer::singleShot(50, [=](){
@@ -3463,32 +3021,24 @@ showfeed = [&]()
                 }
             }
         });
-
         timer->start(100);
-
         QLineEdit *message_box = new QLineEdit();
         message_box->setPlaceholderText(type_text);
-
         QHBoxLayout *entryBox = new QHBoxLayout();
         QPushButton *send_button = new QPushButton(send_text);
-
         entryBox->addWidget(message_box);
         entryBox->addWidget(send_button);
-
         QWidget *container = new QWidget();
         container->setLayout(entryBox);
-
         QObject::connect(send_button, &QPushButton::clicked, [=]() mutable{
             QTimer::singleShot(0, [=](){
                 sendMessage(message_box->text(), user);
                 message_box->clear();
             });
         });
-
         QObject::connect(message_box, &QLineEdit::returnPressed, [=]() mutable{
             send_button->click();
         });
-
         layout->addWidget(container);
         renderBottomBar("chat");
     };
@@ -3500,12 +3050,10 @@ showfeed = [&]()
             "POST",
             group_request
         );
-
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
         if (doc.isObject()) {
             return doc.object();
         }
-
         return QJsonObject();
     };
     auto configGroup = [&](int groupId, QString permission){
@@ -3594,17 +3142,13 @@ showfeed = [&]()
             for (const QJsonValue &val : channelList) {
                 if (val.isObject()) {
                     QJsonObject channelObj = val.toObject();
-                    
                     int channelGroupId = channelObj["group_id"].toInt();
                     QString channelName = channelObj["channel_name"].toString();
-
                     QPushButton *channelButton = new QPushButton(channelName);
-
                     QObject::connect(channelButton, &QPushButton::clicked, [=](){
                         qDebug() << "Abrindo canal:" << channelName << "ID:" << channelGroupId;
                         groupChat(channelGroupId, channelName);
                     });
-
                     widgets.append(channelButton);
                 }
             }
@@ -3644,7 +3188,6 @@ showfeed = [&]()
         clearLayout(layout);
         fadeTransition(central);
         QList<QWidget*> widgets;
-
         QPushButton *ChatGlobalButton = new QPushButton("Chat Global");
         QPushButton *newChatButton = new QPushButton("new chat");
         ChatGlobalButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -3652,7 +3195,6 @@ showfeed = [&]()
         QObject::connect(newChatButton, &QPushButton::clicked, [=](){
             new_chat();
         });
-        
         newChatButton->setFixedHeight(40);
         widgets.append(newChatButton);
         ChatGlobalButton->setFixedHeight(50);
@@ -3660,13 +3202,11 @@ showfeed = [&]()
         QObject::connect(ChatGlobalButton, &QPushButton::clicked, [=]() mutable{
             chatGlobal();
         });
-
         QJsonObject reqJson;
         reqJson["username"] = username;
         QString response_friends = requestHTTP(url + "/friends", "POST", reqJson);
         QString response_groups = requestHTTP(url + "/my-groups", "POST", reqJson);
         QString response_external = requestHTTP(url + "/external-contacts", "POST", reqJson);
-
         QJsonDocument doc_groups = QJsonDocument::fromJson(response_groups.toUtf8());
         QJsonObject obj_groups = doc_groups.object();
         if (obj_groups["status"].toString() == "success") {
@@ -3677,20 +3217,17 @@ showfeed = [&]()
                 QString nameGroup = groupObj["group_name"].toString();
                 QString role = groupObj["role"].toString();
                 if (role.isEmpty()) role = "admin";
-
                 QPushButton *btn = new QPushButton();
                 btn->setText(QString("[Group] %1\nPermission: %2").arg(nameGroup, role));
                 btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
                 btn->setFixedHeight(60);
                 btn->setStyleSheet("QPushButton { text-align: left; padding-left: 15px; font-weight: bold; font-size: 15px; background-color: #1B1B1E; color: #FFFFFF; border: none; border-bottom: 1px solid #282828; border-radius: 0px; } QPushButton:hover { background-color: #252525; } QPushButton:pressed { background-color: #121212; }");
-                
                 QObject::connect(btn, &QPushButton::clicked, [=](){
                     viewChannelGroup(groupId);
                 });
                 widgets.append(btn);
             }
         }
-
         QJsonDocument doc_external = QJsonDocument::fromJson(response_external.toUtf8());
         if (doc_external.isArray()) {
             QJsonArray extArray = doc_external.array();
@@ -3699,24 +3236,20 @@ showfeed = [&]()
                 QString contactId = extObj["username"].toString();
                 QString contactName = extObj["contact_name"].isNull() ? contactId : extObj["contact_name"].toString();
                 QString platform = extObj["url"].toString();
-
                 QPushButton *extBtn = new QPushButton();
                 extBtn->setText(QString("%1\n%2").arg(contactName, platform.toUpper()));
                 extBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
                 extBtn->setFixedHeight(60); 
                 extBtn->setStyleSheet("QPushButton { text-align: left; padding-left: 15px; font-weight: bold; font-size: 15px; background-color: #1B1B1E; color: #FFFFFF; border: none; border-bottom: 1px solid #282828; border-radius: 0px; } QPushButton:hover { background-color: #252525; }");
-                
                 QObject::connect(extBtn, &QPushButton::clicked, [=](){
                     chatExternal(contactName, platform);
                 });
                 widgets.append(extBtn);
             }
         }
-
         QJsonDocument doc_friends = QJsonDocument::fromJson(response_friends.toUtf8());
         QJsonObject obj_friends = doc_friends.object();
         QJsonArray friends = obj_friends["friends"].toArray();
-
         if (friends.isEmpty() && doc_external.array().isEmpty()) {
             QLabel *label_error = new QLabel("No Friends or External Contacts....");
             label_error->setStyleSheet("color: #888888; padding: 15px;");
@@ -3727,26 +3260,20 @@ showfeed = [&]()
                 QString receiver = row[0].toString();
                 QString remittee = row[1].toString();
                 QString friendName = (receiver == username) ? remittee : receiver;
-
                 QWidget *containerWidget = new QWidget();
                 containerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
                 containerWidget->setFixedHeight(60);
                 containerWidget->setStyleSheet("background-color: #1B1B1E; border-bottom: 1px solid #282828;");
-
                 QHBoxLayout *rowLayout = new QHBoxLayout(containerWidget);
                 rowLayout->setContentsMargins(15, 0, 15, 0);
                 rowLayout->setSpacing(12);
-
                 viewProfilePicture(rowLayout, friendName, 40);
-
                 QPushButton *userBtn = new QPushButton();
                 userBtn->setText(QString("%1\nDM").arg(friendName));
                 userBtn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
                 userBtn->setStyleSheet("QPushButton { text-align: left; font-weight: bold; font-size: 15px; color: #FFFFFF; background: transparent; border: none; }");
-
                 rowLayout->addWidget(userBtn);
                 rowLayout->addStretch();
-
                 QObject::connect(userBtn, &QPushButton::clicked, [=]() mutable{
                     QTimer::singleShot(0, [=](){
                         chat(friendName);
@@ -3755,29 +3282,21 @@ showfeed = [&]()
                 widgets.append(containerWidget);
             }
         }
-
-
-        
         QWidget *listContainer = new QWidget();
         QVBoxLayout *listLayout = new QVBoxLayout(listContainer);
         listLayout->setContentsMargins(0, 0, 0, 0);
         listLayout->setSpacing(0); // Tira o espaço entre cada item
         listLayout->setAlignment(Qt::AlignTop); // Coloca tudo no topo
-
         for (QWidget *w : widgets) {
             listLayout->addWidget(w);
         }
-
         QList<QWidget*> wrappedWidget;
         wrappedWidget.append(listContainer);
-
         scroll_area(layout, wrappedWidget);
         renderBottomBar("chat");
     };
-    
     renderBottomBar = [&](QString actual_window){
         splash.finish(&window);
-
         QWidget *bottomBar = new QWidget(central);
         bottomBar->setFixedHeight(74);
         QWidget *container = new QWidget();
@@ -3808,17 +3327,14 @@ showfeed = [&]()
         }
         QSize iconSize(64, 64);
         QSize iconSizeHome(32, 32);
-
         btnHome->setIconSize(iconSizeHome);
         btnChat->setIconSize(iconSize);
         btnProfile->setIconSize(iconSize);
         btnOptions->setIconSize(iconSize);
-
         btnHome->setFixedSize(iconSize);
         btnChat->setFixedSize(iconSize);
         btnProfile->setFixedSize(iconSize);
         btnOptions->setFixedSize(iconSize);
-
         QObject::connect(btnHome, &QPushButton::clicked, [=]() {
             showfeed();
         });
@@ -3829,16 +3345,13 @@ showfeed = [&]()
         });
         QObject::connect(btnProfile, &QPushButton::clicked, [=]() { account(); });
         QObject::connect(btnOptions, &QPushButton::clicked, [options]() { if (options) options(); });
-
         QHBoxLayout *barLayout = new QHBoxLayout(bottomBar);
         barLayout->setContentsMargins(10, 5, 10, 5);
         barLayout->setSpacing(10);
-
         barLayout->addWidget(btnHome);
         barLayout->addWidget(btnChat);
         barLayout->addWidget(btnProfile);
         barLayout->addWidget(btnOptions);
-
         if (layout) {
             layout->addWidget(bottomBar, 0);
         }
@@ -3897,7 +3410,6 @@ showfeed = [&]()
         QJsonObject *empty = new QJsonObject();
         QString response = requestHTTP(url + "/view-index", "GET", *empty);
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
-
         if (doc.isArray()) {
             QJsonArray arr = doc.array();
             for (const QJsonValue &value : arr) {
@@ -3910,7 +3422,6 @@ showfeed = [&]()
                     QHBoxLayout *rowLayout = new QHBoxLayout(rowWidget);
                     renderAvatarImage(coverImage, rowLayout);
                     rowLayout->setContentsMargins(5, 2, 5, 2); // Margens apertadas para telas pequenas
-
                     QPushButton *nameLabel = new QPushButton(name);
                     QObject::connect(nameLabel, &QPushButton::clicked, [=](){
                         federationFeedPage(urlFederation);
@@ -3953,30 +3464,21 @@ showfeed = [&]()
         QNetworkReply *reply = manager->get(request);
         QHBoxLayout *search_layout = new QHBoxLayout();
         QObject::connect(reply, &QNetworkReply::finished, [=]() mutable {
-
-
             QByteArray responseData = reply->readAll();
             reply->deleteLater();
-
             QJsonDocument doc = QJsonDocument::fromJson(responseData);
-
             if(!doc.isArray())
             {
                 QLabel *err = new QLabel("Invalid response from server!");
                 layout->addWidget(err);
                 return;
             }
-
             QJsonArray postsArray = doc.array();
-
             QList<QWidget*> labels;
-
             for(auto value : postsArray)
             {
                 if(!value.isObject()) continue;
-
                 QJsonObject post = value.toObject();
-
                 int postId = post["id"].toInt();
                 QString username = post["username"].toString();
                 QString textPost = post["text_post"].toString();
@@ -4013,7 +3515,6 @@ showfeed = [&]()
                         padding: 10px;
                     }
                 )");
-
                 QVBoxLayout *frameLayout = new QVBoxLayout(frame);
                 QHBoxLayout *starLayout = new QHBoxLayout();
                 QHBoxLayout *usernameLayout = new QHBoxLayout();
@@ -4024,7 +3525,6 @@ showfeed = [&]()
                 QLabel *lblUser = new QLabel(username);
                 QLabel *lblText = new QLabel(textPost);
                 QLabel *lblDate = new QLabel(datetime);
-
                 lblUser->setStyleSheet("color: white; font-size: 16px; font-weight: bold;");
                 lblText->setStyleSheet("color: white; font-size: 14px;");
                 lblDate->setStyleSheet("color: gray; font-size: 12px;");
@@ -4037,35 +3537,26 @@ showfeed = [&]()
                 frameLayout->addLayout(usernameLayout);
                 frameLayout->addLayout(textLayout);
                 frameLayout->addWidget(lblDate);
-
                 // ===== BOTÃO STAR =====
                 QPushButton *iconButton = new QPushButton();
                 QLabel *starLabel = new QLabel("...");
                 frameLayout->addWidget(iconButton);
                 frameLayout->addWidget(starLabel);
-
                 iconButton->setIcon(QIcon(":/assets/default_star.png"));
                 iconButton->setIconSize(QSize(24, 24));
                 iconButton->setFixedSize(30, 30);
                 iconButton->setStyleSheet("border: none;");
-
                 starLabel->setStyleSheet("color: white; font-size: 14px;");
-
-
                 // ponteiro seguro
                 QPointer<QLabel> safeStarLabel = starLabel;
-
                 // buscar quantidade de estrelas
                 QNetworkRequest starsReq(QUrl(url + "/return-stars/" + QString::number(postId)));
                 QNetworkReply *starsReply = manager->get(starsReq);
-
                 QObject::connect(starsReply, &QNetworkReply::finished, [=]() mutable {
-
                     if (!safeStarLabel) {
                         starsReply->deleteLater();
                         return;
                     }
-
                     if(starsReply->error() == QNetworkReply::NoError)
                     {
                         QString starsText = QString(starsReply->readAll()).trimmed();
@@ -4076,10 +3567,8 @@ showfeed = [&]()
                     {
                         safeStarLabel->setText("0");
                     }
-
                     starsReply->deleteLater();
                 });
-
                 // clique da estrela (toggle)
                 QObject::connect(iconButton, &QPushButton::clicked, [=]() mutable {
                     QJsonObject star_json;
@@ -4103,18 +3592,14 @@ showfeed = [&]()
                     }else{
                         iconButton->setIcon(QIcon(":/assets/default_star.png"));
                     };
-
                 });
                 starLayout->addWidget(iconButton);
                 starLayout->addWidget(starLabel);
                 starLayout->addStretch();
-
                 frameLayout->addLayout(starLayout);
-
                 labels.append(frame);
             }
             scroll_area(layout, labels);
-
             // botões de baixo
             QPushButton *btnBack = new QPushButton(back_text);
             QPushButton *btnNewPost = new QPushButton(new_post_text);
@@ -4129,13 +3614,9 @@ showfeed = [&]()
             layout->addLayout(search_layout);
             layout->addWidget(btnNewPost);
             renderBottomBar("home");
-
-
-
             QObject::connect(btnNewPost, &QPushButton::clicked, [=](){
                 new_post();
             });
-
         });
     };
     //pagina inicial para renderizar
@@ -4270,32 +3751,24 @@ showfeed = [&]()
         layout->addWidget(send_button);
         QPushButton *discordButton = new QPushButton();
         discordButton->setIcon(QIcon(":/assets/discord.png"));
-
         QPushButton *redditButton = new QPushButton();
         redditButton->setIcon(QIcon(":/assets/reddit.png"));
-
         // 1. Reduza o tamanho dos ícones para algo realista em telas de celular
         // Em vez de 200 de largura, use tamanhos quadrados ou mais compactos para não estourar
         discordButton->setIconSize(QSize(120, 40));
         redditButton->setIconSize(QSize(120, 40));
-
         // 2. O SEGREDO: Trave a largura máxima do BOTÃO para ele não crescer além disso
         discordButton->setMaximumWidth(130);
         redditButton->setMaximumWidth(130);
-
         QHBoxLayout *layoutHorizontal = new QHBoxLayout();
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
         layoutHorizontal->addWidget(discordButton);
         layoutHorizontal->addWidget(redditButton);
-
         // Adiciona um spacer na direita também para centralizar os dois botões bonitinho no meio da tela
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-
         layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
         layout->addLayout(layoutHorizontal);
-
     };
-
     signupRequest = [&](QString username, QString password){
         int status_code = 0;
         QJsonObject json_signup;
@@ -4359,7 +3832,6 @@ showfeed = [&]()
         QObject::connect(send_button, &QPushButton::clicked, [=, &token_session, &username]() mutable {
             QString userTxt = usernameEntry->text();
             QString passTxt = passwordEntry->text();
-
             QString token_gerado = newSession(userTxt, passTxt);
             if (!token_gerado.isEmpty()){
                 loadConfig();
@@ -4377,27 +3849,21 @@ showfeed = [&]()
         });
         QPushButton *discordButton = new QPushButton();
         discordButton->setIcon(QIcon(":/assets/discord.png"));
-
         QPushButton *redditButton = new QPushButton();
         redditButton->setIcon(QIcon(":/assets/reddit.png"));
-
         // 1. Reduza o tamanho dos ícones para algo realista em telas de celular
         // Em vez de 200 de largura, use tamanhos quadrados ou mais compactos para não estourar
         discordButton->setIconSize(QSize(120, 40));
         redditButton->setIconSize(QSize(120, 40));
-
         // 2. O SEGREDO: Trave a largura máxima do BOTÃO para ele não crescer além disso
         discordButton->setMaximumWidth(130);
         redditButton->setMaximumWidth(130);
-
         QHBoxLayout *layoutHorizontal = new QHBoxLayout();
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
         layoutHorizontal->addWidget(discordButton);
         layoutHorizontal->addWidget(redditButton);
-
         // Adiciona um spacer na direita também para centralizar os dois botões bonitinho no meio da tela
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
-
         layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
         layout->addLayout(layoutHorizontal);
     };
@@ -4508,7 +3974,6 @@ showfeed = [&]()
         });
         scroll_area(layout, button_area);
         renderBottomBar("chat");
-
     };
     changeServerPage = [&](){
         clearLayout(layout);
@@ -4525,7 +3990,6 @@ showfeed = [&]()
         layout->addWidget(back_button);
         renderBottomBar("options");
     };
-
     addFriendsRequest = [&](QString receiver, QString message){
         QJsonObject friend_json;
         friend_json["receiver"] = receiver;
@@ -4551,7 +4015,6 @@ showfeed = [&]()
         QObject::connect(send_button, &QPushButton::clicked, [=](){
                 addFriendsRequest(usernameEntry->text(), messageEntry->text());
                 initialPage();
-
         });
         QObject::connect(back_button, &QPushButton::clicked, [=](){
                 initialPage();
@@ -4563,5 +4026,4 @@ showfeed = [&]()
     //função para exibir o feed
     window.showMaximized();
     return app.exec();
-
 };
