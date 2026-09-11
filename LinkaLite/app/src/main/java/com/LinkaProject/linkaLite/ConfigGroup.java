@@ -26,10 +26,18 @@ public class ConfigGroup extends Activity{
     private String username="";
     private String url="";
     private int groupId = -1;
+    private ImageButton btnHome;
+    private ImageButton btnChat;
+    private ImageButton btnOptions;
+    private ImageButton btnProfile;
     private Button btnRemoveChannel;
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.config_group);
+        btnHome = (ImageButton) findViewById(R.id.btnHome);
+        btnChat = (ImageButton) findViewById(R.id.btnChat);
+        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnBanUser = (Button) findViewById(R.id.btnBanUser);
         btnChangeName = (Button) findViewById(R.id.btnChangeName);
         btnExit = (Button) findViewById(R.id.btnExit);
@@ -82,6 +90,37 @@ public class ConfigGroup extends Activity{
             public void onClick(View v){
                 Intent intent = new Intent(ConfigGroup.this, BanUserGroup.class);
                 intent.putExtra("groupId", groupId);
+                startActivity(intent);
+            }
+        });
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ConfigGroup.this, HomeActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        btnOptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ConfigGroup.this, optionActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        btnProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ConfigGroup.this, profile.class);
+                startActivity(intent);
+            }
+        });
+
+        btnChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ConfigGroup.this, chatActivity.class);
                 startActivity(intent);
             }
         });
