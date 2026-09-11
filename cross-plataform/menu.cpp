@@ -1347,26 +1347,56 @@ int main(int argc, char *argv[])
             &status_code
         );
     };
+    auto displayPostImage = [](QLabel *label, const QString &imageUrl) {
+        if (imageUrl.isEmpty() || !label) return;
+
+        QNetworkAccessManager *manager = new QNetworkAccessManager(label);
+        
+        // Inicialização uniforme com {} evita o Most Vexing Parse
+        QNetworkRequest request{QUrl(imageUrl)};
+
+        QNetworkReply *reply = manager->get(request);
+        QObject::connect(reply, &QNetworkReply::finished, label, [label, reply, manager]() {
+            if (reply->error() == QNetworkReply::NoError) {
+                QPixmap pixmap;
+                pixmap.loadFromData(reply->readAll());
+                if (!pixmap.isNull()) {
+                    label->setPixmap(pixmap.scaledToWidth(300, Qt::SmoothTransformation));
+                }
+            }
+            reply->deleteLater();
+            manager->deleteLater();
+        });
+    };
+
     otherProfilePage = [&](QString usernameProfile){ 
         clearLayout(layout);
         QHBoxLayout *header = new QHBoxLayout();
+        QList<QWidget*> posts;
+
         viewProfilePicture(header, usernameProfile, 240);
+
         QLabel *titleUsername = new QLabel(usernameProfile);
-        titleUsername->setStyleSheet("font-size: 16px; font-weight: bold; color: #333333;");
         QLabel *biography = new QLabel(); 
         QPushButton *sentAFriend = new QPushButton(sent_friend_text);
         QPushButton *unFriend = new QPushButton(un_friend_text);
         QPushButton *back_button = new QPushButton(back_text);
-        QString response_bio = requestHTTP(url + "view_profile/" + usernameProfile, "GET", QJsonObject());
+
+        // 1. Busca Biografia do Usuário
+        QString response_bio = requestHTTP(url + "/view_profile/" + usernameProfile, "GET", QJsonObject());
         QJsonDocument doc_bio = QJsonDocument::fromJson(response_bio.toUtf8());
         QJsonObject json_response_bio = doc_bio.object();
         QString bio = json_response_bio["bio"].toString();
+        biography->setText(bio);
+
+        // 2. Checa status de Amizade
         QJsonObject isFriend;
         isFriend["username"] = username;
         QString response = requestHTTP(url + "/friends", "POST", isFriend);
         QJsonDocument doc = QJsonDocument::fromJson(response.toUtf8());
         QJsonObject json_response = doc.object();
         QJsonArray friendsArray = json_response["friends"].toArray();
+        
         bool jaEAmigo = false;
         for (int i = 0; i < friendsArray.size(); ++i) {
             QJsonArray subArray = friendsArray[i].toArray();
@@ -1379,26 +1409,79 @@ int main(int argc, char *argv[])
                 }
             }
         }
+
         header->addWidget(titleUsername);
         layout->addLayout(header);
         layout->addWidget(biography);
+
         if (jaEAmigo) {
-            layout->addWidget(unFriend);
+            header->addWidget(unFriend);
             QObject::connect(unFriend, &QPushButton::clicked, [=](){
                 sentUnFriendRequest(usernameProfile);
             });
             delete sentAFriend;
         } else {
-            layout->addWidget(sentAFriend);
+            header->addWidget(sentAFriend);
             QObject::connect(sentAFriend, &QPushButton::clicked, [=](){
                 sentFriendRequest(usernameProfile);
             });
             delete unFriend;
         }
-        layout->addWidget(back_button);
+
         QObject::connect(back_button, &QPushButton::clicked, [=](){
             initialPage();
         });
+
+        
+        QJsonObject jsonPostReq;
+        jsonPostReq["username"] = usernameProfile;
+        QString postsResponse = requestHTTP(url + "/view-profile-posts", "POST", jsonPostReq);
+        QJsonDocument docPosts = QJsonDocument::fromJson(postsResponse.toUtf8());
+        QJsonArray postsArray = docPosts.array();
+
+        // Itera do mais recente para o mais antigo
+        for (int i = postsArray.size() - 1; i >= 0; --i) {
+            QJsonObject postObj = postsArray[i].toObject();
+            QString textPost = postObj["text_post"].toString();
+            QString datetime = postObj["datetime"].toString();
+
+            QWidget *postCard = new QWidget();
+            QVBoxLayout *cardLayout = new QVBoxLayout(postCard);
+
+            QLabel *dateLabel = new QLabel(datetime);
+            dateLabel->setStyleSheet("color: gray; font-size: 10px;");
+            cardLayout->addWidget(dateLabel);
+
+            // Trata presenças de [IMAGE]
+            if (textPost.contains("[IMAGE]")) {
+                QStringList parts = textPost.split("[IMAGE]");
+                QString caption = parts[0].trimmed();
+                QString imageUrl = parts.length() > 1 ? parts[1].trimmed() : "";
+
+                if (!caption.isEmpty()) {
+                    QLabel *textLabel = new QLabel(caption);
+                    textLabel->setWordWrap(true);
+                    textLabel->setTextFormat(Qt::PlainText); // Previne XSS/Injeção HTML
+                    cardLayout->addWidget(textLabel);
+                }
+
+                if (!imageUrl.isEmpty()) {
+                    QLabel *imgLabel = new QLabel();
+                    // Carrega a imagem da URL via helper (ex: renderImage / QNetworkAccessManager)
+                    displayPostImage(imgLabel, imageUrl); 
+                    cardLayout->addWidget(imgLabel);
+                }
+            } else {
+                QLabel *textLabel = new QLabel(textPost);
+                textLabel->setWordWrap(true);
+                textLabel->setTextFormat(Qt::PlainText); // Renderiza HTML bruto como texto limpo
+                cardLayout->addWidget(textLabel);
+            }
+
+            posts.append(postCard);
+        }
+        scroll_area(layout, posts);
+        layout->addWidget(back_button);
         renderBottomBar("profile");
     };
     changeLangPage = [&](){
