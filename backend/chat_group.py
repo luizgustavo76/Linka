@@ -173,7 +173,7 @@ def join_group():
         )
         result = cur.fetchone()
         if result:
-            group_id = result[1]
+            group_id = result[0]
             cur.execute("SELECT username FROM users_in_group WHERE username = ? AND group_id = ?",(username, group_id))
             result_user = cur.fetchone()
             if result_user:
