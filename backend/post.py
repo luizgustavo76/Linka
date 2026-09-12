@@ -65,7 +65,7 @@ def view_profile_posts():
     username = str(username).strip() if username else ""
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM posts WHERE username = ? AND ORDER BY id DESC", (username,))
+    cur.execute("SELECT * FROM posts WHERE username = ? ORDER BY id DESC", (username,))
     result = cur.fetchall()
     posts = []
     for single_posts in result:

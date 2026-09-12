@@ -1580,6 +1580,7 @@ int main(int argc, char *argv[])
             QJsonObject jsonNew;
             jsonNew["username"] = username;
             requestHTTP(url + "/create-invite", "POST", jsonNew);
+            generateInvitePage();
         });
         layout->addWidget(generateButton);
         QJsonObject jsonView;
