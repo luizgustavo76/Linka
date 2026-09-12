@@ -902,7 +902,7 @@ int main(int argc, char *argv[])
     std::function<void()> loginPage;
     std::function<void()> signinPage;
     std::function<void()> signupPage;
-    std::function<int(const QString&, const QString&, const QString&)> signinRequest;
+    std::function<int(const QString&, const QString&, const QString&, const QString&)> signinRequest;
     std::function<int(const QString&, const QString&)> signupRequest;
     std::function<void()> changeServerPage;
     std::function<void()> addThemePage;
@@ -2156,7 +2156,6 @@ int main(int argc, char *argv[])
 static QTimer *feedTimer = nullptr;
 showfeed = [&]()
     {
-        // Configura e inicia o timer de 2 minutos apenas uma vez
         if (!feedTimer) {
             feedTimer = new QTimer(central);
             feedTimer->setInterval(120000);   // 120.000 ms = 2 minutos
@@ -3733,11 +3732,12 @@ showfeed = [&]()
         fadeTransition(central);
         showfeed();
     };
-    signinRequest = [&](QString username, QString password, QString email){
+    signinRequest = [&](QString username, QString password, QString email, QString invite){
         QJsonObject json_signin;
         json_signin["username"] = username;
         json_signin["password"] = password;
         json_signin["email"] = email;
+        json_signin["invite_code"] = invite;
         int status_code = 0;
         QString request_signin = requestHTTP(
             url + "/register",
@@ -3788,15 +3788,20 @@ showfeed = [&]()
         QLineEdit *usernameEntry = new QLineEdit();
         QLineEdit *passwordEntry = new QLineEdit();
         QLineEdit *retryPasswordEntry = new QLineEdit();
+        QLineEdit *inviteEntry = new QLineEdit();
         QLineEdit *emailEntry = new QLineEdit();
+        QLabel *labelExplanation = new QLabel("Basically, invites are a way to make access more exclusive; entry is granted to those who have one—whether by asking\n an existing user or by interacting within the subreddit or official Discord server.");
+        inviteEntry->setPlaceholderText("Invite");
         usernameEntry->setPlaceholderText(username_text);
         passwordEntry->setPlaceholderText(password_text);
         retryPasswordEntry->setPlaceholderText(retry_password_text);
         emailEntry->setPlaceholderText(email_text);
+        labelExplanation->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         usernameEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         passwordEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         retryPasswordEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         emailEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        inviteEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         QPushButton *send_button = new QPushButton(send_text);
         QObject::connect(signinPage_button, &QPushButton::clicked, [=](){
             signupPage();
@@ -3806,7 +3811,7 @@ showfeed = [&]()
         });
         QObject::connect(send_button, &QPushButton::clicked, [=, &token_session, &username](){
             if (passwordEntry->text() == retryPasswordEntry->text()) {
-                int status_code = signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text());
+                int status_code = signinRequest(usernameEntry->text(), passwordEntry->text(), emailEntry->text(), inviteEntry->text());
                 if (status_code == 200 || status_code == 201){
                     QJsonObject create_json;
                     create_json["username"] = username;
@@ -3832,23 +3837,21 @@ showfeed = [&]()
         layout->addWidget(passwordEntry);
         layout->addWidget(retryPasswordEntry);
         layout->addWidget(emailEntry);
+        layout->addWidget(inviteEntry);
+        layout->addWidget(labelExplanation);
         layout->addWidget(send_button);
         QPushButton *discordButton = new QPushButton();
         discordButton->setIcon(QIcon(":/assets/discord.png"));
         QPushButton *redditButton = new QPushButton();
         redditButton->setIcon(QIcon(":/assets/reddit.png"));
-        // 1. Reduza o tamanho dos ícones para algo realista em telas de celular
-        // Em vez de 200 de largura, use tamanhos quadrados ou mais compactos para não estourar
         discordButton->setIconSize(QSize(120, 40));
         redditButton->setIconSize(QSize(120, 40));
-        // 2. O SEGREDO: Trave a largura máxima do BOTÃO para ele não crescer além disso
         discordButton->setMaximumWidth(130);
         redditButton->setMaximumWidth(130);
         QHBoxLayout *layoutHorizontal = new QHBoxLayout();
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
         layoutHorizontal->addWidget(discordButton);
         layoutHorizontal->addWidget(redditButton);
-        // Adiciona um spacer na direita também para centralizar os dois botões bonitinho no meio da tela
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
         layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
         layout->addLayout(layoutHorizontal);
