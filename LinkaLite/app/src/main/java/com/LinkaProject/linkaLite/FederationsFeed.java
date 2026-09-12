@@ -36,6 +36,7 @@ public class FederationsFeed extends Activity {
     private Button newPost;
     private ListView listViewPosts;
     private PostAdapter postAdapter;
+    private String username = "";
     private ArrayList<JSONObject> postsList;
     private String currentUrl = "";
     private ScheduledExecutorService scheduler;
@@ -55,20 +56,9 @@ public class FederationsFeed extends Activity {
                 }
             }
         }
-        try {   
-            config cfg = new config();
-            String rawJson = cfg.loadCfgAsJson(this, "config.cfg");
-            JSONObject jsonCfg = new JSONObject(rawJson);
-            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-            JSONObject server = jsonCfg.getJSONObject("SERVER");
-            if (currentUrl.isEmpty()) {
-                currentUrl = server.optString("url", "");
-            }
-            String token = fastLogin.optString("token_session", "");
-        } catch (JSONException e) {
-            Log.e("LINKA_DEBUG", "Erro ao carregar config.cfg: " + e.getMessage());
-            e.printStackTrace();
-        }
+        AppConfig config = new AppConfig(this);
+        currentUrl = config.getUrl();
+        username = config.getUsername();
         newPost = (Button) findViewById(R.id.newPost);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);

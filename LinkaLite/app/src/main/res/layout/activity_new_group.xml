@@ -26,7 +26,6 @@
         android:text="Create"
         android:layout_margin="12dip" />
 
-    <!-- Espaçador flexível para empurrar a barra para o rodapé -->
     <View
         android:layout_width="fill_parent"
         android:layout_height="0dip"

@@ -51,16 +51,9 @@ public class addFriendActivity extends Activity{
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
-        try{
-            config cfg = new config();
-            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(addFriendActivity.this, "config.cfg"));
-            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-            JSONObject server = jsonCfg.getJSONObject("SERVER");
-            username = fastLogin.getString("username").toString();
-            url = server.getString("url").toString();
-        }catch(JSONException e){
-            e.printStackTrace();
-        }
+        AppConfig config = new AppConfig(this);
+        url = config.getUrl();
+        username = config.getUsername();
         btnSend.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){

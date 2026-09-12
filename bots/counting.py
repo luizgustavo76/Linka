@@ -22,3 +22,4 @@ def accept_invite():
     inbox = bot.inbox()
     if "inbox" in inbox:
         for content in inbox["inbox"]:
+            bot.accept_invite(content.get["sender"])
