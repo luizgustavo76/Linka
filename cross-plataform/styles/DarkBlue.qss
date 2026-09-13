@@ -49,6 +49,7 @@ QPushButton {
     border-radius: 0px;
     padding: 10px 14px;
     font-weight: 600;
+    
 }
 
 QPushButton[class="tab-button"] {

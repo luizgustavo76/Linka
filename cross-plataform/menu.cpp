@@ -210,7 +210,7 @@ void renderPostImage(QString urlImage, QBoxLayout *postLayout) {
     imageLabel->setText("Loading image...");
     postLayout->addWidget(imageLabel);
     QNetworkAccessManager *manager = new QNetworkAccessManager(imageLabel);
-    QNetworkRequest request((QUrl(urlImage)));
+    QNetworkRequest request((QUrl("http://linkaProject.pythonanywhere.com/lite-render?url=" + urlImage)));
     QNetworkReply *reply = manager->get(request);
     QObject::connect(reply, &QNetworkReply::finished, imageLabel, [=]() {
         if (reply->error() == QNetworkReply::NoError) {
@@ -240,7 +240,7 @@ void renderAvatarImage(QString urlImage, QBoxLayout *postLayout, int size = 40) 
     imageLabel->setText("...");
     postLayout->addWidget(imageLabel);
     QNetworkAccessManager *manager = new QNetworkAccessManager(imageLabel);
-    QNetworkRequest request((QUrl(urlImage)));
+    QNetworkRequest request((QUrl("http://linkaProject.pythonanywhere.com/lite-render?url=" + urlImage)));
     QNetworkReply *reply = manager->get(request);
     QObject::connect(reply, &QNetworkReply::finished, imageLabel, [=]() {
         if (reply->error() == QNetworkReply::NoError) {
@@ -799,7 +799,7 @@ int main(int argc, char *argv[])
     QPixmap pixmap(":/assets/icon.png");
     QSplashScreen splash(pixmap);
     splash.show();
-    window.setWindowTitle("Linka Mobile");
+    window.setWindowTitle("Linka Desktop");
     QWidget *central = new QWidget(&window);
     QVBoxLayout *layout = new QVBoxLayout(central);
     QLabel *header_linka = new QLabel();
@@ -2153,8 +2153,8 @@ int main(int argc, char *argv[])
         renderBottomBar("home");
     };
     // Defina o timer fora do lambda (pode ser membro da classe, estático ou capturado no escopo)
-static QTimer *feedTimer = nullptr;
-showfeed = [&]()
+    static QTimer *feedTimer = nullptr;
+    showfeed = [&]()
     {
         if (!feedTimer) {
             feedTimer = new QTimer(central);
@@ -2167,30 +2167,24 @@ showfeed = [&]()
         }
         clearLayout(layout);
         fadeTransition(central);
-        // --- NAVEGAÇÃO SUPERIOR (TABS) ---
-        QHBoxLayout *tabPages = new QHBoxLayout();
-        tabPages->setContentsMargins(12, 8, 12, 8);
-        tabPages->setSpacing(8);
-        QPushButton *newer = new QPushButton(newer_text);
-        QPushButton *trending = new QPushButton(trending_text);
-        QPushButton *federations = new QPushButton(federations_text);
-        newer->setProperty("class", "tab-button");
-        trending->setProperty("class", "tab-button");
-        federations->setProperty("class", "tab-button");
-        newer->setProperty("active", true);
-        trending->setProperty("active", false);
-        federations->setProperty("active", false);
-        QPushButton *btnNewPost = new QPushButton("+");
-        btnNewPost->setProperty("class", "primary-button");
-        QObject::connect(btnNewPost, &QPushButton::clicked, [=](){ new_post(); });
-        tabPages->addWidget(btnNewPost);
-        tabPages->addWidget(newer);
-        tabPages->addWidget(trending);
-        tabPages->addWidget(federations);
-        layout->addLayout(tabPages);
-        QObject::connect(trending, &QPushButton::clicked, [=](){ trendingFeed(); });
-        QObject::connect(federations, &QPushButton::clicked, [=](){ addFederationFeed(); });
         auto renderPostsList = [=](const QJsonArray &postsArray) {
+            QHBoxLayout *tabPages = new QHBoxLayout();
+            tabPages->setContentsMargins(12, 8, 12, 8);
+            tabPages->setSpacing(8);
+            QPushButton *newer = new QPushButton(newer_text);
+            QPushButton *federations = new QPushButton(federations_text);
+            newer->setProperty("class", "tab-button");
+            federations->setProperty("class", "tab-button");
+            newer->setProperty("active", true);
+            federations->setProperty("active", false);
+            QPushButton *btnNewPost = new QPushButton("+");
+            btnNewPost->setProperty("class", "primary-button");
+            QObject::connect(btnNewPost, &QPushButton::clicked, [=](){ new_post(); });
+            tabPages->addWidget(btnNewPost);
+            tabPages->addWidget(newer);
+            tabPages->addWidget(federations);
+            layout->addLayout(tabPages);
+            QObject::connect(federations, &QPushButton::clicked, [=](){ addFederationFeed(); });
             QList<QWidget*> labels;
             for (auto value : postsArray) {
                 if (!value.isObject()) continue;
@@ -3378,56 +3372,73 @@ showfeed = [&]()
         scroll_area(layout, wrappedWidget);
         renderBottomBar("chat");
     };
-    renderBottomBar = [&](QString actual_window){
+    renderBottomBar = [=, &splash, &window](QString actual_window){
         splash.finish(&window);
+
+        // Evita acumular barras se já houver uma
         QWidget *bottomBar = new QWidget(central);
         bottomBar->setFixedHeight(74);
-        QWidget *container = new QWidget();
         bottomBar->setStyleSheet("background-color: #11111b; border: none;");
+
         QPushButton *btnHome = new QPushButton(bottomBar);
         QPushButton *btnChat = new QPushButton(bottomBar);
         QPushButton *btnProfile = new QPushButton(bottomBar);
         QPushButton *btnOptions = new QPushButton(bottomBar);
+
         btnHome->setProperty("class", "tab-button");
         btnChat->setProperty("class", "tab-button");
         btnProfile->setProperty("class", "tab-button");
         btnOptions->setProperty("class", "tab-button");
+
         btnHome->setIcon(QIcon(":/assets/home.png"));
         btnChat->setIcon(QIcon(":/assets/chat.png"));
         btnProfile->setIcon(QIcon(":/assets/account.png"));
         btnOptions->setIcon(QIcon(":/assets/options.png"));
-        if (actual_window == "home"){
-            btnHome->setProperty("active", true);
-        }
-        if (actual_window == "chat"){
-            btnChat->setProperty("active", true);
-        }
-        if (actual_window == "profile"){
-            btnProfile->setProperty("active", true);
-        }
-        if (actual_window == "options"){
-            btnOptions->setProperty("active", true);
-        }
+
+        if (actual_window == "home")    btnHome->setProperty("active", true);
+        if (actual_window == "chat")    btnChat->setProperty("active", true);
+        if (actual_window == "profile") btnProfile->setProperty("active", true);
+        if (actual_window == "options") btnOptions->setProperty("active", true);
+
         QSize iconSize(64, 64);
         QSize iconSizeHome(32, 32);
         btnHome->setIconSize(iconSizeHome);
         btnChat->setIconSize(iconSize);
         btnProfile->setIconSize(iconSize);
         btnOptions->setIconSize(iconSize);
+
         btnHome->setFixedSize(iconSize);
         btnChat->setFixedSize(iconSize);
         btnProfile->setFixedSize(iconSize);
         btnOptions->setFixedSize(iconSize);
+
+        // 2. Proteja TODAS as chamadas de std::function contra ponteiros nulos!
         QObject::connect(btnHome, &QPushButton::clicked, [=]() {
-            showfeed();
+            if (actual_window != "home" && showfeed) {
+                showfeed();
+            }
         });
+
         QObject::connect(btnChat, &QPushButton::clicked, [=]() {
-            QTimer::singleShot(50, [=](){
-                chatPage();
-            });
+            if (actual_window != "chat" && chatPage) {
+                QTimer::singleShot(50, [=](){
+                    chatPage();
+                });
+            }
         });
-        QObject::connect(btnProfile, &QPushButton::clicked, [=]() { account(); });
-        QObject::connect(btnOptions, &QPushButton::clicked, [options]() { if (options) options(); });
+
+        QObject::connect(btnProfile, &QPushButton::clicked, [=]() { 
+            if (actual_window != "profile" && account) {
+                account(); 
+            }
+        });
+
+        QObject::connect(btnOptions, &QPushButton::clicked, [=]() { 
+            if (actual_window != "options" && options) {
+                options(); 
+            }
+        });
+
         QHBoxLayout *barLayout = new QHBoxLayout(bottomBar);
         barLayout->setContentsMargins(10, 5, 10, 5);
         barLayout->setSpacing(10);
@@ -3435,6 +3446,7 @@ showfeed = [&]()
         barLayout->addWidget(btnChat);
         barLayout->addWidget(btnProfile);
         barLayout->addWidget(btnOptions);
+
         if (layout) {
             layout->addWidget(bottomBar, 0);
         }
@@ -3485,7 +3497,7 @@ showfeed = [&]()
     addFederationFeed = [&](){
         clearLayout(layout);
         QList <QWidget*> widgets;
-        QPushButton *submmitFederation = new QPushButton();
+        QPushButton *submmitFederation = new QPushButton("submmit");
         widgets.append(submmitFederation);
         QObject::connect(submmitFederation, &QPushButton::clicked, [=](){
             submmitFederationPage();
@@ -3523,21 +3535,14 @@ showfeed = [&]()
         fadeTransition(central);
         QHBoxLayout *tabPages = new QHBoxLayout();
         QPushButton *newer = new QPushButton(newer_text);
-        QPushButton *trending = new QPushButton(trending_text);
         QPushButton *federations = new QPushButton(federations_text);
         newer->setProperty("class", "tab-button");
-        trending->setProperty("class", "tab-button");
         federations->setProperty("class", "tab-button");
         newer->setProperty("active", false);
-        trending->setProperty("active", false);
         federations->setProperty("active", true);
         tabPages->addWidget(newer);
-        tabPages->addWidget(trending);
         tabPages->addWidget(federations);
         layout->addLayout(tabPages);
-        QObject::connect(trending, &QPushButton::clicked, [=](){
-            trendingFeed();
-        });
         QObject::connect(federations, &QPushButton::clicked, [=](){
             addFederationFeed();
         });
@@ -3761,23 +3766,31 @@ showfeed = [&]()
     signinPage = [&](){
         clearLayout(layout);
         fadeTransition(central);
+
+        // 1. BANNER COM SCALING RESPONSIVO
         QHBoxLayout *bannerLayout = new QHBoxLayout();
         QWidget *container = new QWidget();
         QIcon *banner_image = new QIcon(":/assets/linka_app_login_banner.png");
         QLabel *banner_login = new QLabel();
-        banner_login->setPixmap(banner_image->pixmap(QSize(400, 200)));
+        
+        // Ajusta o Pixmap dinamicamente sem forçar largura fixa no layout
+        QPixmap pix = banner_image->pixmap(QSize(400, 200));
+        banner_login->setPixmap(pix);
+        banner_login->setScaledContents(true); // Redimensiona se a tela for menor
+        banner_login->setMaximumSize(400, 200);
+        banner_login->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
         banner_login->setAlignment(Qt::AlignCenter);
+
         bannerLayout->addWidget(banner_login);
         bannerLayout->setContentsMargins(0, 0, 0, 0);
         bannerLayout->setSpacing(0);
         container->setLayout(bannerLayout);
-        int larguraDaTela = QGuiApplication::primaryScreen()->geometry().width();
-        container->setMaximumWidth(larguraDaTela);
         layout->addWidget(container);
+
+        // 2. BOTÕES DE TAB
         QHBoxLayout *loginButtons = new QHBoxLayout();
         QPushButton *signinPage_button = new QPushButton(signup_text);
         QPushButton *signupPage_button = new QPushButton(signin_text);
-        QPushButton *change_server_button = new QPushButton();
         signinPage_button->setProperty("class", "tab-button");
         signupPage_button->setProperty("class", "tab-button");
         signinPage_button->setProperty("active", false);
@@ -3785,24 +3798,38 @@ showfeed = [&]()
         loginButtons->addWidget(signinPage_button);
         loginButtons->addWidget(signupPage_button);
         layout->addLayout(loginButtons);
+
+        // 3. CAMPOS DE ENTRADA E EXPLICAÇÃO
         QLineEdit *usernameEntry = new QLineEdit();
         QLineEdit *passwordEntry = new QLineEdit();
         QLineEdit *retryPasswordEntry = new QLineEdit();
         QLineEdit *inviteEntry = new QLineEdit();
         QLineEdit *emailEntry = new QLineEdit();
-        QLabel *labelExplanation = new QLabel("Basically, invites are a way to make access more exclusive; entry is granted to those who have one—whether by asking\n an existing user or by interacting within the subreddit or official Discord server.");
+
+        QLabel *labelExplanation = new QLabel(
+            "Basically, invites are a way to make access more exclusive; entry is granted to those who have one—whether "
+            "by asking an existing user or by interacting within the subreddit or official Discord server."
+        );
+        
+        // CORREÇÃO CRÍTICA DO LABEL:
+        labelExplanation->setWordWrap(true);
+        // Ignora a largura do texto no cálculo do tamanho mínimo do layout
+        labelExplanation->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Minimum);
+
         inviteEntry->setPlaceholderText("Invite");
         usernameEntry->setPlaceholderText(username_text);
         passwordEntry->setPlaceholderText(password_text);
         retryPasswordEntry->setPlaceholderText(retry_password_text);
         emailEntry->setPlaceholderText(email_text);
-        labelExplanation->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        usernameEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        passwordEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        retryPasswordEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        emailEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        inviteEntry->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
+        usernameEntry->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        passwordEntry->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        retryPasswordEntry->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        emailEntry->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        inviteEntry->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+
         QPushButton *send_button = new QPushButton(send_text);
+
         QObject::connect(signinPage_button, &QPushButton::clicked, [=](){
             signupPage();
         });
@@ -3826,13 +3853,14 @@ showfeed = [&]()
                     config["FAST-LOGIN"]["password"] = passwordEntry->text().toStdString();
                     saveConfig();
                     initialPage();
-                }else{
+                } else {
                     QString msgErro = QString("ERROR! (Status: %1)").arg(status_code);
                     QLabel *error_label = new QLabel(msgErro);
                     layout->addWidget(error_label);
                 };
             };
         });
+
         layout->addWidget(usernameEntry);
         layout->addWidget(passwordEntry);
         layout->addWidget(retryPasswordEntry);
@@ -3840,19 +3868,24 @@ showfeed = [&]()
         layout->addWidget(inviteEntry);
         layout->addWidget(labelExplanation);
         layout->addWidget(send_button);
+
+        // 4. BOTÕES REDES SOCIAIS
         QPushButton *discordButton = new QPushButton();
         discordButton->setIcon(QIcon(":/assets/discord.png"));
         QPushButton *redditButton = new QPushButton();
         redditButton->setIcon(QIcon(":/assets/reddit.png"));
+
         discordButton->setIconSize(QSize(120, 40));
         redditButton->setIconSize(QSize(120, 40));
         discordButton->setMaximumWidth(130);
         redditButton->setMaximumWidth(130);
+
         QHBoxLayout *layoutHorizontal = new QHBoxLayout();
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
         layoutHorizontal->addWidget(discordButton);
         layoutHorizontal->addWidget(redditButton);
         layoutHorizontal->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+
         layout->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
         layout->addLayout(layoutHorizontal);
     };
