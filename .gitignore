@@ -6,6 +6,14 @@ backend/DB/
 build-*/
 build/
 debug/
+# Diretórios de compilação
+build/
+build_linux/
+AppDir/
+*.AppImage
+*.so
+*.o
+*.a
 release/
 cmake-build-*/
 node_modules/
