@@ -108,7 +108,6 @@ def register():
         
         invite_code = dados.get("invite_code")
 
-        # Verifica APENAS username, password e email. O invite_code NÃO ESTÁ MAIS AQUI!
         if not all([username, password, email]):
             return jsonify({"status": "data is missing"}), 400
         if invite_code:

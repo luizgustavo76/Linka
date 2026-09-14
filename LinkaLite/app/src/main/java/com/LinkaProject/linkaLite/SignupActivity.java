@@ -1,4 +1,5 @@
 package com.LinkaProject.linkaLite;
+
 import com.LinkaProject.linkaLite.R;
 import android.app.Activity;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
 public class SignupActivity extends Activity {
     private EditText edtUsername;
     private EditText edtPassword;
@@ -24,6 +26,7 @@ public class SignupActivity extends Activity {
     private Button btnRegister;
     private EditText edtInvite;
     private String url = "";
+
     public String requestHTTP(String urlParam, String method, JSONObject json_body) {
         HttpURLConnection connection = null;
         try {
@@ -46,7 +49,9 @@ public class SignupActivity extends Activity {
             os.close();
 
             int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
+            
+            // CORREÇÃO: Aceita status 200 (OK) e 201 (Created)
+            if (responseCode >= 200 && responseCode < 300) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 StringBuilder response = new StringBuilder();
                 String line;
@@ -69,19 +74,22 @@ public class SignupActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        try{
+        try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(SignupActivity.this, "config.cfg"));
             JSONObject server = jsonCfg.getJSONObject("SERVER");
             url = server.optString("url", "");
-        }catch(JSONException e){
+        } catch (JSONException e) {
             e.printStackTrace();
         }
+
         config cfg = new config();
         final String baseUrl = url;
         cfg.deleteFileLinka(SignupActivity.this, "config.cfg");
         cfg.createDefaultConfig(SignupActivity.this, "config.cfg");
+
         setContentView(R.layout.activity_register);
+
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword); 
         edtRetypePassword = (EditText) findViewById(R.id.edtRetypePassword);
@@ -89,28 +97,35 @@ public class SignupActivity extends Activity {
         txtGoToSignin = (TextView) findViewById(R.id.txtGoToSignin);
         btnRegister = (Button) findViewById(R.id.btnRegister);
         edtInvite = (EditText) findViewById(R.id.edtInvite);
+
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String username = edtUsername.getText().toString();
-                String password = edtPassword.getText().toString();
-                String email = edtEmail.getText().toString();
-                String passwordRetyped = edtRetypePassword.getText().toString();
-                String invite = edtInvite.getText().toString();
+                String username = edtUsername.getText().toString().trim();
+                String password = edtPassword.getText().toString().trim();
+                String email = edtEmail.getText().toString().trim();
+                String passwordRetyped = edtRetypePassword.getText().toString().trim();
+                String invite = edtInvite.getText().toString().trim();
+
                 try {
                     JSONObject json_register = new JSONObject();
                     json_register.put("username", username);
-                    json_register.put("password", password);
+                    json_register.put("senha", password); // Envia como 'senha' para casar com o Flask
+                    json_register.put("password", password); // Envia 'password' por garantia
                     json_register.put("email", email);
                     json_register.put("invite_code", invite);
+
                     if (password.equals(passwordRetyped)) {
                         String response = requestHTTP(baseUrl + "/register", "post", json_register);
+                        
                         if (response.length() != 0) {
                             config cfg = new config();
                             cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "username", username);
                             cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "password", password);
+                            
                             String newToken = tokenManager.newSession(SignupActivity.this);
                             cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
+
                             Intent intent = new Intent(SignupActivity.this, HomeActivity.class);
                             startActivity(intent);
                             finish(); 
