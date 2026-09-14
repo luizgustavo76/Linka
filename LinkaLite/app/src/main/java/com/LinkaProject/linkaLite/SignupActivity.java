@@ -96,7 +96,6 @@ public class SignupActivity extends Activity {
         edtEmail = (EditText) findViewById(R.id.edtEmail);
         txtGoToSignin = (TextView) findViewById(R.id.txtGoToSignin);
         btnRegister = (Button) findViewById(R.id.btnRegister);
-        edtInvite = (EditText) findViewById(R.id.edtInvite);
 
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -105,7 +104,6 @@ public class SignupActivity extends Activity {
                 String password = edtPassword.getText().toString().trim();
                 String email = edtEmail.getText().toString().trim();
                 String passwordRetyped = edtRetypePassword.getText().toString().trim();
-                String invite = edtInvite.getText().toString().trim();
 
                 try {
                     JSONObject json_register = new JSONObject();
@@ -113,7 +111,6 @@ public class SignupActivity extends Activity {
                     json_register.put("senha", password); // Envia como 'senha' para casar com o Flask
                     json_register.put("password", password); // Envia 'password' por garantia
                     json_register.put("email", email);
-                    json_register.put("invite_code", invite);
 
                     if (password.equals(passwordRetyped)) {
                         String response = requestHTTP(baseUrl + "/register", "post", json_register);
