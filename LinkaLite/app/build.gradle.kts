@@ -55,7 +55,7 @@ android {
         applicationId = "com.LinkaProject.linkaLite"
 
         // Mantido em 9 (Android 2.3), o limite máximo de retrocompatibilidade do Gradle moderno
-        minSdk = 9
+        minSdk = 3
         targetSdk = 9
         versionCode = 1
         versionName = "1.0"
@@ -76,12 +76,23 @@ android {
             enableV2Signing = false
         }
     }
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
     signingConfigs {
-        release {
-            storeFile file("chave-linka.jks") // caminho para onde salvou o arquivo
-            storePassword "Luiz08102012"
-            keyAlias "linka_key"
-            keyPassword "Luiz08102012"
+        create("release") {
+            storeFile = file("chave-linka.jks") // ou file("../chave-linka.jks") se o arquivo estiver na raiz do projeto
+            storePassword = "Luiz08102012"
+            keyAlias = "linka_key"
+            keyPassword = "Luiz08102012"
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     

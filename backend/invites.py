@@ -64,7 +64,40 @@ def view_invites():
 def generate_invite():
     data = request.get_json() or {}
     username = data.get("username")
-    
+    admin_key = request.headers.get("X-Admin-Key") or data.get("admin_key")
+    MASTER_KEY = os.getenv("ADMIN_MASTER_KEY")
+    if MASTER_KEY and admin_key == MASTER_KEY:
+        try:
+            quantity = int(data.get("quantity", 1))
+            if quantity < 1:
+                quantity = 1
+        except (ValueError, TypeError):
+            quantity = 1
+
+        conn = get_db()
+        cur = conn.cursor()
+        
+        created_invites = []
+        
+        for _ in range(quantity):
+            invite = secrets.token_hex(8)
+            if username:
+                cur.execute("INSERT INTO activies_invites (username, invite_code) VALUES (?, ?)", (username, invite))
+            else:
+                cur.execute("INSERT INTO activies_invites (username, invite_code) VALUES (?, ?)", ("ADMIN", invite))
+                
+            cur.execute("INSERT INTO invites (invite_code, status) VALUES (?, 'NOT USED')", (invite,))
+            created_invites.append(invite)
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({
+            "status": "admin_invites_created",
+            "count": len(created_invites),
+            "invites": created_invites
+        }), 200
+
     if username and username == getattr(g, 'username', None):
         conn = get_db()
         cur = conn.cursor()
@@ -88,7 +121,6 @@ def generate_invite():
             cur.execute("INSERT INTO activies_invites (username, invite_code) VALUES (?, ?)", (username, invite))
             cur.execute("INSERT INTO invites (invite_code, status) VALUES (?, 'NOT USED')", (invite,))
             
-            # Garante a atualização matemática limpa
             cur.execute("UPDATE invites_remaining SET remaining = ? WHERE username = ?", (remaining_count - 1, username))
             conn.commit()
             conn.close()

@@ -47,7 +47,7 @@
             android:textSize="14sp"
             android:layout_marginTop="10dip" />
         <TextView
-            android:id="@+id/newPostText"
+            android:id="@+id/newPostContent"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="Links are supported now"

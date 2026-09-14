@@ -68,7 +68,7 @@ class Login:
     def verificar_hash(self, senha, hash):
         return check_password_hash(hash, senha)
     def get_db_invites(self):
-        conn = sqlite3.connect(self.db_dir + "/invite.db")
+        conn = sqlite3.connect(self.db_dir + "/invites.db")
         return conn
     def get_db_profiles(self):
         conn = sqlite3.connect(self.db_dir + "/profile.db")
