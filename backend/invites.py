@@ -2,7 +2,9 @@ from flask import Blueprint, request, jsonify, g
 import sqlite3
 import os
 import secrets
+import dotenv
 
+dotenv.load_dotenv("backend.env")
 invites_bp = Blueprint("invites_bp", __name__)
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")

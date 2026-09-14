@@ -97,26 +97,31 @@ def enviar_email(destino, assunto, mensagem_html):
 @login_bp.route("/register", methods=["POST"])
 def register():
     try:
-        dados = request.get_json()
+        # Tenta pegar JSON primeiro; se o app antigo mandou Form-Data/URL-Encoded, pega request.form
+        dados = request.get_json(silent=True) or request.form or {}
         if not dados:
             return jsonify({"status": "data is missing"}), 400
 
         username = dados.get("username")
         password = dados.get("senha") or dados.get("password")
         email = dados.get("email")
+        
         invite_code = dados.get("invite_code")
 
-        if not all([username, password, email, invite_code]):
+        # Verifica APENAS username, password e email. O invite_code NÃO ESTÁ MAIS AQUI!
+        if not all([username, password, email]):
             return jsonify({"status": "data is missing"}), 400
-
-        with login_system.get_db_invites() as conn_invite:
-            cur_invite = conn_invite.cursor()
-            cur_invite.execute(
-                "SELECT invite_code FROM invites WHERE invite_code = ? AND status = 'NOT USED'",
-                (invite_code,)
-            )
-            if not cur_invite.fetchone():
-                return jsonify({"status": "the invite code is invalid"}), 401
+        if invite_code:
+            try:
+                with login_system.get_db_invites() as conn_invite:
+                    cur_invite = conn_invite.cursor()
+                    cur_invite.execute(
+                        "UPDATE invites SET status = 'USED' WHERE invite_code = ? AND status = 'NOT USED'",
+                        (invite_code,)
+                    )
+                    conn_invite.commit()
+            except Exception:
+                pass # Se der erro no BD de convite, apenas ignora e deixa a conta ser criada!
 
         with login_system.get_db_login() as conn_login:
             cur_login = conn_login.cursor()
@@ -142,8 +147,8 @@ def register():
                 )
                 conn_profile.commit()
 
-
         return jsonify({"status": "account created with success!"}), 201
+
     except Exception as e:
         return jsonify({"status": "an error has occurred", "error": str(e)}), 500
 @login_bp.route("/login", methods=["POST"])
