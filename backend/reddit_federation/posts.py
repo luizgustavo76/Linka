@@ -6,6 +6,7 @@ import re
 from html import unescape
 
 post_bp = Blueprint("reddit_post_bp", __name__)
+
 @post_bp.route("/feed/reddit/<path:subreddit>", methods=["GET"], strict_slashes=False)
 def subreddit_posts(subreddit=None):
     clear_sub = subreddit.strip("/") if subreddit else "LinkaProject"
@@ -19,18 +20,38 @@ def subreddit_posts(subreddit=None):
     limit = request.args.get("limit", default=100, type=int)
 
     posts = []
-    rss_url = f"https://www.reddit.com/r/{clear_sub}/new.rss?limit={limit}"
+    
+    # Lista de endpoints RSS: tenta o oficial, se der 429, cai no espelho Redlib
+    rss_urls = [
+        f"https://www.reddit.com/r/{clear_sub}/new.rss?limit={limit}",
+        f"https://redlib.freedit.eu/r/{clear_sub}/new.rss",
+        f"https://l.j3s.tech/r/{clear_sub}/new.rss"
+    ]
+
     headers = {
-        "User-Agent": "mozilla/5.0 (Windows NT 10.0; Win64; x64) LinkaLite/2.0"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
 
-    try:
-        start = time.time()
-        res = requests.get(rss_url, headers=headers, timeout=5)
-        print(f"Status RSS ({clear_sub}): {res.status_code} em {time.time() - start:.2f}s")
+    res_text = None
 
-        if res.status_code == 200 and res.text.strip():
-            root = ET.fromstring(res.text)
+    # Tenta cada URL até conseguir status 200
+    for rss_url in rss_urls:
+        try:
+            start = time.time()
+            res = requests.get(rss_url, headers=headers, timeout=6)
+            print(f"Status RSS ({rss_url}): {res.status_code} em {time.time() - start:.2f}s")
+
+            if res.status_code == 200 and res.text.strip():
+                res_text = res.text
+                break # Conseguiu o RSS válido! Sai do loop.
+        except Exception as e:
+            print(f"⚠️ Falha na conexão com {rss_url}: {e}")
+            continue
+
+    # Se conseguiu o XML de qualquer uma das fontes, roda o SEU parser original
+    if res_text:
+        try:
+            root = ET.fromstring(res_text)
             ns = {
                 'atom': 'http://www.w3.org/2005/Atom',
                 'media': 'http://search.yahoo.com/mrss/'
@@ -89,7 +110,6 @@ def subreddit_posts(subreddit=None):
                     "username": author,
                 })
 
-                # Limite ajustado de acordo com a query ou padrão 50
                 if len(posts) >= limit:
                     break
 
@@ -97,7 +117,7 @@ def subreddit_posts(subreddit=None):
                 print(f"✅ Sucesso via RSS! {len(posts)} posts encontrados.")
                 return jsonify(posts), 200
 
-    except Exception as e:
-        print(f"⚠️ Erro ao processar RSS: {e}")
+        except Exception as e:
+            print(f"⚠️ Erro ao processar XML do RSS: {e}")
 
     return jsonify(posts), 200
