@@ -74,7 +74,7 @@ def formate(posts):
 
     return posts_formatados
 
-def fetch_mastodon_posts(tag="photography", instance="mastodon.social", limit=100):
+def fetch_mastodon_posts(tag="retrocomputing", instance="mastodon.social", limit=100):
     url = f"https://{instance}/api/v1/timelines/tag/{tag}"
 
     headers = {
