@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request
 import requests
 import time
-import xml.etree.ElementTree as ET
 import re
 from html import unescape
 
@@ -21,103 +20,82 @@ def subreddit_posts(subreddit=None):
 
     posts = []
     
-    # Lista de endpoints RSS: tenta o oficial, se der 429, cai no espelho Redlib
-    rss_urls = [
-        f"https://www.reddit.com/r/{clear_sub}/new.rss?limit={limit}",
-        f"https://redlib.freedit.eu/r/{clear_sub}/new.rss",
-        f"https://l.j3s.tech/r/{clear_sub}/new.rss"
-    ]
+    # O rss2json converte o RSS em JSON e passa liso pelo proxy do PythonAnywhere
+    target_rss = f"https://www.reddit.com/r/{clear_sub}/new.rss"
+    api_url = f"https://api.rss2json.com/v1/api.json?rss_url={target_rss}&api_key=&count={limit}"
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
 
-    res_text = None
+    try:
+        start = time.time()
+        res = requests.get(api_url, headers=headers, timeout=8)
+        print(f"Status RSS2JSON ({clear_sub}): {res.status_code} em {time.time() - start:.2f}s")
 
-    # Tenta cada URL até conseguir status 200
-    for rss_url in rss_urls:
-        try:
-            start = time.time()
-            res = requests.get(rss_url, headers=headers, timeout=6)
-            print(f"Status RSS ({rss_url}): {res.status_code} em {time.time() - start:.2f}s")
-
-            if res.status_code == 200 and res.text.strip():
-                res_text = res.text
-                break # Conseguiu o RSS válido! Sai do loop.
-        except Exception as e:
-            print(f"⚠️ Falha na conexão com {rss_url}: {e}")
-            continue
-
-    # Se conseguiu o XML de qualquer uma das fontes, roda o SEU parser original
-    if res_text:
-        try:
-            root = ET.fromstring(res_text)
-            ns = {
-                'atom': 'http://www.w3.org/2005/Atom',
-                'media': 'http://search.yahoo.com/mrss/'
-            }
-
-            for entry in root.findall('atom:entry', ns):
-                title_elem = entry.find('atom:title', ns)
-                author_elem = entry.find('atom:author/atom:name', ns)
-                content_elem = entry.find('atom:content', ns)
-                media_elem = entry.find('media:thumbnail', ns)
-
-                title = title_elem.text.strip() if title_elem is not None and title_elem.text else ""
-                author = author_elem.text.replace("/u/", "").strip() if author_elem is not None and author_elem.text else "Anônimo"
+        if res.status_code == 200:
+            data = res.json()
+            
+            if data.get("status") == "ok":
+                items = data.get("items", [])
                 
-                # Descarta posts de moderadores ou deletados
-                if not author or author in ["[deleted]", "AutoModerator"]:
-                    continue
+                for item in items:
+                    title = item.get("title", "").strip()
+                    author = item.get("author", "").replace("/u/", "").replace("u/", "").strip()
+                    if not author:
+                        author = "Anônimo"
 
-                body = ""
-                image_url = ""
+                    # Descarta posts de moderadores ou deletados
+                    if author in ["[deleted]", "AutoModerator"]:
+                        continue
 
-                # 1. Tenta pegar imagem pela tag media:thumbnail
-                if media_elem is not None and 'url' in media_elem.attrib:
-                    image_url = media_elem.attrib['url']
+                    body = ""
+                    image_url = item.get("thumbnail", "")
 
-                if content_elem is not None and content_elem.text:
-                    content_html = unescape(content_elem.text)
-                    
-                    # 2. Se não tinha thumbnail, busca imagem válida no HTML
-                    if not image_url:
-                        img_match = re.search(r'(https://i\.redd\.it/[^\s"<]+|https://preview\.redd\.it/[^\s"<]+|https://i\.imgur\.com/[^\s"<]+)', content_html, re.IGNORECASE)
-                        if img_match:
-                            image_url = img_match.group(1)
+                    # Se a thumbnail do rss2json não veio válida
+                    if not image_url or "static/selficon" in image_url or "default" in image_url:
+                        image_url = ""
 
-                    # 3. Extrai apenas o texto útil do post
-                    text_match = re.search(r'<div class="md">(.*?)</div>', content_html, re.DOTALL)
-                    if text_match:
-                        raw_text = text_match.group(1)
-                        body = re.sub(r'<[^>]+>', '', raw_text).strip()
-                    
-                    # Limpa as tags [link] e [comments] residuais
-                    body = re.sub(r'\[link\]|\[comments\]', '', body, flags=re.IGNORECASE).strip()
+                    content_html = unescape(item.get("content", ""))
 
-                # Montagem do texto final com quebra de linha garantida antes do [IMAGE]
-                components = [title]
-                if body:
-                    components.append(body)
-                if image_url:
-                    components.append(f"[IMAGE]{image_url}")
+                    if content_html:
+                        # Se não tinha thumbnail, extrai a imagem do HTML
+                        if not image_url:
+                            img_match = re.search(r'(https://i\.redd\.it/[^\s"<]+|https://preview\.redd\.it/[^\s"<]+|https://i\.imgur\.com/[^\s"<]+)', content_html, re.IGNORECASE)
+                            if img_match:
+                                image_url = img_match.group(1)
 
-                text_content = "\n".join(components)
+                        # Extrai o texto útil do post do div classe md
+                        text_match = re.search(r'<div class="md">(.*?)</div>', content_html, re.DOTALL)
+                        if text_match:
+                            raw_text = text_match.group(1)
+                            body = re.sub(r'<[^>]+>', '', raw_text).strip()
+                        
+                        body = re.sub(r'\[link\]|\[comments\]', '', body, flags=re.IGNORECASE).strip()
 
-                posts.append({
-                    "id": len(posts) + 1,
-                    "text_post": text_content,
-                    "username": author,
-                })
+                    # Montagem do texto final no formato do LinkaLite
+                    components = [title]
+                    if body:
+                        components.append(body)
+                    if image_url:
+                        components.append(f"[IMAGE]{image_url}")
 
-                if len(posts) >= limit:
-                    break
+                    text_content = "\n".join(components)
 
-            if posts:
-                print(f"✅ Sucesso via RSS! {len(posts)} posts encontrados.")
-                return jsonify(posts), 200
+                    posts.append({
+                        "id": len(posts) + 1,
+                        "text_post": text_content,
+                        "username": author,
+                    })
 
-        except Exception as e:
-            print(f"⚠️ Erro ao processar XML do RSS: {e}")
+                    if len(posts) >= limit:
+                        break
+
+                if posts:
+                    print(f"✅ Sucesso via RSS2JSON! {len(posts)} posts encontrados.")
+                    return jsonify(posts), 200
+
+    except Exception as e:
+        print(f"⚠️ Erro ao processar via RSS2JSON: {e}")
 
     return jsonify(posts), 200
