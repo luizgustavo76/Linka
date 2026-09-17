@@ -3,66 +3,93 @@ import json
 import unicodedata
 from bs4 import BeautifulSoup
 from datetime import datetime
+
 def formate(posts):
-    # Se os posts vierem como string JSON, decodifica para lista do Python
     if isinstance(posts, str):
-        posts = json.loads(posts)
+        try:
+            posts = json.loads(posts)
+        except json.JSONDecodeError:
+            return []
+            
+    if isinstance(posts, dict):
+        if "error" in posts:
+            return []
+        posts = [posts]
         
     posts_formatados = []
     
     for post in posts:
-        if "error" in post:
+        if not isinstance(post, dict) or "error" in post:
             continue
-            
-        username = post["account"]["acct"]        
-        
-        # Formata a data
-        dt = datetime.fromisoformat(post["created_at"].replace("Z", "+00:00"))
-        datetime_formatado = dt.strftime("%Y-%m-%d %H:%M:%S")        
-        
-        # Limpa o HTML do post
-        html_content = post["content"]
+
+        # Se for um reblog/boost, pega o post original interno
+        target_post = post.get("reblog") if isinstance(post.get("reblog"), dict) else post
+
+        # Extração segura da conta
+        account_info = target_post.get("account") or {}
+        username = account_info.get("acct") or account_info.get("username") or "desconhecido"
+
+        # Formata a data se existir
+        datetime_formatado = None
+        raw_created_at = target_post.get("created_at")
+        if raw_created_at:
+            try:
+                dt = datetime.fromisoformat(raw_created_at.replace("Z", "+00:00"))
+                datetime_formatado = dt.strftime("%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                datetime_formatado = raw_created_at
+
+        # Limpa e normaliza o HTML do post
+        html_content = target_post.get("content", "")
         html_content = html_content.replace("<br />", "\n").replace("<br>", "\n").replace("</p>", "\n")
-        
+
         soup = BeautifulSoup(html_content, "html.parser")
         text_post = soup.get_text()
-        
-        # Normaliza o texto removendo caracteres invisíveis (\u00a0)
+
+        # Normaliza o texto
         text_post = unicodedata.normalize("NFKC", text_post)
         text_post = "\n".join(line.strip() for line in text_post.splitlines()).strip()
-        
-        # Monta o dicionário
-        posts_formatados.append({
-            "username": username,
-            "text_post": text_post,
-            "datetime": datetime_formatado
-        })
-        
-    # RETORNO IMPORTANTE: Retornamos a lista do Python pura! 
-    # NADA de usar json.dumps() aqui.
+
+        # Extração de anexos de mídia
+        images = []
+        for media in target_post.get("media_attachments", []):
+            if isinstance(media, dict) and media.get("type") == "image":
+                img_url = media.get("url") or media.get("preview_url")
+                if img_url:
+                    images.append(img_url)
+
+        if images:
+            texto_com_imagens = text_post + "\n" + "".join(f"[IMAGE]{url}\n" for url in images)
+            text_final = texto_com_imagens.strip()
+        else:
+            text_final = text_post
+
+        # Garante o envio mesmo se o texto for vazio (post só com imagem)
+        if text_final or images:
+            posts_formatados.append({
+                "username": username,
+                "text_post": text_final,
+                "datetime": datetime_formatado
+            })
+
     return posts_formatados
 
-def fetch_mastodon_posts(instance="mastodon.world", total_limit=100):
-    api_url = f"https://{instance}/api/v1/timelines/public"
-    collected_posts = []
-    
-    parameters = {'limit': 40, 'local': 'true'} 
+def fetch_mastodon_posts(tag="photography", instance="mastodon.social", limit=100):
+    url = f"https://{instance}/api/v1/timelines/tag/{tag}"
 
-    while len(collected_posts) < total_limit:
-        response = requests.get(api_url, params=parameters)
+    headers = {
+        "Authorization": "Bearer DlvaQpDNhhb2ZvxjFsElKNQrWYUmpqGfM0v6oKrtUeM",
+        "User-Agent": "LinkaLiteApp/1.0"
+    }
+
+    try:
+        response = requests.get(url, headers=headers, params={'limit': limit}, timeout=10)
         
         if response.status_code != 200:
-            return [{"error": f"API request failed. Status code: {response.status_code}"}]
-            
-        page_posts = response.json()
-        
-        if not isinstance(page_posts, list):
-            return [{"error": "API returned an unexpected format"}]
-        
-        if not page_posts:
-            break
-            
-        collected_posts.extend(page_posts)
-        parameters['max_id'] = page_posts[-1]['id']
-        
-    return collected_posts[:total_limit]
+            print(f"[MASTODON ERROR] Status: {response.status_code} - Body: {response.text}")
+            return []
+
+        return formate(response.json())
+    except Exception as e:
+        print(f"[MASTODON EXCEPTION] {e}")
+        return []

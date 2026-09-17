@@ -6,10 +6,6 @@ import re
 from html import unescape
 
 post_bp = Blueprint("post_bp", __name__)
-
-@post_bp.route("/", methods=["GET"], strict_slashes=False)
-@post_bp.route("/feed", methods=["GET"], strict_slashes=False)
-@post_bp.route("/feed/", methods=["GET"], strict_slashes=False)
 @post_bp.route("/feed/<path:subreddit>", methods=["GET"], strict_slashes=False)
 def subreddit_posts(subreddit=None):
     clear_sub = subreddit.strip("/") if subreddit else "LinkaProject"
@@ -20,8 +16,7 @@ def subreddit_posts(subreddit=None):
     if not clear_sub or clear_sub.lower() in ["feed", "valide-session"]:
         clear_sub = "LinkaProject"
 
-    # Permite passar ?limit=X na requisição se quiser (padrão 50)
-    limit = request.args.get("limit", default=3, type=int)
+    limit = request.args.get("limit", default=100, type=int)
 
     posts = []
     rss_url = f"https://www.reddit.com/r/{clear_sub}/new.rss?limit={limit}"
