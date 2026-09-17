@@ -5,8 +5,8 @@ import xml.etree.ElementTree as ET
 import re
 from html import unescape
 
-post_bp = Blueprint("post_bp", __name__)
-@post_bp.route("/feed/<path:subreddit>", methods=["GET"], strict_slashes=False)
+post_bp = Blueprint("reddit_post_bp", __name__)
+@post_bp.route("/feed/reddit/<path:subreddit>", methods=["GET"], strict_slashes=False)
 def subreddit_posts(subreddit=None):
     clear_sub = subreddit.strip("/") if subreddit else "LinkaProject"
     

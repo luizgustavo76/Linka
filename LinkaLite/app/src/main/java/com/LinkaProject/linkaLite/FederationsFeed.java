@@ -58,13 +58,11 @@ public class FederationsFeed extends Activity {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(FederationsFeed.this, "config.cfg"));
             JSONObject server = jsonCfg.getJSONObject("server");
-            // CORRIGIDO: Ponto e vírgula removido de dentro dos parênteses
             baseUrl = server.optString("url", ""); 
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        // 1. Obtém a URL da Intent ou recupera do AppConfig
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra("url") && intent.getStringExtra("url") != null && !intent.getStringExtra("url").isEmpty()) {
             currentUrl = intent.getStringExtra("url");
@@ -72,7 +70,6 @@ public class FederationsFeed extends Activity {
             currentUrl = config.getUrl();
         }
 
-        // 2. Formatação correta da URL base
         currentUrl = formatUrl(currentUrl);
 
         newPost = (Button) findViewById(R.id.newPost);
@@ -145,19 +142,13 @@ public class FederationsFeed extends Activity {
         return formatted;
     }
 
-    /**
-     * Sanitiza URLs do Reddit: Converte links do 'preview.redd.it' para 'i.redd.it'
-     * e remove parâmetros de busca que causam o erro HTTP 403 Forbidden.
-     */
     private String sanitizarUrlImagem(String rawUrl) {
         if (rawUrl == null || rawUrl.trim().isEmpty()) return "";
 
         String cleanUrl = rawUrl.replace("&amp;", "&").trim();
 
         if (cleanUrl.contains("preview.redd.it")) {
-            // Remove os parametros de querystring (?width=...&auto=...)
             cleanUrl = cleanUrl.replaceAll("\\?.*$", "");
-            // Aponta para o bucket estático público do Reddit
             cleanUrl = cleanUrl.replace("https://preview.redd.it/", "https://i.redd.it/");
             cleanUrl = cleanUrl.replace("http://preview.redd.it/", "https://i.redd.it/");
         }
@@ -301,21 +292,17 @@ public class FederationsFeed extends Activity {
                 ImageLoader imageLoader = new ImageLoader();
                 imageLoader.viewProfilePicture(context, username, avatarPost);
 
-                // --- TRATAMENTO E EXTRAÇÃO DA IMAGEM ---
                 if (textPost != null && textPost.contains("[IMAGE]")) {
                     Pattern pattern = Pattern.compile("\\[IMAGE\\](https?://[^\\s\n\r]+)");
                     Matcher matcher = pattern.matcher(textPost);
 
                     if (matcher.find()) {
                         String rawImageUrl = matcher.group(1).trim();
-
-                        // Trata e converte a URL para evitar o erro HTTP 403 Forbidden
                         final String finalImageUrl = sanitizarUrlImagem(rawImageUrl);
 
                         if (!finalImageUrl.isEmpty()) {
                             imgPost.setVisibility(View.VISIBLE);
 
-                            // Carrega a imagem sanitizada via ImageLoader
                             new ImageLoader().LoadImageUrl(finalImageUrl, imgPost);
 
                             imgPost.setOnClickListener(new View.OnClickListener() {

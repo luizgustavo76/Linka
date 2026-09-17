@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 public class feedFinder extends Activity{
     private Button btnNewer;
+    private EditText edtUrl;
+    private Button btnSend;
     private ImageButton btnHome;
     private ImageButton btnChat;
     private ImageButton btnOptions;
@@ -30,6 +32,8 @@ public class feedFinder extends Activity{
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         ListView listView = (ListView) findViewById(R.id.listFederations);
+        edtUrl = (EditText) findViewById(R.id.edtUrl);
+        btnSend = (Button) findViewById(R.id.btnSend);
         List<FederationItem> itemList = new ArrayList<>();
         try{
             config cfg = new config();
@@ -56,6 +60,14 @@ public class feedFinder extends Activity{
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        btnSend.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(feedFinder.this, FederationsFeed.class);
+                intent.putExtra("url", edtUrl.getText().toString());
+                startActivity(intent);
+            }
+        });
         btnChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v){

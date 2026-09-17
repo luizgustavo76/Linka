@@ -8,6 +8,12 @@ with open(json_path, "r") as f:
 root_flags = modules_flags["modules-flags"]
 from flask_cors import CORS 
 from jobs import jobs_bp
+if root_flags["reddit-federation"]:
+    from reddit_federation.posts import post_bp as reddit_post_bp
+if root_flags["mastodon-federation"]:
+    from mastodon_federation.posts import post_bp as mastodon_post_bp
+if root_flags["bluesky-federation"]:
+    from bluesky_federation.posts import post_bp as bluesky_post_bp
 if root_flags["post"]:
     from post import post_bp
 if root_flags["chat"]:
@@ -248,6 +254,12 @@ if root_flags["friends"]:
 app.register_blueprint(meta_bp)
 app.register_blueprint(jobs_bp)
 app.register_blueprint(invites_bp)
+if root_flags["reddit-federation"]:
+    app.register_blueprint(reddit_post_bp)
+if root_flags["mastodon-federation"]:
+    app.register_blueprint(mastodon_post_bp)
+if root_flags["bluesky-federation"]:
+    app.register_blueprint(bluesky_post_bp)
 if root_flags["chat_global"]:
     app.register_blueprint(chat_global_bp)
 if root_flags["notifications"]:

@@ -14,6 +14,9 @@
         "search":true,
         "sincronizer":true,
         "status":true,
-        "themes":true
+        "themes":true,
+        "reddit-federation":true,
+        "mastodon-federation":true,
+        "bluesky-federation":true
     }
 }

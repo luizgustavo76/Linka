@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify
-from get_posts import fetch_mastodon_posts
+from .get_posts import fetch_mastodon_posts
 
-post_bp = Blueprint('posts', __name__)
+post_bp = Blueprint('mastodon_posts', __name__)
 
 @post_bp.route("/feed/mastodon/<path:tag>")
 def get_posts(tag):
