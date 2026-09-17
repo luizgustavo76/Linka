@@ -14,24 +14,30 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class LoginActivity extends Activity {
+    private static final String TAG = "LinkaLogin";
+    
     private EditText edtUsername;
     private EditText edtPassword;
     private Button btnServer;
     private Button btnLogin;
     private TextView txtGoToSignup;
-    private String serverUrl = "http://linkaProject.pythonanywhere.com";
+    // CORRIGIDO: Alterado de https:// para http://
+    private String serverUrl = "http://192.168.240.1:5000"; 
     private LoginTask currentLoginTask;
 
     private void executeLogin(String username, String password) {
         if (currentLoginTask != null && currentLoginTask.getStatus() == AsyncTask.Status.RUNNING) {
+            Log.d(TAG, "Cancelando LoginTask anterior em execução.");
             currentLoginTask.cancel(true);
         }
+        Log.d(TAG, "Iniciando nova LoginTask para o usuário: " + username);
         currentLoginTask = new LoginTask();
         currentLoginTask.execute(username, password);
     }
@@ -49,12 +55,13 @@ public class LoginActivity extends Activity {
         btnLogin = (Button) findViewById(R.id.btnLogin);
         txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
 
-        // Executa a leitura de arquivos em background para não travar a UI Thread
         new Thread(new Runnable() {
             @Override
             public void run() {
+                Log.d(TAG, "Lendo configurações de arquivo em background...");
                 config cfg = new config();
                 if (!config.configFileExists(LoginActivity.this, "config.cfg")) {
+                    Log.d(TAG, "Arquivo config.cfg não existe. Criando padrão...");
                     cfg.createDefaultConfig(LoginActivity.this, "config.cfg");
                 }
 
@@ -62,10 +69,14 @@ public class LoginActivity extends Activity {
                 String fastPassword = "";
 
                 try {
-                    JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(LoginActivity.this, "config.cfg"));
+                    String jsonString = cfg.loadCfgAsJson(LoginActivity.this, "config.cfg");
+                    Log.d(TAG, "Conteúdo do config.cfg: " + jsonString);
+                    
+                    JSONObject jsonCfg = new JSONObject(jsonString);
                     JSONObject server = jsonCfg.optJSONObject("SERVER");
                     if (server != null) {
                         serverUrl = server.optString("url", serverUrl);
+                        Log.d(TAG, "URL do servidor carregada da config: " + serverUrl);
                     }
                     JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
                     if (fastLogin != null) {
@@ -73,7 +84,7 @@ public class LoginActivity extends Activity {
                         fastPassword = fastLogin.optString("password", "");
                     }
                 } catch (JSONException e) {
-                    Log.e("LinkaLogin", "Error loading JSON config", e);
+                    Log.e(TAG, "Erro ao processar JSON da configuração:", e);
                 }
 
                 final String finalUser = fastUsername;
@@ -83,6 +94,7 @@ public class LoginActivity extends Activity {
                     @Override
                     public void run() {
                         if (!isFinishing() && !finalUser.isEmpty() && !finalPass.isEmpty()) {
+                            Log.d(TAG, "Executando Fast Login para: " + finalUser);
                             executeLogin(finalUser, finalPass);
                         }
                     }
@@ -158,7 +170,11 @@ public class LoginActivity extends Activity {
                 if (baseUrl.endsWith("/")) {
                     baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                 }
-                URL url = new URL(baseUrl + "/login");
+                
+                String targetUrl = baseUrl + "/login";
+                Log.d(TAG, "Iniciando conexão HTTP POST para: " + targetUrl);
+
+                URL url = new URL(targetUrl);
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
 
@@ -177,14 +193,22 @@ public class LoginActivity extends Activity {
                 byte[] postData = jsonParam.toString().getBytes("UTF-8");
                 connection.setRequestProperty("Content-Length", String.valueOf(postData.length));
 
+                Log.d(TAG, "Enviando Payload JSON: " + jsonParam.toString());
+
                 OutputStream os = connection.getOutputStream();
                 os.write(postData);
                 os.flush();
                 os.close();
 
                 int responseCode = connection.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
+                Log.d(TAG, "Código de Resposta HTTP recebido: " + responseCode);
+
+                InputStream stream = (responseCode >= 200 && responseCode < 300) 
+                        ? connection.getInputStream() 
+                        : connection.getErrorStream();
+
+                if (stream != null) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
                     StringBuilder response = new StringBuilder();
                     String line;
                     while ((line = in.readLine()) != null) {
@@ -192,12 +216,14 @@ public class LoginActivity extends Activity {
                         response.append(line);
                     }
                     in.close();
+                    Log.d(TAG, "Resposta bruta do servidor: " + response.toString());
                     return response.toString();
                 } else {
-                    Log.e("LinkaLogin", "HTTP Error Code: " + responseCode);
+                    Log.e(TAG, "InputStream e ErrorStream vieram nulos do servidor.");
                 }
+
             } catch (Exception e) {
-                Log.e("LinkaLogin", "ERRO REAL DA CONEXAO: ", e);
+                Log.e(TAG, "EXCEÇÃO DURANTE O REQUEST HTTP: ", e);
                 return null;
             } finally {
                 if (connection != null) connection.disconnect();
@@ -210,15 +236,22 @@ public class LoginActivity extends Activity {
             dismissDialogSafely();
             if (isCancelled() || LoginActivity.this.isFinishing()) return;
 
+            Log.d(TAG, "onPostExecute chamado com resultado: " + result);
+
             if (result != null) {
                 try {
                     JSONObject responseJson = new JSONObject(result);
                     String status = responseJson.optString("status", "");
-                    if (status.equals("login is sucessful")) {
+                    Log.d(TAG, "Status extraído do JSON: " + status);
+
+                    if (status.equalsIgnoreCase("login is sucessful") || status.equalsIgnoreCase("login is successful") || status.equalsIgnoreCase("success")) {
                         
                         config cfg = new config();
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "username", attemptedUsername);
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "password", attemptedPassword);
+                        
+                        // Garante o log ao tentar criar o token
+                        Log.d(TAG, "Gerando nova sessão no TokenManager...");
                         String newToken = tokenManager.newSession(LoginActivity.this);
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
                 
@@ -227,12 +260,15 @@ public class LoginActivity extends Activity {
                         startActivity(intent);
                         finish();
                     } else {
+                        Log.w(TAG, "Login recusado pelo backend. Status: " + status);
                         Toast.makeText(LoginActivity.this, "Username or password incorrect!", Toast.LENGTH_LONG).show();
                     }
                 } catch (Exception e) {
-                    Toast.makeText(LoginActivity.this, "Error processing data", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "EXCEÇÃO AO PROCESSAR O JSON NO ONPOSTEXECUTE: ", e);
+                    Toast.makeText(LoginActivity.this, "Error processing data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             } else {
+                Log.e(TAG, "Resultado nulo recebido em onPostExecute. Conexão falhou completamente.");
                 Toast.makeText(LoginActivity.this, "Connection with server failed", Toast.LENGTH_SHORT).show();
             }
         }
@@ -248,7 +284,7 @@ public class LoginActivity extends Activity {
                     progressDialog.dismiss();
                 }
             } catch (Exception e) {
-                Log.e("LinkaLogin", "Error dismissing progress dialog", e);
+                Log.e(TAG, "Error dismissing progress dialog", e);
             }
         }
     }
