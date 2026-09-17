@@ -21,7 +21,7 @@ def subreddit_posts(subreddit=None):
         clear_sub = "LinkaProject"
 
     # Permite passar ?limit=X na requisição se quiser (padrão 50)
-    limit = request.args.get("limit", default=50, type=int)
+    limit = request.args.get("limit", default=3, type=int)
 
     posts = []
     rss_url = f"https://www.reddit.com/r/{clear_sub}/new.rss?limit={limit}"

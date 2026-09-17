@@ -27,7 +27,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Matcher;
@@ -54,14 +53,17 @@ public class FederationsFeed extends Activity {
 
         AppConfig config = new AppConfig(this);
         username = config.getUsername();
-        try{
+        
+        try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(FederationsFeed.this, "config.cfg"));
             JSONObject server = jsonCfg.getJSONObject("server");
-            baseUrl = server.optString("url", "";)
-        }catch(JSONException e){
+            // CORRIGIDO: Ponto e vírgula removido de dentro dos parênteses
+            baseUrl = server.optString("url", ""); 
+        } catch (JSONException e) {
             e.printStackTrace();
         }
+
         // 1. Obtém a URL da Intent ou recupera do AppConfig
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra("url") && intent.getStringExtra("url") != null && !intent.getStringExtra("url").isEmpty()) {
@@ -143,6 +145,26 @@ public class FederationsFeed extends Activity {
         return formatted;
     }
 
+    /**
+     * Sanitiza URLs do Reddit: Converte links do 'preview.redd.it' para 'i.redd.it'
+     * e remove parâmetros de busca que causam o erro HTTP 403 Forbidden.
+     */
+    private String sanitizarUrlImagem(String rawUrl) {
+        if (rawUrl == null || rawUrl.trim().isEmpty()) return "";
+
+        String cleanUrl = rawUrl.replace("&amp;", "&").trim();
+
+        if (cleanUrl.contains("preview.redd.it")) {
+            // Remove os parametros de querystring (?width=...&auto=...)
+            cleanUrl = cleanUrl.replaceAll("\\?.*$", "");
+            // Aponta para o bucket estático público do Reddit
+            cleanUrl = cleanUrl.replace("https://preview.redd.it/", "https://i.redd.it/");
+            cleanUrl = cleanUrl.replace("http://preview.redd.it/", "https://i.redd.it/");
+        }
+
+        return cleanUrl;
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -164,7 +186,6 @@ public class FederationsFeed extends Activity {
         @Override
         protected void onPostExecute(String result) {
             Log.d("LINKA_FEED", "Resultado recebido (tam: " + (result != null ? result.length() : 0) + ")");
-            Log.d("LINKA_FEED", "Conteudo RAW: " + result);
 
             if (result == null || result.trim().length() == 0) {
                 Log.e("LINKA_FEED", "Resposta nula ou vazia do servidor.");
@@ -174,8 +195,8 @@ public class FederationsFeed extends Activity {
 
             String trimmed = result.trim();
             if (trimmed.startsWith("<")) {
-                Log.e("LINKA_FEED", "O servidor retornou HTML em vez de JSON! Verifique o backend.");
-                Toast.makeText(FederationsFeed.this, "Erro: Servidor retornou HTML em vez de JSON", Toast.LENGTH_LONG).show();
+                Log.e("LINKA_FEED", "O servidor retornou HTML em vez de JSON!");
+                Toast.makeText(FederationsFeed.this, "Erro: Servidor retornou HTML", Toast.LENGTH_LONG).show();
                 return;
             }
 
@@ -193,11 +214,7 @@ public class FederationsFeed extends Activity {
                         jsonArray = jsonObject.getJSONArray("feed");
                     } else if (jsonObject.has("data")) {
                         jsonArray = jsonObject.getJSONArray("data");
-                    } else {
-                        Log.e("LINKA_FEED", "Objeto JSON sem array 'posts'/'feed'/'data'. Chaves: " + jsonObject.names());
                     }
-                } else {
-                    Log.e("LINKA_FEED", "Formato invalido de resposta: " + trimmed);
                 }
 
                 if (jsonArray != null) {
@@ -207,17 +224,13 @@ public class FederationsFeed extends Activity {
                     Log.d("LINKA_FEED", "Sucesso! " + postsList.size() + " posts renderizados.");
                     postAdapter.notifyDataSetChanged();
                 } else {
-                    Log.e("LINKA_FEED", "Nao foi possivel extrair o JSONArray dos posts.");
                     Toast.makeText(FederationsFeed.this, "Erro: Estrutura JSON incompativel", Toast.LENGTH_SHORT).show();
                 }
             } catch (JSONException e) {
                 Log.e("LINKA_FEED", "JSONException ao processar posts: " + e.getMessage());
-                e.printStackTrace();
                 Toast.makeText(FederationsFeed.this, "Erro de sintaxe JSON", Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
                 Log.e("LINKA_FEED", "Excecao geral no parsing: " + e.getMessage());
-                e.printStackTrace();
-                Toast.makeText(FederationsFeed.this, "Erro no processamento dos posts", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -261,7 +274,6 @@ public class FederationsFeed extends Activity {
             TextView tvStarCount = (TextView) convertView.findViewById(R.id.starCount);
             Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
 
-            // Reseta limpo os estados da imagem para reuso eficiente de views no ListView
             imgPost.setImageDrawable(null);
             imgPost.setVisibility(View.GONE);
 
@@ -291,52 +303,41 @@ public class FederationsFeed extends Activity {
 
                 // --- TRATAMENTO E EXTRAÇÃO DA IMAGEM ---
                 if (textPost != null && textPost.contains("[IMAGE]")) {
-                    // Regex delimitada para ignorar espacos em branco e quebras de linha
                     Pattern pattern = Pattern.compile("\\[IMAGE\\](https?://[^\\s\n\r]+)");
                     Matcher matcher = pattern.matcher(textPost);
 
                     if (matcher.find()) {
-                        String imageUrl = matcher.group(1).trim();
+                        String rawImageUrl = matcher.group(1).trim();
 
-                        if (!imageUrl.isEmpty()) {
+                        // Trata e converte a URL para evitar o erro HTTP 403 Forbidden
+                        final String finalImageUrl = sanitizarUrlImagem(rawImageUrl);
+
+                        if (!finalImageUrl.isEmpty()) {
                             imgPost.setVisibility(View.VISIBLE);
 
-                            // Aplica o encoding na URL recebida para nao truncar os parametros de querystring (?width=...&auto=...)
-                            String encodedImageUrl;
-                            try {
-                                encodedImageUrl = URLEncoder.encode(imageUrl, "UTF-8");
-                            } catch (Exception e) {
-                                encodedImageUrl = imageUrl;
-                            }
-
-                            // Formata a URL final apontando para o proxy de renderização
-                            final String urlProxy = currentUrl + "/lite-render?url=" + encodedImageUrl;
-
-                            // Carrega a imagem pelo ImageLoader
-                            new ImageLoader().LoadImageUrl(urlProxy, imgPost);
+                            // Carrega a imagem sanitizada via ImageLoader
+                            new ImageLoader().LoadImageUrl(finalImageUrl, imgPost);
 
                             imgPost.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
                                     Intent intent = new Intent(context, ViewPicture.class);
                                     intent.putExtra("type", "Image");
-                                    intent.putExtra("url", urlProxy);
+                                    intent.putExtra("url", finalImageUrl);
                                     context.startActivity(intent);
                                 }
                             });
 
-                            // Remove a tag [IMAGE] e o link original do texto principal
+                            // Remove as tags de imagem do texto principal
                             textPost = textPost.replaceAll("\\[IMAGE\\]https?://[^\\s\n\r]+", "").trim();
                         }
                     }
                 }
 
-                // Exibe o texto limpo sem as marcas [IMAGE]
                 tvText.setText(textPost);
 
             } catch (Exception e) {
-                Log.e("LINKA_ADAPTER", "Erro ao renderizar item na posicao " + position + ": " + e.getMessage());
-                e.printStackTrace();
+                Log.e("LINKA_ADAPTER", "Erro no item na posicao " + position + ": " + e.getMessage());
             }
 
             return convertView;
@@ -359,7 +360,7 @@ public class FederationsFeed extends Activity {
             connection.setReadTimeout(10000);
 
             connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("User-Agent", "LinkaLiteApp/1.0");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0");
 
             if (method.equals("POST") || method.equals("PUT")) {
                 connection.setDoOutput(true);
@@ -381,30 +382,9 @@ public class FederationsFeed extends Activity {
                 }
                 in.close();
                 return response.toString();
-            } else {
-                InputStream errStream = connection.getErrorStream();
-                if (errStream != null) {
-                    BufferedReader inErr = new BufferedReader(new InputStreamReader(errStream, "UTF-8"));
-                    StringBuilder errResponse = new StringBuilder();
-                    String errLine;
-                    while ((errLine = inErr.readLine()) != null) {
-                        errResponse.append(errLine);
-                    }
-                    inErr.close();
-                    Log.e("LINKA_HTTP", "Corpo do erro HTTP " + responseCode + ": " + errResponse.toString());
-                } else {
-                    Log.e("LINKA_HTTP", "Erro HTTP sem corpo de resposta: " + responseCode);
-                }
             }
-        } catch (java.net.UnknownHostException e) {
-            Log.e("LINKA_HTTP", "DNS Error (Host nao encontrado): " + e.getMessage());
-        } catch (java.net.SocketTimeoutException e) {
-            Log.e("LINKA_HTTP", "Timeout na conexao (10s expirados): " + e.getMessage());
-        } catch (javax.net.ssl.SSLException e) {
-            Log.e("LINKA_HTTP", "Erro TLS/SSL Handshake: " + e.getMessage());
         } catch (Exception e) {
-            Log.e("LINKA_HTTP", "Excecao inesperada na conexao: " + e.getClass().getName() + " - " + e.getMessage());
-            e.printStackTrace();
+            Log.e("LINKA_HTTP", "Excecao na conexao: " + e.getMessage());
         } finally {
             if (connection != null) {
                 connection.disconnect();

@@ -14,46 +14,42 @@ import io
 import requests
 from flask import Flask, request, Response
 from PIL import Image
+import re
 
 @image_bp.route('/lite-render', methods=['GET'])
 def lite_render():
-    image_url = request.args.get('url')
-    if not image_url:
-        return "URL ausente", 400
+    url = request.args.get('url', '')
+    if not url:
+        return "URL vazia", 400
 
-    # Headers completos simulando um navegador real no Windows/Chrome
-    # Isso engana o Varnish Cache do Reddit
+    # 1. Limpa entidades HTML (&amp; -> &) se a URL vier codificada da API do Reddit
+    clean_url = url.replace('&amp;', '&')
+
+    # 2. Converte preview.redd.it para o CDN direto i.redd.it
+    if 'preview.redd.it' in clean_url:
+        # Extrai a hash/nome da imagem (ex: 5lw7ajy5awph1.jpeg)
+        match = re.search(r'preview\.redd\.it/([a-zA-Z0-9]+\.(?:jpg|jpeg|png|webp))', clean_url)
+        if match:
+            clean_url = f"https://i.redd.it/{match.group(1)}"
+        else:
+            # Fallback simples: remove os parametros de query
+            clean_url = clean_url.split('?')[0].replace('preview.redd.it', 'i.redd.it')
+
+    # 3. Faz a requisicao com o User-Agent que aprovamos no cURL
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Referer': 'https://www.reddit.com/',
-        'Sec-Fetch-Dest': 'image',
-        'Sec-Fetch-Mode': 'no-cors',
-        'Sec-Fetch-Site': 'cross-site'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0'
     }
 
     try:
-        # Requisita a imagem passando os headers de navegador
-        response = requests.get(image_url, headers=headers, timeout=10)
-
-        if response.status_code != 200:
-            return f"Erro ao buscar do Reddit: {response.status_code}", response.status_code
-
-        # Converte a imagem (WebP/PNG/GIF) para JPEG padrao
-        # Isso garante que versões antigas do Android consigam renderizar
-        image = Image.open(io.BytesIO(response.content))
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-
-        output = io.BytesIO()
-        image.save(output, format='JPEG', quality=85)
-        output.seek(0)
-
-        return Response(output.getvalue(), mimetype='image/jpeg')
-
+        res = requests.get(clean_url, headers=headers, stream=True, timeout=8)
+        if res.status_code == 200:
+            return Response(
+                res.raw.read(),
+                content_type=res.headers.get('Content-Type', 'image/jpeg')
+            )
+        return f"Erro CDN: {res.status_code}", res.status_code
     except Exception as e:
-        return f"Erro interno do servidor: {str(e)}", 500
+        return f"Erro interno: {str(e)}", 500
 @image_bp.route("/upload-image", methods=["POST"])
 def upload_image():
     if "image" not in request.files:
