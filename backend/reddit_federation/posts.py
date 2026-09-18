@@ -3,20 +3,24 @@ import time
 import urllib.parse
 import xml.etree.ElementTree as ET
 from html import unescape
+
 from flask import Blueprint, jsonify, request
 import requests
 
 post_bp = Blueprint("reddit_post_bp", __name__)
 
 CLOUDFLARE_WORKER_URL = "https://fancy-fire-49d2.luizsgustavo76.workers.dev"
-PROXY_BASE = "https://patient-hall-2915.luizsgustavo76.workers.dev/?url="
+
+# Todas as imagens do Reddit vão para o lite-render,
+# igual ao fluxo do Bluesky/Mastodon.
+PROXY_BASE = "http://linkaProject.pythonanywhere.com/lite-render?url="
 
 
 def sanitizar_url_reddit(url):
     """Remove entidades HTML, trata duplicação de '?' e formata parâmetros da imagem."""
     if not url:
         return ""
-    
+
     # Decodifica entidades HTML nativas do RSS do Reddit (&amp; -> &)
     clean = unescape(url).replace("&amp;", "&").strip()
 
@@ -34,7 +38,11 @@ def sanitizar_url_reddit(url):
     return clean
 
 
-@post_bp.route("/feed/reddit/<path:subreddit>", methods=["GET"], strict_slashes=False)
+@post_bp.route(
+    "/feed/reddit/<path:subreddit>",
+    methods=["GET"],
+    strict_slashes=False,
+)
 def subreddit_posts(subreddit=None):
     clear_sub = subreddit.strip("/") if subreddit else "LinkaProject"
 
@@ -45,13 +53,18 @@ def subreddit_posts(subreddit=None):
         clear_sub = "LinkaProject"
 
     limit = request.args.get("limit", default=100, type=int)
+
     posts = []
 
-    target_rss = f"https://www.reddit.com/r/{clear_sub}/new.rss?limit={limit}"
+    target_rss = (
+        f"https://www.reddit.com/r/{clear_sub}/new.rss?limit={limit}"
+    )
+
     proxy_url = f"{CLOUDFLARE_WORKER_URL}/?url={target_rss}"
 
     try:
         start = time.time()
+
         res = requests.get(proxy_url, timeout=10)
 
         if res.status_code == 200 and res.text.strip():
@@ -72,16 +85,21 @@ def subreddit_posts(subreddit=None):
                 )
 
                 author = "entity404"
+
                 author_elem = entry.find("author")
+
                 if author_elem is not None:
                     name_elem = author_elem.find("name")
+
                     if name_elem is not None and name_elem.text:
                         author = name_elem.text
+
                     elif (
                         author_elem.find("uri") is not None
                         and author_elem.find("uri").text
                     ):
                         author = author_elem.find("uri").text.split("/user/")[-1]
+
                     elif author_elem.text:
                         author = author_elem.text
 
@@ -104,30 +122,47 @@ def subreddit_posts(subreddit=None):
 
                     if img_match:
                         image_url = img_match.group(1)
+
                     else:
                         link_match = re.search(
                             r'href=["\'](https://i\.redd\.it/[^"\']+\.(?:jpg|jpeg|png|gif))["\']',
                             content_html,
                             re.IGNORECASE,
                         )
+
                         if link_match:
                             image_url = link_match.group(1)
 
                     text_match = re.search(
-                        r'<div class="md">(.*?)</div>', content_html, re.DOTALL
+                        r'<div class="md">(.*?)</div>',
+                        content_html,
+                        re.DOTALL,
                     )
+
                     if text_match:
                         raw_text = text_match.group(1)
-                        body = re.sub(r"<[^>]+>", "", raw_text).strip()
+                        body = re.sub(
+                            r"<[^>]+>",
+                            "",
+                            raw_text,
+                        ).strip()
 
                     body = re.sub(
-                        r"\[link\]|\[comments\]", "", body, flags=re.IGNORECASE
+                        r"\[link\]|\[comments\]",
+                        "",
+                        body,
+                        flags=re.IGNORECASE,
                     ).strip()
 
                 if not image_url:
                     media_elem = entry.find("thumbnail")
-                    if media_elem is not None and "url" in media_elem.attrib:
+
+                    if (
+                        media_elem is not None
+                        and "url" in media_elem.attrib
+                    ):
                         thumb = media_elem.attrib["url"]
+
                         if thumb.startswith("http"):
                             image_url = thumb
 
@@ -135,20 +170,39 @@ def subreddit_posts(subreddit=None):
                     continue
 
                 components = []
+
                 if title:
                     components.append(title)
+
                 if body:
                     components.append(body)
+
                 if image_url:
                     clean_img_url = sanitizar_url_reddit(image_url)
-                    safe_image_url = urllib.parse.quote(clean_img_url, safe="")
-                    components.append(f"[IMAGE]{PROXY_BASE}{safe_image_url}")
 
-                posts.append({
-                    "id": len(posts) + 1,
-                    "text_post": "\n".join(components),
-                    "username": f"@{author}" if not author.startswith("@") else author,
-                })
+                    # IMPORTANT:
+                    # Reddit também sai como [IMAGE] + lite-render,
+                    # exatamente como Bluesky/Mastodon.
+                    safe_image_url = urllib.parse.quote(
+                        clean_img_url,
+                        safe="",
+                    )
+
+                    components.append(
+                        f"[IMAGE]{PROXY_BASE}{safe_image_url}"
+                    )
+
+                posts.append(
+                    {
+                        "id": len(posts) + 1,
+                        "text_post": "\n".join(components),
+                        "username": (
+                            f"@{author}"
+                            if not author.startswith("@")
+                            else author
+                        ),
+                    }
+                )
 
                 if len(posts) >= limit:
                     break

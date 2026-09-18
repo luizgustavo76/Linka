@@ -27,8 +27,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.MalformedURLException;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -201,26 +199,7 @@ public class FederationsFeed extends Activity {
             return "";
         }
 
-        String cleanUrl = rawUrl
-                .replace("&amp;", "&")
-                .trim();
-
-        // IMPORTANTE PARA ANDROID MUITO ANTIGO (1.x):
-        // nao converta HTTP para HTTPS aqui. O backend do LinkaLite
-        // pode fornecer imagens atraves de um endpoint HTTP/proxy,
-        // e o cliente deve respeitar exatamente a URL recebida.
-
-        // Mantem links do worker / lite-render exatamente como chegaram.
-        if (cleanUrl.contains("workers.dev") || cleanUrl.contains("lite-render")) {
-            return cleanUrl;
-        }
-
-        cleanUrl = cleanUrl.replaceAll("width=\\d+", "width=1080");
-        cleanUrl = cleanUrl.replaceAll("height=\\d+", "");
-        cleanUrl = cleanUrl.replaceAll("crop=[^&]+", "");
-        cleanUrl = cleanUrl.replaceAll("&&+", "&");
-
-        return cleanUrl;
+        return rawUrl.replace("&amp;", "&").trim();
     }
 
     /**
@@ -508,21 +487,24 @@ public class FederationsFeed extends Activity {
                  * [IMAGE]http://servidor/imagem.jpg
                  *
                  * O LinkaLite detecta a marca [IMAGE], extrai somente a URL
-                 * e usa o loader legado do proprio Feed para colocar a imagem no ImageView.
+                 * e envia a imagem para o ImageLoader, que sempre usa o lite-render HTTP.
                  */
                 final String imageUrl = extractImageUrl(textPost);
 
                 if (!imageUrl.isEmpty()) {
                     holder.imgPost.setVisibility(View.VISIBLE);
+
+                    // A URL original vai para o ImageLoader.
+                    // O ImageLoader e o unico responsavel por encaminhar tudo ao /lite-render.
                     holder.imgPost.setTag(imageUrl);
 
-                    // Nao depende do ImageLoader externo para imagens federadas.
-                    // O download usa HttpURLConnection + BitmapFactory, APIs antigas
-                    // disponiveis nos Androids que o LinkaLite pretende suportar.
-                    new LegacyImageTask(
-                            holder.imgPost,
-                            imageUrl
-                    ).execute();
+                    Log.d(
+                            "LINKA_FEED",
+                            "[IMAGE] detectada. Original=" + imageUrl
+                                    + " | enviando para ImageLoader"
+                    );
+
+                    new ImageLoader().LoadImageUrl(imageUrl, holder.imgPost);
 
                     holder.imgPost.setOnClickListener(v -> {
                         Intent intent = new Intent(
@@ -535,6 +517,8 @@ public class FederationsFeed extends Activity {
                                 "Image"
                         );
 
+                        // Usa a mesma URL da imagem.
+                        // O ImageLoader continua sendo responsavel pelo lite-render.
                         intent.putExtra(
                                 "url",
                                 imageUrl
@@ -560,121 +544,6 @@ public class FederationsFeed extends Activity {
             }
 
             return convertView;
-        }
-    }
-
-    /**
-     * Loader de imagem propositalmente simples para Android antigo.
-     *
-     * Fluxo:
-     *   [IMAGE]URL -> HttpURLConnection -> bytes -> BitmapFactory -> ImageView
-     *
-     * Nao usa WebView, HTML moderno, Glide ou Picasso.
-     */
-    private static class LegacyImageTask extends AsyncTask<Void, Void, android.graphics.Bitmap> {
-
-        private final WeakReference<ImageView> imageViewRef;
-        private final String imageUrl;
-
-        LegacyImageTask(ImageView imageView, String imageUrl) {
-            this.imageViewRef = new WeakReference<ImageView>(imageView);
-            this.imageUrl = imageUrl;
-        }
-
-        @Override
-        protected android.graphics.Bitmap doInBackground(Void... ignored) {
-            HttpURLConnection connection = null;
-            java.io.InputStream input = null;
-
-            try {
-                Log.d("LINKA_IMAGE", "Baixando imagem: " + imageUrl);
-
-                URL url = new URL(imageUrl);
-                connection = (HttpURLConnection) url.openConnection();
-
-                connection.setInstanceFollowRedirects(true);
-                connection.setConnectTimeout(15000);
-                connection.setReadTimeout(20000);
-                connection.setUseCaches(true);
-                connection.setRequestProperty(
-                        "User-Agent",
-                        "Mozilla/5.0 (Android) LinkaLite/1.0"
-                );
-                connection.setRequestProperty("Accept", "image/*,*/*;q=0.8");
-
-                int responseCode = connection.getResponseCode();
-                String contentType = connection.getContentType();
-
-                Log.d(
-                        "LINKA_IMAGE",
-                        "HTTP=" + responseCode + " type=" + contentType
-                                + " finalUrl=" + connection.getURL()
-                );
-
-                if (responseCode < 200 || responseCode >= 300) {
-                    Log.e(
-                            "LINKA_IMAGE",
-                            "Servidor nao retornou imagem. HTTP=" + responseCode
-                    );
-                    return null;
-                }
-
-                input = connection.getInputStream();
-                android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(input);
-
-                if (bitmap == null) {
-                    Log.e(
-                            "LINKA_IMAGE",
-                            "BitmapFactory nao conseguiu decodificar a resposta. type="
-                                    + contentType
-                    );
-                } else {
-                    Log.d(
-                            "LINKA_IMAGE",
-                            "Imagem OK: " + bitmap.getWidth() + "x" + bitmap.getHeight()
-                    );
-                }
-
-                return bitmap;
-
-            } catch (MalformedURLException e) {
-                Log.e("LINKA_IMAGE", "URL invalida: " + imageUrl, e);
-            } catch (Exception e) {
-                Log.e("LINKA_IMAGE", "Erro ao baixar imagem: " + imageUrl, e);
-            } finally {
-                if (input != null) {
-                    try {
-                        input.close();
-                    } catch (Exception ignoredClose) {
-                        // Ignora erro de fechamento.
-                    }
-                }
-
-                if (connection != null) {
-                    connection.disconnect();
-                }
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(android.graphics.Bitmap bitmap) {
-            ImageView imageView = imageViewRef.get();
-
-            if (imageView == null || bitmap == null) {
-                return;
-            }
-
-            Object currentTag = imageView.getTag();
-
-            // Impede que uma resposta atrasada de uma linha antiga apareca
-            // em outra linha reciclada do ListView.
-            if (!imageUrl.equals(currentTag)) {
-                return;
-            }
-
-            imageView.setImageBitmap(bitmap);
         }
     }
 
