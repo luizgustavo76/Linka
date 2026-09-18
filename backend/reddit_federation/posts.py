@@ -29,23 +29,35 @@ def subreddit_posts(subreddit=None):
         start = time.time()
         res = requests.get(proxy_url, timeout=10)
         print(f"Status Proxy Cloudflare ({clear_sub}): {res.status_code} em {time.time() - start:.2f}s")
+        
+        # Log do conteúdo retornado para diagnóstico
+        raw_xml = res.text.strip()
+        print(f"🔍 Resposta inicial do XML ({len(raw_xml)} bytes): {raw_xml[:250]}...")
 
-        if res.status_code == 200 and res.text.strip():
-            root = ET.fromstring(res.text)
+        if res.status_code == 200 and raw_xml:
+            root = ET.fromstring(raw_xml)
+            
+            # Namespace padronizado do Atom Feed do Reddit
             ns = {
                 'atom': 'http://www.w3.org/2005/Atom',
                 'media': 'http://search.yahoo.com/mrss/'
             }
 
-            for entry in root.findall('atom:entry', ns):
-                title_elem = entry.find('atom:title', ns)
-                author_elem = entry.find('atom:author/atom:name', ns)
-                content_elem = entry.find('atom:content', ns)
+            # Procura por entradas com ou sem namespace
+            entries = root.findall('atom:entry', ns) or root.findall('entry')
+
+            for entry in entries:
+                title_elem = entry.find('atom:title', ns) if 'atom:entry' in entry.tag else entry.find('title')
+                author_elem = entry.find('atom:author/atom:name', ns) if 'atom:entry' in entry.tag else entry.find('author/name')
+                content_elem = entry.find('atom:content', ns) if 'atom:entry' in entry.tag else entry.find('content')
                 media_elem = entry.find('media:thumbnail', ns)
 
                 title = title_elem.text.strip() if title_elem is not None and title_elem.text else ""
-                author = author_elem.text.replace("/u/", "").replace("u/", "").strip() if author_elem is not None and author_elem.text else "Anônimo"
                 
+                author = "Anônimo"
+                if author_elem is not None and author_elem.text:
+                    author = author_elem.text.replace("/u/", "").replace("u/", "").strip()
+
                 if not author or author in ["[deleted]", "AutoModerator"]:
                     continue
 
@@ -76,20 +88,17 @@ def subreddit_posts(subreddit=None):
                 if image_url:
                     components.append(f"[IMAGE]{image_url}")
 
-                text_content = "\n".join(components)
-
                 posts.append({
                     "id": len(posts) + 1,
-                    "text_post": text_content,
+                    "text_post": "\n".join(components),
                     "username": author,
                 })
 
                 if len(posts) >= limit:
                     break
 
-            if posts:
-                print(f"✅ Sucesso via Cloudflare Proxy! {len(posts)} posts encontrados.")
-                return jsonify(posts), 200
+            print(f"✅ Processamento concluído! Total de posts: {len(posts)}")
+            return jsonify(posts), 200
 
     except Exception as e:
         print(f"⚠️ Erro ao processar via Worker: {e}")
