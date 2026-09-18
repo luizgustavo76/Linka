@@ -27,24 +27,40 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.MalformedURLException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FederationsFeed extends Activity {
+
     private ImageButton btnHome;
     private ImageButton btnProfile;
     private ImageButton btnOptions;
     private ImageButton btnChat;
     private Button newPost;
+
     private ListView listViewPosts;
     private PostAdapter postAdapter;
-    private String username = "";
     private ArrayList<JSONObject> postsList;
+
+    private String username = "";
     private String currentUrl = "";
     private String baseUrl = "";
-    private ScheduledExecutorService scheduler;
+
+    /*
+     * Aceita os dois formatos que o Linka pode receber:
+     *
+     * [IMAGE]https://site.com/imagem.jpg
+     * [IMAGE](https://site.com/imagem.jpg)
+     *
+     * O formato sem parenteses e o que aparece no feed atual do projeto.
+     */
+    private static final Pattern IMAGE_PATTERN = Pattern.compile(
+            "\\[IMAGE\\]\\s*\\(?((?:https?://)[^\\s\\)]+)\\)?",
+            Pattern.CASE_INSENSITIVE
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,18 +69,41 @@ public class FederationsFeed extends Activity {
 
         AppConfig config = new AppConfig(this);
         username = config.getUsername();
-        
+
         try {
             config cfg = new config();
-            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(FederationsFeed.this, "config.cfg"));
-            JSONObject server = jsonCfg.getJSONObject("server");
-            baseUrl = server.optString("url", ""); 
+            JSONObject jsonCfg = new JSONObject(
+                    cfg.loadCfgAsJson(
+                            FederationsFeed.this,
+                            "config.cfg"
+                    )
+            );
+
+            JSONObject server = null;
+
+            if (jsonCfg.has("SERVER")) {
+                server = jsonCfg.getJSONObject("SERVER");
+            } else if (jsonCfg.has("server")) {
+                server = jsonCfg.getJSONObject("server");
+            }
+
+            if (server != null) {
+                baseUrl = server.optString("url", "");
+            }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(
+                    "LINKA_FEED",
+                    "Error parsing config.cfg: " + e.getMessage()
+            );
         }
 
         Intent intent = getIntent();
-        if (intent != null && intent.hasExtra("url") && intent.getStringExtra("url") != null && !intent.getStringExtra("url").isEmpty()) {
+
+        if (intent != null
+                && intent.hasExtra("url")
+                && intent.getStringExtra("url") != null
+                && !intent.getStringExtra("url").isEmpty()) {
+
             currentUrl = intent.getStringExtra("url");
         } else {
             currentUrl = config.getUrl();
@@ -78,39 +117,44 @@ public class FederationsFeed extends Activity {
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
 
-        btnChat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent chatIntent = new Intent(FederationsFeed.this, chatActivity.class);
-                startActivity(chatIntent);
-            }
-        });
+        btnChat.setOnClickListener(
+                v -> startActivity(
+                        new Intent(
+                                FederationsFeed.this,
+                                chatActivity.class
+                        )
+                )
+        );
 
-        btnOptions.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent optionsIntent = new Intent(FederationsFeed.this, optionActivity.class);
-                startActivity(optionsIntent);
-            }
-        });
+        btnOptions.setOnClickListener(
+                v -> startActivity(
+                        new Intent(
+                                FederationsFeed.this,
+                                optionActivity.class
+                        )
+                )
+        );
 
-        btnProfile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent profileIntent = new Intent(FederationsFeed.this, profile.class);
-                startActivity(profileIntent);
-            }
-        });
+        btnProfile.setOnClickListener(
+                v -> startActivity(
+                        new Intent(
+                                FederationsFeed.this,
+                                profile.class
+                        )
+                )
+        );
 
-        newPost.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent newPostIntent = new Intent(FederationsFeed.this, newPost.class);
-                startActivity(newPostIntent);
-            }
-        });
+        newPost.setOnClickListener(
+                v -> startActivity(
+                        new Intent(
+                                FederationsFeed.this,
+                                newPost.class
+                        )
+                )
+        );
 
         listViewPosts = (ListView) findViewById(R.id.listViewPosts);
+
         postsList = new ArrayList<JSONObject>();
         postAdapter = new PostAdapter(this, postsList);
         listViewPosts.setAdapter(postAdapter);
@@ -119,86 +163,154 @@ public class FederationsFeed extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        
+
         if (currentUrl == null || currentUrl.isEmpty()) {
             AppConfig config = new AppConfig(this);
             currentUrl = formatUrl(config.getUrl());
         }
 
-        Log.d("LINKA_FEED", "Executando FetchFeedTask para: " + currentUrl);
+        Log.d(
+                "LINKA_FEED",
+                "Executing FetchFeedTask for: " + currentUrl
+        );
+
         new FetchFeedTask().execute(currentUrl);
     }
 
     private String formatUrl(String rawUrl) {
-        if (rawUrl == null || rawUrl.isEmpty()) return "";
-        
+        if (rawUrl == null || rawUrl.trim().isEmpty()) {
+            return "";
+        }
+
         String formatted = rawUrl.trim();
-        if (!formatted.startsWith("http://") && !formatted.startsWith("https://")) {
+
+        if (!formatted.startsWith("http://")
+                && !formatted.startsWith("https://")) {
             formatted = "http://" + formatted;
         }
-        if (formatted.endsWith("/")) {
+
+        while (formatted.endsWith("/")) {
             formatted = formatted.substring(0, formatted.length() - 1);
         }
+
         return formatted;
     }
 
     private String sanitizarUrlImagem(String rawUrl) {
-        if (rawUrl == null || rawUrl.trim().isEmpty()) return "";
-
-        String cleanUrl = rawUrl.replace("&amp;", "&").trim();
-
-        if (cleanUrl.contains("preview.redd.it")) {
-            cleanUrl = cleanUrl.replaceAll("\\?.*$", "");
-            cleanUrl = cleanUrl.replace("https://preview.redd.it/", "https://i.redd.it/");
-            cleanUrl = cleanUrl.replace("http://preview.redd.it/", "https://i.redd.it/");
+        if (rawUrl == null || rawUrl.trim().isEmpty()) {
+            return "";
         }
 
+        String cleanUrl = rawUrl
+                .replace("&amp;", "&")
+                .trim();
+
+        // IMPORTANTE PARA ANDROID MUITO ANTIGO (1.x):
+        // nao converta HTTP para HTTPS aqui. O backend do LinkaLite
+        // pode fornecer imagens atraves de um endpoint HTTP/proxy,
+        // e o cliente deve respeitar exatamente a URL recebida.
+
+        // Mantem links do worker / lite-render exatamente como chegaram.
+        if (cleanUrl.contains("workers.dev") || cleanUrl.contains("lite-render")) {
+            return cleanUrl;
+        }
+
+        cleanUrl = cleanUrl.replaceAll("width=\\d+", "width=1080");
+        cleanUrl = cleanUrl.replaceAll("height=\\d+", "");
+        cleanUrl = cleanUrl.replaceAll("crop=[^&]+", "");
+        cleanUrl = cleanUrl.replaceAll("&&+", "&");
+
         return cleanUrl;
+    }
+
+    /**
+     * Extrai a primeira imagem marcada no texto do post.
+     */
+    private String extractImageUrl(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+
+        Matcher matcher = IMAGE_PATTERN.matcher(text);
+
+        if (!matcher.find()) {
+            return "";
+        }
+
+        return sanitizarUrlImagem(matcher.group(1));
+    }
+
+    /**
+     * Remove todas as marcacoes [IMAGE]URL do texto que sera exibido.
+     */
+    private String removeImageMarkers(String text) {
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
+
+        return IMAGE_PATTERN
+                .matcher(text)
+                .replaceAll("")
+                .trim();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (scheduler != null && !scheduler.isShutdown()) {
-            scheduler.shutdownNow();
-        }
     }
 
     private class FetchFeedTask extends AsyncTask<String, Void, String> {
+
         private String requestedUrl;
 
         @Override
         protected String doInBackground(String... urls) {
             requestedUrl = urls[0];
-            Log.d("LINKA_FEED", "Requisitando feed na URL: " + requestedUrl);
-            return requestHTTP(requestedUrl, "GET", new JSONObject());
+
+            Log.d(
+                    "LINKA_FEED",
+                    "Requesting feed at URL: " + requestedUrl
+            );
+
+            return requestHTTP(
+                    requestedUrl,
+                    "GET",
+                    new JSONObject()
+            );
         }
 
         @Override
         protected void onPostExecute(String result) {
-            Log.d("LINKA_FEED", "Resultado recebido (tam: " + (result != null ? result.length() : 0) + ")");
-
             if (result == null || result.trim().length() == 0) {
-                Log.e("LINKA_FEED", "Resposta nula ou vazia do servidor.");
-                Toast.makeText(FederationsFeed.this, "Erro: Servidor nao respondeu", Toast.LENGTH_SHORT).show();
+                Toast.makeText(
+                        FederationsFeed.this,
+                        "Error: Server did not respond",
+                        Toast.LENGTH_SHORT
+                ).show();
                 return;
             }
 
             String trimmed = result.trim();
+
             if (trimmed.startsWith("<")) {
-                Log.e("LINKA_FEED", "O servidor retornou HTML em vez de JSON!");
-                Toast.makeText(FederationsFeed.this, "Erro: Servidor retornou HTML", Toast.LENGTH_LONG).show();
+                Toast.makeText(
+                        FederationsFeed.this,
+                        "Error: Server returned HTML",
+                        Toast.LENGTH_LONG
+                ).show();
                 return;
             }
 
             try {
                 postsList.clear();
+
                 JSONArray jsonArray = null;
 
                 if (trimmed.startsWith("[")) {
                     jsonArray = new JSONArray(trimmed);
                 } else if (trimmed.startsWith("{")) {
                     JSONObject jsonObject = new JSONObject(trimmed);
+
                     if (jsonObject.has("posts")) {
                         jsonArray = jsonObject.getJSONArray("posts");
                     } else if (jsonObject.has("feed")) {
@@ -210,27 +322,38 @@ public class FederationsFeed extends Activity {
 
                 if (jsonArray != null) {
                     for (int i = 0; i < jsonArray.length(); i++) {
-                        postsList.add(jsonArray.getJSONObject(i));
+                        if (jsonArray.opt(i) instanceof JSONObject) {
+                            postsList.add(jsonArray.getJSONObject(i));
+                        }
                     }
-                    Log.d("LINKA_FEED", "Sucesso! " + postsList.size() + " posts renderizados.");
+
                     postAdapter.notifyDataSetChanged();
                 } else {
-                    Toast.makeText(FederationsFeed.this, "Erro: Estrutura JSON incompativel", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(
+                            FederationsFeed.this,
+                            "Error: Incompatible JSON structure",
+                            Toast.LENGTH_SHORT
+                    ).show();
                 }
             } catch (JSONException e) {
-                Log.e("LINKA_FEED", "JSONException ao processar posts: " + e.getMessage());
-                Toast.makeText(FederationsFeed.this, "Erro de sintaxe JSON", Toast.LENGTH_SHORT).show();
-            } catch (Exception e) {
-                Log.e("LINKA_FEED", "Excecao geral no parsing: " + e.getMessage());
+                Log.e(
+                        "LINKA_FEED",
+                        "JSONException while processing posts: "
+                                + e.getMessage()
+                );
             }
         }
     }
 
     private class PostAdapter extends BaseAdapter {
-        private Context context;
-        private ArrayList<JSONObject> list;
 
-        public PostAdapter(Context context, ArrayList<JSONObject> list) {
+        private final Context context;
+        private final ArrayList<JSONObject> list;
+
+        public PostAdapter(
+                Context context,
+                ArrayList<JSONObject> list
+        ) {
             this.context = context;
             this.list = list;
         }
@@ -247,97 +370,325 @@ public class FederationsFeed extends Activity {
 
         @Override
         public long getItemId(int position) {
-            return position;
+            JSONObject post = list.get(position);
+            return post.optLong("id", position);
+        }
+
+        private class ViewHolder {
+            ImageView avatarPost;
+            ImageView imgPost;
+            TextView tvUsername;
+            TextView tvText;
+            TextView tvDate;
+            TextView tvStarCount;
+            Button btnComments;
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(
+                int position,
+                View convertView,
+                ViewGroup parent
+        ) {
+            ViewHolder holder;
+
             if (convertView == null) {
-                LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                convertView = inflater.inflate(R.layout.item_post, null);
+                LayoutInflater inflater =
+                        (LayoutInflater) context.getSystemService(
+                                Context.LAYOUT_INFLATER_SERVICE
+                        );
+
+                convertView = inflater.inflate(
+                        R.layout.item_post,
+                        parent,
+                        false
+                );
+
+                holder = new ViewHolder();
+
+                holder.avatarPost =
+                        (ImageView) convertView.findViewById(
+                                R.id.postAvatar
+                        );
+
+                holder.imgPost =
+                        (ImageView) convertView.findViewById(
+                                R.id.imgPost
+                        );
+
+                holder.tvUsername =
+                        (TextView) convertView.findViewById(
+                                R.id.postUsername
+                        );
+
+                holder.tvText =
+                        (TextView) convertView.findViewById(
+                                R.id.postText
+                        );
+
+                holder.tvDate =
+                        (TextView) convertView.findViewById(
+                                R.id.postDate
+                        );
+
+                holder.tvStarCount =
+                        (TextView) convertView.findViewById(
+                                R.id.starCount
+                        );
+
+                holder.btnComments =
+                        (Button) convertView.findViewById(
+                                R.id.btnComments
+                        );
+
+                convertView.setTag(holder);
+            } else {
+                holder = (ViewHolder) convertView.getTag();
             }
 
-            ImageView avatarPost = (ImageView) convertView.findViewById(R.id.postAvatar);
-            ImageView imgPost = (ImageView) convertView.findViewById(R.id.imgPost);
-            TextView tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
-            TextView tvText = (TextView) convertView.findViewById(R.id.postText);
-            TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
-            TextView tvStarCount = (TextView) convertView.findViewById(R.id.starCount);
-            Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
-
-            imgPost.setImageDrawable(null);
-            imgPost.setVisibility(View.GONE);
+            // Limpa completamente o estado de uma View reciclada.
+            holder.imgPost.setImageDrawable(null);
+            holder.imgPost.setVisibility(View.GONE);
+            holder.imgPost.setTag(null);
+            holder.imgPost.setOnClickListener(null);
 
             try {
                 JSONObject post = list.get(position);
-                String username = post.optString("username", post.optString("user", "entity404"));
-                String textPost = post.optString("text_post", post.optString("text", ""));
-                String datetime = post.optString("datetime", post.optString("date", ""));
+
+                String user = post.optString(
+                        "username",
+                        post.optString("user", "entity404")
+                );
+
+                String textPost = post.optString(
+                        "text_post",
+                        post.optString("text", "")
+                );
+
+                String datetime = post.optString(
+                        "datetime",
+                        post.optString("date", "")
+                );
+
                 final String id = post.optString("id", "");
                 String stars = post.optString("stars", "0");
 
-                btnComments.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent commentIntent = new Intent(FederationsFeed.this, comments_activity.class);
-                        commentIntent.putExtra("post_id", id);
-                        startActivity(commentIntent);
-                    }
+                holder.btnComments.setOnClickListener(v -> {
+                    Intent commentIntent = new Intent(
+                            FederationsFeed.this,
+                            comments_activity.class
+                    );
+
+                    commentIntent.putExtra(
+                            "post_id",
+                            id
+                    );
+
+                    startActivity(commentIntent);
                 });
 
-                tvUsername.setText("@" + username);
-                tvDate.setText(datetime);
-                tvStarCount.setText(stars);
+                holder.tvUsername.setText(
+                        user.startsWith("@") ? user : "@" + user
+                );
 
-                ImageLoader imageLoader = new ImageLoader();
-                imageLoader.viewProfilePicture(context, username, avatarPost);
+                holder.tvDate.setText(datetime);
+                holder.tvStarCount.setText(stars);
 
-                if (textPost != null && textPost.contains("[IMAGE]")) {
-                    Pattern pattern = Pattern.compile("\\[IMAGE\\](https?://[^\\s\n\r]+)");
-                    Matcher matcher = pattern.matcher(textPost);
+                new ImageLoader().viewProfilePicture(
+                        context,
+                        user,
+                        holder.avatarPost
+                );
 
-                    if (matcher.find()) {
-                        String rawImageUrl = matcher.group(1).trim();
-                        final String finalImageUrl = sanitizarUrlImagem(rawImageUrl);
+                /*
+                 * ===== IMAGEM DO POST =====
+                 *
+                 * O backend manda, por exemplo:
+                 *
+                 * [IMAGE]http://servidor/imagem.jpg
+                 *
+                 * O LinkaLite detecta a marca [IMAGE], extrai somente a URL
+                 * e usa o loader legado do proprio Feed para colocar a imagem no ImageView.
+                 */
+                final String imageUrl = extractImageUrl(textPost);
 
-                        if (!finalImageUrl.isEmpty()) {
-                            imgPost.setVisibility(View.VISIBLE);
+                if (!imageUrl.isEmpty()) {
+                    holder.imgPost.setVisibility(View.VISIBLE);
+                    holder.imgPost.setTag(imageUrl);
 
-                            new ImageLoader().LoadImageUrl(finalImageUrl, imgPost);
+                    // Nao depende do ImageLoader externo para imagens federadas.
+                    // O download usa HttpURLConnection + BitmapFactory, APIs antigas
+                    // disponiveis nos Androids que o LinkaLite pretende suportar.
+                    new LegacyImageTask(
+                            holder.imgPost,
+                            imageUrl
+                    ).execute();
 
-                            imgPost.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    Intent intent = new Intent(context, ViewPicture.class);
-                                    intent.putExtra("type", "Image");
-                                    intent.putExtra("url", finalImageUrl);
-                                    context.startActivity(intent);
-                                }
-                            });
+                    holder.imgPost.setOnClickListener(v -> {
+                        Intent intent = new Intent(
+                                context,
+                                ViewPicture.class
+                        );
 
-                            // Remove as tags de imagem do texto principal
-                            textPost = textPost.replaceAll("\\[IMAGE\\]https?://[^\\s\n\r]+", "").trim();
-                        }
-                    }
+                        intent.putExtra(
+                                "type",
+                                "Image"
+                        );
+
+                        intent.putExtra(
+                                "url",
+                                imageUrl
+                        );
+
+                        context.startActivity(intent);
+                    });
                 }
 
-                tvText.setText(textPost);
+                // Nao deixa a URL da imagem poluir o texto do post.
+                textPost = removeImageMarkers(textPost);
+
+                holder.tvText.setText(textPost);
 
             } catch (Exception e) {
-                Log.e("LINKA_ADAPTER", "Erro no item na posicao " + position + ": " + e.getMessage());
+                Log.e(
+                        "LINKA_ADAPTER",
+                        "Error at position "
+                                + position
+                                + ": "
+                                + e.getMessage()
+                );
             }
 
             return convertView;
         }
     }
 
-    public String requestHTTP(String urlParam, String method, JSONObject json_body) {
+    /**
+     * Loader de imagem propositalmente simples para Android antigo.
+     *
+     * Fluxo:
+     *   [IMAGE]URL -> HttpURLConnection -> bytes -> BitmapFactory -> ImageView
+     *
+     * Nao usa WebView, HTML moderno, Glide ou Picasso.
+     */
+    private static class LegacyImageTask extends AsyncTask<Void, Void, android.graphics.Bitmap> {
+
+        private final WeakReference<ImageView> imageViewRef;
+        private final String imageUrl;
+
+        LegacyImageTask(ImageView imageView, String imageUrl) {
+            this.imageViewRef = new WeakReference<ImageView>(imageView);
+            this.imageUrl = imageUrl;
+        }
+
+        @Override
+        protected android.graphics.Bitmap doInBackground(Void... ignored) {
+            HttpURLConnection connection = null;
+            java.io.InputStream input = null;
+
+            try {
+                Log.d("LINKA_IMAGE", "Baixando imagem: " + imageUrl);
+
+                URL url = new URL(imageUrl);
+                connection = (HttpURLConnection) url.openConnection();
+
+                connection.setInstanceFollowRedirects(true);
+                connection.setConnectTimeout(15000);
+                connection.setReadTimeout(20000);
+                connection.setUseCaches(true);
+                connection.setRequestProperty(
+                        "User-Agent",
+                        "Mozilla/5.0 (Android) LinkaLite/1.0"
+                );
+                connection.setRequestProperty("Accept", "image/*,*/*;q=0.8");
+
+                int responseCode = connection.getResponseCode();
+                String contentType = connection.getContentType();
+
+                Log.d(
+                        "LINKA_IMAGE",
+                        "HTTP=" + responseCode + " type=" + contentType
+                                + " finalUrl=" + connection.getURL()
+                );
+
+                if (responseCode < 200 || responseCode >= 300) {
+                    Log.e(
+                            "LINKA_IMAGE",
+                            "Servidor nao retornou imagem. HTTP=" + responseCode
+                    );
+                    return null;
+                }
+
+                input = connection.getInputStream();
+                android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(input);
+
+                if (bitmap == null) {
+                    Log.e(
+                            "LINKA_IMAGE",
+                            "BitmapFactory nao conseguiu decodificar a resposta. type="
+                                    + contentType
+                    );
+                } else {
+                    Log.d(
+                            "LINKA_IMAGE",
+                            "Imagem OK: " + bitmap.getWidth() + "x" + bitmap.getHeight()
+                    );
+                }
+
+                return bitmap;
+
+            } catch (MalformedURLException e) {
+                Log.e("LINKA_IMAGE", "URL invalida: " + imageUrl, e);
+            } catch (Exception e) {
+                Log.e("LINKA_IMAGE", "Erro ao baixar imagem: " + imageUrl, e);
+            } finally {
+                if (input != null) {
+                    try {
+                        input.close();
+                    } catch (Exception ignoredClose) {
+                        // Ignora erro de fechamento.
+                    }
+                }
+
+                if (connection != null) {
+                    connection.disconnect();
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(android.graphics.Bitmap bitmap) {
+            ImageView imageView = imageViewRef.get();
+
+            if (imageView == null || bitmap == null) {
+                return;
+            }
+
+            Object currentTag = imageView.getTag();
+
+            // Impede que uma resposta atrasada de uma linha antiga apareca
+            // em outra linha reciclada do ListView.
+            if (!imageUrl.equals(currentTag)) {
+                return;
+            }
+
+            imageView.setImageBitmap(bitmap);
+        }
+    }
+
+    public String requestHTTP(
+            String urlParam,
+            String method,
+            JSONObject json_body
+    ) {
         HttpURLConnection connection = null;
-        Log.d("LINKA_HTTP", "Iniciando requisicao HTTP [" + method + "] -> " + urlParam);
 
         try {
             URL url = new URL(urlParam);
             connection = (HttpURLConnection) url.openConnection();
+
             HttpURLConnection.setFollowRedirects(true);
             connection.setInstanceFollowRedirects(true);
 
@@ -346,11 +697,19 @@ public class FederationsFeed extends Activity {
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(10000);
 
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0");
+            connection.setRequestProperty(
+                    "Content-Type",
+                    "application/json"
+            );
+
+            connection.setRequestProperty(
+                    "User-Agent",
+                    "Mozilla/5.0 (Android) LinkaLite"
+            );
 
             if (method.equals("POST") || method.equals("PUT")) {
                 connection.setDoOutput(true);
+
                 OutputStream os = connection.getOutputStream();
                 os.write(json_body.toString().getBytes("UTF-8"));
                 os.flush();
@@ -358,25 +717,56 @@ public class FederationsFeed extends Activity {
             }
 
             int responseCode = connection.getResponseCode();
-            Log.d("LINKA_HTTP", "Response Code: " + responseCode + " para " + urlParam);
 
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = in.readLine()) != null) {
-                    response.append(line);
-                }
-                in.close();
-                return response.toString();
+            InputStream inputStream;
+
+            if (responseCode >= 200 && responseCode < 300) {
+                inputStream = connection.getInputStream();
+            } else {
+                inputStream = connection.getErrorStream();
             }
+
+            if (inputStream == null) {
+                return "";
+            }
+
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(
+                            inputStream,
+                            "UTF-8"
+                    )
+            );
+
+            StringBuilder response = new StringBuilder();
+            String line;
+
+            while ((line = in.readLine()) != null) {
+                response.append(line);
+            }
+
+            in.close();
+
+            if (responseCode < 200 || responseCode >= 300) {
+                Log.e(
+                        "LINKA_HTTP",
+                        "HTTP " + responseCode + ": " + response
+                );
+            }
+
+            return response.toString();
+
         } catch (Exception e) {
-            Log.e("LINKA_HTTP", "Excecao na conexao: " + e.getMessage());
+            Log.e(
+                    "LINKA_HTTP",
+                    "Connection exception: " + e.getMessage(),
+                    e
+            );
         } finally {
             if (connection != null) {
                 connection.disconnect();
             }
         }
+
         return "";
     }
 }
