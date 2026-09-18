@@ -53,7 +53,8 @@ def formate(posts):
                     images.append(img_url)
 
         if images:
-            texto_com_imagens = text_post + "\n" + "".join(f"[IMAGE]{url}\n" for url in images)
+            proxy_url = "http://linkaProject.pythonanywhere.com"
+            texto_com_imagens = text_post + "\n" + "".join(f"[IMAGE]{proxy_url}/lite-render?url={url}\n" for url in images)
             text_final = texto_com_imagens.strip()
         else:
             text_final = text_post

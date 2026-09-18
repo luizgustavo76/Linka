@@ -100,7 +100,6 @@ def subreddit_posts(subreddit=None):
                     
                     body = re.sub(r'\[link\]|\[comments\]', '', body, flags=re.IGNORECASE).strip()
 
-                # Fallback final: se não achou no HTML, tenta a tag thumbnail do RSS
                 if not image_url:
                     media_elem = entry.find('thumbnail')
                     if media_elem is not None and 'url' in media_elem.attrib:
@@ -117,7 +116,9 @@ def subreddit_posts(subreddit=None):
                 if body:
                     components.append(body)
                 if image_url:
-                    components.append(f"[IMAGE]{image_url}")
+                    baseUrl = "http://linkaProject.pythonanywhere.com"
+                    proxy_image_url = f"{baseUrl}/lite-render?url={image_url}"
+                    components.append(f"[IMAGE]{proxy_image_url}")
 
                 posts.append({
                     "id": len(posts) + 1,
