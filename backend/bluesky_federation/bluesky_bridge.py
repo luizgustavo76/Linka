@@ -1,7 +1,8 @@
-import cloudscraper
+import requests
 import unicodedata
 from datetime import datetime
 import urllib.parse
+
 BSKY_HANDLE = "luizsgustavo76.bsky.social"
 BSKY_APP_PASSWORD = "acas-tyic-vd47-i6ci"
 
@@ -12,16 +13,52 @@ def get_bluesky_token():
         "password": BSKY_APP_PASSWORD
     }
     
-    scraper = cloudscraper.create_scraper()
+    # Substituído cloudscraper por requests direto (não trava a CPU do PythonAnywhere)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    }
+    
     try:
-        response = scraper.post(url, json=payload, timeout=10)
+        response = requests.post(url, json=payload, headers=headers, timeout=4)
         if response.status_code == 200:
             return response.json().get("accessJwt")
-        print(f"[BLUESKY AUTH ERROR] Status: {response.status_code} - {response.text}")
+        print(f"[BLUESKY AUTH ERROR] Status: {response.status_code}")
         return None
     except Exception as e:
         print(f"[BLUESKY AUTH EXCEPTION] {e}")
         return None
+
+def fetch_bluesky_posts(query="retrocomputing", limit=40):
+    token = get_bluesky_token()
+    if not token:
+        print("[BLUESKY] Nao foi possivel autenticar. Abortando busca.")
+        return []
+
+    url = "https://bsky.social/xrpc/app.bsky.feed.searchPosts"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "User-Agent": "LinkaLiteApp/1.0"
+    }
+    params = {
+        'q': query,
+        'limit': limit
+    }
+
+    try:
+        # Timeout reduzido para não travar a thread do WSGI
+        response = requests.get(url, headers=headers, params=params, timeout=4)
+        
+        if response.status_code != 200:
+            print(f"[BLUESKY ERROR] Status: {response.status_code}")
+            return []
+
+        data = response.json()
+        posts_brutos = data.get("posts", [])
+        return formate_bluesky(posts_brutos)
+
+    except Exception as e:
+        print(f"[BLUESKY EXCEPTION] {e}")
+        return []
 
 def formate_bluesky(posts):
     posts_formatados = []
