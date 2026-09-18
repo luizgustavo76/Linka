@@ -22,14 +22,11 @@ def formate(posts):
         if not isinstance(post, dict) or "error" in post:
             continue
 
-        # Se for um reblog/boost, pega o post original interno
         target_post = post.get("reblog") if isinstance(post.get("reblog"), dict) else post
 
-        # Extração segura da conta
         account_info = target_post.get("account") or {}
         username = account_info.get("acct") or account_info.get("username") or "desconhecido"
 
-        # Formata a data se existir
         datetime_formatado = None
         raw_created_at = target_post.get("created_at")
         if raw_created_at:
@@ -39,18 +36,15 @@ def formate(posts):
             except ValueError:
                 datetime_formatado = raw_created_at
 
-        # Limpa e normaliza o HTML do post
         html_content = target_post.get("content", "")
         html_content = html_content.replace("<br />", "\n").replace("<br>", "\n").replace("</p>", "\n")
 
         soup = BeautifulSoup(html_content, "html.parser")
         text_post = soup.get_text()
 
-        # Normaliza o texto
         text_post = unicodedata.normalize("NFKC", text_post)
         text_post = "\n".join(line.strip() for line in text_post.splitlines()).strip()
 
-        # Extração de anexos de mídia
         images = []
         for media in target_post.get("media_attachments", []):
             if isinstance(media, dict) and media.get("type") == "image":
@@ -64,7 +58,6 @@ def formate(posts):
         else:
             text_final = text_post
 
-        # Garante o envio mesmo se o texto for vazio (post só com imagem)
         if text_final or images:
             posts_formatados.append({
                 "username": username,

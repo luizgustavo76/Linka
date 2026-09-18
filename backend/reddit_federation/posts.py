@@ -42,33 +42,55 @@ def subreddit_posts(subreddit=None):
                 title_elem = entry.find('title')
                 author_elem = entry.find('author/name') or entry.find('author')
                 content_elem = entry.find('content')
-                media_elem = entry.find('thumbnail')
 
                 title = title_elem.text.strip() if title_elem is not None and title_elem.text else ""
                 
-                author = "Anônimo"
-                if author_elem is not None and author_elem.text:
-                    author = author_elem.text.replace("/u/", "").replace("u/", "").strip()
+                author = "entity404"
+                author_elem = entry.find('author')
+                if author_elem is not None:
+                    name_elem = author_elem.find('name')
+                    if name_elem is not None and name_elem.text:
+                        author = name_elem.text
+                    elif author_elem.find('uri') is not None and author_elem.find('uri').text:
+                        author = author_elem.find('uri').text.split('/user/')[-1]
+                    elif author_elem.text:
+                        author = author_elem.text
 
-                # Ignora moderadores ou posts sem autor
+                    # Limpa os prefixos do Reddit
+                    author = re.sub(r'^/?u/', '', author).strip()
+
+                if not author or author in ["[deleted]", "AutoModerator"]:
+                    continue
+
                 if author in ["[deleted]", "AutoModerator"]:
                     continue
 
                 body = ""
                 image_url = ""
 
-                # 1. Busca imagem pela thumbnail
-                if media_elem is not None and 'url' in media_elem.attrib:
-                    image_url = media_elem.attrib['url']
-
                 if content_elem is not None and content_elem.text:
+                    # Desescapa os caracteres HTML (&lt; img src=... &gt;)
                     content_html = unescape(content_elem.text)
                     
-                    # 2. Se não tinha thumbnail, extrai do HTML
-                    if not image_url:
-                        img_match = re.search(r'(https://i\.redd\.it/[^\s"<]+|https://preview\.redd\.it/[^\s"<]+|https://i\.imgur\.com/[^\s"<]+)', content_html, re.IGNORECASE)
-                        if img_match:
-                            image_url = img_match.group(1)
+                    # 1. Busca QUALQUER link de imagem direto dentro do HTML do post
+                    img_match = re.search(
+                        r'src=["\'](https://(?:i|preview|external-preview)\.redd\.it/[^"\']+|https://i\.imgur\.com/[^"\']+)["\']', 
+                        content_html, 
+                        re.IGNORECASE
+                    )
+                    
+                    if img_match:
+                        # Substitui &amp; por & limpo na URL
+                        image_url = img_match.group(1).replace("&amp;", "&")
+                    else:
+                        # 2. Fallback: procura por links diretos sem a tag <img>
+                        link_match = re.search(
+                            r'href=["\'](https://i\.redd\.it/[^"\']+\.(?:jpg|jpeg|png|gif))["\']', 
+                            content_html, 
+                            re.IGNORECASE
+                        )
+                        if link_match:
+                            image_url = link_match.group(1).replace("&amp;", "&")
 
                     # 3. Extrai texto útil do post
                     text_match = re.search(r'<div class="md">(.*?)</div>', content_html, re.DOTALL)
@@ -78,7 +100,14 @@ def subreddit_posts(subreddit=None):
                     
                     body = re.sub(r'\[link\]|\[comments\]', '', body, flags=re.IGNORECASE).strip()
 
-                # Garante que não crie post totalmente vazio
+                # Fallback final: se não achou no HTML, tenta a tag thumbnail do RSS
+                if not image_url:
+                    media_elem = entry.find('thumbnail')
+                    if media_elem is not None and 'url' in media_elem.attrib:
+                        thumb = media_elem.attrib['url']
+                        if thumb.startswith("http"):
+                            image_url = thumb
+
                 if not title and not body and not image_url:
                     continue
 

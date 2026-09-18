@@ -2,12 +2,10 @@ import cloudscraper
 import unicodedata
 from datetime import datetime
 
-# Credenciais da ponte (use seu handle e a App Password gerada)
 BSKY_HANDLE = "luizsgustavo76.bsky.social"
 BSKY_APP_PASSWORD = "acas-tyic-vd47-i6ci"
 
 def get_bluesky_token():
-    """Autentica na API e retorna o accessJwt"""
     url = "https://bsky.social/xrpc/com.atproto.server.createSession"
     payload = {
         "identifier": BSKY_HANDLE,
@@ -24,6 +22,7 @@ def get_bluesky_token():
     except Exception as e:
         print(f"[BLUESKY AUTH EXCEPTION] {e}")
         return None
+
 def formate_bluesky(posts):
     posts_formatados = []
     
@@ -75,14 +74,13 @@ def formate_bluesky(posts):
         })
 
     return posts_formatados
+
 def fetch_bluesky_posts(query="retrocomputing", limit=40):
-    # 1. Pega o Token de Sessão
     token = get_bluesky_token()
     if not token:
         print("[BLUESKY] Nao foi possivel autenticar. Abortando busca.")
         return []
 
-    # 2. Faz a busca global autenticada
     url = "https://bsky.social/xrpc/app.bsky.feed.searchPosts"
     headers = {
         "Authorization": f"Bearer {token}"
