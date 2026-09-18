@@ -29,28 +29,20 @@ def subreddit_posts(subreddit=None):
         start = time.time()
         res = requests.get(proxy_url, timeout=10)
         print(f"Status Proxy Cloudflare ({clear_sub}): {res.status_code} em {time.time() - start:.2f}s")
-        
-        # Log do conteúdo retornado para diagnóstico
-        raw_xml = res.text.strip()
-        print(f"🔍 Resposta inicial do XML ({len(raw_xml)} bytes): {raw_xml[:250]}...")
 
-        if res.status_code == 200 and raw_xml:
-            root = ET.fromstring(raw_xml)
+        if res.status_code == 200 and res.text.strip():
+            root = ET.fromstring(res.text)
             
-            # Namespace padronizado do Atom Feed do Reddit
-            ns = {
-                'atom': 'http://www.w3.org/2005/Atom',
-                'media': 'http://search.yahoo.com/mrss/'
-            }
+            # Remove namespaces do XML para facilitar a busca de tags
+            for elem in root.iter():
+                if '}' in elem.tag:
+                    elem.tag = elem.tag.split('}', 1)[1]
 
-            # Procura por entradas com ou sem namespace
-            entries = root.findall('atom:entry', ns) or root.findall('entry')
-
-            for entry in entries:
-                title_elem = entry.find('atom:title', ns) if 'atom:entry' in entry.tag else entry.find('title')
-                author_elem = entry.find('atom:author/atom:name', ns) if 'atom:entry' in entry.tag else entry.find('author/name')
-                content_elem = entry.find('atom:content', ns) if 'atom:entry' in entry.tag else entry.find('content')
-                media_elem = entry.find('media:thumbnail', ns)
+            for entry in root.findall('entry'):
+                title_elem = entry.find('title')
+                author_elem = entry.find('author/name') or entry.find('author')
+                content_elem = entry.find('content')
+                media_elem = entry.find('thumbnail')
 
                 title = title_elem.text.strip() if title_elem is not None and title_elem.text else ""
                 
@@ -58,23 +50,27 @@ def subreddit_posts(subreddit=None):
                 if author_elem is not None and author_elem.text:
                     author = author_elem.text.replace("/u/", "").replace("u/", "").strip()
 
-                if not author or author in ["[deleted]", "AutoModerator"]:
+                # Ignora moderadores ou posts sem autor
+                if author in ["[deleted]", "AutoModerator"]:
                     continue
 
                 body = ""
                 image_url = ""
 
+                # 1. Busca imagem pela thumbnail
                 if media_elem is not None and 'url' in media_elem.attrib:
                     image_url = media_elem.attrib['url']
 
                 if content_elem is not None and content_elem.text:
                     content_html = unescape(content_elem.text)
                     
+                    # 2. Se não tinha thumbnail, extrai do HTML
                     if not image_url:
                         img_match = re.search(r'(https://i\.redd\.it/[^\s"<]+|https://preview\.redd\.it/[^\s"<]+|https://i\.imgur\.com/[^\s"<]+)', content_html, re.IGNORECASE)
                         if img_match:
                             image_url = img_match.group(1)
 
+                    # 3. Extrai texto útil do post
                     text_match = re.search(r'<div class="md">(.*?)</div>', content_html, re.DOTALL)
                     if text_match:
                         raw_text = text_match.group(1)
@@ -82,7 +78,13 @@ def subreddit_posts(subreddit=None):
                     
                     body = re.sub(r'\[link\]|\[comments\]', '', body, flags=re.IGNORECASE).strip()
 
-                components = [title]
+                # Garante que não crie post totalmente vazio
+                if not title and not body and not image_url:
+                    continue
+
+                components = []
+                if title:
+                    components.append(title)
                 if body:
                     components.append(body)
                 if image_url:
@@ -97,10 +99,11 @@ def subreddit_posts(subreddit=None):
                 if len(posts) >= limit:
                     break
 
-            print(f"✅ Processamento concluído! Total de posts: {len(posts)}")
-            return jsonify(posts), 200
+            if posts:
+                print(f"✅ Sucesso com tags limpas! {len(posts)} posts válidos extraídos.")
+                return jsonify(posts), 200
 
     except Exception as e:
-        print(f"⚠️ Erro ao processar via Worker: {e}")
+        print(f"⚠️ Erro ao processar XML no Flask: {e}")
 
     return jsonify(posts), 200
