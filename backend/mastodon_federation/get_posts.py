@@ -3,7 +3,7 @@ import json
 import unicodedata
 from bs4 import BeautifulSoup
 from datetime import datetime
-
+import urllib.parse
 def formate(posts):
     if isinstance(posts, str):
         try:
@@ -54,7 +54,14 @@ def formate(posts):
 
         if images:
             proxy_url = "http://linkaProject.pythonanywhere.com"
-            texto_com_imagens = text_post + "\n" + "".join(f"[IMAGE]{proxy_url}/lite-render?url={url}\n" for url in images)
+            
+            # Faz o encode da URL original para não quebrar a Query String do Flask
+            links_formatados = "".join(
+                f"[IMAGE]{proxy_url}/lite-render?url={urllib.parse.quote(url, safe='')}\n" 
+                for url in images
+            )
+            
+            texto_com_imagens = text_post + "\n" + links_formatados
             text_final = texto_com_imagens.strip()
         else:
             text_final = text_post

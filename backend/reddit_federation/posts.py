@@ -4,7 +4,7 @@ import time
 import xml.etree.ElementTree as ET
 import re
 from html import unescape
-
+import urllib.parse
 post_bp = Blueprint("reddit_post_bp", __name__)
 
 CLOUDFLARE_WORKER_URL = "https://fancy-fire-49d2.luizsgustavo76.workers.dev"
@@ -117,7 +117,8 @@ def subreddit_posts(subreddit=None):
                     components.append(body)
                 if image_url:
                     baseUrl = "http://linkaProject.pythonanywhere.com"
-                    proxy_image_url = f"{baseUrl}/lite-render?url={image_url}"
+                    safe_image_url = urllib.parse.quote(image_url, safe='')
+                    proxy_image_url = f"{baseUrl}/lite-render?url={safe_image_url}"
                     components.append(f"[IMAGE]{proxy_image_url}")
 
                 posts.append({
