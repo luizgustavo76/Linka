@@ -37,52 +37,344 @@ def clean_reddit_url(url_str):
 
 @image_bp.route("/lite-render", methods=["GET"])
 def lite_render():
+    import io
+    import time
+    import requests
+
+    from flask import Response, request, jsonify
+    from PIL import Image, ImageOps
+
+    # ============================================================
+    # CONFIGURAÇÃO
+    # ============================================================
+
+    CLOUDFLARE_WORKER_URL = (
+        "https://fancy-fire-49d2.luizsgustavo76.workers.dev/?url="
+    )
+
+    print("\n[LITE-RENDER] =======================================", flush=True)
+    print("[LITE-RENDER] NOVA REQUISICAO", flush=True)
+
     raw_url = request.args.get("url")
 
+    print(
+        f"[LITE-RENDER] URL recebida: {raw_url}",
+        flush=True,
+    )
+
     if not raw_url:
-        return "URL missing", 400
+        print(
+            "[LITE-RENDER ERROR] URL missing",
+            flush=True,
+        )
+        return jsonify({"error": "URL missing"}), 400
 
-    target_url = clean_reddit_url(raw_url)
-
-    # Headers avançados simulando navegação direta no Reddit
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-        "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
-        "Referer": "https://www.reddit.com/",
-        "Sec-Ch-Ua": '"Chromium";v="123", "Not:A-Brand";v="8", "Google Chrome";v="123"',
-        "Sec-Ch-Ua-Mobile": "?0",
-        "Sec-Ch-Ua-Platform": '"Windows"',
-        "Sec-Fetch-Dest": "image",
-        "Sec-Fetch-Mode": "no-cors",
-        "Sec-Fetch-Site": "cross-site",
-    }
+    # ============================================================
+    # LIMPAR URL
+    # ============================================================
 
     try:
-        session = requests.Session()
-        resp = session.get(
-            target_url, headers=headers, timeout=8, allow_redirects=True
+        target_url = clean_reddit_url(raw_url)
+    except Exception as e:
+        print(
+            f"[LITE-RENDER] clean_reddit_url falhou: {e}",
+            flush=True,
+        )
+        target_url = raw_url
+
+    print(
+        f"[LITE-RENDER] URL final: {target_url}",
+        flush=True,
+    )
+
+    # ============================================================
+    # IMPORTANTE:
+    #
+    # NÃO fazemos requests.get() diretamente para o Reddit.
+    #
+    # O PythonAnywhere apenas chama o Cloudflare Worker.
+    #
+    # A imagem vem para a RAM do processo, é convertida pelo
+    # Pillow em RAM e imediatamente devolvida ao Android.
+    #
+    # NENHUM arquivo é criado.
+    # NENHUM cache é criado.
+    # ============================================================
+
+    worker_url = (
+        CLOUDFLARE_WORKER_URL
+        + requests.utils.quote(target_url, safe="")
+    )
+
+    print(
+        f"[LITE-RENDER] URL do Worker: {worker_url}",
+        flush=True,
+    )
+
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/123.0.0.0 Safari/537.36"
+        ),
+        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+    }
+
+    # ============================================================
+    # BAIXAR PELO WORKER
+    #
+    # O conteúdo fica SOMENTE na memória.
+    # ============================================================
+
+    start = time.time()
+
+    try:
+        print(
+            "[LITE-RENDER] Chamando Cloudflare Worker...",
+            flush=True,
         )
 
-        # Se o Reddit aceitou a requisição, devolve a imagem
-        if resp.status_code == 200:
-            content_type = resp.headers.get("Content-Type", "image/jpeg")
-            return Response(resp.content, mimetype=content_type)
+        response = requests.get(
+            worker_url,
+            headers=headers,
+            timeout=15,
+            allow_redirects=True,
+        )
+
+        elapsed = time.time() - start
 
         print(
-            f"[LITE-RENDER ERROR] Status {resp.status_code} para {target_url}. Redirecionando..."
+            f"[LITE-RENDER] Worker respondeu em {elapsed:.2f}s",
+            flush=True,
         )
 
-        # FALLBACK: Se o IP do servidor tomou 403 da CDN do Reddit, redireciona diretamente
-        return redirect(target_url, code=302)
+        print(
+            f"[LITE-RENDER] Status: {response.status_code}",
+            flush=True,
+        )
+
+        print(
+            "[LITE-RENDER] Content-Type: "
+            f"{response.headers.get('Content-Type')}",
+            flush=True,
+        )
+
+        print(
+            f"[LITE-RENDER] Bytes recebidos: "
+            f"{len(response.content)}",
+            flush=True,
+        )
+
+        if response.status_code != 200:
+            print(
+                "[LITE-RENDER ERROR] Worker não conseguiu "
+                "buscar a imagem.",
+                flush=True,
+            )
+
+            print(
+                "[LITE-RENDER ERROR] Resposta do Worker:",
+                flush=True,
+            )
+
+            print(
+                response.text[:500],
+                flush=True,
+            )
+
+            return jsonify(
+                {
+                    "error": "Failed to fetch image",
+                    "worker_status": response.status_code,
+                }
+            ), 502
+
+        if not response.content:
+            print(
+                "[LITE-RENDER ERROR] Worker retornou 0 bytes.",
+                flush=True,
+            )
+
+            return jsonify(
+                {"error": "Worker returned empty response"}
+            ), 502
 
     except Exception as e:
-        print(f"[LITE-RENDER EXCEPTION] {e}")
-        # Em caso de erro de conexão, faz o fallback via redirect
-        return redirect(target_url, code=302)
+        elapsed = time.time() - start
 
+        print(
+            "[LITE-RENDER EXCEPTION] Erro chamando Worker "
+            f"após {elapsed:.2f}s: {e}",
+            flush=True,
+        )
+
+        return jsonify(
+            {
+                "error": "Failed to fetch image",
+                "details": str(e),
+            }
+        ), 502
+
+    try:
+        print(
+            "[LITE-RENDER] Abrindo imagem com Pillow...",
+            flush=True,
+        )
+
+        image_data = io.BytesIO(response.content)
+
+        image = Image.open(image_data)
+
+        print(
+            f"[LITE-RENDER] Formato original: {image.format}",
+            flush=True,
+        )
+
+        print(
+            f"[LITE-RENDER] Tamanho original: {image.size}",
+            flush=True,
+        )
+
+        print(
+            f"[LITE-RENDER] Modo original: {image.mode}",
+            flush=True,
+        )
+
+        # Corrigir orientação EXIF sem criar arquivo.
+        try:
+            image = ImageOps.exif_transpose(image)
+        except Exception as e:
+            print(
+                f"[LITE-RENDER] EXIF não aplicado: {e}",
+                flush=True,
+            )
+
+        # ========================================================
+        # CONVERTER PARA RGB
+        #
+        # JPEG não aceita:
+        # - RGBA
+        # - LA
+        # - P
+        # ========================================================
+
+        if image.mode == "P":
+            print(
+                "[LITE-RENDER] Convertendo P -> RGBA",
+                flush=True,
+            )
+
+            image = image.convert("RGBA")
+
+        if image.mode in ("RGBA", "LA"):
+            print(
+                "[LITE-RENDER] Removendo transparência "
+                "para compatibilidade JPEG.",
+                flush=True,
+            )
+
+            background = Image.new(
+                "RGB",
+                image.size,
+                (255, 255, 255),
+            )
+
+            alpha = image.getchannel("A")
+
+            background.paste(
+                image,
+                (0, 0),
+                alpha,
+            )
+
+            image = background
+
+        elif image.mode != "RGB":
+            print(
+                f"[LITE-RENDER] Convertendo "
+                f"{image.mode} -> RGB",
+                flush=True,
+            )
+
+            image = image.convert("RGB")
+
+        # ========================================================
+        # JPEG TAMBÉM EM MEMÓRIA
+        # ========================================================
+
+        jpeg_buffer = io.BytesIO()
+
+        image.save(
+            jpeg_buffer,
+            format="JPEG",
+            quality=88,
+            optimize=True,
+        )
+
+        jpeg_buffer.seek(0)
+
+        jpeg_size = jpeg_buffer.getbuffer().nbytes
+
+        print(
+            "[LITE-RENDER] Conversão para JPEG concluída.",
+            flush=True,
+        )
+
+        print(
+            f"[LITE-RENDER] JPEG final: {jpeg_size} bytes",
+            flush=True,
+        )
+
+        print(
+            "[LITE-RENDER] Enviando JPEG para Android...",
+            flush=True,
+        )
+
+        print(
+            "[LITE-RENDER] SUCESSO",
+            flush=True,
+        )
+
+        print(
+            "[LITE-RENDER] =======================================\n",
+            flush=True,
+        )
+
+        # ========================================================
+        # DEVOLVE DIRETAMENTE DA MEMÓRIA
+        #
+        # NÃO salva arquivo.
+        # NÃO cria cache.
+        # NÃO faz redirect.
+        # ========================================================
+
+        return Response(
+            jpeg_buffer.getvalue(),
+            status=200,
+            mimetype="image/jpeg",
+            headers={
+                "Cache-Control": "no-store",
+            },
+        )
+
+    except Exception as e:
+        print(
+            "[LITE-RENDER ERROR] Pillow não conseguiu "
+            f"processar a imagem: {e}",
+            flush=True,
+        )
+
+        print(
+            "[LITE-RENDER] =======================================\n",
+            flush=True,
+        )
+
+        return jsonify(
+            {
+                "error": "Failed to process image",
+                "details": str(e),
+            }
+        ), 500
 
 @image_bp.route("/upload-image", methods=["POST"])
 def upload_image():
