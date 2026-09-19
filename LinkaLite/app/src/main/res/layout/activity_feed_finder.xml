@@ -1,86 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    android:background="#121212" xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:fillViewport="true">
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dip">
-        <ListView
-            android:id="@+id/listFederations"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content">
-        </ListView>
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="0dip"
-            android:layout_weight="1" />
-        <LinearLayout 
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content" 
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    android:orientation="vertical"
+    android:padding="16dp">
 
-            <EditText
-                android:id="@+id/edtUrl"
-                android:layout_width="0dip"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:hint="federation url"/>
+    <!-- A lista agora ocupa todo o espaço disponível e gerencia a rolagem sozinha -->
+    <ListView
+        android:id="@+id/listFederations"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@null"
+        android:dividerHeight="8dp" />
 
-            <Button
-                android:id="@+id/btnSend"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Send"/>
+    <!-- Campo de texto e botão de envio fixos na parte inferior -->
+    <LinearLayout 
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" 
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp">
 
-        </LinearLayout>
-        <LinearLayout 
-            android:layout_width="fill_parent"
-            android:layout_height="40dip" 
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="#11111b">
+        <EditText
+            android:id="@+id/edtUrl"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="federation url"/>
 
-            <ImageButton
-                android:id="@+id/btnHome"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:src="@drawable/home"
-                android:scaleType="centerInside"
-                android:background="@android:color/transparent" />
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send"/>
 
-            <ImageButton
-                android:id="@+id/btnChat"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:src="@drawable/chat"
-                android:scaleType="centerInside"
-                android:background="@android:color/transparent" />
-
-            <ImageButton
-                android:id="@+id/btnOptions"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:src="@drawable/options"
-                android:scaleType="centerInside"
-                android:background="@android:color/transparent" />
-
-            <ImageButton
-                android:id="@+id/btnProfile"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:src="@drawable/account"
-                android:scaleType="centerInside"
-                android:background="@android:color/transparent" />
-
-        </LinearLayout>
     </LinearLayout>
-</ScrollView>
+
+    <!-- Barra de navegação inferior fixa -->
+    <LinearLayout 
+        android:layout_width="match_parent"
+        android:layout_height="40dp" 
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#11111b">
+
+        <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/home"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnChat"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/chat"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnOptions"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/options"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@drawable/account"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+    </LinearLayout>
+
+</LinearLayout>

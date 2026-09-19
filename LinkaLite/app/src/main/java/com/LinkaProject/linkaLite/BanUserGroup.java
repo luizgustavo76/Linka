@@ -81,11 +81,8 @@ public class BanUserGroup extends Activity {
                     }
                 }).start();
 
-                if (clickedItem.getType() == FriendsAdapter.TYPE_FRIEND) {
-                    Intent intentRemove = new Intent(BanUserGroup.this, DmChat.class);
-                    intentRemove.putExtra("friend", clickedItem.getUsername());
-                    startActivity(intentRemove);
-                }
+                Intent intentRemove = new Intent(BanUserGroup.this, ChannelsGroupActivity.class);
+                startActivity(intentRemove);
             }
         });
 

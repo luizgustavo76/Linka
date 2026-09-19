@@ -74,5 +74,5 @@ def run_jobs():
     fix_login_ids()
     sync_profiles()
     print("--- CONCLUÍDO ---")
-
-run_jobs()
+if __name__ == "__main__":
+    run_jobs()
