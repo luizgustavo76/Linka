@@ -110,7 +110,6 @@ def new_comment():
         date = datetime.now()
         if post_owner:
             notificationsModule.CreateNotification(username, post_owner, date, "comment", text_comment)
-            mentions_module.createMention(op, username, text_comment, None, None, "comment")
         return jsonify({"status": "the comment has been created with sucess!"}), 200
     else:
         return jsonify({"status": "forbidden"}), 403
