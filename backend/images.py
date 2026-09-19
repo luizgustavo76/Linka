@@ -33,7 +33,18 @@ def lite_render():
     if not raw_url:
         return jsonify({"error": "URL missing"}), 400
 
-    target_url = clean_reddit_url(raw_url)
+    # 1. Limpa entidades HTML e faz unquote preventivo
+    target_url = urllib.parse.unquote(raw_url).replace("&amp;", "&").strip()
+
+    # 2. Desfaz qualquer encadeamento duplo de lite-render para isolar a URL real
+    if "lite-render?url=" in target_url:
+        target_url = target_url.split("lite-render?url=")[-1]
+        target_url = urllib.parse.unquote(target_url)
+
+    # 3. Sanitiza formatos específicos (ex: Reddit)
+    target_url = clean_reddit_url(target_url)
+
+    # 4. Redireciona a chamada obrigatoriamente para o Cloudflare Worker
     worker_url = WORKER_BASE_URL + requests.utils.quote(target_url, safe="")
 
     headers = {
@@ -70,7 +81,6 @@ def lite_render():
         image.save(jpeg_buffer, format="JPEG", quality=88, optimize=True)
         jpeg_buffer.seek(0)
 
-        # Resposta configurada para HTTP puro (compatível com Android 2.x)
         resp = Response(
             jpeg_buffer.getvalue(),
             status=200,
@@ -78,13 +88,14 @@ def lite_render():
         )
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
         resp.headers["Content-Type"] = "image/jpeg"
-        # Desativa redirecionamentos forçados para HTTPS
-        resp.headers["Strict-Transport-Security"] = "" 
+        resp.headers["Strict-Transport-Security"] = ""
         
         return resp
 
     except Exception as e:
         return jsonify({"error": "Image processing failed", "details": str(e)}), 500
+
+
 @image_bp.route("/upload-image", methods=["POST"])
 def upload_image():
     if "image" not in request.files or not request.files["image"].filename:

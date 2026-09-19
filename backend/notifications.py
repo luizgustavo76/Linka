@@ -50,9 +50,7 @@ def notifications():
         (username,)
     )
     result = cur.fetchall()
-    cur.execute("UPDATE notifications SET read = 1 WHERE receiver = ?",(username,))
-    conn.commit()
-    conn.close()
+    conn.close() # REMOVIDO O UPDATE AUTOMÁTICO AQUI!
     
     notifications_list = []
     for items in result:
@@ -70,15 +68,22 @@ def notifications():
     return jsonify(notifications_list), 200
 @notifications_blueprint.route("/set-read-notification", methods=["POST"])
 def set_read():
-    data = request.get_json() or {}
+    data = request.get_json(force=True) or {}
     id_notif = data.get("id")
     
-    if not id_notif:
+    if id_notif is None:
         return jsonify({"error": "Missing notification id"}), 400
         
+    try:
+        id_notif = int(id_notif)
+    except ValueError:
+        return jsonify({"error": "Invalid ID format"}), 400
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute("UPDATE notifications SET read = 1 WHERE id = ?", (id_notif,))
     conn.commit()
     conn.close()
-    return jsonify({"status": "success"})
+    
+    print(f" [LOG FLASK] Notificação {id_notif} marcada como LIDA com sucesso!")
+    return jsonify({"status": "success"}), 200

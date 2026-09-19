@@ -30,7 +30,7 @@ public class notificationManager {
                 int id = msg.getId();
                 JSONObject jsonRead = new JSONObject();
                 jsonRead.put("id", id);
-                request.requestHTTP(url + "set-read-notification", "post", jsonRead, context);
+                request.requestHTTP(url + "/set-read-notification", "post", jsonRead, context);
                 String fromUser = msg.getFromUser();
                 String content = msg.getContent();
                 int icon = android.R.drawable.stat_notify_chat;

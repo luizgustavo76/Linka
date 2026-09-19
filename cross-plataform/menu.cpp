@@ -3412,14 +3412,23 @@ int main(int argc, char *argv[])
         btnProfile->setFixedSize(iconSize);
         btnOptions->setFixedSize(iconSize);
 
-        // 2. Proteja TODAS as chamadas de std::function contra ponteiros nulos!
         QObject::connect(btnHome, &QPushButton::clicked, [=]() {
+            if (feedTimer) {
+                feedTimer->stop();
+                delete feedTimer; 
+                feedTimer = nullptr;
+            }
             if (actual_window != "home" && showfeed) {
                 showfeed();
             }
         });
 
         QObject::connect(btnChat, &QPushButton::clicked, [=]() {
+            if (feedTimer) {
+                feedTimer->stop();
+                delete feedTimer; 
+                feedTimer = nullptr;
+            }
             if (actual_window != "chat" && chatPage) {
                 QTimer::singleShot(50, [=](){
                     chatPage();
@@ -3427,13 +3436,23 @@ int main(int argc, char *argv[])
             }
         });
 
-        QObject::connect(btnProfile, &QPushButton::clicked, [=]() { 
+        QObject::connect(btnProfile, &QPushButton::clicked, [=]() {
+            if (feedTimer) {
+                feedTimer->stop();
+                delete feedTimer; 
+                feedTimer = nullptr;
+            }
             if (actual_window != "profile" && account) {
                 account(); 
             }
         });
 
-        QObject::connect(btnOptions, &QPushButton::clicked, [=]() { 
+        QObject::connect(btnOptions, &QPushButton::clicked, [=]() {
+            if (feedTimer) {
+                feedTimer->stop();
+                delete feedTimer; 
+                feedTimer = nullptr;
+            }
             if (actual_window != "options" && options) {
                 options(); 
             }
