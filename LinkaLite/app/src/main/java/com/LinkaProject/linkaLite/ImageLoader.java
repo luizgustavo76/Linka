@@ -31,7 +31,7 @@ public class ImageLoader {
      * O lite-render faz a requisicao moderna no servidor e devolve a imagem.
      */
     private static final String LITE_RENDER_BASE =
-            "http://192.168.0.16:5000/lite-render?url=";
+            "http:/linkaProject.pythonanywhere.com/lite-render?url=";
     public static String buildLiteRenderUrl(String imageUrl) {
         if (imageUrl == null) {
             Log.e(TAG, "buildLiteRenderUrl: imageUrl == null");
