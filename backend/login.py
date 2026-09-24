@@ -152,39 +152,37 @@ def register():
         return jsonify({"status": "an error has occurred", "error": str(e)}), 500
 @login_bp.route("/login", methods=["POST"])
 def login():
-    dados = request.get_json()
+    dados = request.get_json() or {}
     username = dados.get("username")
     password = dados.get("senha") or dados.get("password")
-    conn = login_system.get_db_login()
-    cur = conn.cursor()
-    cur.execute("SELECT username FROM login WHERE username = ?", (username,))
-    resultado_username = cur.fetchone()
-    conn.close()
-    conn_profile = login_system.get_db_profiles()
-    cur_profile = conn_profile.cursor()
-    cur_profile.execute("SELECT username FROM profile WHERE username = ?",(username,))
-    result_profile = cur_profile.fetchone()
-    if result_profile:
-        pass
-    else:
-        biography = f"Hi! my name is {username}, let's be friends?"
-        cur_profile.execute(
-            "INSERT INTO profile (username, bio) VALUES (?, ?)",
-            (username, biography)
-        )
-        conn_profile.commit()
-    if not resultado_username:
-        return jsonify({"status":"user not exists, please verify the username"}), 401
-    if resultado_username:
-        conn = login_system.get_db_login()
+
+    if not username or not password:
+        return jsonify({"status": "username and password required"}), 400
+
+    # 1. Busca Usuário e Senha de UMA VEZ SÓ
+    hash_salvo = None
+    with login_system.get_db_login() as conn:
         cur = conn.cursor()
-        cur.execute("SELECT password FROM login WHERE username =?", (username,))
-        resultado_senha = cur.fetchone()
-        hash_salvo = resultado_senha[0]
-        senha_descodificada = login_system.verificar_hash(password, hash_salvo)
-        conn.close()
-        if senha_descodificada:
-            return jsonify({"status":"login is sucessful"}), 200
-        else:
-            return jsonify({"status": "wrong password, check the password entry"}), 401
-        
+        cur.execute("SELECT password FROM login WHERE username = ?", (username,))
+        resultado = cur.fetchone()
+        if resultado:
+            hash_salvo = resultado[0]
+    if not hash_salvo:
+        return jsonify({"status": "user not exists, please verify the username"}), 401
+
+    if not login_system.verificar_hash(password, hash_salvo):
+        return jsonify({"status": "wrong password, check the password entry"}), 401
+
+    # 3. Garante o Perfil APENAS se o login for bem-sucedido
+    with login_system.get_db_profiles() as conn_profile:
+        cur_profile = conn_profile.cursor()
+        cur_profile.execute("SELECT username FROM profile WHERE username = ?", (username,))
+        if not cur_profile.fetchone():
+            biography = f"Hi! my name is {username}, let's be friends?"
+            cur_profile.execute(
+                "INSERT INTO profile (username, bio) VALUES (?, ?)",
+                (username, biography)
+            )
+            conn_profile.commit()
+
+    return jsonify({"status": "login is sucessful"}), 200
