@@ -16,6 +16,10 @@ supabase: Client = create_client(
 image_bp = Blueprint("image_bp", __name__)
 WORKER_BASE_URL = "https://fancy-fire-49d2.luizsgustavo76.workers.dev/?url="
 
+# Alterado para 144p para consumo mínimo de memória/banda
+MAX_DIMENSION = 144
+JPEG_QUALITY = 50
+
 
 def clean_reddit_url(url_str):
     url_str = urllib.parse.unquote(url_str).replace("&amp;", "&").strip()
@@ -27,24 +31,55 @@ def clean_reddit_url(url_str):
     return url_str
 
 
+def process_and_downscale_image(image_bytes: bytes) -> bytes:
+    """
+    Recebe os bytes brutos de qualquer imagem (seja 4K ou menor),
+    aplica a rotação EXIF, converte transparência para fundo branco e
+    força o redimensionamento para no máximo 144p.
+    """
+    image = Image.open(io.BytesIO(image_bytes))
+
+    try:
+        image = ImageOps.exif_transpose(image)
+    except Exception:
+        pass
+
+    if image.mode in ("P", "RGBA", "LA"):
+        image = image.convert("RGBA")
+        background = Image.new("RGB", image.size, (255, 255, 255))
+        background.paste(image, (0, 0), image.getchannel("A"))
+        image = background
+    elif image.mode != "RGB":
+        image = image.convert("RGB")
+
+    image.thumbnail((MAX_DIMENSION, MAX_DIMENSION), Image.Resampling.NEAREST)
+
+    jpeg_buffer = io.BytesIO()
+    image.save(
+        jpeg_buffer,
+        format="JPEG",
+        quality=JPEG_QUALITY,
+        optimize=True,
+        progressive=True
+    )
+    return jpeg_buffer.getvalue()
+
+
 @image_bp.route("/lite-render", methods=["GET"])
 def lite_render():
     raw_url = request.args.get("url")
     if not raw_url:
         return jsonify({"error": "URL missing"}), 400
 
-    # 1. Limpa entidades HTML e faz unquote preventivo
     target_url = urllib.parse.unquote(raw_url).replace("&amp;", "&").strip()
 
-    # 2. Desfaz qualquer encadeamento duplo de lite-render para isolar a URL real
-    if "lite-render?url=" in target_url:
+    # Proteção antirrecursiva: remove acúmulos de 'lite-render?url=' na string
+    while "lite-render?url=" in target_url:
         target_url = target_url.split("lite-render?url=")[-1]
         target_url = urllib.parse.unquote(target_url)
 
-    # 3. Sanitiza formatos específicos (ex: Reddit)
     target_url = clean_reddit_url(target_url)
 
-    # 4. Redireciona a chamada obrigatoriamente para o Cloudflare Worker
     worker_url = WORKER_BASE_URL + requests.utils.quote(target_url, safe="")
 
     headers = {
@@ -54,7 +89,7 @@ def lite_render():
 
     try:
         response = requests.get(
-            worker_url, headers=headers, timeout=15, allow_redirects=True
+            worker_url, headers=headers, timeout=12, allow_redirects=True
         )
         if response.status_code != 200 or not response.content:
             return jsonify({"error": "Failed to fetch image from worker"}), 502
@@ -62,33 +97,16 @@ def lite_render():
         return jsonify({"error": "Worker request failed", "details": str(e)}), 502
 
     try:
-        image = Image.open(io.BytesIO(response.content))
-
-        try:
-            image = ImageOps.exif_transpose(image)
-        except Exception:
-            pass
-
-        if image.mode in ("P", "RGBA", "LA"):
-            image = image.convert("RGBA")
-            background = Image.new("RGB", image.size, (255, 255, 255))
-            background.paste(image, (0, 0), image.getchannel("A"))
-            image = background
-        elif image.mode != "RGB":
-            image = image.convert("RGB")
-
-        jpeg_buffer = io.BytesIO()
-        image.save(jpeg_buffer, format="JPEG", quality=88, optimize=True)
-        jpeg_buffer.seek(0)
+        # Processa e redimensiona obrigatoriamente para 144p
+        processed_image_bytes = process_and_downscale_image(response.content)
 
         resp = Response(
-            jpeg_buffer.getvalue(),
+            processed_image_bytes,
             status=200,
             mimetype="image/jpeg"
         )
-        resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        resp.headers["Cache-Control"] = "public, max-age=86400"
         resp.headers["Content-Type"] = "image/jpeg"
-        resp.headers["Strict-Transport-Security"] = ""
         
         return resp
 
@@ -103,14 +121,17 @@ def upload_image():
 
     file = request.files["image"]
     try:
-        ext = os.path.splitext(file.filename)[1]
-        file_name = f"post_{uuid.uuid4().hex}{ext}"
+        raw_bytes = file.read()
+
+        processed_bytes = process_and_downscale_image(raw_bytes)
+
+        file_name = f"post_{uuid.uuid4().hex}.jpg"
         bucket = "linka-media"
 
         supabase.storage.from_(bucket).upload(
             path=file_name,
-            file=file.read(),
-            file_options={"content-type": file.content_type},
+            file=processed_bytes,
+            file_options={"content-type": "image/jpeg"},
         )
         public_url = supabase.storage.from_(bucket).get_public_url(file_name)
 
