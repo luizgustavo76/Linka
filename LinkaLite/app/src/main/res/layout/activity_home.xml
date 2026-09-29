@@ -12,26 +12,6 @@
         android:orientation="horizontal"
         android:background="#1e1e2e">
 
-        <Button
-            android:id="@+id/newerButton"
-            android:layout_width="0dip"
-            android:layout_height="32dip"
-            android:layout_weight="1"
-            android:padding="0dip"
-            android:text="newer"
-            android:textSize="11sp"
-            android:layout_margin="2dip" />  
-
-        <Button
-            android:id="@+id/federationsButton"
-            android:layout_width="0dip"
-            android:layout_height="32dip"
-            android:layout_weight="1"
-            android:padding="0dip"
-            android:text="federations"
-            android:textSize="11sp"
-            android:layout_margin="2dip" />  
-
     </LinearLayout>
 
     <Button 
@@ -43,7 +23,6 @@
         android:textSize="11sp"
         android:layout_margin="2dip" />
 
-    <!-- Lista principal de Posts -->
     <ListView
         android:id="@+id/listViewPosts"
         android:layout_width="fill_parent"

@@ -19,7 +19,7 @@
         </service>
         <activity 
             android:name=".LoginActivity" 
-            android:label="LinkaLite"
+            android:label="Linka"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

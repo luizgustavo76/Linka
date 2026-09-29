@@ -47,14 +47,6 @@ public class FederationsFeed extends Activity {
     private String currentUrl = "";
     private String baseUrl = "";
 
-    /*
-     * Aceita os dois formatos que o Linka pode receber:
-     *
-     * [IMAGE]https://site.com/imagem.jpg
-     * [IMAGE](https://site.com/imagem.jpg)
-     *
-     * O formato sem parenteses e o que aparece no feed atual do projeto.
-     */
     private static final Pattern IMAGE_PATTERN = Pattern.compile(
             "\\[IMAGE\\]\\s*\\(?((?:https?://)[^\\s\\)]+)\\)?",
             Pattern.CASE_INSENSITIVE
@@ -108,8 +100,6 @@ public class FederationsFeed extends Activity {
         }
 
         currentUrl = formatUrl(currentUrl);
-
-        newPost = (Button) findViewById(R.id.newPost);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
@@ -359,7 +349,6 @@ public class FederationsFeed extends Activity {
             TextView tvUsername;
             TextView tvText;
             TextView tvDate;
-            TextView tvStarCount;
             Button btnComments;
         }
 
@@ -408,11 +397,6 @@ public class FederationsFeed extends Activity {
                 holder.tvDate =
                         (TextView) convertView.findViewById(
                                 R.id.postDate
-                        );
-
-                holder.tvStarCount =
-                        (TextView) convertView.findViewById(
-                                R.id.starCount
                         );
 
                 holder.btnComments =
@@ -471,7 +455,6 @@ public class FederationsFeed extends Activity {
                 );
 
                 holder.tvDate.setText(datetime);
-                holder.tvStarCount.setText(stars);
 
                 new ImageLoader().viewProfilePicture(
                         context,
@@ -479,30 +462,14 @@ public class FederationsFeed extends Activity {
                         holder.avatarPost
                 );
 
-                /*
-                 * ===== IMAGEM DO POST =====
-                 *
-                 * O backend manda, por exemplo:
-                 *
-                 * [IMAGE]http://servidor/imagem.jpg
-                 *
-                 * O LinkaLite detecta a marca [IMAGE], extrai somente a URL
-                 * e envia a imagem para o ImageLoader, que sempre usa o lite-render HTTP.
-                 */
+              
                 final String imageUrl = extractImageUrl(textPost);
 
                 if (!imageUrl.isEmpty()) {
                     holder.imgPost.setVisibility(View.VISIBLE);
 
-                    // A URL original vai para o ImageLoader.
-                    // O ImageLoader e o unico responsavel por encaminhar tudo ao /lite-render.
                     holder.imgPost.setTag(imageUrl);
 
-                    Log.d(
-                            "LINKA_FEED",
-                            "[IMAGE] detectada. Original=" + imageUrl
-                                    + " | enviando para ImageLoader"
-                    );
 
                     new ImageLoader().LoadImageUrl(imageUrl, holder.imgPost);
 
@@ -517,8 +484,6 @@ public class FederationsFeed extends Activity {
                                 "Image"
                         );
 
-                        // Usa a mesma URL da imagem.
-                        // O ImageLoader continua sendo responsavel pelo lite-render.
                         intent.putExtra(
                                 "url",
                                 imageUrl
@@ -528,7 +493,6 @@ public class FederationsFeed extends Activity {
                     });
                 }
 
-                // Nao deixa a URL da imagem poluir o texto do post.
                 textPost = removeImageMarkers(textPost);
 
                 holder.tvText.setText(textPost);

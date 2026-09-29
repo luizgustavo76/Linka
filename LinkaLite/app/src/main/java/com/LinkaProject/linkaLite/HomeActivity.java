@@ -92,22 +92,12 @@ public class HomeActivity extends Activity {
             e.printStackTrace();
         }
 
-        federationButton = (Button) findViewById(R.id.federationsButton);
         newPost = (Button) findViewById(R.id.newPost);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
 
-        View.OnClickListener goFederationsListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(HomeActivity.this, feedFinder.class);
-                startActivity(intent);
-            }
-        };
-
-        federationButton.setOnClickListener(goFederationsListener);
 
         btnChat.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -143,11 +133,9 @@ public class HomeActivity extends Activity {
 
         listViewPosts = (ListView) findViewById(R.id.listViewPosts);
 
-        // --- INFLA E ADICIONA O FOOTER NA LISTA (DEVE SER ANTES DO setAdapter) ---
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         footerContainer = inflater.inflate(R.layout.footer_federations, null);
         btnFooterFederations = (Button) footerContainer.findViewById(R.id.btnFooterFederations);
-        btnFooterFederations.setOnClickListener(goFederationsListener);
 
         listViewPosts.addFooterView(footerContainer);
 
@@ -249,7 +237,6 @@ public class HomeActivity extends Activity {
 
             TextView tvText = (TextView) convertView.findViewById(R.id.postText);
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
-            TextView tvStarCount = (TextView) convertView.findViewById(R.id.starCount);
             Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
 
             imgPost.setImageBitmap(null);
@@ -274,7 +261,6 @@ public class HomeActivity extends Activity {
 
                 tvUsername.setText("@" + username);
                 tvDate.setText(datetime);
-                tvStarCount.setText(stars);
 
                 ImageLoader imageLoader = new ImageLoader();
                 imageLoader.viewProfilePicture(context, username, avatarPost);
