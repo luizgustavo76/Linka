@@ -108,20 +108,20 @@
                         android:textColor="#FFFFFF"
                         android:textSize="14sp" />
 
-                     <LinearLayout
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
+                        android:orientation="horizontal"
                         android:padding="16dp">
                             <Button
                                 android:id="@+id/btnEdit"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_width="wrap_content"
+                                android:layout_height="fill_parent"
                                 android:text="Edit account" />
                             <Button
                                 android:id="@+id/btnExit"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_width="wrap_content"
+                                android:layout_height="fill_parent"
                                 android:text="Exit account" />
                     </LinearLayout>
 
