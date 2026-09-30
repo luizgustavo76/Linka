@@ -111,41 +111,48 @@
             android:background="@android:color/transparent" />
 
     </LinearLayout>
-    <LinearLayout 
+        <LinearLayout 
         android:id="@+id/layoutGuest"
         android:layout_width="fill_parent"
-        android:layout_height="40dip" 
+        android:layout_height="wrap_content" 
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="#11111b"
+        android:padding="4dip"
         android:visibility="gone">
 
+        <!-- layout_weight="1" faz o texto ocupar todo o espaço sobrando -->
         <TextView
             android:id="@+id/tvGuest"
-            android:layout_width="wrap_content"
+            android:layout_width="0dip"
             android:layout_height="wrap_content"
-            android:text="You are navigate as guest, to more options and contents create or login into a account!"
-            android:textSize="14sp"
+            android:layout_weight="1"
+            android:text="You are navigating as guest, for more options login!"
+            android:textSize="11sp"
             android:textColor="#AAAAAA"
-            android:gravity="center"
-            android:layout_marginTop="8dp" />
+            android:gravity="center_vertical" />
 
+        <!-- wrap_content para o botão de Login ocupar só o tamanho do texto -->
         <Button 
             android:id="@+id/btnLogin"
-            android:layout_width="fill_parent"
+            android:layout_width="wrap_content"
             android:layout_height="32dip"
-            android:padding="0dip"
+            android:paddingLeft="8dip"
+            android:paddingRight="8dip"
             android:text="Go to Login"
             android:textSize="11sp"
-            android:layout_margin="2dip" />
+            android:layout_marginLeft="4dip"
+            android:layout_marginRight="2dip" />
 
+        <!-- wrap_content para o botão X aparecer no canto direito -->
         <Button 
             android:id="@+id/btnClose"
-            android:layout_width="fill_parent"
+            android:layout_width="wrap_content"
             android:layout_height="32dip"
-            android:padding="0dip"
+            android:paddingLeft="8dip"
+            android:paddingRight="8dip"
             android:text="X"
             android:textSize="11sp"
-            android:layout_margin="2dip" />
+            android:layout_marginLeft="2dip" />
     </LinearLayout>
 </LinearLayout>

@@ -98,10 +98,23 @@ public class HomeActivity extends Activity {
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         LinearLayout layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
         Intent intent = getIntent();
-        boolean isGuest = intent.getBooleanExtra("isGuest", true);
+        boolean isGuest = intent.getBooleanExtra("isGuest", false);
         if (isGuest){
             layoutGuest.setVisibility(View.VISIBLE);
         }
+        btnLogin.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
+                startActivity(intent);
+            }
+        });
+        btnClose.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                layoutGuest.setVisibility(View.INVISIBLE);
+            }
+        });
         btnChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
