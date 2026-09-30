@@ -36,6 +36,10 @@
             android:name=".HomeActivity" 
             android:label="Feed"
             android:exported="false" />
+        <activity 
+            android:name=".EditTimeline" 
+            android:label="Edit timeline"
+            android:exported="false" />
         <activity
             android:name=".newPost"
             android:label="New post"

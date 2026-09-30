@@ -4,41 +4,24 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical">
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="0dip"
-        android:layout_weight="1"
-        android:orientation="vertical">
-        <Button
-            android:id="@+id/btnGenerateInvite"
+    <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Generate a invite" />
-        <Button
-            android:id="@+id/btnEditTimeline"
+            android:text="Add timeline"
+            android:textSize="32sp"
+            android:gravity="center"
+            android:layout_marginTop="30dip"
+            android:layout_marginBottom="30dip" 
+        android:textColor="#FFFFFF" />
+    <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Edit timeline" />
-        <Button
-            android:id="@+id/btnInbox"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Inbox" />
-
-        <Button
-            android:id="@+id/btnFriends"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Friends" />
-
-        <Button
-            android:id="@+id/btnChangeServer"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Change server" />
-    </LinearLayout>
-
-    <LinearLayout
+            android:text="What is this? Here, you can customize your feed and timeline by selecting your post sources—such as Linka itself, Reddit, Mastodon, Bluesky, etc."
+            android:gravity="center"
+            android:layout_marginTop="30dip"
+            android:layout_marginBottom="30dip" 
+        android:textColor="#FFFFFF" />
+     <LinearLayout 
         android:layout_width="fill_parent"
         android:layout_height="40dip" 
         android:orientation="horizontal"
@@ -82,5 +65,4 @@
             android:background="@android:color/transparent" />
 
     </LinearLayout>
-
 </LinearLayout>

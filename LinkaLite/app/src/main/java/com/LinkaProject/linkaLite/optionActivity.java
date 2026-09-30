@@ -38,10 +38,12 @@ public class optionActivity extends Activity{
     private ImageButton btnProfile;
     private ImageButton btnOptions;
     private Button btnGenerateInvite;
+    private Button btnEditTimeline;
     @Override
     public void onCreate(Bundle savedInstanceState){        
         super.onCreate(savedInstanceState);        
         setContentView(R.layout.activity_options);
+        btnEditTimeline = (Button) findViewById(R.id.btnEditTimeline);
         btnInbox = (Button) findViewById(R.id.btnInbox);
         btnFriends = (Button) findViewById(R.id.btnFriends);
         btnChangeServer = (Button) findViewById(R.id.btnChangeServer);
@@ -50,6 +52,13 @@ public class optionActivity extends Activity{
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnGenerateInvite = (Button) findViewById(R.id.btnGenerateInvite);
+        btnEditTimeline.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(optionActivity.this, EditTimeline.class);
+                startActivity(intent);
+            }
+        });
         btnGenerateInvite.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
