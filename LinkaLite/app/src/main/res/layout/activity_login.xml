@@ -46,6 +46,17 @@
             android:id="@+id/txtGoToSignup"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:text="Explore as guest"
+            android:gravity="center"
+            android:layout_marginTop="20dip"
+            android:padding="10dip"
+            android:focusable="true"
+            android:clickable="true" 
+        android:textColor="#FFFFFF" />
+        <TextView
+            android:id="@+id/txtGoToSignup"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
             android:text="Dont have a account? register!"
             android:gravity="center"
             android:layout_marginTop="20dip"
