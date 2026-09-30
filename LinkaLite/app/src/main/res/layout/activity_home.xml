@@ -111,5 +111,29 @@
             android:background="@android:color/transparent" />
 
     </LinearLayout>
-
+    <LinearLayout 
+        android:layout_width="fill_parent"
+        android:layout_height="40dip" 
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#11111b"
+        android:visibility="gone">
+        <TextView
+            android:id="@+id/tvGuest"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="You are navigate as guest, to more options and contents create or login into a account!"
+            android:textSize="14sp"
+            android:textColor="#AAAAAA"
+            android:gravity="center"
+            android:layout_marginTop="8dp" />
+        <Button 
+            android:id="@+id/btnLogin"
+            android:layout_width="fill_parent"
+            android:layout_height="32dip"
+            android:padding="0dip"
+            android:text="Go to Login"
+            android:textSize="11sp"
+            android:layout_margin="2dip" />
+    </LinearLayout>
 </LinearLayout>

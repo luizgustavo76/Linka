@@ -28,10 +28,9 @@ public class LoginActivity extends Activity {
     private Button btnServer;
     private Button btnLogin;
     private TextView txtGoToSignup;
-    // CORRIGIDO: Alterado de https:// para http://
     private String serverUrl = "http://192.168.240.1:5000"; 
     private LoginTask currentLoginTask;
-
+    private TextView txtGuest;
     private void executeLogin(String username, String password) {
         if (currentLoginTask != null && currentLoginTask.getStatus() == AsyncTask.Status.RUNNING) {
             Log.d(TAG, "Cancelando LoginTask anterior em execução.");
@@ -52,6 +51,14 @@ public class LoginActivity extends Activity {
         btnServer = (Button) findViewById(R.id.btnServer);
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
+        txtGuest = (TextView) findViewById(R.id.txtGuest);
+        txtGuest.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+                startActivity(intent)
+            }
+        });
         btnLogin = (Button) findViewById(R.id.btnLogin);
         txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
 

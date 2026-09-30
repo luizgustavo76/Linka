@@ -43,7 +43,7 @@
             android:text="Enter"
             android:layout_marginTop="20dip" />
         <TextView
-            android:id="@+id/txtGoToSignup"
+            android:id="@+id/txtGuest"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="Explore as guest"
