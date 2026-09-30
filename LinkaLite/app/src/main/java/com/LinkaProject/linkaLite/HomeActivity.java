@@ -15,16 +15,13 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 public class HomeActivity extends Activity {
     private Button federationButton;
     private ImageButton btnHome;
@@ -35,13 +32,13 @@ public class HomeActivity extends Activity {
     private ListView listViewPosts;
     private PostAdapter postAdapter;
     private ArrayList<JSONObject> postsList;
-
+    private Button btnClose;
     private View footerContainer;
     private Button btnFooterFederations;
-
+    private Button btnLogin;
     private ScheduledExecutorService scheduler;
     private ScheduledExecutorService schedulerNotifications;
-
+    private TextView tvGuest;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,14 +88,18 @@ public class HomeActivity extends Activity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
+        btnClose = (Button) findViewById(R.id.btnClose);
+        btnLogin = (Button) findViewById(R.id.btnLogin);
         newPost = (Button) findViewById(R.id.newPost);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
-
-
+        Intent intent = getIntent();
+        Bool isGuest = intent.getString("isGuest");
+        if (!isGuest.equals("")){
+            
+        }
         btnChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

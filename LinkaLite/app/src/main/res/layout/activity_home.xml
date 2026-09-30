@@ -135,5 +135,13 @@
             android:text="Go to Login"
             android:textSize="11sp"
             android:layout_margin="2dip" />
+        <Button 
+            android:id="@+id/btnClose"
+            android:layout_width="fill_parent"
+            android:layout_height="32dip"
+            android:padding="0dip"
+            android:text="X"
+            android:textSize="11sp"
+            android:layout_margin="2dip" />
     </LinearLayout>
 </LinearLayout>
