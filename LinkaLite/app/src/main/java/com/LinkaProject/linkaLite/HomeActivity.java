@@ -16,6 +16,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONArray;
+import android.widget.LinearLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
@@ -95,10 +96,11 @@ public class HomeActivity extends Activity {
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        LinearLayout layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
         Intent intent = getIntent();
-        Bool isGuest = intent.getString("isGuest");
-        if (!isGuest.equals("")){
-            
+        boolean isGuest = intent.getBooleanExtra("isGuest", true);
+        if (isGuest){
+            layoutGuest.setVisibility(View.VISIBLE);
         }
         btnChat.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -32,37 +32,7 @@ def clean_reddit_url(url_str):
 
 
 def process_and_downscale_image(image_bytes: bytes) -> bytes:
-    """
-    Recebe os bytes brutos de qualquer imagem (seja 4K ou menor),
-    aplica a rotação EXIF, converte transparência para fundo branco e
-    força o redimensionamento para no máximo 144p.
-    """
-    image = Image.open(io.BytesIO(image_bytes))
-
-    try:
-        image = ImageOps.exif_transpose(image)
-    except Exception:
-        pass
-
-    if image.mode in ("P", "RGBA", "LA"):
-        image = image.convert("RGBA")
-        background = Image.new("RGB", image.size, (255, 255, 255))
-        background.paste(image, (0, 0), image.getchannel("A"))
-        image = background
-    elif image.mode != "RGB":
-        image = image.convert("RGB")
-
-    image.thumbnail((MAX_DIMENSION, MAX_DIMENSION), Image.Resampling.NEAREST)
-
-    jpeg_buffer = io.BytesIO()
-    image.save(
-        jpeg_buffer,
-        format="JPEG",
-        quality=JPEG_QUALITY,
-        optimize=True,
-        progressive=True
-    )
-    return jpeg_buffer.getvalue()
+    return None
 
 
 @image_bp.route("/lite-render", methods=["GET"])
