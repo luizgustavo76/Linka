@@ -44,14 +44,14 @@ public class comments_activity extends Activity {
         lvComments = (ListView) findViewById(R.id.lvComments);
         commentEdt = (EditText) findViewById(R.id.commentEdt);
         btnSend = (Button) findViewById(R.id.btnSend);
-        // 3. Ação do Botão de Enviar
+        Intent intent = getIntent();
+        boolean isGuest = intent.getBooleanExtra("isGuest");
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String textComment = commentEdt.getText().toString().trim();
-                // Validação para barrar o 401 antes mesmo de chamar a rede
                 if (username == null || username.trim().isEmpty()) {
-                    Toast.makeText(comments_activity.this, "Erro: Usuário não identificado!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(comments_activity.this, "Erro: user not registred!", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 if (postId == null || postId.trim().isEmpty()) {

@@ -5,7 +5,6 @@
     android:orientation="vertical"
     android:background="@drawable/bg_material_card">
 
-    <!-- Apenas a ListView que vai receber os itens do Adapter -->
     <ListView
         android:id="@+id/lvComments"
         android:layout_width="fill_parent"
@@ -14,13 +13,13 @@
         android:divider="#2a2a3c"
         android:dividerHeight="1dip" />
 
-    <!-- Area de digitar comentário no rodape -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="6dip"
-        android:background="#181825">
+        android:background="#181825"
+        android:visibility="gone">
 
         <EditText
             android:id="@+id/commentEdt"
@@ -39,5 +38,17 @@
             android:text="Send"
             android:textSize="13sp" />
     </LinearLayout>
-
+    <LinearLayout
+        android:id="@+id/layoutGuest"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_material_card"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:text="You are a guest! login to comment in post and more"
+            android:textStyle="bold"/>
+    </LinearLayout>
 </LinearLayout>

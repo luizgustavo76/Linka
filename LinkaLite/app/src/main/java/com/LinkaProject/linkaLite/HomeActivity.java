@@ -270,6 +270,7 @@ public class HomeActivity extends Activity {
                     @Override
                     public void onClick(View v) {
                         Intent intent = new Intent(HomeActivity.this, comments_activity.class);
+                        intent.putExtra("isGuest", isGuest);
                         intent.putExtra("post_id", id);
                         startActivity(intent);
                     }
