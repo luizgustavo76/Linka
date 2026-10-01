@@ -37,6 +37,7 @@ public class HomeActivity extends Activity {
     private View footerContainer;
     private Button btnFooterFederations;
     private Button btnLogin;
+    private boolean isGuest = false;
     private ScheduledExecutorService scheduler;
     private ScheduledExecutorService schedulerNotifications;
     private TextView tvGuest;
@@ -98,7 +99,7 @@ public class HomeActivity extends Activity {
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         LinearLayout layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
         Intent intent = getIntent();
-        boolean isGuest = intent.getBooleanExtra("isGuest", false);
+        isGuest = intent.getBooleanExtra("isGuest", false);
         if (isGuest){
             layoutGuest.setVisibility(View.VISIBLE);
         }

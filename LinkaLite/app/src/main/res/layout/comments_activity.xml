@@ -14,12 +14,12 @@
         android:dividerHeight="1dip" />
 
     <LinearLayout
+        android:id="@+id/layoutComment"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="6dip"
-        android:background="#181825"
-        android:visibility="gone">
+        android:background="#181825">
 
         <EditText
             android:id="@+id/commentEdt"
@@ -41,14 +41,17 @@
     <LinearLayout
         android:id="@+id/layoutGuest"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:padding="12dip"
         android:background="@drawable/bg_material_card"
         android:visibility="gone">
+        
         <TextView
             android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:text="You are a guest! login to comment in post and more"
+            android:layout_height="wrap_content"
+            android:textColor="#cdd6f4"
+            android:text="You are a guest! Login to comment in post and more"
             android:textStyle="bold"/>
     </LinearLayout>
 </LinearLayout>

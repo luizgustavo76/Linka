@@ -2,7 +2,9 @@ package com.LinkaProject.linkaLite;
 import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.content.Intent;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -19,6 +21,8 @@ public class comments_activity extends Activity {
     private Button btnSend;
     private String username = "";
     private String baseUrl = "";
+    private LinearLayout layoutComment;
+    private LinearLayout layoutGuest;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,9 +47,15 @@ public class comments_activity extends Activity {
         setContentView(R.layout.comments_activity);
         lvComments = (ListView) findViewById(R.id.lvComments);
         commentEdt = (EditText) findViewById(R.id.commentEdt);
+        layoutComment = (LinearLayout) findViewById(R.id.layoutComment);
+        layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
         btnSend = (Button) findViewById(R.id.btnSend);
         Intent intent = getIntent();
-        boolean isGuest = intent.getBooleanExtra("isGuest");
+        boolean isGuest = intent.getBooleanExtra("isGuest", false);
+        if (isGuest){
+            layoutComment.setVisibility(View.INVISIBLE);
+            layoutGuest.setVisibility(View.VISIBLE);
+        }
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
