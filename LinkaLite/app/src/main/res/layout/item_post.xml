@@ -77,7 +77,7 @@
             android:layout_width="wrap_content"
             android:layout_height="28dip"
             android:text="Comments"
-            android:textSize="11sp"
+            android:textSize="9sp"
             android:paddingLeft="8dip"
             android:paddingRight="8dip" />
 
