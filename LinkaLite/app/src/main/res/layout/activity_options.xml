@@ -1,43 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-    android:background="#121212" xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical">
-    <LinearLayout
+    android:orientation="vertical"
+    android:background="#000000">
+
+    <!-- Lista de Opções no estilo Android 2.x -->
+    <ListView
+        android:id="@+id/optionsListView"
         android:layout_width="fill_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
-        android:orientation="vertical">
-        <Button
-            android:id="@+id/btnGenerateInvite"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Generate a invite" />
-        <Button
-            android:id="@+id/btnEditTimeline"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Edit timeline" />
-        <Button
-            android:id="@+id/btnInbox"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Inbox" />
+        android:divider="#222222"
+        android:dividerHeight="1dip"
+        android:cacheColorHint="#000000" />
 
-        <Button
-            android:id="@+id/btnFriends"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Friends" />
-
-        <Button
-            android:id="@+id/btnChangeServer"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Change server" />
-    </LinearLayout>
-
+    <!-- Barra de Navegação Inferior -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="40dip" 

@@ -1,112 +1,109 @@
 package com.LinkaProject.linkaLite;
 
 import android.app.Activity;
-import android.content.Context;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.Button;
 import android.content.Intent;
-import java.util.concurrent.TimeUnit;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ImageButton;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-public class optionActivity extends Activity{
-    private Button btnInbox;
-    private Button btnFriends;
-    private Button btnChangeServer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class optionActivity extends Activity {
+
+    private ListView optionsListView;
     private ImageButton btnHome;
     private ImageButton btnChat;
     private ImageButton btnProfile;
     private ImageButton btnOptions;
-    private Button btnGenerateInvite;
-    private Button btnEditTimeline;
+
     @Override
-    public void onCreate(Bundle savedInstanceState){        
-        super.onCreate(savedInstanceState);        
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_options);
-        btnEditTimeline = (Button) findViewById(R.id.btnEditTimeline);
-        btnInbox = (Button) findViewById(R.id.btnInbox);
-        btnFriends = (Button) findViewById(R.id.btnFriends);
-        btnChangeServer = (Button) findViewById(R.id.btnChangeServer);
+
+        optionsListView = (ListView) findViewById(R.id.optionsListView);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
-        btnGenerateInvite = (Button) findViewById(R.id.btnGenerateInvite);
-        btnEditTimeline.setOnClickListener(new View.OnClickListener(){
+
+        // Monta os itens do menu no formato Título + Subtítulo/Descrição
+        List<Map<String, String>> data = new ArrayList<Map<String, String>>();
+        
+        addItem(data, "Generate a invite", "Create invitation codes for new users");
+        addItem(data, "Edit timeline", "Customize feeds, federations and post sources");
+        addItem(data, "Inbox", "View messages and notifications");
+        addItem(data, "Friends", "Manage your contacts and federation friends");
+        addItem(data, "Change server", "Switch or configure your current node server");
+
+        // Utiliza o layout NATIVO do Android (simple_list_item_2) para renderizar 2 linhas
+        SimpleAdapter adapter = new SimpleAdapter(
+                this,
+                data,
+                android.R.layout.simple_list_item_2,
+                new String[] {"title", "subtitle"},
+                new int[] {android.R.id.text1, android.R.id.text2}
+        );
+
+        optionsListView.setAdapter(adapter);
+
+        // Eventos de clique para a lista de opções
+        optionsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onClick(View v){
-                Intent intent = new Intent(optionActivity.this, EditTimeline.class);
-                startActivity(intent);
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch (position) {
+                    case 0: // Generate a invite
+                        startActivity(new Intent(optionActivity.this, GenerateInvite.class));
+                        break;
+                    case 1: // Edit timeline
+                        startActivity(new Intent(optionActivity.this, EditTimeline.class));
+                        break;
+                    case 2: // Inbox
+                        startActivity(new Intent(optionActivity.this, InboxActivity.class));
+                        break;
+                    case 3: // Friends
+                        startActivity(new Intent(optionActivity.this, addFriendActivity.class));
+                        break;
+                    case 4: // Change server
+                        startActivity(new Intent(optionActivity.this, ChangeServer.class));
+                        break;
+                }
             }
         });
-        btnGenerateInvite.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                Intent intent = new Intent(optionActivity.this, GenerateInvite.class);
-                startActivity(intent);
-            }
-        });
+
+        // Botões de Navegação Inferior
         btnHome.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
-                Intent intent = new Intent(optionActivity.this, HomeActivity.class);
-                startActivity(intent);
+            public void onClick(View v) {
+                startActivity(new Intent(optionActivity.this, HomeActivity.class));
             }
         });
-        btnChat.setOnClickListener(new View.OnClickListener(){
+
+        btnChat.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
-                Intent intent = new Intent(optionActivity.this, chatActivity.class);
-                startActivity(intent);
+            public void onClick(View v) {
+                startActivity(new Intent(optionActivity.this, chatActivity.class));
             }
         });
-        btnProfile.setOnClickListener(new View.OnClickListener(){
+
+        btnProfile.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
-                Intent intent = new Intent(optionActivity.this, profile.class);
-                startActivity(intent);
+            public void onClick(View v) {
+                startActivity(new Intent(optionActivity.this, profile.class));
             }
         });
-        btnFriends.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                Intent intent = new Intent(optionActivity.this, addFriendActivity.class);
-                startActivity(intent);
-            }
-        });
-        btnInbox.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                Intent intent = new Intent(optionActivity.this, InboxActivity.class);
-                startActivity(intent);
-            }
-        });
-        btnChangeServer.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                Intent intent = new Intent(optionActivity.this, ChangeServer.class);
-                startActivity(intent);
-            }
-        });
+    }
+
+    private void addItem(List<Map<String, String>> list, String title, String subtitle) {
+        Map<String, String> item = new HashMap<String, String>();
+        item.put("title", title);
+        item.put("subtitle", subtitle);
+        list.add(item);
     }
 }
