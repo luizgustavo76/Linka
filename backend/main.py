@@ -168,11 +168,21 @@ def valide():
     if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post", "/lite-render"]:
         return None
 
-    token = request.headers.get("Authorization")
-
-    if request.method == "GET" and request.endpoint in public_routes and not token:
-        g.username = None
+    if request.method == "GET":
+        token = request.headers.get("Authorization")
+        if token:
+            token = token.replace("Bearer ", "").strip()
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("SELECT username FROM tokens WHERE token = ?", (token,))
+            result = cur.fetchone()
+            conn.close()
+            g.username = result["username"] if result else None
+        else:
+            g.username = None
         return None
+
+    token = request.headers.get("Authorization")
 
     if token is None:
         return jsonify({"status": "the token is empty"}), 403
