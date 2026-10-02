@@ -157,23 +157,6 @@ def upload_profile_pic():
             print(e)
             return jsonify({"status": "error", "message": str(e)}), 500
 
-@profile_bp.route("/lite-render", methods=["GET"])
-def lite_render():
-    image_url = request.args.get("url")
-    
-    if not image_url:
-        return jsonify({"error": "URL parameter missing"}), 400
-
-    try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        res = requests.get(image_url, headers=headers, timeout=10)
-        if res.status_code == 200:
-            content_type = res.headers.get("Content-Type", "image/jpeg")
-            return Response(res.content, mimetype=content_type, status=200)
-        return jsonify({"error": "Failed to fetch image"}), res.status_code
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 @profile_bp.route("/view-profile-picture",methods=["POST"])
 def get_profile_pic():
     data = request.get_json()

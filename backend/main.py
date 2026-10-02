@@ -1,13 +1,22 @@
 import json
 import os
-modules_flags = {}
+import sqlite3
+from datetime import datetime, timedelta
+import secrets
+from werkzeug.security import check_password_hash
+from flask import Flask, Blueprint, request, jsonify, g
+from flask_cors import CORS
+
 base_dir = os.path.dirname(os.path.abspath(__file__))
 json_path = os.path.join(base_dir, "backend.json")
+
 with open(json_path, "r") as f:
     modules_flags = json.load(f)
+
 root_flags = modules_flags["modules-flags"]
-from flask_cors import CORS 
+
 from jobs import jobs_bp
+
 if root_flags["reddit-federation"]:
     from reddit_federation.posts import post_bp as reddit_post_bp
 if root_flags["mastodon-federation"]:
@@ -37,24 +46,21 @@ if root_flags["notifications"]:
     from notifications import notifications_blueprint
 if root_flags["images"]:
     from images import image_bp
-from flask import Flask, Blueprint, request, jsonify, g
-import sqlite3
-import os
 if root_flags["federation_index"]:
     from federation_index import federation_index_bp
 if root_flags["sincronizer"]:
     from sincronizer import sincronizer_bp
 if root_flags["themes"]:
     from themes import theme_bp
-from datetime import datetime, timedelta
-from werkzeug.security import check_password_hash
-import secrets
 from chat_group import chat_group_bp
+
 db_dir = os.path.join(base_dir, "DB")
 tokens_file = os.path.join(db_dir, "tokens.db")
 login_file = os.path.join(db_dir, "login.db")
 banned_file = os.path.join(db_dir, "banned.db")
+
 app = Flask(__name__)
+
 def get_db():
     conn = sqlite3.connect(tokens_file)
     conn.row_factory = sqlite3.Row
@@ -64,10 +70,12 @@ def get_db_login():
     conn = sqlite3.connect(login_file)
     conn.row_factory = sqlite3.Row
     return conn
+
 def get_db_banned():
     conn = sqlite3.connect(banned_file)
     conn.row_factory = sqlite3.Row
     return conn
+
 def create_db():
     if not os.path.exists(db_dir):
         os.makedirs(db_dir)
@@ -86,6 +94,7 @@ def create_db():
 
     conn.commit()
     conn.close()
+
 def create_db_banned():
     conn = get_db_banned()
     cur = conn.cursor()
@@ -96,15 +105,12 @@ def create_db_banned():
                 reason TEXT)""")
     conn.commit()
     conn.close()
+
 create_db_banned()
 create_db()
 
-
-
-
 def verificar_hash(senha, hash_salvo):
     return check_password_hash(hash_salvo, senha)
-
 
 def gerar_token():
     return secrets.token_hex(16)
@@ -116,7 +122,7 @@ def new_session():
     password = data.get("password")
     
     if None in (username, password):
-        return jsonify({"status":"the json is empty or is missing data"}),401
+        return jsonify({"status":"the json is empty or is missing data"}), 401
         
     conn = get_db_login()
     cur = conn.cursor()
@@ -136,9 +142,10 @@ def new_session():
         cur.execute("INSERT INTO tokens(username, token, emission_date, expire_date) VALUES(?, ?, ?, ?)", (username, token, emission_date, expire_date))
         conn.commit()
         conn.close()
-        return jsonify({"status":"the session has created", "token":token}),200
+        return jsonify({"status":"the session has created", "token":token}), 200
         
     return jsonify({"status": "wrong password"}), 401
+
 public_routes = [
     "post.feed",
     "meta.return_version",
@@ -151,23 +158,27 @@ public_routes = [
     "None",
     "profile.create",
     "images.upload_image",
+    "images.lite_render",  # <- Adicionado para permitir visualização da imagem
     "profile.get_profile_pic",
     "post.view_post"
 ]
+
 @app.before_request
 def valide():
-    if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post"]:
+    # Permite acesso direto a estas rotas por URL sem token
+    if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post", "/lite-render"]:
         return None
 
     token = request.headers.get("Authorization")
 
- 
-    if (request.endpoint in public_routes or request.method == "GET") and not token:
+    # Liberado se for rota pública e sem token
+    if request.endpoint in public_routes and not token:
         g.username = None
         return None
 
     if token is None:
         return jsonify({"status": "the token is empty"}), 403
+        
     token = token.replace("Bearer ", "").strip()
 
     conn = get_db()
@@ -178,13 +189,15 @@ def valide():
 
     if not result:
         return jsonify({"status": "invalid token"}), 403
-    token_db = result["token"]
+        
     g.username = result["username"]
+    
     conn = get_db_banned()
     cur = conn.cursor()
     cur.execute("SELECT * FROM banned WHERE username = ?", (g.username,))
     result_user_banned = cur.fetchone()
     conn.close()
+    
     if result_user_banned:
         json_banned = {
             "status": "BANNED",
@@ -192,11 +205,14 @@ def valide():
             "time": result_user_banned[1]
         }
         return jsonify(json_banned), 403
+        
     if result["expire_date"]:
         expire_date = datetime.fromisoformat(result["expire_date"])
         if datetime.now() > expire_date:
             return jsonify({"status": "the token has been expired"}), 403
+            
     return None
+
 @app.route("/valide-session", methods=["POST"])
 def valideManual():
     public_paths = ["/login", "/register", "/new-session", "/create-profile"]
@@ -206,7 +222,7 @@ def valideManual():
 
     token = request.headers.get("Authorization")
     
-    if token == None:
+    if token is None:
         return jsonify({"status": "the token is empty"}), 403
     else:
         token = token.replace("Bearer ", "")
@@ -228,14 +244,12 @@ def valideManual():
         if datetime.now() > expire_date:
             return jsonify({"status": "the token has been expired"}), 403
         else:
-            return jsonify({"status":"the token is valid"}),200
+            return jsonify({"status":"the token is valid"}), 200
     else:
         return jsonify({"status": "the token is invalid"}), 403
 
-
-
-
 CORS(app, resources={r"/*": {"origins": "*"}})
+
 if root_flags["status"]:
     app.register_blueprint(status_bp)
 if root_flags["search"]:
@@ -274,5 +288,6 @@ if root_flags["federations"]:
     app.register_blueprint(federations_bp)
 if root_flags["federation_index"]:
     app.register_blueprint(federation_index_bp)
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
