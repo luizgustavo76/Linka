@@ -158,21 +158,19 @@ public_routes = [
     "None",
     "profile.create",
     "images.upload_image",
-    "images.lite_render",  # <- Adicionado para permitir visualização da imagem
+    "images.lite_render",
     "profile.get_profile_pic",
     "post.view_post"
 ]
 
 @app.before_request
 def valide():
-    # Permite acesso direto a estas rotas por URL sem token
     if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post", "/lite-render"]:
         return None
 
     token = request.headers.get("Authorization")
 
-    # Liberado se for rota pública e sem token
-    if request.endpoint in public_routes and not token:
+    if request.method == "GET" and request.endpoint in public_routes and not token:
         g.username = None
         return None
 
