@@ -184,6 +184,10 @@ def valide():
 
     token = request.headers.get("Authorization")
 
+    if request.endpoint in public_routes and not token:
+        g.username = None
+        return None
+
     if token is None:
         return jsonify({"status": "the token is empty"}), 403
         
