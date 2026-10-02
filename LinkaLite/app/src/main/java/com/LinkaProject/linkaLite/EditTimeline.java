@@ -49,11 +49,9 @@ public class EditTimeline extends Activity {
             e.printStackTrace();
         }
 
-        // Executa a busca na rede em Background
         new FetchFederationsTask().execute(url + "/view-index");
     }
 
-    // AsyncTask para evitar NetworkOnMainThreadException
     private class FetchFederationsTask extends AsyncTask<String, Void, String> {
 
         @Override

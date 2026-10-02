@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-    android:background="@drawable/card_item"
-    android:layout_marginBottom="4dip"
-    android:padding="10dip" xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/card_item"
+    android:layout_marginBottom="4dip"
+    android:padding="10dip"
     android:orientation="horizontal"
     android:gravity="center_vertical">
 
@@ -14,10 +15,13 @@
         android:layout_height="60dip"
         android:scaleType="centerCrop" />
 
-    <Button
+    <CheckBox
         android:id="@+id/btnFederation"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dip" />
+        android:text="text"
+        android:textColor="#FFFFFF"
+        android:focusable="false"
+        android:focusableInTouchMode="false" />
 
 </LinearLayout>

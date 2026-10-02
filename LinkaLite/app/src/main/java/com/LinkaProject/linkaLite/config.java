@@ -1,4 +1,5 @@
 package com.LinkaProject.linkaLite;
+
 import android.content.Context;
 import java.io.BufferedReader;
 import java.io.File;
@@ -7,7 +8,9 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import org.json.JSONObject;
+
 public class config {
+
     public String saveCfg(Context context, String filename, String content) {
         try {
             FileOutputStream fos = context.openFileOutput(filename, Context.MODE_PRIVATE);
@@ -19,10 +22,12 @@ public class config {
             return e.toString();
         }
     }
+
     public static boolean configFileExists(Context context, String fileName) {
         File file = context.getFileStreamPath(fileName);
         return file != null && file.exists();
     }
+
     public String updateCfg(Context context, String filename, String targetSection, String newKey, String newValue) {
         try {
             String currentContent = "";
@@ -39,11 +44,16 @@ public class config {
             } catch (Exception e) {
                 // Arquivo ainda não existe
             }
+
+            // Remove colchetes se já vierem na String para não duplicar [[SECTION]]
+            String cleanSection = targetSection.replace("[", "").replace("]", "");
+            String headerSection = "[" + cleanSection + "]";
+            
             StringBuilder newContent = new StringBuilder();
-            String headerSection = "[" + targetSection + "]";
             boolean sectionFound = false;
             boolean keyUpdated = false;
             String[] lines = currentContent.split("\n");
+
             for (String line : lines) {
                 String trimmed = line.trim();
                 if (trimmed.equalsIgnoreCase(headerSection)) {
@@ -66,9 +76,11 @@ public class config {
                 }
                 newContent.append(line).append("\n");
             }
+
             if (sectionFound && !keyUpdated) {
                 newContent.append(newKey).append("=").append(newValue).append("\n");
             }
+
             if (!sectionFound) {
                 if (newContent.length() > 0 && !newContent.toString().endsWith("\n")) {
                     newContent.append("\n");
@@ -76,22 +88,21 @@ public class config {
                 newContent.append(headerSection).append("\n");
                 newContent.append(newKey).append("=").append(newValue).append("\n");
             }
+
             return saveCfg(context, filename, newContent.toString().trim());
         } catch (Exception e) {
             return e.toString();
         }
     }
-    public void createEmptyFile(Context context, String filename) {
-        try {
-            FileOutputStream fos = context.openFileOutput(filename, Context.MODE_PRIVATE);
-            fos.close();
-        } catch (Exception e) {
-        }
-    }
+
     public String loadCfgAsJson(Context context, String filename) {
         if (!configFileExists(context, filename)) {
+            if (filename.contains("timeline")) {
+                return createDefaultConfigTimeline(context, filename);
+            }
             return createDefaultConfig(context, filename);
         }
+
         try {
             FileInputStream fis = context.openFileInput(filename);
             BufferedReader br = new BufferedReader(new InputStreamReader(fis));
@@ -100,6 +111,7 @@ public class config {
             StringBuilder json = new StringBuilder();
             json.append("{");
             boolean firstSection = true;
+
             while ((line = br.readLine()) != null) {
                 line = line.trim();
                 if (line.isEmpty() || line.startsWith("#") || line.startsWith(";") || line.startsWith("{")) {
@@ -125,6 +137,7 @@ public class config {
                     json.append("\"").append(key).append("\":\"").append(value).append("\",");
                 }
             }
+
             if (json.charAt(json.length() - 1) == ',') {
                 json.deleteCharAt(json.length() - 1);
             }
@@ -133,17 +146,17 @@ public class config {
             }
             json.append("}");
             br.close();
-            String finalJson = json.toString();
-            JSONObject testObject = new JSONObject(finalJson);
-            if (!testObject.has("SERVER")) {
-                return createDefaultConfig(context, filename);
-            }
-            return finalJson;
+
+            return json.toString();
+
         } catch (Exception e) {
+            if (filename.contains("timeline")) {
+                return createDefaultConfigTimeline(context, filename);
+            }
             return createDefaultConfig(context, filename);
         }
     }
-    // CORRIGIDO: Gera o padrão padrão do Linka em formato INI/CFG Puro
+
     public String createDefaultConfig(Context context, String fileName) {
         try {
             StringBuilder iniBuilder = new StringBuilder();
@@ -153,38 +166,38 @@ public class config {
             iniBuilder.append("username=\n");
             iniBuilder.append("password=\n");
             iniBuilder.append("token_session=\n");
+            
             String iniString = iniBuilder.toString();
-            // Salva no armazenamento interno em formato INI
             saveCfg(context, fileName, iniString);
-            // Retorna o JSON gerado a partir do INI para manter o retorno original do método
             return loadCfgAsJson(context, fileName);
         } catch (Exception e) {
             e.printStackTrace();
             return "";
         }
     }
+
     public String createDefaultConfigTimeline(Context context, String fileName) {
         try {
             StringBuilder iniBuilder = new StringBuilder();
             iniBuilder.append("[FEDERATION-TIMELINE]\n");
             iniBuilder.append("urls=http://linkaProject.pythonanywhere.com/feed\n");
+            
             String iniString = iniBuilder.toString();
+            // CORRIGIDO: Agora ele efetivamente SALVA o arquivo no armazenamento do celular
+            saveCfg(context, fileName, iniString);
+            
             return loadCfgAsJson(context, fileName);
         } catch (Exception e) {
             e.printStackTrace();
             return "";
         }
     }
+
     public String deleteFileLinka(Context context, String filename) {
         try {
             File file = context.getFileStreamPath(filename);
             if (file.exists()) {
-                boolean deleted = file.delete();
-                if (deleted) {
-                    return "deleted";
-                } else {
-                    return "failed";
-                }
+                return file.delete() ? "deleted" : "failed";
             }
             return "not_found";
         } catch (Exception e) {
