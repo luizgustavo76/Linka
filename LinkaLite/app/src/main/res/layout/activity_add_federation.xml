@@ -1,68 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:background="#121212" xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="#121212"
     android:orientation="vertical">
-    <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Add timeline"
-            android:textSize="32sp"
-            android:gravity="center"
-            android:layout_marginTop="30dip"
-            android:layout_marginBottom="30dip" 
-        android:textColor="#FFFFFF" />
-    <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="What is this? Here, you can customize your feed and timeline by selecting your post sources—such as Linka itself, Reddit, Mastodon, Bluesky, etc."
-            android:gravity="center"
-            android:layout_marginTop="30dip"
-            android:layout_marginBottom="30dip" 
-        android:textColor="#FFFFFF" />
-     <LinearLayout 
+
+    <!-- Área de Conteúdo (Scrollable/Flexível) -->
+    <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="40dip" 
-        android:orientation="horizontal"
+        android:layout_height="0dip"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="16dip">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dip"
+            android:layout_marginBottom="16dip"
+            android:gravity="center"
+            android:text="Add timeline"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dip"
+            android:gravity="center"
+            android:text="What is this? Here, you can customize your feed and timeline by selecting your post sources—such as Linka itself, Reddit, Mastodon, Bluesky, etc."
+            android:textColor="#A0A0A0"
+            android:textSize="14sp" />
+        <ListView
+            android:id="@+id/listFederations"
+            android:layout_width="fill_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"
+            android:divider="#2a2a3c"
+            android:dividerHeight="1dip" />
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="16dip">
+            <EditText
+                android:id="@+id/edtUrl"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="Federation url"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#666666"
+                android:textSize="14sp"
+                android:singleLine="true" />
+
+            <Button
+                android:id="@+id/btnAdd"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dip"
+                android:text="Add!"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="48dip"
+        android:background="#11111b"
         android:gravity="center_vertical"
-        android:background="#11111b">
+        android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/btnHome"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:src="@drawable/home"
+            android:background="@android:color/transparent"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+            android:src="@drawable/home" />
 
         <ImageButton
             android:id="@+id/btnChat"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:src="@drawable/chat"
+            android:background="@android:color/transparent"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+            android:src="@drawable/chat" />
 
         <ImageButton
             android:id="@+id/btnOptions"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:src="@drawable/options"
+            android:background="@android:color/transparent"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+            android:src="@drawable/options" />
 
         <ImageButton
             android:id="@+id/btnProfile"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:src="@drawable/account"
+            android:background="@android:color/transparent"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+            android:src="@drawable/account" />
 
     </LinearLayout>
+
 </LinearLayout>

@@ -163,6 +163,18 @@ public class config {
             return "";
         }
     }
+    public String createDefaultConfigTimeline(Context context, String fileName) {
+        try {
+            StringBuilder iniBuilder = new StringBuilder();
+            iniBuilder.append("[FEDERATION-TIMELINE]\n");
+            iniBuilder.append("urls=http://linkaProject.pythonanywhere.com/feed\n");
+            String iniString = iniBuilder.toString();
+            return loadCfgAsJson(context, fileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
     public String deleteFileLinka(Context context, String filename) {
         try {
             File file = context.getFileStreamPath(filename);
