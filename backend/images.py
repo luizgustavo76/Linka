@@ -12,7 +12,6 @@ supabase: Client = create_client(
 )
 
 image_bp = Blueprint("image_bp", __name__)
-WORKER_BASE_URL = "https://fancy-fire-49d2.luizsgustavo76.workers.dev/?url="
 
 
 def clean_reddit_url(url_str):
@@ -22,6 +21,16 @@ def clean_reddit_url(url_str):
     if "redd.it" in url_str and url_str.count("?") > 1:
         base, rest = url_str.split("?", 1)
         url_str = f"{base}?{rest.replace('?', '&')}"
+    return url_str
+
+
+def normalize_url(url_str):
+    if url_str.startswith("https//"):
+        url_str = "https://" + url_str[7:]
+    elif url_str.startswith("http//"):
+        url_str = "http://" + url_str[6:]
+    elif not url_str.startswith(("http://", "https://")):
+        url_str = "https://" + url_str
     return url_str
 
 
@@ -41,12 +50,14 @@ def lite_render():
         target_url = target_url.split("lite-render?url=")[-1]
         target_url = urllib.parse.unquote(target_url)
 
+    target_url = normalize_url(target_url)
     target_url = clean_reddit_url(target_url)
     domain = get_domain(target_url)
 
-    # BLOQUEIO RIGOROSO: Permite apenas domínios do Supabase
-    if not domain.endswith(".supabase.co") and domain != "supabase.co":
-        print(f"[DEBUG] Domínio não permitido ({domain}). Redirecionando...", flush=True)
+    allowed_domains = ["supabase.co", "i.redd.it", "preview.redd.it", "redd.it"]
+    is_allowed = any(domain.endswith(d) or domain == d for d in allowed_domains)
+
+    if not is_allowed:
         return redirect(target_url, code=302)
 
     headers = {
@@ -54,29 +65,37 @@ def lite_render():
         "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
     }
 
-    worker_url = WORKER_BASE_URL + requests.utils.quote(target_url, safe="")
-
     try:
-        response = requests.get(worker_url, headers=headers, timeout=12, allow_redirects=True)
+        # Busca direta da imagem sem Cloudflare Worker
+        response = requests.get(target_url, headers=headers, timeout=12)
+
+        if response.status_code != 200 or not response.content:
+            return jsonify({
+                "error": "Failed to fetch image directly", 
+                "status_code": response.status_code
+            }), 502
 
         content_type = response.headers.get("Content-Type", "").lower()
 
-        if response.status_code != 200 or not response.content:
-            return jsonify({"error": "Failed to fetch image from worker"}), 502
+        if not content_type.startswith("image/"):
+            return jsonify({
+                "error": "Target URL is not a valid image",
+                "received_content_type": content_type
+            }), 502
 
         resp = Response(
             response.content,
             status=200,
-            mimetype=content_type if content_type.startswith("image/") else "image/jpeg",
+            mimetype=content_type,
         )
         resp.headers["Cache-Control"] = "public, max-age=86400"
-        resp.headers["Content-Type"] = resp.mimetype
+        resp.headers["Content-Type"] = content_type
 
         return resp
 
     except Exception as e:
-        print(f"[DEBUG] Exception na rota: {e}", flush=True)
-        return jsonify({"error": "Worker request failed", "details": str(e)}), 502
+        print(f"[DEBUG] Exception na rota lite-render: {e}", flush=True)
+        return jsonify({"error": "Direct image fetch failed", "details": str(e)}), 502
 
 
 @image_bp.route("/upload-image", methods=["POST"])
