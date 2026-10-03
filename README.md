@@ -152,4 +152,4 @@ Backend and desktop developer focused on lightweight and multi-platform systems.
 # License
 
 This project is open-source.
-read the LICENSE.txt, is a apache 2.0 license
+read the LICENSE.txt, is a AGpl-3.0
