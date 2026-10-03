@@ -66,7 +66,6 @@ def lite_render():
     }
 
     try:
-        # Busca direta da imagem sem Cloudflare Worker
         response = requests.get(target_url, headers=headers, timeout=12)
 
         if response.status_code != 200 or not response.content:
@@ -100,34 +99,55 @@ def lite_render():
 
 @image_bp.route("/upload-image", methods=["POST"])
 def upload_image():
-    if "image" not in request.files or not request.files["image"].filename:
-        return jsonify({"error": "Invalid or missing image file"}), 400
+    if "image" not in request.files:
+        return jsonify({"error": "Missing 'image' field in multipart request"}), 400
 
     file = request.files["image"]
-    secure_ext = [".jpg", ".jpeg", ".webp", ".png"]
-    if not any(file.filename.lower().endswith(ext) for ext in secure_ext):
-        return jsonify({"status": "Nice try, little boy; Big Brother is watching you..."}), 400
+    raw_bytes = file.read()
+    if not raw_bytes or len(raw_bytes) == 0:
+        return jsonify({"error": "File is empty"}), 400
+
+    filename = (file.filename or "image.jpg").lower()
+    file_ext = os.path.splitext(filename)[1]
+
+    # Detecção robusta do formato (extensão, Content-Type ou Magic Bytes)
+    mime_types = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".webp": "image/webp",
+    }
+
+    content_type = file.content_type or ""
+    
+    if file_ext in mime_types:
+        ct = mime_types[file_ext]
+        ext = ".jpg" if file_ext == ".jpeg" else file_ext
+    elif "png" in content_type:
+        ct, ext = "image/png", ".png"
+    elif "webp" in content_type:
+        ct, ext = "image/webp", ".webp"
+    elif "jpeg" in content_type or "jpg" in content_type:
+        ct, ext = "image/jpeg", ".jpg"
+    else:
+        # Fallback por assinatura binária dos primeiros bytes
+        if raw_bytes.startswith(b"\xff\xd8\xff"):
+            ct, ext = "image/jpeg", ".jpg"
+        elif raw_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+            ct, ext = "image/png", ".png"
+        elif raw_bytes.startswith(b"RIFF") and b"WEBP" in raw_bytes[:16]:
+            ct, ext = "image/webp", ".webp"
+        else:
+            return jsonify({"status": "Nice try, little boy; Big Brother is watching you..."}), 400
+
     try:
-        raw_bytes = file.read()
-
-        file_ext = os.path.splitext(file.filename)[1].lower()
-        if file_ext == ".jpeg":
-            file_ext = ".jpg"
-
-        file_name = f"post_{uuid.uuid4().hex}{file_ext}"
+        file_name = f"post_{uuid.uuid4().hex}{ext}"
         bucket = "linka-media"
-
-        mime_types = {
-            ".jpg": "image/jpeg",
-            ".png": "image/png",
-            ".webp": "image/webp",
-        }
-        content_type = mime_types.get(file_ext, "image/jpeg")
 
         supabase.storage.from_(bucket).upload(
             path=file_name,
             file=raw_bytes,
-            file_options={"content-type": content_type},
+            file_options={"content-type": ct, "upsert": "true"},
         )
         public_url = supabase.storage.from_(bucket).get_public_url(file_name)
 

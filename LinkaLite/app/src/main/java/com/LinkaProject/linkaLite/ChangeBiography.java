@@ -37,7 +37,7 @@ public class ChangeBiography extends Activity{
                 try{
                     JSONObject jsonBio = new JSONObject();
                     jsonBio.put("username", username);
-                    jsonBio.put("mode", "bio");
+                    jsonBio.put("edit-mode", "bio");
                     jsonBio.put("content", edtBiography.getText());
                     request.requestHTTP(url + "/edit", "post", jsonBio, ChangeBiography.this);
                 }
