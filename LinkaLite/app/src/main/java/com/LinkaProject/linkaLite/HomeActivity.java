@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +36,6 @@ public class HomeActivity extends TabActivity {
     private Button btnClose;
     private Button btnLogin;
 
-    // ListViews e Adapters para cada Aba
     private ListView listViewForYou;
     private ListView listViewNewest;
     private PostAdapter adapterForYou;
@@ -68,7 +68,6 @@ public class HomeActivity extends TabActivity {
 
         tabHost.setCurrentTab(0);
 
-        // Listener para recarregar o feed ao alternar as abas
         tabHost.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
             @Override
             public void onTabChanged(String tabId) {
@@ -215,15 +214,18 @@ public class HomeActivity extends TabActivity {
         String currentTab = getTabHost().getCurrentTabTag();
         loadFeedForTab(currentTab != null ? currentTab : "foryou");
     }
+
     private void loadFeedForTab(String tabId) {
+        Log.d("LINKA_DEBUG", "Iniciando loadFeedForTab para a aba: " + tabId);
         String baseUrl = "http://linkaProject.pythonanywhere.com";
         JSONArray urlsArray = new JSONArray();
 
         try {
             config cfg = new config();
             
-            // 1. Carrega URL base do servidor
             String rawCfg = cfg.loadCfgAsJson(HomeActivity.this, "config.cfg");
+            Log.d("LINKA_DEBUG", "Conteudo bruto de config.cfg: " + rawCfg);
+            
             if (rawCfg != null && !rawCfg.isEmpty()) {
                 JSONObject jsonCfg = new JSONObject(rawCfg);
                 JSONObject server = jsonCfg.optJSONObject("SERVER");
@@ -232,21 +234,21 @@ public class HomeActivity extends TabActivity {
                 }
             }
 
-            // 2. Lê o config-timeline.cfg tratando quebras de linha e sujeiras no texto
             String rawTimeline = cfg.loadCfgAsJson(HomeActivity.this, "config-timeline.cfg");
+            Log.d("LINKA_DEBUG", "Conteudo bruto de config-timeline.cfg: " + rawTimeline);
+
             if (rawTimeline != null && !rawTimeline.isEmpty()) {
-                // Remove todas as quebras de linha antes de processar
-                String singleLineTimeline = rawTimeline.replace("\r", "").replace("\n", "");
+                // Fazer o parse direto como JSON
+                JSONObject jsonTimeline = new JSONObject(rawTimeline);
+                JSONObject fedSection = jsonTimeline.optJSONObject("FEDERATION-TIMELINE");
                 
-                if (singleLineTimeline.contains("urls=")) {
-                    String urlsValue = singleLineTimeline.substring(singleLineTimeline.indexOf("urls=") + 5).trim();
+                if (fedSection != null) {
+                    String urlsValue = fedSection.optString("urls", "");
                     
-                    // Remove comentários com #
                     if (urlsValue.contains("#")) {
                         urlsValue = urlsValue.split("#")[0].trim();
                     }
                     
-                    // Remove caminhos de arquivos anexados por engano
                     if (urlsValue.contains(":/data/data/")) {
                         urlsValue = urlsValue.split(":/data/data/")[0].trim();
                     }
@@ -261,18 +263,22 @@ public class HomeActivity extends TabActivity {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("LINKA_DEBUG", "Excecao ao ler arquivos de configuracao", e);
         }
+
+        Log.d("LINKA_DEBUG", "URLs extraidas para o ForYou: " + urlsArray.toString());
 
         if ("foryou".equals(tabId)) {
             JSONObject body = new JSONObject();
             try {
                 body.put("urls", urlsArray);
             } catch (JSONException e) {
-                e.printStackTrace();
+                Log.e("LINKA_DEBUG", "Erro JSON ao colocar urls no body", e);
             }
+            Log.d("LINKA_DEBUG", "Enviando POST para " + baseUrl + "/view-external-posts com body: " + body.toString());
             new FetchFeedTask("foryou", baseUrl + "/view-external-posts", "POST", body).execute();
         } else {
+            Log.d("LINKA_DEBUG", "Enviando GET para " + baseUrl + "/feed");
             new FetchFeedTask("newest", baseUrl + "/feed", "GET", null).execute();
         }
     }
@@ -297,14 +303,20 @@ public class HomeActivity extends TabActivity {
 
         @Override
         protected void onPostExecute(String result) {
+            Log.d("LINKA_DEBUG", "onPostExecute para a aba [" + tabId + "] com resposta: " + result);
+
             ArrayList<JSONObject> targetList = "foryou".equals(tabId) ? postsForYou : postsNewest;
             PostAdapter targetAdapter = "foryou".equals(tabId) ? adapterForYou : adapterNewest;
 
-            if (targetList == null || targetAdapter == null) return;
+            if (targetList == null || targetAdapter == null) {
+                Log.e("LINKA_DEBUG", "targetList ou targetAdapter e nulo para a aba: " + tabId);
+                return;
+            }
 
             targetList.clear();
 
             if (result == null || result.trim().isEmpty()) {
+                Log.e("LINKA_DEBUG", "Erro: Resposta HTTP retornou nula ou vazia para a aba: " + tabId);
                 targetAdapter.notifyDataSetChanged();
                 Toast.makeText(HomeActivity.this, "Error loading feed", Toast.LENGTH_SHORT).show();
                 return;
@@ -314,17 +326,20 @@ public class HomeActivity extends TabActivity {
                 String trimmed = result.trim();
                 if (trimmed.startsWith("[")) {
                     JSONArray jsonArray = new JSONArray(trimmed);
+                    Log.d("LINKA_DEBUG", "Quantidade de posts recebidos no JSONArray (" + tabId + "): " + jsonArray.length());
                     for (int i = 0; i < jsonArray.length(); i++) {
                         targetList.add(jsonArray.getJSONObject(i));
                     }
                 } else if (trimmed.startsWith("{")) {
-                    // Trata o retorno caso o servidor envie um objeto de erro {"error": "..."}
                     JSONObject errObj = new JSONObject(trimmed);
                     String msg = errObj.optString("error", errObj.optString("status", "Error loading feed"));
+                    Log.e("LINKA_DEBUG", "Servidor retornou objeto JSON de erro (" + tabId + "): " + msg);
                     Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.e("LINKA_DEBUG", "Resposta invalida do servidor (nao e JSON Array nem Object): " + trimmed);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e("LINKA_DEBUG", "Excecao no parse dos posts na aba (" + tabId + ")", e);
                 Toast.makeText(HomeActivity.this, "Error parsing posts", Toast.LENGTH_SHORT).show();
             }
 
@@ -332,9 +347,6 @@ public class HomeActivity extends TabActivity {
         }
     }
 
-    // -------------------------------------------------------------
-    // Adapter customizado do ListView
-    // -------------------------------------------------------------
     private class PostAdapter extends BaseAdapter {
         private Context context;
         private ArrayList<JSONObject> list;

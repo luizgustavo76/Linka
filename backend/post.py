@@ -221,6 +221,44 @@ def fetch_single_federation(node_url):
         return None
 
     return None
+@post_bp.route("/view-external-posts", methods=["POST"])
+def view_external_posts():
+    data = request.get_json() or {}
+    urls = data.get("urls")
+
+    if not urls or not isinstance(urls, list):
+        return jsonify({"error": "url invalid or bad formatted"}), 400
+
+    if len(urls) > 50:
+        return jsonify({"status": "max limit with federation url"}), 400
+
+    aggregated_posts = []
+
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        futures = [executor.submit(fetch_single_federation, url) for url in urls]
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") 
+                
+                if result:
+                    if isinstance(result, list):
+                        aggregated_posts.extend(result)
+                    elif isinstance(result, dict) and "posts" in result: 
+                        aggregated_posts.extend(result["posts"])
+            except Exception as e:
+                print(f"DEBUG - Erro na thread: {e}") 
+
+    if not aggregated_posts:
+        return jsonify([]), 200
+    random.shuffle(aggregated_posts)
+    formated_feed = []
+    for index, post in enumerate(aggregated_posts, start=1):
+        if isinstance(post, dict):
+            post["id"] = index
+            formated_feed.append(post)
+
+    return jsonify(formated_feed), 200
 @post_bp.route("/new", methods=["POST"])
 def new_post():
     try:
