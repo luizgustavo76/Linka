@@ -4,8 +4,10 @@ import os
 from datetime import datetime
 import notificationsModule
 import re
+import random
 import linkosModule
 import mentions_module
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
@@ -29,13 +31,13 @@ def create_db():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS FEDERATED_POSTS(
+        CREATE TABLE IF NOT EXISTS federated_posts(
         federation_name TEXT,
         text_post TEXT,
         username TEXT,
         post_id TEXT,
         created_at TEXT,
-        platform TEXT""")
+        platform TEXT)""")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS posts(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -139,11 +141,55 @@ def view_comments():
             "comment_id":row["id"]
         })
     return jsonify({"comments":comments})
+def fetch_single_federation(node_url):
+    try:
+        
+        response = requests.get(f"{node_url}", timeout=10.0)
+        if response.status_code == 200:
+            return response.json()
+    except Exception:
+        return None
+    return None
+
+
 @post_bp.route("/view-external-posts", methods=["POST"])
 def view_external_posts():
-    data = request.get_json()
+    data = request.get_json() or {}
     urls = data.get("urls")
-    if 
+
+    if not urls or not isinstance(urls, list):
+        return jsonify({"error": "url invalid or bad formatted"}), 400
+
+    if len(urls) > 50:
+        return jsonify({"status": "max limit with federation url"}), 400
+
+    aggregated_posts = []
+
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        futures = [executor.submit(fetch_single_federation, url) for url in urls]
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") # <--- Veja o tipo e valor
+                
+                if result:
+                    if isinstance(result, list):
+                        aggregated_posts.extend(result)
+                    elif isinstance(result, dict) and "posts" in result: # Caso venha como dicionário
+                        aggregated_posts.extend(result["posts"])
+            except Exception as e:
+                print(f"DEBUG - Erro na thread: {e}") # <--- Descubra se deu erro de conexão/URL
+
+    if not aggregated_posts:
+        return jsonify([]), 200
+    random.shuffle(aggregated_posts)
+    formated_feed = []
+    for index, post in enumerate(aggregated_posts, start=1):
+        if isinstance(post, dict):
+            post["id"] = index
+            formated_feed.append(post)
+
+    return jsonify(formated_feed), 200
 @post_bp.route("/new", methods=["POST"])
 def new_post():
     try:
