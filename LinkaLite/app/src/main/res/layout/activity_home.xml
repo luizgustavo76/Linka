@@ -1,158 +1,186 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:background="#121212" 
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<TabHost xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/tabhost"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical">
+    android:background="#121212">
 
     <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" 
-        android:orientation="horizontal"
-        android:background="#1e1e2e">
-
-    </LinearLayout>
-
-    <Button 
-        android:id="@+id/newPost"
-        android:layout_width="fill_parent"
-        android:layout_height="32dip"
-        android:padding="0dip"
-        android:text="+ New Post"
-        android:textSize="11sp"
-        android:layout_margin="2dip" />
-
-    <ListView
-        android:id="@+id/listViewPosts"
-        android:layout_width="fill_parent"
-        android:layout_height="0dip"
-        android:layout_weight="1"
-        android:scrollingCache="false"   
-        android:divider="#2a2a3c"
-        android:dividerHeight="1dip" />
-    <LinearLayout
-        android:id="@+id/emptyView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="20dp"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/tvEmptyTitle"
-            android:layout_width="wrap_content"
+        android:orientation="vertical">
+        <TabWidget
+            android:id="@android:id/tabs"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="No posts yet!"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:gravity="center" />
+            android:background="#1e1e2e" />
+        <Button 
+            android:id="@+id/newPost"
+            android:layout_width="fill_parent"
+            android:layout_height="32dip"
+            android:padding="0dip"
+            android:text="+ New Post"
+            android:textSize="11sp"
+            android:layout_margin="2dip" />
+        <FrameLayout
+            android:id="@android:id/tabcontent"
+            android:layout_width="fill_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1">
+            <LinearLayout
+                android:id="@+id/tabForYou"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:orientation="vertical">
+                <ListView
+                    android:id="@+id/listViewForYou"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:scrollingCache="false"   
+                    android:divider="#2a2a3c"
+                    android:dividerHeight="1dip" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/tabNewest"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvEmptySubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Check out federations to explore Reddit, Mastodon, and Bluesky feeds."
-            android:textSize="14sp"
-            android:textColor="#AAAAAA"
-            android:gravity="center"
-            android:layout_marginTop="8dp" />
+                <ListView
+                    android:id="@+id/listViewNewest"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:scrollingCache="false"   
+                    android:divider="#2a2a3c"
+                    android:dividerHeight="1dip" />
+            </LinearLayout>
 
-        <Button
-            android:id="@+id/btnEmptyFederations"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Visit Federations"
-            android:layout_marginTop="16dp" />
-    </LinearLayout>
-    <LinearLayout 
-        android:layout_width="fill_parent"
-        android:layout_height="40dip" 
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="#11111b">
+            <LinearLayout
+                android:id="@+id/emptyView"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="20dip"
+                android:visibility="gone">
 
-        <ImageButton
-            android:id="@+id/btnHome"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:src="@drawable/home"
-            android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+                <TextView
+                    android:id="@+id/tvEmptyTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No posts yet!"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF"
+                    android:gravity="center" />
 
-        <ImageButton
-            android:id="@+id/btnChat"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:src="@drawable/chat"
-            android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+                <TextView
+                    android:id="@+id/tvEmptySubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Check out federations to explore Reddit, Mastodon, and Bluesky feeds."
+                    android:textSize="14sp"
+                    android:textColor="#AAAAAA"
+                    android:gravity="center"
+                    android:layout_marginTop="8dip" />
 
-        <ImageButton
-            android:id="@+id/btnOptions"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:src="@drawable/options"
-            android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+                <Button
+                    android:id="@+id/btnEmptyFederations"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Visit Federations"
+                    android:layout_marginTop="16dip" />
+            </LinearLayout>
 
-        <ImageButton
-            android:id="@+id/btnProfile"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:src="@drawable/account"
-            android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+        </FrameLayout>
 
-    </LinearLayout>
         <LinearLayout 
-        android:id="@+id/layoutGuest"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" 
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="#11111b"
-        android:padding="4dip"
-        android:visibility="gone">
+            android:layout_width="fill_parent"
+            android:layout_height="40dip" 
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#11111b">
 
-        <!-- layout_weight="1" faz o texto ocupar todo o espaço sobrando -->
-        <TextView
-            android:id="@+id/tvGuest"
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="You are navigating as guest, for more options login!"
-            android:textSize="11sp"
-            android:textColor="#AAAAAA"
-            android:gravity="center_vertical" />
+            <ImageButton
+                android:id="@+id/btnHome"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:src="@drawable/home"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent" />
 
-        <!-- wrap_content para o botão de Login ocupar só o tamanho do texto -->
-        <Button 
-            android:id="@+id/btnLogin"
-            android:layout_width="wrap_content"
-            android:layout_height="32dip"
-            android:paddingLeft="8dip"
-            android:paddingRight="8dip"
-            android:text="Go to Login"
-            android:textSize="11sp"
-            android:layout_marginLeft="4dip"
-            android:layout_marginRight="2dip" />
+            <ImageButton
+                android:id="@+id/btnChat"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:src="@drawable/chat"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent" />
 
-        <!-- wrap_content para o botão X aparecer no canto direito -->
-        <Button 
-            android:id="@+id/btnClose"
-            android:layout_width="wrap_content"
-            android:layout_height="32dip"
-            android:paddingLeft="8dip"
-            android:paddingRight="8dip"
-            android:text="X"
-            android:textSize="11sp"
-            android:layout_marginLeft="2dip" />
+            <ImageButton
+                android:id="@+id/btnOptions"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:src="@drawable/options"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent" />
+
+            <ImageButton
+                android:id="@+id/btnProfile"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:src="@drawable/account"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent" />
+
+        </LinearLayout>
+
+        <!-- Barra de Convidado -->
+        <LinearLayout 
+            android:id="@+id/layoutGuest"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" 
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#11111b"
+            android:padding="4dip"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvGuest"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="You are navigating as guest, for more options login!"
+                android:textSize="11sp"
+                android:textColor="#AAAAAA"
+                android:gravity="center_vertical" />
+
+            <Button 
+                android:id="@+id/btnLogin"
+                android:layout_width="wrap_content"
+                android:layout_height="32dip"
+                android:paddingLeft="8dip"
+                android:paddingRight="8dip"
+                android:text="Go to Login"
+                android:textSize="11sp"
+                android:layout_marginLeft="4dip"
+                android:layout_marginRight="2dip" />
+
+            <Button 
+                android:id="@+id/btnClose"
+                android:layout_width="wrap_content"
+                android:layout_height="32dip"
+                android:paddingLeft="8dip"
+                android:paddingRight="8dip"
+                android:text="X"
+                android:textSize="11sp"
+                android:layout_marginLeft="2dip" />
+        </LinearLayout>
+
     </LinearLayout>
-</LinearLayout>
+</TabHost>
