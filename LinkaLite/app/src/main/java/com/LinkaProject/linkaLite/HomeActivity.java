@@ -238,7 +238,6 @@ public class HomeActivity extends TabActivity {
             Log.d("LINKA_DEBUG", "Conteudo bruto de config-timeline.cfg: " + rawTimeline);
 
             if (rawTimeline != null && !rawTimeline.isEmpty()) {
-                // Fazer o parse direto como JSON
                 JSONObject jsonTimeline = new JSONObject(rawTimeline);
                 JSONObject fedSection = jsonTimeline.optJSONObject("FEDERATION-TIMELINE");
                 
@@ -350,10 +349,12 @@ public class HomeActivity extends TabActivity {
     private class PostAdapter extends BaseAdapter {
         private Context context;
         private ArrayList<JSONObject> list;
+        private ImageLoader imageLoader; // Instância única para evitar múltiplos pools de Threads
 
         public PostAdapter(Context context, ArrayList<JSONObject> list) {
             this.context = context;
             this.list = list;
+            this.imageLoader = new ImageLoader();
         }
 
         @Override
@@ -385,6 +386,8 @@ public class HomeActivity extends TabActivity {
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
             Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
 
+            // Reset obrigatório de ambas as ImageViews para não manter imagens de views recicladas
+            avatarPost.setImageBitmap(null);
             imgPost.setImageBitmap(null);
             imgPost.setVisibility(View.GONE);
 
@@ -419,7 +422,7 @@ public class HomeActivity extends TabActivity {
                 tvUsername.setText("@" + username);
                 tvDate.setText(datetime);
 
-                ImageLoader imageLoader = new ImageLoader();
+                // Carrega foto de perfil reutilizando o ImageLoader único
                 imageLoader.viewProfilePicture(context, username, avatarPost);
 
                 if (textPost.contains("[IMAGE]")) {
@@ -441,7 +444,8 @@ public class HomeActivity extends TabActivity {
                                     }
                                 });
 
-                                new ImageLoader().LoadImageUrl(urlProxy, imgPost);
+                                // Carrega imagem do post reutilizando o ImageLoader único
+                                imageLoader.LoadImageUrl(urlProxy, imgPost);
                                 textPost = textPost.replace(line, "").trim();
                                 break;
                             }
