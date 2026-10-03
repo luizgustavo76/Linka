@@ -4,17 +4,30 @@ import os
 from datetime import datetime
 import notificationsModule
 import re
+from urllib.parse import urlparse
 import random
 import linkosModule
 import mentions_module
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 base_dir = os.path.dirname(os.path.abspath(__file__))
+json_path = os.path.join(base_dir, "backend.json")
+
+with open(json_path, "r") as f:
+    modules_flags = json.load(f)
+
+root_flags = modules_flags["modules-flags"]
+base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 post_dir = os.path.join(db_dir, "post.db")
-
+if root_flags["bluesky-federation"]:
+    import bluesky_federation.posts as bluesky
+if root_flags["reddit-federation"]:
+    import reddit_federation.posts as reddit
+if root_flags["mastodon-federation"]:
+    import mastodon_federation.posts as mastodon
 post_bp = Blueprint("post", __name__)
-
 if not os.path.exists(db_dir):
     os.makedirs(db_dir)
 
@@ -142,16 +155,38 @@ def view_comments():
         })
     return jsonify({"comments":comments})
 def fetch_single_federation(node_url):
+    parsed = urlparse(node_url)
+    path = parsed.path.rstrip('/')
+    if "linkaProject.pythonanywhere.com" in parsed.netloc or "127.0.0.1" in parsed.netloc or "localhost" in parsed.netloc:
+        try:
+            res = None
+            if path == "/feed":
+                res = feed()
+            elif path.startswith("/feed/reddit/"):
+                sub_name = path.replace("/feed/reddit/", "")
+                res = reddit.subreddit_posts(subreddit=sub_name)
+            elif path.startswith("/feed/mastodon/"):
+                tag_name = path.replace("/feed/mastodon/", "")
+                res = mastodon.get_posts(tag=tag_name)
+            elif path.startswith("/feed/bluesky/"):
+                tag_name = path.replace("/feed/bluesky/", "")
+                res = bluesky.get_bluesky_feed(tag=tag_name)
+
+            if res is not None:
+                response_obj = res[0] if isinstance(res, tuple) else res
+                return response_obj.get_json()
+
+        except Exception as e:
+            print(f"Erro ao processar rota interna {path}: {e}")
+            return None
     try:
-        
-        response = requests.get(f"{node_url}", timeout=10.0)
+        response = requests.get(node_url, timeout=3.0)
         if response.status_code == 200:
             return response.json()
-    except Exception:
+    except Exception as e:
+        print(f"Erro na requisição externa {node_url}: {e}")
         return None
     return None
-
-
 @post_bp.route("/view-external-posts", methods=["POST"])
 def view_external_posts():
     data = request.get_json() or {}
@@ -170,15 +205,15 @@ def view_external_posts():
         for future in as_completed(futures):
             try:
                 result = future.result()
-                print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") # <--- Veja o tipo e valor
+                print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") 
                 
                 if result:
                     if isinstance(result, list):
                         aggregated_posts.extend(result)
-                    elif isinstance(result, dict) and "posts" in result: # Caso venha como dicionário
+                    elif isinstance(result, dict) and "posts" in result: 
                         aggregated_posts.extend(result["posts"])
             except Exception as e:
-                print(f"DEBUG - Erro na thread: {e}") # <--- Descubra se deu erro de conexão/URL
+                print(f"DEBUG - Erro na thread: {e}") 
 
     if not aggregated_posts:
         return jsonify([]), 200
