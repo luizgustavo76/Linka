@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 import org.json.JSONObject;
 
 public class newPost extends Activity {
+    private static final String TAG = "Linka_Upload";
     private static final int PICK_IMAGE_REQUEST = 1001;
     private TextView newPostText;
     private EditText textPost;
@@ -62,12 +64,17 @@ public class newPost extends Activity {
 
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             Uri selectedImageUri = data.getData();
+            Log.d(TAG, "Selected Image Uri: " + selectedImageUri.toString());
             btnImage.setEnabled(false);
             new UploadImageTask().execute(selectedImageUri);
+        } else {
+            Log.w(TAG, "Image selection canceled or failed. ResultCode: " + resultCode);
         }
     }
 
     private class UploadImageTask extends AsyncTask<Uri, Void, String> {
+        private String lastError = null;
+
         @Override
         protected String doInBackground(Uri... uris) {
             Uri selectedImageUri = uris[0];
@@ -83,9 +90,14 @@ public class newPost extends Activity {
                 }
 
                 String fullUrl = url + "/upload-image";
-                return UploadTask.uploadProfilePicture(newPost.this, selectedImageUri, fullUrl);
+                Log.d(TAG, "Uploading to URL: " + fullUrl + " | Uri: " + selectedImageUri);
+
+                String res = UploadTask.uploadProfilePicture(newPost.this, selectedImageUri, fullUrl);
+                Log.d(TAG, "Raw upload result from server: " + res);
+                return res;
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Exception during upload in doInBackground", e);
+                lastError = e.getClass().getSimpleName() + ": " + e.getMessage();
             }
             return null;
         }
@@ -101,15 +113,21 @@ public class newPost extends Activity {
                     if (!imageUrl.isEmpty()) {
                         textPost.append("\n[IMAGE]" + imageUrl);
                         Toast.makeText(newPost.this, "Image uploaded!", Toast.LENGTH_SHORT).show();
+                        Log.d(TAG, "Upload SUCCESS: " + imageUrl);
                     } else {
-                        Toast.makeText(newPost.this, "Invalid response format", Toast.LENGTH_SHORT).show();
+                        String serverError = jsonResponse.optString("error", jsonResponse.optString("status", jsonResponse.optString("message", "Unknown server error")));
+                        String msg = "Server error: " + serverError;
+                        Log.e(TAG, msg);
+                        Toast.makeText(newPost.this, msg, Toast.LENGTH_LONG).show();
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    Toast.makeText(newPost.this, "Error parsing server response", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "JSON Parse error on response: " + result, e);
+                    Toast.makeText(newPost.this, "Raw server response: " + result, Toast.LENGTH_LONG).show();
                 }
             } else {
-                Toast.makeText(newPost.this, "Error in upload image", Toast.LENGTH_SHORT).show();
+                String errMsg = (lastError != null) ? "Upload failed: " + lastError : "Error: Null/Empty response from UploadTask";
+                Log.e(TAG, errMsg);
+                Toast.makeText(newPost.this, errMsg, Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -139,7 +157,7 @@ public class newPost extends Activity {
                 }
                 return request.requestHTTP(url + "/new", "post", jsonResponse, newPost.this);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error sending post", e);
             }
             return null;
         }

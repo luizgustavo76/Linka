@@ -2,60 +2,87 @@ package com.LinkaProject.linkaLite;
 
 import android.content.Context;
 import android.net.Uri;
+import android.util.Log;
+
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class UploadTask {
 
+    private static final String TAG = "Linka_UploadTask";
+
     public static String uploadProfilePicture(Context context, Uri imageUri, String requestUrl) {
-        String boundary = "----LinkaUploadBound" + System.currentTimeMillis();
-        String LINE_FEED = "\r\n";
+        if (context == null || imageUri == null || requestUrl == null || requestUrl.trim().isEmpty()) {
+            return makeJsonError("UploadTask", "Parâmetros de entrada inválidos (null/vazio).");
+        }
+
+        String boundary = "*****" + System.currentTimeMillis() + "*****";
+        String lineEnd = "\r\n";
+        String twoHyphens = "--";
+
+        HttpURLConnection conn = null;
+        DataOutputStream dos = null;
+        InputStream inputStream = null;
 
         try {
+            Log.d(TAG, "Iniciando upload para: " + requestUrl);
+
             URL url = new URL(requestUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setDoOutput(true);
+            conn = (HttpURLConnection) url.openConnection();
             conn.setDoInput(true);
+            conn.setDoOutput(true);
             conn.setUseCaches(false);
             conn.setRequestMethod("POST");
-            conn.setConnectTimeout(15000);
-            conn.setReadTimeout(15000);
+            conn.setConnectTimeout(20000);
+            conn.setReadTimeout(20000);
+            conn.setRequestProperty("Connection", "Keep-Alive");
             conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
-            OutputStream outputStream = conn.getOutputStream();
-            PrintWriter writer = new PrintWriter(outputStream, true);
+            OutputStream outStream = conn.getOutputStream();
+            if (outStream == null) {
+                return makeJsonError("UploadTask", "Não foi possível obter OutputStream da ligação HTTP.");
+            }
+            dos = new DataOutputStream(outStream);
 
-            String fileName = "upload_image.png";
+            // Cabeçalho Multipart
+            dos.writeBytes(twoHyphens + boundary + lineEnd);
+            dos.writeBytes("Content-Disposition: form-data; name=\"image\"; filename=\"image.jpg\"" + lineEnd);
+            dos.writeBytes("Content-Type: image/jpeg" + lineEnd);
+            dos.writeBytes(lineEnd);
 
-            writer.append("--").append(boundary).append(LINE_FEED);
-            writer.append("Content-Disposition: form-data; name=\"image\"; filename=\"").append(fileName).append("\"").append(LINE_FEED);
-            writer.append("Content-Type: image/png").append(LINE_FEED);
-            writer.append(LINE_FEED);
-            writer.flush();
+            // Abrir imagem
+            inputStream = context.getContentResolver().openInputStream(imageUri);
+            if (inputStream == null) {
+                return makeJsonError("UploadTask", "Falha ao abrir InputStream do ficheiro de imagem.");
+            }
 
-            InputStream inputStream = context.getContentResolver().openInputStream(imageUri);
             byte[] buffer = new byte[4096];
             int bytesRead;
             while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
-            outputStream.flush();
-            if (inputStream != null) {
-                inputStream.close();
+                dos.write(buffer, 0, bytesRead);
             }
 
-            writer.append(LINE_FEED);
-            writer.append("--").append(boundary).append("--").append(LINE_FEED);
-            writer.flush();
-            writer.close();
+            dos.writeBytes(lineEnd);
+            dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+            dos.flush();
 
             int status = conn.getResponseCode();
-            InputStream responseStream = (status == HttpURLConnection.HTTP_OK) ? conn.getInputStream() : conn.getErrorStream();
+            Log.d(TAG, "HTTP Response Code: " + status);
+
+            InputStream responseStream = (status >= 200 && status < 300) 
+                    ? conn.getInputStream() 
+                    : conn.getErrorStream();
+
+            if (responseStream == null) {
+                return makeJsonError("UploadTask", "Servidor retornou HTTP " + status + " sem corpo de resposta.");
+            }
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream));
             StringBuilder response = new StringBuilder();
@@ -64,12 +91,41 @@ public class UploadTask {
                 response.append(line);
             }
             reader.close();
-            conn.disconnect();
 
             return response.toString();
+
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Erro no upload da imagem", e);
+            
+            int lineNumber = -1;
+            if (e.getStackTrace() != null && e.getStackTrace().length > 0) {
+                lineNumber = e.getStackTrace()[0].getLineNumber();
+            }
+            
+            String detail = e.getClass().getSimpleName() + " (linha " + lineNumber + "): " + 
+                           (e.getMessage() != null ? e.getMessage() : "causa nula/desconhecida");
+            
+            return makeJsonError("UploadTask", detail);
+        } finally {
+            if (inputStream != null) {
+                try { inputStream.close(); } catch (Exception ignored) {}
+            }
+            if (dos != null) {
+                try { dos.close(); } catch (Exception ignored) {}
+            }
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
-        return null;
+    }
+
+    private static String makeJsonError(String source, String message) {
+        try {
+            JSONObject err = new JSONObject();
+            err.put("error", source + " -> " + message);
+            return err.toString();
+        } catch (Exception e) {
+            return "{\"error\":\"" + source + " -> " + message + "\"}";
+        }
     }
 }
