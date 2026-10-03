@@ -77,8 +77,11 @@ public class HomeActivity extends Activity {
         scheduler.scheduleAtFixedRate(tokenTask, 0, 2, TimeUnit.MINUTES);
 
         config cfg = new config();
-        try {   
+        try {
             String rawJson = cfg.loadCfgAsJson(this, "config.cfg");
+            JSONObject jsonTimeline = new JSONObject(cfg.loadCfgAsJson(this, "config-timeline.cfg"));
+            JSONObject jsonFederationTimeline = jsonTimeline.getJSONObject("FEDERATION-TIMELINE");
+            String urlsExternal = jsonFederationTimeline.optString("urls", "");
             JSONObject jsonCfg = new JSONObject(rawJson);
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             JSONObject server = jsonCfg.getJSONObject("SERVER");

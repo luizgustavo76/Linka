@@ -6,6 +6,7 @@ import notificationsModule
 import re
 import linkosModule
 import mentions_module
+import requests
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 post_dir = os.path.join(db_dir, "post.db")
@@ -27,7 +28,14 @@ def get_db():
 def create_db():
     conn = get_db()
     cur = conn.cursor()
-
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS FEDERATED_POSTS(
+        federation_name TEXT,
+        text_post TEXT,
+        username TEXT,
+        post_id TEXT,
+        created_at TEXT,
+        platform TEXT""")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS posts(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,6 +139,11 @@ def view_comments():
             "comment_id":row["id"]
         })
     return jsonify({"comments":comments})
+@post_bp.route("/view-external-posts", methods=["POST"])
+def view_external_posts():
+    data = request.get_json()
+    urls = data.get("urls")
+    if 
 @post_bp.route("/new", methods=["POST"])
 def new_post():
     try:
