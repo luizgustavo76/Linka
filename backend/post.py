@@ -154,77 +154,73 @@ def view_comments():
             "comment_id":row["id"]
         })
     return jsonify({"comments":comments})
+def get_internal_feed_posts():
+    """Busca os posts locais do banco de dados sem usar jsonify()."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, username, text_post, datetime FROM posts ORDER BY id DESC")
+    posts = cur.fetchall()
+    conn.close()
+
+    lista_posts = []
+    for post in posts:
+        lista_posts.append({
+            "id": post[0],
+            "username": post[1],
+            "text_post": post[2],
+            "datetime": post[3]
+        })
+    return lista_posts
+
+
 def fetch_single_federation(node_url):
     parsed = urlparse(node_url)
+    netloc = parsed.netloc.lower()
     path = parsed.path.rstrip('/')
-    if "linkaProject.pythonanywhere.com" in parsed.netloc or "127.0.0.1" in parsed.netloc or "localhost" in parsed.netloc:
-        try:
-            res = None
-            if path == "/feed":
-                res = feed()
-            elif path.startswith("/feed/reddit/"):
-                sub_name = path.replace("/feed/reddit/", "")
-                res = reddit.subreddit_posts(subreddit=sub_name)
-            elif path.startswith("/feed/mastodon/"):
-                tag_name = path.replace("/feed/mastodon/", "")
-                res = mastodon.get_posts(tag=tag_name)
-            elif path.startswith("/feed/bluesky/"):
-                tag_name = path.replace("/feed/bluesky/", "")
-                res = bluesky.get_bluesky_feed(tag=tag_name)
 
-            if res is not None:
-                response_obj = res[0] if isinstance(res, tuple) else res
-                return response_obj.get_json()
+    # Trata requisições internas para o próprio servidor
+    if "linkaproject.pythonanywhere.com" in netloc or "127.0.0.1" in netloc or "localhost" in netloc:
+        try:
+            # 1. Feed Local
+            if path == "/feed":
+                return get_internal_feed_posts()
+
+            # 2. Reddit (chama a função de busca do módulo diretamente se estiver ativo)
+            elif path.startswith("/feed/reddit/"):
+                if root_flags.get("reddit-federation") and 'reddit' in globals():
+                    sub_name = path.replace("/feed/reddit/", "")
+                    # Se houver função interna no módulo reddit, chame-a aqui
+                    if hasattr(reddit, "fetch_reddit_posts"):
+                        return reddit.fetch_reddit_posts(subreddit=sub_name)
+
+            # 3. Mastodon (chama fetch_mastodon_posts diretamente sem jsonify)
+            elif path.startswith("/feed/mastodon/"):
+                if root_flags.get("mastodon-federation") and 'mastodon' in globals():
+                    tag_name = path.replace("/feed/mastodon/", "")
+                    if hasattr(mastodon, "fetch_mastodon_posts"):
+                        return mastodon.fetch_mastodon_posts(tag=tag_name, limit=100)
+
+            # 4. Bluesky (chama fetch_bluesky_posts diretamente sem jsonify)
+            elif path.startswith("/feed/bluesky/"):
+                if root_flags.get("bluesky-federation") and 'bluesky' in globals():
+                    tag_name = path.replace("/feed/bluesky/", "")
+                    if hasattr(bluesky, "fetch_bluesky_posts"):
+                        return bluesky.fetch_bluesky_posts(query=tag_name, limit=100)
 
         except Exception as e:
-            print(f"Erro ao processar rota interna {path}: {e}")
+            print(f"DEBUG - Erro na rota interna {path}: {e}")
             return None
+
+    # Requisição externa para outros servidores na internet
     try:
         response = requests.get(node_url, timeout=3.0)
         if response.status_code == 200:
             return response.json()
     except Exception as e:
-        print(f"Erro na requisição externa {node_url}: {e}")
+        print(f"DEBUG - Erro na requisição externa {node_url}: {e}")
         return None
+
     return None
-@post_bp.route("/view-external-posts", methods=["POST"])
-def view_external_posts():
-    data = request.get_json() or {}
-    urls = data.get("urls")
-
-    if not urls or not isinstance(urls, list):
-        return jsonify({"error": "url invalid or bad formatted"}), 400
-
-    if len(urls) > 50:
-        return jsonify({"status": "max limit with federation url"}), 400
-
-    aggregated_posts = []
-
-    with ThreadPoolExecutor(max_workers=50) as executor:
-        futures = [executor.submit(fetch_single_federation, url) for url in urls]
-        for future in as_completed(futures):
-            try:
-                result = future.result()
-                print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") 
-                
-                if result:
-                    if isinstance(result, list):
-                        aggregated_posts.extend(result)
-                    elif isinstance(result, dict) and "posts" in result: 
-                        aggregated_posts.extend(result["posts"])
-            except Exception as e:
-                print(f"DEBUG - Erro na thread: {e}") 
-
-    if not aggregated_posts:
-        return jsonify([]), 200
-    random.shuffle(aggregated_posts)
-    formated_feed = []
-    for index, post in enumerate(aggregated_posts, start=1):
-        if isinstance(post, dict):
-            post["id"] = index
-            formated_feed.append(post)
-
-    return jsonify(formated_feed), 200
 @post_bp.route("/new", methods=["POST"])
 def new_post():
     try:
