@@ -44,10 +44,14 @@
     <ImageView
         android:id="@+id/imgPost"
         android:layout_width="match_parent"
-        android:layout_height="220dp"
-        android:scaleType="centerCrop"
-        android:background="#E0E0E0"
-        android:visibility="gone" />
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone"
+        android:contentDescription="Imagem do Post" />
 
     <!-- Conteúdo do Post -->
     <TextView

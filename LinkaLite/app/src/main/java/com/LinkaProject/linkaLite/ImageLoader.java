@@ -79,7 +79,6 @@ public class ImageLoader {
             return;
         }
 
-        // Define a TAG imediatamente na UI Thread
         targetView.setTag(imageUrl);
         final Context appContext = targetView.getContext();
 
@@ -115,7 +114,6 @@ public class ImageLoader {
         }
 
         final String tagKey = "avatar_" + username;
-        // Define a TAG do avatar imediatamente na UI Thread
         targetImageView.setTag(tagKey);
 
         executor.submit(new Runnable() {
