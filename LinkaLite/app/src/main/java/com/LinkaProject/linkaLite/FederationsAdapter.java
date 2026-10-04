@@ -13,9 +13,6 @@ import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
-import android.widget.Toast;
-
-import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -27,19 +24,25 @@ import java.util.concurrent.Executors;
 public class FederationsAdapter extends BaseAdapter {
     private Context context;
     private List<FederationItem> items;
+    private List<String> savedUrls;
     private LayoutInflater inflater;
     private ExecutorService executorService;
 
-    public FederationsAdapter(Context context, List<FederationItem> items) {
+    public FederationsAdapter(Context context, List<FederationItem> items, List<String> savedUrls) {
         this.context = context;
         this.items = items;
+        this.savedUrls = savedUrls;
         this.inflater = LayoutInflater.from(context);
         this.executorService = Executors.newFixedThreadPool(4);
     }
 
+    public FederationsAdapter(Context context, List<FederationItem> items) {
+        this(context, items, null);
+    }
+
     @Override
     public int getCount() {
-        return items.size();
+        return items != null ? items.size() : 0;
     }
 
     @Override
@@ -72,7 +75,6 @@ public class FederationsAdapter extends BaseAdapter {
 
         final FederationItem item = items.get(position);
 
-        // Trata o nome para evitar exibir "null" no ecrã
         String displayName = item.getName();
         if (displayName == null || displayName.trim().isEmpty() || displayName.equalsIgnoreCase("null")) {
             displayName = item.getUrl();
@@ -82,7 +84,9 @@ public class FederationsAdapter extends BaseAdapter {
         }
         holder.btnFederation.setText(displayName);
 
-        // Evita disparar listeners errados ao reutilizar a View do ListView
+        boolean isSaved = savedUrls != null && item.getUrl() != null && savedUrls.contains(item.getUrl().trim());
+        item.setChecked(isSaved);
+
         holder.btnFederation.setOnCheckedChangeListener(null);
         holder.btnFederation.setChecked(item.isChecked());
 
@@ -90,34 +94,21 @@ public class FederationsAdapter extends BaseAdapter {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 item.setChecked(isChecked);
-            }
-        });
-
-        holder.btnFederation.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
                 String link = item.getUrl();
-                if (link != null && (link.startsWith("http://") || link.startsWith("https://"))) {
+                if (link != null && !link.trim().isEmpty()) {
                     config cfg = new config();
-                    try {
-                        String jsonString = cfg.loadCfgAsJson(context, "config-timeline.cfg");
-                        JSONObject jsonCfg = new JSONObject(jsonString);
-                        JSONObject jsonTimeline = jsonCfg.optJSONObject("FEDERATION-TIMELINE");
-                        String jsonUrls = (jsonTimeline != null) ? jsonTimeline.optString("urls", "") : "";
-
-                        String newUrls = jsonUrls.isEmpty() ? link : jsonUrls + "," + link;
-
-                        cfg.updateCfg(context, "config-timeline.cfg", "FEDERATION-TIMELINE", "urls", newUrls);
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    cfg.toggleUrl(context, link);
+                    if (savedUrls != null) {
+                        if (isChecked && !savedUrls.contains(link.trim())) {
+                            savedUrls.add(link.trim());
+                        } else if (!isChecked) {
+                            savedUrls.remove(link.trim());
+                        }
                     }
-                } else {
-                    Toast.makeText(context, "URL: " + link, Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
-        // Carregamento de imagem de capa
         String imageSrc = item.getCoverImage();
         holder.coverFederation.setImageBitmap(null);
         holder.coverFederation.setTag(imageSrc);

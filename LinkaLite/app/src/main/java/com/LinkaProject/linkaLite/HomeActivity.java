@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -197,13 +196,13 @@ public class HomeActivity extends TabActivity {
         footerNewest = inflater.inflate(R.layout.footer_federations, null);
         if (listViewForYou != null) {
             listViewForYou.addFooterView(footerForYou);
-            adapterForYou = new PostAdapter(this, postsForYou);
+            adapterForYou = new PostAdapter(this, postsForYou, "foryou");
             listViewForYou.setAdapter(adapterForYou);
         }
 
         if (listViewNewest != null) {
             listViewNewest.addFooterView(footerNewest);
-            adapterNewest = new PostAdapter(this, postsNewest);
+            adapterNewest = new PostAdapter(this, postsNewest, "newest");
             listViewNewest.setAdapter(adapterNewest);
         }
     }
@@ -216,7 +215,6 @@ public class HomeActivity extends TabActivity {
     }
 
     private void loadFeedForTab(String tabId) {
-        Log.d("LINKA_DEBUG", "Iniciando loadFeedForTab para a aba: " + tabId);
         String baseUrl = "http://linkaProject.pythonanywhere.com";
         JSONArray urlsArray = new JSONArray();
 
@@ -224,8 +222,6 @@ public class HomeActivity extends TabActivity {
             config cfg = new config();
             
             String rawCfg = cfg.loadCfgAsJson(HomeActivity.this, "config.cfg");
-            Log.d("LINKA_DEBUG", "Conteudo bruto de config.cfg: " + rawCfg);
-            
             if (rawCfg != null && !rawCfg.isEmpty()) {
                 JSONObject jsonCfg = new JSONObject(rawCfg);
                 JSONObject server = jsonCfg.optJSONObject("SERVER");
@@ -235,8 +231,6 @@ public class HomeActivity extends TabActivity {
             }
 
             String rawTimeline = cfg.loadCfgAsJson(HomeActivity.this, "config-timeline.cfg");
-            Log.d("LINKA_DEBUG", "Conteudo bruto de config-timeline.cfg: " + rawTimeline);
-
             if (rawTimeline != null && !rawTimeline.isEmpty()) {
                 JSONObject jsonTimeline = new JSONObject(rawTimeline);
                 JSONObject fedSection = jsonTimeline.optJSONObject("FEDERATION-TIMELINE");
@@ -262,22 +256,18 @@ public class HomeActivity extends TabActivity {
                 }
             }
         } catch (Exception e) {
-            Log.e("LINKA_DEBUG", "Excecao ao ler arquivos de configuracao", e);
+            e.printStackTrace();
         }
-
-        Log.d("LINKA_DEBUG", "URLs extraidas para o ForYou: " + urlsArray.toString());
 
         if ("foryou".equals(tabId)) {
             JSONObject body = new JSONObject();
             try {
                 body.put("urls", urlsArray);
             } catch (JSONException e) {
-                Log.e("LINKA_DEBUG", "Erro JSON ao colocar urls no body", e);
+                e.printStackTrace();
             }
-            Log.d("LINKA_DEBUG", "Enviando POST para " + baseUrl + "/view-external-posts com body: " + body.toString());
             new FetchFeedTask("foryou", baseUrl + "/view-external-posts", "POST", body).execute();
         } else {
-            Log.d("LINKA_DEBUG", "Enviando GET para " + baseUrl + "/feed");
             new FetchFeedTask("newest", baseUrl + "/feed", "GET", null).execute();
         }
     }
@@ -302,20 +292,16 @@ public class HomeActivity extends TabActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            Log.d("LINKA_DEBUG", "onPostExecute para a aba [" + tabId + "] com resposta: " + result);
-
             ArrayList<JSONObject> targetList = "foryou".equals(tabId) ? postsForYou : postsNewest;
             PostAdapter targetAdapter = "foryou".equals(tabId) ? adapterForYou : adapterNewest;
 
             if (targetList == null || targetAdapter == null) {
-                Log.e("LINKA_DEBUG", "targetList ou targetAdapter e nulo para a aba: " + tabId);
                 return;
             }
 
             targetList.clear();
 
             if (result == null || result.trim().isEmpty()) {
-                Log.e("LINKA_DEBUG", "Erro: Resposta HTTP retornou nula ou vazia para a aba: " + tabId);
                 targetAdapter.notifyDataSetChanged();
                 Toast.makeText(HomeActivity.this, "Error loading feed", Toast.LENGTH_SHORT).show();
                 return;
@@ -325,20 +311,15 @@ public class HomeActivity extends TabActivity {
                 String trimmed = result.trim();
                 if (trimmed.startsWith("[")) {
                     JSONArray jsonArray = new JSONArray(trimmed);
-                    Log.d("LINKA_DEBUG", "Quantidade de posts recebidos no JSONArray (" + tabId + "): " + jsonArray.length());
                     for (int i = 0; i < jsonArray.length(); i++) {
                         targetList.add(jsonArray.getJSONObject(i));
                     }
                 } else if (trimmed.startsWith("{")) {
                     JSONObject errObj = new JSONObject(trimmed);
                     String msg = errObj.optString("error", errObj.optString("status", "Error loading feed"));
-                    Log.e("LINKA_DEBUG", "Servidor retornou objeto JSON de erro (" + tabId + "): " + msg);
                     Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
-                } else {
-                    Log.e("LINKA_DEBUG", "Resposta invalida do servidor (nao e JSON Array nem Object): " + trimmed);
                 }
             } catch (Exception e) {
-                Log.e("LINKA_DEBUG", "Excecao no parse dos posts na aba (" + tabId + ")", e);
                 Toast.makeText(HomeActivity.this, "Error parsing posts", Toast.LENGTH_SHORT).show();
             }
 
@@ -349,11 +330,13 @@ public class HomeActivity extends TabActivity {
     private class PostAdapter extends BaseAdapter {
         private Context context;
         private ArrayList<JSONObject> list;
-        private ImageLoader imageLoader; // Instância única para evitar múltiplos pools de Threads
+        private String tabId;
+        private ImageLoader imageLoader;
 
-        public PostAdapter(Context context, ArrayList<JSONObject> list) {
+        public PostAdapter(Context context, ArrayList<JSONObject> list, String tabId) {
             this.context = context;
             this.list = list;
+            this.tabId = tabId;
             this.imageLoader = new ImageLoader();
         }
 
@@ -386,7 +369,6 @@ public class HomeActivity extends TabActivity {
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
             Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
 
-            // Reset obrigatório de ambas as ImageViews para não manter imagens de views recicladas
             avatarPost.setImageBitmap(null);
             imgPost.setImageBitmap(null);
             imgPost.setVisibility(View.GONE);
@@ -442,8 +424,12 @@ public class HomeActivity extends TabActivity {
                                         startActivity(intent);
                                     }
                                 });
-
-                                imageLoader.LoadImageUrl(urlProxy, imgPost);
+                                
+                                if ("foryou".equals(tabId)) {
+                                    imageLoader.LoadImageUrl("https://fancy-fire-49d2.luizsgustavo76.workers.dev/?url=" + newUrl, imgPost);
+                                } else {
+                                    imageLoader.LoadImageUrl(urlProxy, imgPost);
+                                }
                                 textPost = textPost.replace(line, "").trim();
                                 break;
                             }

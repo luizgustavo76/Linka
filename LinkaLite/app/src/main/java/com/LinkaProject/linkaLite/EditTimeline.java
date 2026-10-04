@@ -1,9 +1,11 @@
 package com.LinkaProject.linkaLite;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -40,6 +42,7 @@ public class EditTimeline extends Activity {
         listView = (ListView) findViewById(R.id.listFederations);
         edtUrl = (EditText) findViewById(R.id.edtUrl);
         btnAdd = (Button) findViewById(R.id.btnAdd);
+
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(EditTimeline.this, "config.cfg"));
@@ -47,6 +50,45 @@ public class EditTimeline extends Activity {
             url = server.getString("url");
         } catch (Exception e) {
             e.printStackTrace();
+        }
+
+        if (btnAdd != null) {
+            btnAdd.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String inputUrl = edtUrl.getText().toString().trim();
+                    if (!inputUrl.isEmpty()) {
+                        config cfg = new config();
+                        cfg.toggleUrl(EditTimeline.this, inputUrl);
+                        edtUrl.setText("");
+                        new FetchFederationsTask().execute(url + "/view-index");
+                    }
+                }
+            });
+        }
+
+        if (btnHome != null) {
+            btnHome.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    finish();
+                }
+            });
+        }
+
+        if (listView != null) {
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Object obj = parent.getItemAtPosition(position);
+                    if (obj instanceof FederationItem) {
+                        FederationItem item = (FederationItem) obj;
+                        config cfg = new config();
+                        cfg.toggleUrl(EditTimeline.this, item.getUrl());
+                        new FetchFederationsTask().execute(url + "/view-index");
+                    }
+                }
+            });
         }
 
         new FetchFederationsTask().execute(url + "/view-index");
@@ -72,7 +114,7 @@ public class EditTimeline extends Activity {
                 return;
             }
 
-            List<FederationItem> itemList = new ArrayList<>();
+            List<FederationItem> itemList = new ArrayList<FederationItem>();
             try {
                 JSONArray jsonArray = new JSONArray(response);
                 for (int i = 0; i < jsonArray.length(); i++) {
@@ -86,7 +128,9 @@ public class EditTimeline extends Activity {
                 }
 
                 if (listView != null && !isFinishing()) {
-                    FederationsAdapter adapter = new FederationsAdapter(EditTimeline.this, itemList);
+                    config cfg = new config();
+                    List<String> savedUrls = cfg.getSavedUrls(EditTimeline.this);
+                    FederationsAdapter adapter = new FederationsAdapter(EditTimeline.this, itemList, savedUrls);
                     listView.setAdapter(adapter);
                 }
             } catch (JSONException e) {

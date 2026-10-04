@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
 import org.json.JSONObject;
 
 public class config {
@@ -42,10 +44,8 @@ public class config {
                 br.close();
                 currentContent = sb.toString();
             } catch (Exception e) {
-                // Arquivo ainda não existe
             }
 
-            // Remove colchetes se já vierem na String para não duplicar [[SECTION]]
             String cleanSection = targetSection.replace("[", "").replace("]", "");
             String headerSection = "[" + cleanSection + "]";
             
@@ -183,7 +183,6 @@ public class config {
             iniBuilder.append("urls=http://linkaProject.pythonanywhere.com/feed\n");
             
             String iniString = iniBuilder.toString();
-            // CORRIGIDO: Agora ele efetivamente SALVA o arquivo no armazenamento do celular
             saveCfg(context, fileName, iniString);
             
             return loadCfgAsJson(context, fileName);
@@ -191,6 +190,53 @@ public class config {
             e.printStackTrace();
             return "";
         }
+    }
+
+    public List<String> getSavedUrls(Context context) {
+        List<String> list = new ArrayList<String>();
+        try {
+            String rawTimeline = loadCfgAsJson(context, "config-timeline.cfg");
+            if (rawTimeline != null && !rawTimeline.isEmpty()) {
+                JSONObject jsonTimeline = new JSONObject(rawTimeline);
+                JSONObject fedSection = jsonTimeline.optJSONObject("FEDERATION-TIMELINE");
+                if (fedSection != null) {
+                    String urlsValue = fedSection.optString("urls", "");
+                    if (!urlsValue.isEmpty()) {
+                        String[] parts = urlsValue.split(",");
+                        for (String part : parts) {
+                            String clean = part.trim();
+                            if (!clean.isEmpty() && !list.contains(clean)) {
+                                list.add(clean);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public void toggleUrl(Context context, String targetUrl) {
+        if (targetUrl == null || targetUrl.trim().isEmpty()) {
+            return;
+        }
+        String cleanUrl = targetUrl.trim();
+        List<String> current = getSavedUrls(context);
+        if (current.contains(cleanUrl)) {
+            current.remove(cleanUrl);
+        } else {
+            current.add(cleanUrl);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < current.size(); i++) {
+            sb.append(current.get(i));
+            if (i < current.size() - 1) {
+                sb.append(",");
+            }
+        }
+        updateCfg(context, "config-timeline.cfg", "FEDERATION-TIMELINE", "urls", sb.toString());
     }
 
     public String deleteFileLinka(Context context, String filename) {
