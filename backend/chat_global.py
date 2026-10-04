@@ -1,6 +1,7 @@
 from flask import Flask, Blueprint, request, jsonify
 import sqlite3
 import os
+import notificationsModule
 chat_global_bp = Blueprint("chat_global", __name__)
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
@@ -33,6 +34,7 @@ def send_global_message():
     cur.execute("INSERT INTO chat_global (sender, message) VALUES (?, ?)",(sender, message))
     conn.commit()
     conn.close()
+    notificationsModule.CreateNotificationForEveryone(sender, "0000", "chat", message)
     return jsonify({"status":"the message has been sent"}),200
 @chat_global_bp.route("/view-global-message", methods=["POST"])
 def view_global_message():
