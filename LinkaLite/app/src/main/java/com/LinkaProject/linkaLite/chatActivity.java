@@ -9,6 +9,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import org.json.JSONArray;
 import org.json.JSONException;
+import android.widget.LinearLayout;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class chatActivity extends Activity {
     private ListView lvFriends;
     private FriendsAdapter adapter;
     private List<FriendItem> friendsList;
+    private boolean isGuest;
     private String url = "";
     private String myUsername = "";
     @Override
@@ -35,6 +37,10 @@ public class chatActivity extends Activity {
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         lvFriends = (ListView) findViewById(R.id.lvFriends);
         btnNewChat = (Button) findViewById(R.id.btnNewChat);
+        isGuest = getIntent().getBooleanExtra("isGuest", false);
+        if(!isGuest){
+            lvFriends.setVisibility(View.VISIBLE);
+        }
         friendsList = new ArrayList<FriendItem>();
         try {
             config cfg = new config();
@@ -106,6 +112,7 @@ public class chatActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(chatActivity.this, ChatGlobalActivity.class);
+                intent.putExtra("isGuest", isGuest);
                 startActivity(intent);
             }
         });
@@ -113,6 +120,7 @@ public class chatActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(chatActivity.this, HomeActivity.class);
+                intent.putExtra("isGuest", isGuest);
                 startActivity(intent);
             }
         });
@@ -127,6 +135,7 @@ public class chatActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(chatActivity.this, profile.class);
+                intent.putExtra("isGuest", isGuest);
                 startActivity(intent);
             }
         });

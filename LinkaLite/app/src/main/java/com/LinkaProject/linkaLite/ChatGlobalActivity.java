@@ -27,7 +27,8 @@ public class ChatGlobalActivity extends Activity {
     private String url = "";
     private Handler autoUpdateHandler = new Handler();
     private Runnable autoUpdateRunnable;
-    private static final int UPDATE_INTERVAL = 2000; 
+    private static final int UPDATE_INTERVAL = 2000;
+    private Boolean isGuest;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,6 +52,11 @@ public class ChatGlobalActivity extends Activity {
         btnSend = (Button) findViewById(R.id.btnSend);
         edtInputMessage = (EditText) findViewById(R.id.edtInputMessage);
         chatContainer = (LinearLayout) findViewById(R.id.layoutMessagesContainer);
+        isGuest = getIntent().getBooleanExtra("isGuest", false);
+        if (isGuest){
+            edtInputMessage.setVisibility(View.GONE);
+            btnSend.setVisibility(View.GONE);
+        }
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

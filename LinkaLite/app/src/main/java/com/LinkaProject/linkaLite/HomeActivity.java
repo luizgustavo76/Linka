@@ -157,7 +157,9 @@ public class HomeActivity extends TabActivity {
             btnChat.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    startActivity(new Intent(HomeActivity.this, chatActivity.class));
+                    Intent intent = new Intent(HomeActivity.this, chatActivity.class);
+                    intent.putExtra("isGuest", isGuest);
+                    startActivity(intent);
                 }
             });
         }
