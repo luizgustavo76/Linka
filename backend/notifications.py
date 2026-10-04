@@ -1,11 +1,12 @@
-from flask import Flask, jsonify, request, Blueprint, g
+from flask import Flask, jsonify, request, Blueprint
 import os
 import sqlite3
+
 notifications_blueprint = Blueprint("notifications", __name__)
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
-os.makedirs(db_dir, exist_ok=True) # Garante que a pasta DB exista
+os.makedirs(db_dir, exist_ok=True)
 notifications_dir = os.path.join(db_dir, "notifications.db")
 
 def get_db():
@@ -31,6 +32,7 @@ def create_db():
     """)
     conn.commit()
     conn.close()
+    print(f"[DEBUG Notifications] DB verificado em: {notifications_dir}")
 
 create_db()
 
@@ -39,18 +41,31 @@ def notifications():
     data = request.get_json(force=True) or {}
     username = data.get("username")
     
+    print(f"\n[DEBUG /notifications] Requisição recebida com JSON: {data}")
+
     if not username:
-        print(" [LOG FLASK] Requisição chegou sem username!")
+        print(" [DEBUG /notifications] Erro: Requisição sem 'username'!")
         return jsonify([]), 200
+
+    username = str(username).strip()
 
     conn = get_db()
     cur = conn.cursor()
+
+    # INSPEÇÃO DO BANCO: Lista todos os registros existentes no log do servidor
+    cur.execute("SELECT id, receiver, from_user, read, content FROM notifications")
+    raw_all = cur.fetchall()
+    print(f" [DEBUG /notifications] Total de registros no arquivo DB: {len(raw_all)}")
+    for row in raw_all:
+        print(f"   -> ID: {row[0]} | Receiver: '{row[1]}' | From: '{row[2]}' | Read: {row[3]} | Content: '{row[4]}'")
+
+    # Busca registros correspondentes ao usuário e pendentes de leitura
     cur.execute(
-        "SELECT receiver, from_user, datetime, type, content, read, id FROM notifications WHERE receiver = ? AND (read = 0 OR read = FALSE)", 
+        "SELECT receiver, from_user, datetime, type, content, read, id FROM notifications WHERE receiver = ? AND (read = 0 OR read IS NULL OR read = FALSE)", 
         (username,)
     )
     result = cur.fetchall()
-    conn.close() # REMOVIDO O UPDATE AUTOMÁTICO AQUI!
+    conn.close()
     
     notifications_list = []
     for items in result:
@@ -60,17 +75,20 @@ def notifications():
             "datetime": items[2],
             "type": items[3],
             "content": items[4],
-            "read": items[5],
+            "read": bool(items[5]),
             "id": items[6] 
         })
         
-    print(f" [LOG FLASK] Retornando {len(notifications_list)} notificações para {username}")
+    print(f" [DEBUG /notifications] Retornando {len(notifications_list)} notificações para '{username}'")
     return jsonify(notifications_list), 200
+
 @notifications_blueprint.route("/set-read-notification", methods=["POST"])
 def set_read():
     data = request.get_json(force=True) or {}
     id_notif = data.get("id")
     
+    print(f"\n[DEBUG /set-read-notification] Payload recebido: {data}")
+
     if id_notif is None:
         return jsonify({"error": "Missing notification id"}), 400
         
@@ -85,5 +103,5 @@ def set_read():
     conn.commit()
     conn.close()
     
-    print(f" [LOG FLASK] Notificação {id_notif} marcada como LIDA com sucesso!")
+    print(f" [DEBUG /set-read-notification] Notificação ID {id_notif} marcada como LIDA!")
     return jsonify({"status": "success"}), 200
