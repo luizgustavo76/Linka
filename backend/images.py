@@ -2,19 +2,14 @@ import os
 import urllib.parse
 import uuid
 import dotenv
-from flask import Blueprint, jsonify, redirect, request
+import requests
+from flask import Blueprint, Response, jsonify, redirect, request
 from supabase import Client, create_client
 
 dotenv.load_dotenv("backend.env")
 supabase: Client = create_client(
     os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY")
 )
-
-# URL do seu Cloudflare Worker (pode salvar no backend.env ou usar a padrão)
-WORKER_URL = os.getenv(
-    "CLOUDFLARE_WORKER_URL", 
-    "https://fancy-fire-49d2.luizsgustavo76.workers.dev"
-).rstrip("/")
 
 image_bp = Blueprint("image_bp", __name__)
 
@@ -39,6 +34,11 @@ def normalize_url(url_str):
     return url_str
 
 
+def get_domain(url_str):
+    parsed = urllib.parse.urlparse(url_str)
+    return parsed.netloc.lower()
+
+
 @image_bp.route("/lite-render", methods=["GET"])
 def lite_render():
     raw_url = request.args.get("url")
@@ -52,9 +52,49 @@ def lite_render():
 
     target_url = normalize_url(target_url)
     target_url = clean_reddit_url(target_url)
-    encoded_target = urllib.parse.quote(target_url, safe="")
-    worker_redirect_url = f"{WORKER_URL}/?url={encoded_target}"
-    return redirect(worker_redirect_url, code=302)
+    domain = get_domain(target_url)
+
+    allowed_domains = ["supabase.co", "i.redd.it", "preview.redd.it", "redd.it"]
+    is_allowed = any(domain.endswith(d) or domain == d for d in allowed_domains)
+
+    if not is_allowed:
+        return redirect(target_url, code=302)
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36",
+        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+    }
+
+    try:
+        response = requests.get(target_url, headers=headers, timeout=12)
+
+        if response.status_code != 200 or not response.content:
+            return jsonify({
+                "error": "Failed to fetch image directly", 
+                "status_code": response.status_code
+            }), 502
+
+        content_type = response.headers.get("Content-Type", "").lower()
+
+        if not content_type.startswith("image/"):
+            return jsonify({
+                "error": "Target URL is not a valid image",
+                "received_content_type": content_type
+            }), 502
+
+        resp = Response(
+            response.content,
+            status=200,
+            mimetype=content_type,
+        )
+        resp.headers["Cache-Control"] = "public, max-age=86400"
+        resp.headers["Content-Type"] = content_type
+
+        return resp
+
+    except Exception as e:
+        print(f"[DEBUG] Exception na rota lite-render: {e}", flush=True)
+        return jsonify({"error": "Direct image fetch failed", "details": str(e)}), 502
 
 
 @image_bp.route("/upload-image", methods=["POST"])
@@ -70,6 +110,7 @@ def upload_image():
     filename = (file.filename or "image.jpg").lower()
     file_ext = os.path.splitext(filename)[1]
 
+    # Detecção robusta do formato (extensão, Content-Type ou Magic Bytes)
     mime_types = {
         ".jpg": "image/jpeg",
         ".jpeg": "image/jpeg",
@@ -78,7 +119,7 @@ def upload_image():
     }
 
     content_type = file.content_type or ""
-
+    
     if file_ext in mime_types:
         ct = mime_types[file_ext]
         ext = ".jpg" if file_ext == ".jpeg" else file_ext
@@ -89,6 +130,7 @@ def upload_image():
     elif "jpeg" in content_type or "jpg" in content_type:
         ct, ext = "image/jpeg", ".jpg"
     else:
+        # Fallback por assinatura binária dos primeiros bytes
         if raw_bytes.startswith(b"\xff\xd8\xff"):
             ct, ext = "image/jpeg", ".jpg"
         elif raw_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
