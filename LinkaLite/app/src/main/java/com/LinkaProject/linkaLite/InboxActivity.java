@@ -44,6 +44,8 @@ public class InboxActivity extends Activity {
             JSONObject jsonInbox = new JSONObject();
             jsonInbox.put("username", username);
             String responseStr = request.requestHTTP(url + "/inbox", "post", jsonInbox, InboxActivity.this);
+            String responseNotifications = request.requestHTTP(url + "/notifications", "post", jsonInbox, InboxActivity.this);
+            
             if (responseStr != null && !responseStr.trim().equals("")) {
                 JSONObject rootObject = new JSONObject(responseStr);
                 JSONArray inboxArray = rootObject.getJSONArray("inbox");

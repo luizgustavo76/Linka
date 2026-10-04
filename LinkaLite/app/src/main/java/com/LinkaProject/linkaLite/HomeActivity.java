@@ -422,7 +422,6 @@ public class HomeActivity extends TabActivity {
                 tvUsername.setText("@" + username);
                 tvDate.setText(datetime);
 
-                // Carrega foto de perfil reutilizando o ImageLoader único
                 imageLoader.viewProfilePicture(context, username, avatarPost);
 
                 if (textPost.contains("[IMAGE]")) {
