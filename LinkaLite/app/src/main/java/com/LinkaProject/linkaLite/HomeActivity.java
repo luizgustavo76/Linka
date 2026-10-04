@@ -443,7 +443,7 @@ public class HomeActivity extends TabActivity {
                                     }
                                 });
 
-                                imageLoader.LoadImageUrl(newUrl, imgPost);
+                                imageLoader.LoadImageUrl(urlProxy, imgPost);
                                 textPost = textPost.replace(line, "").trim();
                                 break;
                             }
