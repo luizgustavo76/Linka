@@ -40,8 +40,15 @@
             android:textSize="11sp"
             android:textColor="#9BA1B0" />
     </LinearLayout>
-
-    <!-- Imagem do Post (com limite pra não estourar a tela) -->
+    <Gallery
+        android:id="@+id/galleryImages"
+        android:layout_width="fill_parent"
+        android:layout_height="200dip"
+        android:layout_marginTop="6dip"
+        android:layout_marginBottom="6dip"
+        android:spacing="8dip"
+        android:unselectedAlpha="0.6"
+        android:visibility="gone" />
     <ImageView
         android:id="@+id/imgPost"
         android:layout_width="fill_parent"
@@ -55,7 +62,6 @@
         android:visibility="gone"
         android:contentDescription="Imagem do Post" />
 
-    <!-- Conteúdo do Post -->
     <TextView
         android:id="@+id/postText"
         android:layout_width="fill_parent"

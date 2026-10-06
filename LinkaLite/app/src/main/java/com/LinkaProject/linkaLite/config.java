@@ -180,7 +180,7 @@ public class config {
         try {
             StringBuilder iniBuilder = new StringBuilder();
             iniBuilder.append("[FEDERATION-TIMELINE]\n");
-            iniBuilder.append("urls=http://linkaProject.pythonanywhere.com/feed\n");
+            iniBuilder.append("urls=\n");
             
             String iniString = iniBuilder.toString();
             saveCfg(context, fileName, iniString);

@@ -19,6 +19,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
+import android.widget.Gallery;
+import java.util.List;
+import java.util.ArrayList;
+import android.widget.Gallery;
+import android.widget.AdapterView;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
@@ -48,7 +53,7 @@ public class HomeActivity extends TabActivity {
     private boolean isGuest = false;
     private ScheduledExecutorService scheduler;
     private ScheduledExecutorService schedulerNotifications;
-
+    private Gallery galleryImages;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -127,7 +132,7 @@ public class HomeActivity extends TabActivity {
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         LinearLayout layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
-
+        galleryImages = (Gallery) findViewById(R.id.galleryImages);
         Intent intent = getIntent();
         isGuest = intent.getBooleanExtra("isGuest", false);
         if (isGuest && layoutGuest != null) {
@@ -372,16 +377,12 @@ public class HomeActivity extends TabActivity {
             TextView tvText = (TextView) convertView.findViewById(R.id.postText);
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
             Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
-
-            // 1. Limpeza de tags e Bitmaps ao reciclar a View
             avatarPost.setTag(null);
             avatarPost.setImageBitmap(null);
 
             imgPost.setTag(null);
             imgPost.setImageBitmap(null);
             imgPost.setVisibility(View.GONE);
-
-            // 2. Redimensionamento por escala proporcional sem cortar nada
             imgPost.setAdjustViewBounds(true);
             imgPost.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
@@ -419,31 +420,63 @@ public class HomeActivity extends TabActivity {
                 imageLoader.viewProfilePicture(context, username, avatarPost);
 
                 if (textPost.contains("[IMAGE]")) {
+                    List<String> photos = new ArrayList<String>();
                     String[] lines = textPost.split("\n");
                     for (String line : lines) {
                         if (line.contains("[IMAGE]")) {
-                            final String newUrl = line.replace("[IMAGE]", "").trim();
+                            String newUrl = line.replace("[IMAGE]", "").trim();
                             if (!newUrl.isEmpty()) {
-                                imgPost.setVisibility(View.VISIBLE);
-                                final String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + newUrl;
+                                photos.add(newUrl);
+                            }
+                            textPost = textPost.replace(line, "").trim();
+                        }
+                    }
 
-                                imgPost.setOnClickListener(new View.OnClickListener() {
+                    // 3. Processa a exibição das imagens
+                    if (!photos.isEmpty()) {
+                        if (photos.size() == 1) {
+                            final String singleUrl = photos.get(0);
+                            imgPost.setVisibility(View.VISIBLE);
+                            if (galleryImages != null) {
+                                galleryImages.setVisibility(View.GONE);
+                            }
+                            final String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + singleUrl;
+                            imgPost.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
+                                    intent.putExtra("type", "Image");
+                                    intent.putExtra("url", urlProxy);
+                                    startActivity(intent);
+                                }
+                            });
+
+                            if ("foryou".equals(tabId)) {
+                                imageLoader.LoadImageUrl("https://fancy-fire-49d2.luizsgustavo76.workers.dev/?url=" + singleUrl, imgPost);
+                            } else {
+                                imageLoader.LoadImageUrl(urlProxy, imgPost);
+                            }
+                        } else {
+                            imgPost.setVisibility(View.GONE);
+
+                            if (galleryImages != null) {
+                                galleryImages.setVisibility(View.VISIBLE);
+                                
+                                ImageGalleryAdapter galleryAdapter = new ImageGalleryAdapter(HomeActivity.this, photos);
+                                galleryImages.setAdapter(galleryAdapter);
+
+                                galleryImages.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                                     @Override
-                                    public void onClick(View v) {
+                                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                        String selectedUrl = photos.get(position);
+                                        String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + selectedUrl;
+                                        
                                         Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
                                         intent.putExtra("type", "Image");
                                         intent.putExtra("url", urlProxy);
                                         startActivity(intent);
                                     }
                                 });
-                                
-                                if ("foryou".equals(tabId)) {
-                                    imageLoader.LoadImageUrl("https://fancy-fire-49d2.luizsgustavo76.workers.dev/?url=" + newUrl, imgPost);
-                                } else {
-                                    imageLoader.LoadImageUrl(urlProxy, imgPost);
-                                }
-                                textPost = textPost.replace(line, "").trim();
-                                break;
                             }
                         }
                     }
