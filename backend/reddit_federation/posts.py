@@ -221,8 +221,7 @@ def subreddit_posts(subreddit=None):
                     )
 
                     lite_render_url = f"{PROXY_BASE}{safe_image_url}"
-                    components.append(f"[IMAGE]{lite_render_url}")
-
+                    components.append(f"[IMAGE]", safe_image_url)
                 # MONTA POST
                 final_text = "\n".join(components)
 
