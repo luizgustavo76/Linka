@@ -11,10 +11,6 @@ post_bp = Blueprint("reddit_post_bp", __name__)
 
 CLOUDFLARE_WORKER_URL = "https://fancy-fire-49d2.luizsgustavo76.workers.dev"
 
-# Todas as imagens do Reddit passam pelo lite-render.
-# O Android antigo NÃO acessa o Reddit diretamente.
-PROXY_BASE = "http://linkaProject.pythonanywhere.com/lite-render?url="
-
 
 def sanitizar_url_reddit(url):
     """
@@ -210,20 +206,11 @@ def subreddit_posts(subreddit=None):
                 if body:
                     components.append(body)
 
+                # IMAGEM DIRETA DO REDDIT
                 if image_url:
                     clean_img_url = sanitizar_url_reddit(image_url)
+                    components.append(f"[IMAGE]{clean_img_url}")
 
-                    # Codifica a URL inteira para o parâmetro ?url= do lite-render
-                    safe_image_url = urllib.parse.quote(
-                        clean_img_url,
-                        safe="",
-                    )
-
-                    # Junta o PROXY_BASE + a URL codificada
-                    lite_render_url = f"{PROXY_BASE}{safe_image_url}"
-
-                    # Usa a variável lite_render_url completa
-                    components.append(f"[IMAGE]{lite_render_url}")
                 final_text = "\n".join(components)
 
                 posts.append(
