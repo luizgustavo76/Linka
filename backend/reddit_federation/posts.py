@@ -210,7 +210,6 @@ def subreddit_posts(subreddit=None):
                 if body:
                     components.append(body)
 
-                # IMAGEM
                 if image_url:
                     clean_img_url = sanitizar_url_reddit(image_url)
 
@@ -220,8 +219,11 @@ def subreddit_posts(subreddit=None):
                         safe="",
                     )
 
+                    # Junta o PROXY_BASE + a URL codificada
                     lite_render_url = f"{PROXY_BASE}{safe_image_url}"
-                    components.append(f"[IMAGE]{safe_image_url}")
+
+                    # Usa a variável lite_render_url completa
+                    components.append(f"[IMAGE]{lite_render_url}")
                 final_text = "\n".join(components)
 
                 posts.append(
