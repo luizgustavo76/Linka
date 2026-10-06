@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONObject;
@@ -16,40 +17,79 @@ import org.json.JSONObject;
 public class newPost extends Activity {
     private static final String TAG = "Linka_Upload";
     private static final int PICK_IMAGE_REQUEST = 1001;
+
     private TextView newPostText;
     private EditText textPost;
     private Button btnSend;
     private Button btnImage;
+    private Button btnLogin;
+    private LinearLayout layoutGuest;
+    private boolean isGuest;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);        
         setContentView(R.layout.new_post_activity);
 
+        // Mapeamento dos componentes da tela
+        layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
+        btnLogin = (Button) findViewById(R.id.btnLogin);
         newPostText = (TextView) findViewById(R.id.newPostText);
         textPost = (EditText) findViewById(R.id.textPost);
         btnSend = (Button) findViewById(R.id.btnSend);
         btnImage = (Button) findViewById(R.id.btnImage);
 
-        btnSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String postContent = textPost.getText().toString();
-                if (postContent.trim().isEmpty()) {
-                    Toast.makeText(newPost.this, "write something!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                btnSend.setEnabled(false);
-                new SendPostTask().execute(postContent);
-            }
-        });
+        isGuest = getIntent().getBooleanExtra("isGuest", false);
 
-        btnImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openGallery();
+        // Lógica de exibição conforme status do usuário
+        if (isGuest) {
+            // Se for VISITANTE: mostra o aviso/botão de login e esconde o formulário de post
+            if (layoutGuest != null) layoutGuest.setVisibility(View.VISIBLE);
+            if (newPostText != null) newPostText.setVisibility(View.GONE);
+            if (textPost != null) textPost.setVisibility(View.GONE);
+            if (btnSend != null) btnSend.setVisibility(View.GONE);
+            if (btnImage != null) btnImage.setVisibility(View.GONE);
+
+            if (btnLogin != null) {
+                btnLogin.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(newPost.this, LoginActivity.class);
+                        startActivity(intent);
+                    }
+                });
             }
-        });
+        } else {
+            if (layoutGuest != null) layoutGuest.setVisibility(View.GONE);
+            if (newPostText != null) newPostText.setVisibility(View.VISIBLE);
+            if (textPost != null) textPost.setVisibility(View.VISIBLE);
+            if (btnSend != null) btnSend.setVisibility(View.VISIBLE);
+            if (btnImage != null) btnImage.setVisibility(View.VISIBLE);
+
+            if (btnSend != null) {
+                btnSend.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String postContent = textPost.getText().toString();
+                        if (postContent.trim().length() == 0) {
+                            Toast.makeText(newPost.this, "write something!", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        btnSend.setEnabled(false);
+                        new SendPostTask().execute(postContent);
+                    }
+                });
+            }
+
+            if (btnImage != null) {
+                btnImage.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openGallery();
+                    }
+                });
+            }
+        }
     }
 
     private void openGallery() {
@@ -65,7 +105,7 @@ public class newPost extends Activity {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             Uri selectedImageUri = data.getData();
             Log.d(TAG, "Selected Image Uri: " + selectedImageUri.toString());
-            btnImage.setEnabled(false);
+            if (btnImage != null) btnImage.setEnabled(false);
             new UploadImageTask().execute(selectedImageUri);
         } else {
             Log.w(TAG, "Image selection canceled or failed. ResultCode: " + resultCode);
@@ -104,14 +144,14 @@ public class newPost extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            btnImage.setEnabled(true);
-            if (result != null && !result.isEmpty()) {
+            if (btnImage != null) btnImage.setEnabled(true);
+            if (result != null && result.length() > 0) {
                 try {
                     JSONObject jsonResponse = new JSONObject(result);
                     String imageUrl = jsonResponse.optString("image_url", "");
 
-                    if (!imageUrl.isEmpty()) {
-                        textPost.append("\n[IMAGE]" + imageUrl);
+                    if (imageUrl.length() > 0) {
+                        if (textPost != null) textPost.append("\n[IMAGE]" + imageUrl);
                         Toast.makeText(newPost.this, "Image uploaded!", Toast.LENGTH_SHORT).show();
                         Log.d(TAG, "Upload SUCCESS: " + imageUrl);
                     } else {
@@ -164,8 +204,8 @@ public class newPost extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
-            btnSend.setEnabled(true);
-            if (result != null && !result.isEmpty()) {
+            if (btnSend != null) btnSend.setEnabled(true);
+            if (result != null && result.length() > 0) {
                 Toast.makeText(newPost.this, "post was send!", Toast.LENGTH_SHORT).show();
                 finish();
             } else {

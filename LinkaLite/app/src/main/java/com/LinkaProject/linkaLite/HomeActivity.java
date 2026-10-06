@@ -186,7 +186,9 @@ public class HomeActivity extends TabActivity {
             newPost.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    startActivity(new Intent(HomeActivity.this, newPost.class));
+                    Intent intent = new Intent(HomeActivity.this, newPost.class);
+                    intent.putExtra("isGuest", isGuest);
+                    startActivity(intent);
                 }
             });
         }

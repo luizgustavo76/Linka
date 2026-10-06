@@ -9,7 +9,31 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="8dip">
+        <LinearLayout 
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dip">
+            <TextView
+                android:id="@+id/guestText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="You are a guest! create or login with a account to Create a post"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginTop="8dip"
+                android:layout_marginBottom="10dip" 
+            android:textColor="#FFFFFF" />
+            <Button
+                android:id="@+id/btnLogin"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="Click here to login"
+                android:textSize="14sp"
+                android:layout_marginTop="10dip" />
 
+        </LinearLayout>
         <TextView
             android:id="@+id/newPostText"
             android:layout_width="fill_parent"
