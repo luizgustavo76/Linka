@@ -17,7 +17,6 @@ import java.util.concurrent.Executors;
 public class ImageLoader {
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
-    // Executor unico e estatico para toda a aplicacao
     private static final ExecutorService executor = Executors.newFixedThreadPool(4);
 
     private int[] getDensityBasedDimensions(Context context, boolean isAvatar) {
@@ -79,6 +78,7 @@ public class ImageLoader {
             return;
         }
 
+        // Define a tag na Thread principal para validar contra trocas no scroll
         targetView.setTag(imageUrl);
         final Context appContext = targetView.getContext();
 
@@ -91,12 +91,16 @@ public class ImageLoader {
                 byte[] rawBytes = request.requestBytes(imageUrl, "GET", appContext);
 
                 if (rawBytes != null && rawBytes.length > 0) {
+                    // Checagem prévia antes do processamento pesado do bitmap
+                    if (!imageUrl.equals(targetView.getTag())) return;
+
                     final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
 
                     if (decodedBitmap != null) {
                         mainHandler.post(new Runnable() {
                             @Override
                             public void run() {
+                                // Confere novamente se a ImageView ainda pertence a esse mesmo post
                                 if (imageUrl.equals(targetView.getTag())) {
                                     targetView.setImageBitmap(decodedBitmap);
                                 }
@@ -150,6 +154,8 @@ public class ImageLoader {
 
                                 int[] dims = getDensityBasedDimensions(context, true);
                                 byte[] rawBytes = request.requestBytes(proxyUrl, "GET", context);
+
+                                if (!tagKey.equals(targetImageView.getTag())) return;
 
                                 if (rawBytes != null && rawBytes.length > 0) {
                                     final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);

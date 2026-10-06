@@ -43,7 +43,6 @@ public class newPost extends Activity {
 
         // Lógica de exibição conforme status do usuário
         if (isGuest) {
-            // Se for VISITANTE: mostra o aviso/botão de login e esconde o formulário de post
             if (layoutGuest != null) layoutGuest.setVisibility(View.VISIBLE);
             if (newPostText != null) newPostText.setVisibility(View.GONE);
             if (textPost != null) textPost.setVisibility(View.GONE);

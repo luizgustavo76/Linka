@@ -373,9 +373,17 @@ public class HomeActivity extends TabActivity {
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
             Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
 
+            // 1. Limpeza de tags e Bitmaps ao reciclar a View
+            avatarPost.setTag(null);
             avatarPost.setImageBitmap(null);
+
+            imgPost.setTag(null);
             imgPost.setImageBitmap(null);
             imgPost.setVisibility(View.GONE);
+
+            // 2. Redimensionamento por escala proporcional sem cortar nada
+            imgPost.setAdjustViewBounds(true);
+            imgPost.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
             tvUsername.setOnClickListener(new View.OnClickListener() {
                 @Override
