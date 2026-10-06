@@ -1,7 +1,6 @@
 package com.LinkaProject.linkaLite;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
@@ -29,6 +28,7 @@ public class EditTimeline extends Activity {
     private ImageButton btnProfile;
     private ListView listView;
     private String url = "";
+    private List<FederationItem> itemList = new ArrayList<FederationItem>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -114,8 +114,15 @@ public class EditTimeline extends Activity {
                 return;
             }
 
-            List<FederationItem> itemList = new ArrayList<FederationItem>();
             try {
+                itemList.clear();
+                itemList.add(new FederationItem(
+                    "", 
+                    "Servidor local padrão", 
+                    "Linka-local", 
+                    "http://linkaProject.pythonanywhere.com"
+                ));
+
                 JSONArray jsonArray = new JSONArray(response);
                 for (int i = 0; i < jsonArray.length(); i++) {
                     JSONObject obj = jsonArray.getJSONObject(i);

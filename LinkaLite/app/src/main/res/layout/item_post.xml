@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-    android:background="@drawable/card_item"
-    android:layout_marginBottom="4dip"
-    android:padding="10dip" 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:background="#282c37"
+    android:orientation="vertical"
+    android:padding="10dip"
+    android:layout_marginBottom="4dip">
 
     <!-- Cabeçalho: Avatar + Nome + Data -->
     <LinearLayout
@@ -17,8 +17,8 @@
 
         <ImageView
             android:id="@+id/postAvatar"
-            android:layout_width="28dip"
-            android:layout_height="28dip"
+            android:layout_width="32dip"
+            android:layout_height="32dip"
             android:scaleType="centerCrop" />
 
         <TextView
@@ -29,27 +29,29 @@
             android:text="\@username"
             android:textStyle="bold"
             android:textSize="13sp"
-            android:layout_marginLeft="6dip" 
-        android:textColor="#FFFFFF" />
+            android:layout_marginLeft="8dip"
+            android:textColor="#FFFFFF" />
 
         <TextView
             android:id="@+id/postDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="12m"
-            android:textSize="10sp" 
-        android:textColor="#FFFFFF" />
+            android:textSize="11sp"
+            android:textColor="#9BA1B0" />
     </LinearLayout>
 
+    <!-- Imagem do Post (com limite pra não estourar a tela) -->
     <ImageView
         android:id="@+id/imgPost"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"
-        android:scaleType="fitCenter"
+        android:maxHeight="250dip"
+        android:scaleType="centerCrop"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginTop="8dip"
+        android:layout_marginBottom="8dip"
         android:visibility="gone"
         android:contentDescription="Imagem do Post" />
 
@@ -62,10 +64,11 @@
         android:autoLink="web|email"
         android:textSize="13sp"
         android:layout_marginTop="4dip"
-        android:layout_marginBottom="6dip" 
-        android:textColor="#FFFFFF" />
+        android:layout_marginBottom="6dip"
+        android:textColor="#EFEFEF"
+        android:textColorLink="#6364FF" />
 
-    <!-- Rodapé: Botão de Comentários em Texto + Estrelas -->
+    <!-- Rodapé original sem alterações de estrutura -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
