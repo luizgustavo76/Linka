@@ -225,7 +225,7 @@ def fetch_single_federation(node_url):
 def view_external_posts():
     data = request.get_json() or {}
     urls = data.get("urls")
-
+    
     if not urls or not isinstance(urls, list):
         return jsonify({"error": "url invalid or bad formatted"}), 400
 
@@ -330,10 +330,19 @@ ORDER BY total_stars DESC;""")
 def feed():
     conn = get_db()
     cur = conn.cursor()
-
-    cur.execute("SELECT id, username, text_post, datetime FROM posts ORDER BY id DESC")
+    cur.execute("""
+        SELECT 
+            p.id, 
+            p.username, 
+            p.text_post, 
+            p.datetime, 
+            COUNT(c.id) AS comment_count
+        FROM posts p
+        LEFT JOIN comments c ON c.post_id = p.id
+        GROUP BY p.id, p.username, p.text_post, p.datetime
+        ORDER BY p.id DESC
+    """)
     posts = cur.fetchall()
-
     conn.close()
 
     lista_posts = []
@@ -342,7 +351,8 @@ def feed():
             "id": post[0],
             "username": post[1],
             "text_post": post[2],
-            "datetime": post[3]
+            "datetime": post[3],
+            "comment_count": post[4] 
         })
 
     return jsonify(lista_posts), 200
