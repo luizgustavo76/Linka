@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-    android:background="@drawable/card_item"
+    android:background="#282c37"
     android:layout_marginBottom="4dip"
     android:padding="10dip" 
     xmlns:android="http://schemas.android.com/apk/res/android"
