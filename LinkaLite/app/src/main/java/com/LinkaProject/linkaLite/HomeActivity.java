@@ -377,6 +377,7 @@ public class HomeActivity extends TabActivity {
             TextView tvText = (TextView) convertView.findViewById(R.id.postText);
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
             ImageButton btnComments = (ImageButton) convertView.findViewById(R.id.btnComments);
+            TextView txtCommentCount = (TextView) convertView.findViewById(R.id.txtCommentCount);
             avatarPost.setTag(null);
             avatarPost.setImageBitmap(null);
 
@@ -402,6 +403,7 @@ public class HomeActivity extends TabActivity {
                 String username = post.optString("username", post.optString("user", "entity404"));
                 String textPost = post.optString("text_post", post.optString("text", ""));
                 String datetime = post.optString("datetime", post.optString("date", ""));
+                String commentsCount = post.optString("comment_count", "0");
                 final String id = post.optString("id", "");
 
                 btnComments.setOnClickListener(new View.OnClickListener() {
@@ -413,7 +415,7 @@ public class HomeActivity extends TabActivity {
                         startActivity(intent);
                     }
                 });
-
+                txtCommentCount.setText(commentsCount);
                 tvUsername.setText("@" + username);
                 tvDate.setText(datetime);
 

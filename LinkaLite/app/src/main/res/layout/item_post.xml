@@ -77,22 +77,27 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:paddingTop="2dip"
+        android:paddingBottom="2dip">
 
         <ImageButton
             android:id="@+id/btnComments"
-            android:layout_width="wrap_content"
-            android:layout_height="28dip"
-            android:paddingLeft="8dip"
-            android:paddingRight="8dip"
+            android:layout_width="24dip"
+            android:layout_height="24dip"
             android:background="@null"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_comments" />
 
-        <View
-            android:layout_width="0dip"
-            android:layout_height="1dip"
-            android:layout_weight="1" />
+        <TextView
+            android:id="@+id/txtCommentCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:textColor="#8C93A8"
+            android:layout_marginLeft="6dip" />
 
     </LinearLayout>
 
