@@ -10,10 +10,12 @@
         android:orientation="vertical"
         android:padding="8dip">
         <LinearLayout 
+            android:id="@+id/layoutGuest"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="8dip">
+            android:padding="8dip"
+            android:visibility="gone">
             <TextView
                 android:id="@+id/guestText"
                 android:layout_width="fill_parent"

@@ -40,8 +40,6 @@ public class newPost extends Activity {
         btnImage = (Button) findViewById(R.id.btnImage);
 
         isGuest = getIntent().getBooleanExtra("isGuest", false);
-
-        // Lógica de exibição conforme status do usuário
         if (isGuest) {
             if (layoutGuest != null) layoutGuest.setVisibility(View.VISIBLE);
             if (newPostText != null) newPostText.setVisibility(View.GONE);
@@ -59,7 +57,9 @@ public class newPost extends Activity {
                 });
             }
         } else {
-            if (layoutGuest != null) layoutGuest.setVisibility(View.GONE);
+            if (layoutGuest != null) layoutGuest.setVisibility(View.GONE);else{
+                layoutGuest.setVisibility(View.VISIBLE);
+            }
             if (newPostText != null) newPostText.setVisibility(View.VISIBLE);
             if (textPost != null) textPost.setVisibility(View.VISIBLE);
             if (btnSend != null) btnSend.setVisibility(View.VISIBLE);
