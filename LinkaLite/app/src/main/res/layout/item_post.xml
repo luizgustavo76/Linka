@@ -3,12 +3,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="#282c37"
+    android:background="#181820"
     android:orientation="vertical"
     android:padding="10dip"
     android:layout_marginBottom="4dip">
 
-    <!-- Cabeçalho: Avatar + Nome + Data -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -72,23 +71,23 @@
         android:layout_marginTop="4dip"
         android:layout_marginBottom="6dip"
         android:textColor="#EFEFEF"
-        android:textColorLink="#6364FF" />
+        android:textColorLink="#7f6786" />
 
-    <!-- Rodapé original sem alterações de estrutura -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <Button
+        <ImageButton
             android:id="@+id/btnComments"
             android:layout_width="wrap_content"
             android:layout_height="28dip"
-            android:text="Comments"
-            android:textSize="9sp"
             android:paddingLeft="8dip"
-            android:paddingRight="8dip" />
+            android:paddingRight="8dip"
+            android:background="@null"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icon_comments" />
 
         <View
             android:layout_width="0dip"

@@ -376,7 +376,7 @@ public class HomeActivity extends TabActivity {
             TextView tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
             TextView tvText = (TextView) convertView.findViewById(R.id.postText);
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
-            Button btnComments = (Button) convertView.findViewById(R.id.btnComments);
+            ImageButton btnComments = (ImageButton) convertView.findViewById(R.id.btnComments);
             avatarPost.setTag(null);
             avatarPost.setImageBitmap(null);
 
