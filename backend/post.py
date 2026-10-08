@@ -225,7 +225,7 @@ def fetch_single_federation(node_url):
 def view_external_posts():
     data = request.get_json() or {}
     urls = data.get("urls")
-    
+    filters = data.get("filters")
     if not urls or not isinstance(urls, list):
         return jsonify({"error": "url invalid or bad formatted"}), 400
 
@@ -234,20 +234,31 @@ def view_external_posts():
 
     aggregated_posts = []
 
-    with ThreadPoolExecutor(max_workers=50) as executor:
-        futures = [executor.submit(fetch_single_federation, url) for url in urls]
-        for future in as_completed(futures):
-            try:
-                result = future.result()
-                print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") 
+   with ThreadPoolExecutor(max_workers=20) as executor:  # 20 workers é mais seguro contra limites do PythonAnywhere
+    futures = [executor.submit(fetch_single_federation, url) for url in urls]
+    
+    for future in as_completed(futures):
+        try:
+            result = future.result()
+            print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") 
+
+            if not result:
+                continue
+            posts_list = []
+            if isinstance(result, list):
+                posts_list = result
+            elif isinstance(result, dict) and "posts" in result and isinstance(result["posts"], list):
+                posts_list = result["posts"]
+            for post in posts_list:
+                if not isinstance(post, dict):
+                    continue
                 
-                if result:
-                    if isinstance(result, list):
-                        aggregated_posts.extend(result)
-                    elif isinstance(result, dict) and "posts" in result: 
-                        aggregated_posts.extend(result["posts"])
-            except Exception as e:
-                print(f"DEBUG - Erro na thread: {e}") 
+                text = post.get("text_post", "")
+                if filters is None or (filters not in text):
+                    aggregated_posts.append(post)
+
+        except Exception as e:
+            print(f"DEBUG - Erro na thread: {e}")
 
     if not aggregated_posts:
         return jsonify([]), 200
@@ -255,6 +266,7 @@ def view_external_posts():
     formated_feed = []
     for index, post in enumerate(aggregated_posts, start=1):
         if isinstance(post, dict):
+            
             post["id"] = index
             formated_feed.append(post)
 
