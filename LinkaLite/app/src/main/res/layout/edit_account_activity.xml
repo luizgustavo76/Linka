@@ -37,7 +37,6 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Barra inferior fixa no rodapé -->
     <LinearLayout 
             android:layout_width="fill_parent"
             android:layout_height="40dip" 

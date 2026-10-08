@@ -1,10 +1,18 @@
+from datetime import datetime
 import json
 import unicodedata
-from datetime import datetime
+import urllib.parse
 import requests
 
 BSKY_HANDLE = "luizsgustavo76.bsky.social"
 BSKY_APP_PASSWORD = "acas-tyic-vd47-i6ci"
+
+
+def aplicar_proxy_wsrv(original_url):
+    if not original_url:
+        return ""
+    url_enc = urllib.parse.quote(original_url, safe="")
+    return f"https://wsrv.nl/?url={url_enc}&output=jpg&q=75"
 
 
 def get_bluesky_token():
@@ -81,7 +89,7 @@ def formate_bluesky(posts):
                     if ref:
                         img_url = f"https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:{author_info.get('did')}/{ref}@jpeg"
                 if img_url:
-                    images.append(img_url)
+                    images.append(aplicar_proxy_wsrv(img_url))
 
         if not text_post and not images:
             continue

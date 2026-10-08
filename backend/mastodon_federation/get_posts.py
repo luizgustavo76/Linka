@@ -1,8 +1,16 @@
+from datetime import datetime
 import json
 import unicodedata
-from datetime import datetime
+import urllib.parse
 from bs4 import BeautifulSoup
 import requests
+
+
+def aplicar_proxy_wsrv(original_url):
+    if not original_url:
+        return ""
+    url_enc = urllib.parse.quote(original_url, safe="")
+    return f"https://wsrv.nl/?url={url_enc}&output=jpg&q=75"
 
 
 def formate(posts):
@@ -67,7 +75,7 @@ def formate(posts):
             if isinstance(media, dict) and media.get("type") == "image":
                 img_url = media.get("url") or media.get("preview_url")
                 if img_url:
-                    images.append(img_url)
+                    images.append(aplicar_proxy_wsrv(img_url))
 
         if images:
             links_formatados = "".join(f"[IMAGE]{url}\n" for url in images)
@@ -104,34 +112,9 @@ def fetch_mastodon_posts(
     raw_posts = []
     max_id = None
 
-    # Paginação para ultrapassar a trava de 40 posts por requisição
     while len(raw_posts) < limit:
         fetch_limit = min(limit - len(raw_posts), 40)
         params = {"limit": fetch_limit}
 
         if max_id:
             params["max_id"] = max_id
-
-        try:
-            response = requests.get(
-                url, headers=headers, params=params, timeout=10
-            )
-
-            if response.status_code != 200:
-                print(f"[MASTODON ERROR] Status Code: {response.status_code}")
-                break
-
-            data = response.json()
-
-            if not isinstance(data, list) or not data:
-                break
-
-            raw_posts.extend(data)
-            max_id = data[-1].get("id")
-
-        except Exception as e:
-            print(f"[MASTODON EXCEPTION] {e}")
-            break
-
-    formatted_posts = formate(raw_posts)
-    return formatted_posts[:limit]
