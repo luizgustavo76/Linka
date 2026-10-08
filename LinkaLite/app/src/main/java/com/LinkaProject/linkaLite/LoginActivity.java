@@ -36,7 +36,6 @@ public class LoginActivity extends Activity {
             Log.d(TAG, "Cancelando LoginTask anterior em execução.");
             currentLoginTask.cancel(true);
         }
-        Log.d(TAG, "Iniciando nova LoginTask para o usuário: " + username);
         currentLoginTask = new LoginTask();
         currentLoginTask.execute(username, password);
     }

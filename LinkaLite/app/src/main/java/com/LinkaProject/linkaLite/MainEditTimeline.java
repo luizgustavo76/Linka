@@ -36,6 +36,7 @@ public class MainEditTimeline extends Activity{
         optionsListView = (ListView) findViewById(R.id.optionsListView);
         addItem(data, "Add new sources", "Add new post sources here.");
         addItem(data, "Filters", "Filter the hashtags you want to see—or not—and the order of your feed here.");
+        addItem(data, "Manual", "Add the URL here manually..");        
         SimpleAdapter adapter = new SimpleAdapter(
                 this,
                 data,
@@ -49,6 +50,8 @@ public class MainEditTimeline extends Activity{
                 switch (position) {
                     case 0:
                         startActivity(new Intent(MainEditTimeline.this, EditTimeline.class));
+                    case 2:
+                        startActivity(new Intent(MainEditTimeline.this, AddManualUrl.class));
                 }
             }
         });

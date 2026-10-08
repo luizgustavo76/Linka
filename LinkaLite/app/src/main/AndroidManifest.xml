@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <application android:label="Linka Lite"
+    android:theme="@android:style/Theme.DeviceDefault"
     android:icon="@drawable/icon"
     android:usesCleartextTraffic="true">
         <service
@@ -31,7 +32,10 @@
             android:name=".SignupActivity" 
             android:label="Register"
             android:exported="false" />
-            
+        <activity 
+            android:name=".AddManualUrl" 
+            android:label="Add a External url"
+            android:exported="false" />
         <activity 
             android:name=".HomeActivity" 
             android:label="Feed"
@@ -42,7 +46,7 @@
             android:exported="false" />
         <activity 
             android:name=".EditTimeline" 
-            android:label="Edit timeline"
+            android:label="Add new sources"
             android:exported="false" />
         <activity
             android:name=".newPost"
