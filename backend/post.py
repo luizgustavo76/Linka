@@ -18,7 +18,7 @@ json_path = os.path.join(base_dir, "backend.json")
 with open(json_path, "r") as f:
     modules_flags = json.load(f)
 
-root_flags = modules_flags["modules-flags"]
+root_flags = modules_flags.get("modules-flags", {})
 db_dir = os.path.join(base_dir, "DB")
 post_dir = os.path.join(db_dir, "post.db")
 
@@ -34,14 +34,15 @@ post_bp = Blueprint("post", __name__)
 if not os.path.exists(db_dir):
     os.makedirs(db_dir)
 
+
 def get_db():
     conn = sqlite3.connect(post_dir, timeout=10)
     conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.execute("PRAGMA cache_size=-10000;")
     return conn
+
 
 def create_db():
     conn = get_db()
@@ -83,7 +84,9 @@ def create_db():
     conn.commit()
     conn.close()
 
+
 create_db()
+
 
 def parse_datetime(val):
     """Normaliza Unix Timestamps e strings ISO para datetime comparável."""
@@ -113,6 +116,26 @@ def parse_datetime(val):
 
     return datetime.min.replace(tzinfo=timezone.utc)
 
+
+def extract_posts_from_response(result):
+    """Extrai listas de posts de múltiplos formatos de API (Bluesky, Reddit, Mastodon, etc)."""
+    if not result:
+        return []
+    if isinstance(result, list):
+        return result
+    if isinstance(result, dict):
+        for key in ["posts", "feed", "items", "data"]:
+            if key in result and isinstance(result[key], list):
+                return result[key]
+        
+        if "data" in result and isinstance(result["data"], dict):
+            children = result["data"].get("children")
+            if isinstance(children, list):
+                return [item.get("data", item) for item in children if isinstance(item, dict)]
+
+    return []
+
+
 @post_bp.route("/view-profile-posts", methods=["POST"])
 def view_profile_posts():
     data = request.get_json(silent=True) or {}
@@ -137,15 +160,18 @@ def view_profile_posts():
         })
     return jsonify(posts)
 
+
 @post_bp.route("/view-post", methods=["POST"])
 def view_post():
     data = request.get_json(silent=True) or {}
     post_id = data.get("post_id")
     conn = get_db()
     cur = conn.cursor()
-    posts = cur.execute("SELECT * FROM posts WHERE id = ?", (post_id,)).fetchall()
+    cur.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    posts = cur.fetchall()
     conn.close()
     return jsonify([dict(row) for row in posts])
+
 
 @post_bp.route("/comments", methods=["POST"])
 def new_comment():
@@ -177,6 +203,7 @@ def new_comment():
     else:
         return jsonify({"status": "forbidden"}), 403
 
+
 @post_bp.route("/view-comments", methods=["POST"])
 def view_comments():
     data = request.get_json(force=True)
@@ -197,6 +224,7 @@ def view_comments():
         })
     return jsonify({"comments": comments})
 
+
 def get_internal_feed_posts():
     """Busca os posts locais do banco de dados sem usar jsonify()."""
     conn = get_db()
@@ -215,12 +243,13 @@ def get_internal_feed_posts():
         })
     return lista_posts
 
+
 def fetch_single_federation(node_url):
     parsed = urlparse(node_url)
     netloc = parsed.netloc.lower()
     path = parsed.path.rstrip('/')
 
-    if "linkaproject.pythonanywhere.com" in netloc or "127.0.0.1" in netloc or "localhost" in netloc:
+    if any(host in netloc for host in ["linkaproject.pythonanywhere.com", "127.0.0.1", "localhost"]) or not netloc:
         try:
             if path == "/feed":
                 return get_internal_feed_posts()
@@ -248,7 +277,7 @@ def fetch_single_federation(node_url):
             return None
 
     try:
-        response = requests.get(node_url, timeout=3.0)
+        response = requests.get(node_url, timeout=6.0)
         if response.status_code == 200:
             return response.json()
     except Exception as e:
@@ -256,6 +285,7 @@ def fetch_single_federation(node_url):
         return None
 
     return None
+
 
 @post_bp.route("/view-external-posts", methods=["POST"])
 def view_external_posts():
@@ -274,19 +304,16 @@ def view_external_posts():
         futures = [executor.submit(fetch_single_federation, url) for url in urls]
         for future in as_completed(futures):
             try:
-                result = future.result()
-                if result:
-                    if isinstance(result, list) and len(result) > 0:
-                        results_by_source.append(result)
-                    elif isinstance(result, dict) and "posts" in result and len(result["posts"]) > 0:
-                        results_by_source.append(result["posts"])
+                raw_result = future.result()
+                extracted_posts = extract_posts_from_response(raw_result)
+                if extracted_posts:
+                    results_by_source.append(extracted_posts)
             except Exception as e:
                 print(f"DEBUG - Erro na thread: {e}")
 
     if not results_by_source:
         return jsonify([]), 200
 
-    # Intercalação round-robin + ordenação por data para eliminar blocos sem criar paginação
     interleaved_posts = []
     max_len = max(len(s) for s in results_by_source)
     for i in range(max_len):
@@ -295,7 +322,9 @@ def view_external_posts():
                 interleaved_posts.append(source[i])
 
     interleaved_posts.sort(
-        key=lambda x: parse_datetime(x.get("datetime") or x.get("created_at")),
+        key=lambda x: parse_datetime(
+            x.get("datetime") or x.get("created_at") or x.get("createdAt") or x.get("created_utc")
+        ) if isinstance(x, dict) else parse_datetime(None),
         reverse=True
     )
 
@@ -306,6 +335,7 @@ def view_external_posts():
             formated_feed.append(post)
 
     return jsonify(formated_feed), 200
+
 
 @post_bp.route("/new", methods=["POST"])
 def new_post():
@@ -350,7 +380,8 @@ def new_post():
             return jsonify({"status": "forbidden"}), 403
     except Exception as e:
         print("ERROR", e)
-        return jsonify({"status": "ok"}), 200
+        return jsonify({"status": "error internal"}), 500
+
 
 @post_bp.route("/trending-feed", methods=["GET"])
 def trending_feed():
@@ -380,22 +411,12 @@ def trending_feed():
     conn.close()
     return jsonify(posts)
 
+
 @post_bp.route("/feed", methods=["GET"])
 def feed():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT 
-            p.id, 
-            p.username, 
-            p.text_post, 
-            p.datetime, 
-            COUNT(c.id) AS comment_count
-        FROM posts p
-        LEFT JOIN comments c ON c.post_id = p.id
-        GROUP BY p.id, p.username, p.text_post, p.datetime
-        ORDER BY p.id DESC
-    """)
+    cur.execute("SELECT id, username, text_post, datetime FROM posts ORDER BY id DESC")
     posts = cur.fetchall()
     conn.close()
 
@@ -405,11 +426,11 @@ def feed():
             "id": post[0],
             "username": post[1],
             "text_post": post[2],
-            "datetime": post[3],
-            "comment_count": post[4]
+            "datetime": post[3]
         })
 
     return jsonify(lista_posts), 200
+
 
 @post_bp.route("/star", methods=["POST"])
 def star():
@@ -449,21 +470,23 @@ def star():
         )
         cur.execute("SELECT username FROM posts WHERE id = ?", (post_id,))
         op = cur.fetchone()
-        
-        if op:
-            linkosModule.add_linkos(op[0], "3")
+
+        if op and op[0]:
+            post_owner = op[0]
+            linkosModule.add_linkos(post_owner, "3")
             date = datetime.now()
             notificationsModule.CreateNotification(
                 username,
-                op[0],
+                post_owner,
                 date,
                 "star",
                 f"{username} starred your post!"
             )
-            
+
         conn.commit()
         conn.close()
         return jsonify({"status": "added"}), 200
+
 
 @post_bp.route("/return-stars/<int:post_id>", methods=["GET"])
 def return_stars(post_id):
@@ -476,6 +499,7 @@ def return_stars(post_id):
     conn.close()
 
     return str(qtd), 200
+
 
 @post_bp.route("/has-star", methods=["POST"])
 def has_star():
