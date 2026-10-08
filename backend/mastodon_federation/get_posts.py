@@ -3,8 +3,10 @@ import unicodedata
 from datetime import datetime
 from bs4 import BeautifulSoup
 import requests
-
-
+import dotenv
+import os
+dotenv.load_dotenv("")
+MASTODON_KEY = os.getenv("MASTODON_KEY")
 def formate(posts):
     if isinstance(posts, str):
         try:
@@ -97,7 +99,7 @@ def fetch_mastodon_posts(
     url = f"https://{instance}/api/v1/timelines/tag/{tag}"
 
     headers = {
-        "Authorization": "Bearer DlvaQpDNhhb2ZvxjFsElKNQrWYUmpqGfM0v6oKrtUeM",
+        "Authorization": "Bearer " + MASTODON_KEY,
         "User-Agent": "LinkaLiteApp/1.0",
     }
 

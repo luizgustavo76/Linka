@@ -2,9 +2,12 @@ import json
 import unicodedata
 from datetime import datetime
 import requests
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
-BSKY_HANDLE = "luizsgustavo76.bsky.social"
-BSKY_APP_PASSWORD = "acas-tyic-vd47-i6ci"
+BSKY_HANDLE = os.getenv("BSKY_HANDLE")
+BSKY_APP_PASSWORD = os.getenv("BSKY_APP_PASSWORD")
 
 
 def get_bluesky_token():
