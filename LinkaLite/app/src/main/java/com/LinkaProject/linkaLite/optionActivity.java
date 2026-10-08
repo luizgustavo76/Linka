@@ -62,12 +62,12 @@ public class optionActivity extends Activity {
                         startActivity(new Intent(optionActivity.this, GenerateInvite.class));
                         break;
                     case 1: // Edit timeline
-                        startActivity(new Intent(optionActivity.this, EditTimeline.class));
+                        startActivity(new Intent(optionActivity.this, MainEditTimeline.class));
                         break;
-                    case 2: // Inbox
+                    case 2: 
                         startActivity(new Intent(optionActivity.this, InboxActivity.class));
                         break;
-                    case 3: // Friends
+                    case 3:
                         startActivity(new Intent(optionActivity.this, addFriendActivity.class));
                         break;
                     case 4: // Change server

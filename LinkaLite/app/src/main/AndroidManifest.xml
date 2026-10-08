@@ -37,6 +37,10 @@
             android:label="Feed"
             android:exported="false" />
         <activity 
+            android:name=".MainEditTimeline" 
+            android:label="Edit timeline"
+            android:exported="false" />
+        <activity 
             android:name=".EditTimeline" 
             android:label="Edit timeline"
             android:exported="false" />

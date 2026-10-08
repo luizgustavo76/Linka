@@ -81,6 +81,10 @@
         android:paddingTop="2dip"
         android:paddingBottom="2dip">
 
+        <View
+            android:layout_height="fill_parent"
+            android:layout_width="fill_parent"
+            android:layout_weight="1"/>
         <ImageButton
             android:id="@+id/btnComments"
             android:layout_width="24dip"
@@ -88,7 +92,6 @@
             android:background="@null"
             android:scaleType="fitCenter"
             android:src="@drawable/icon_comments" />
-
         <TextView
             android:id="@+id/txtCommentCount"
             android:layout_width="wrap_content"
@@ -98,7 +101,6 @@
             android:textSize="12sp"
             android:textColor="#8C93A8"
             android:layout_marginLeft="6dip" />
-
     </LinearLayout>
 
 </LinearLayout>
