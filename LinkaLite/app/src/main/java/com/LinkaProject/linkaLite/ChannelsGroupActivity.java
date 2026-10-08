@@ -4,13 +4,13 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONArray;
@@ -22,9 +22,11 @@ import java.util.List;
 
 public class ChannelsGroupActivity extends Activity {
 
+    private TabHost tabHost;
     private ImageButton btnBack;
     private TextView textGroup;
-    private Button btnAdd;
+    private Button btnAddChannel;
+    private Button btnAddMember;
     private Button btnConfig;
     private ImageButton btnHome;
     private ImageButton btnChat;
@@ -32,20 +34,22 @@ public class ChannelsGroupActivity extends Activity {
     private ImageButton btnProfile;
     private ListView listChannelsView;
     private ListView listViewMembers;
-
+    private String permissions = "";
     private String url = "";
     private String username = "";
     private int groupId = -1;
     private List<Channel> channelList;
     private ChannelAdapter adapter;
-    private Button btnAddMember;
+    private String groupName = "";
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_channels);
 
         Intent intent = getIntent();
+        groupName = intent.getStringExtra("groupName");
         groupId = intent.getIntExtra("groupId", -1);
+        permissions = intent.getStringExtra("permissions");
         if (groupId == -1) {
             Toast.makeText(this, "ID do grupo inválido", Toast.LENGTH_SHORT).show();
             finish();
@@ -63,29 +67,38 @@ public class ChannelsGroupActivity extends Activity {
             e.printStackTrace();
         }
 
+        tabHost = (TabHost) findViewById(android.R.id.tabhost);
+        tabHost.setup();
+
+        TabHost.TabSpec specChannels = tabHost.newTabSpec("channels");
+        specChannels.setIndicator("Channels");
+        specChannels.setContent(R.id.tabChannels);
+        tabHost.addTab(specChannels);
+
+        TabHost.TabSpec specOptions = tabHost.newTabSpec("options");
+        specOptions.setIndicator("Options");
+        specOptions.setContent(R.id.tabOptions);
+        tabHost.addTab(specOptions);
         btnBack = (ImageButton) findViewById(R.id.btnBack);
         textGroup = (TextView) findViewById(R.id.textGroup);
-        btnAdd = (Button) findViewById(R.id.btnAdd);
+        btnAddChannel = (Button) findViewById(R.id.btnAddChannel);
+        btnAddMember = (Button) findViewById(R.id.btnAddMember);
         btnConfig = (Button) findViewById(R.id.btnConfig);
+
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+
         listChannelsView = (ListView) findViewById(R.id.listChannels);
         listViewMembers = (ListView) findViewById(R.id.listViewMembers);
         channelList = new ArrayList<Channel>();
-        btnAddMember = (Button) findViewById(R.id.btnAddMember);
-
+        if(permissions.equals("admin")){
+            btnAddChannel.setVisibility(View.VISIBLE);
+        }
         new FetchMembersTask().execute();
         new FetchChannelsTask().execute();
-        btnConfig.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                Intent intent = new Intent(ChannelsGroupActivity.this, ConfigGroup.class);
-                intent.putExtra("groupId", groupId);
-                startActivity(intent);
-            }
-        });
+        textGroup.setText(groupName);
         if (btnBack != null) {
             btnBack.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -95,15 +108,7 @@ public class ChannelsGroupActivity extends Activity {
             });
         }
 
-        btnAdd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(ChannelsGroupActivity.this, AddGroupMember.class);
-                intent.putExtra("group_id", groupId);
-                startActivity(intent);
-            }
-        });
-        btnAddMember.setOnClickListener(new View.OnClickListener() {
+        btnAddChannel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(ChannelsGroupActivity.this, AddGroupChannel.class);
@@ -111,6 +116,26 @@ public class ChannelsGroupActivity extends Activity {
                 startActivity(intent);
             }
         });
+
+        btnAddMember.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ChannelsGroupActivity.this, AddGroupMember.class);
+                intent.putExtra("group_id", groupId);
+                startActivity(intent);
+            }
+        });
+
+        btnConfig.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ChannelsGroupActivity.this, ConfigGroup.class);
+                intent.putExtra("groupId", groupId);
+                startActivity(intent);
+            }
+        });
+
+        // Listeners do Rodapé
         btnHome.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

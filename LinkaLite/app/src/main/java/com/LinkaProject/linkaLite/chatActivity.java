@@ -97,6 +97,8 @@ public class chatActivity extends Activity {
                 } else if (clickedItem.getType() == FriendsAdapter.TYPE_GROUP) {
                     Intent intent = new Intent(chatActivity.this, ChannelsGroupActivity.class);
                     intent.putExtra("groupId", clickedItem.getId());
+                    intent.putExtra("groupName", clickedItem.getGroupName());
+                    intent.putExtra("permissions", clickedItem.getPermissions());
                     startActivity(intent);
                 }
             }

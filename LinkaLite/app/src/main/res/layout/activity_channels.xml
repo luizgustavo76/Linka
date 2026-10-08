@@ -1,138 +1,171 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<TabHost xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/tabhost"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#282c37"
-    android:orientation="vertical">
+    android:background="#282c37">
+
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="0dip"
-        android:layout_weight="1"
-        android:orientation="horizontal">
+        android:layout_height="fill_parent"
+        android:orientation="vertical">
         <LinearLayout
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="2"
-            android:background="#282c37"
-            android:orientation="vertical">
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#1e1e2e"
+            android:padding="6dip">
 
-            <LinearLayout
-                android:layout_width="fill_parent"
-                android:layout_height="48dip"
-                android:background="#11111b"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="4dip">
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/back"
+                android:background="@android:color/transparent" />
 
-                <ImageButton
-                    android:id="@+id/btnBack"
-                    android:layout_width="40dip"
-                    android:layout_height="40dip"
-                    android:background="@android:color/transparent"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/back" />
-
-                <TextView
-                    android:id="@+id/textGroup"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:paddingLeft="8dip"
-                    android:text="Group name"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp" />
-
-                <Button
-                    android:id="@+id/btnAdd"
-                    android:layout_width="40dip"
-                    android:layout_height="40dip"
-                    android:text="+" />
-
-                <Button
-                    android:id="@+id/btnAddMember"
-                    android:layout_width="40dip"
-                    android:layout_height="40dip"
-                    android:text="Add member" />
-                
-                <Button
-                    android:id="@+id/btnConfig"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dip"
-                    android:text="config" />
-            </LinearLayout>
-
-            <!-- Lista de Canais -->
-            <ListView
-                android:id="@+id/listChannels"
-                android:layout_width="fill_parent"
-                android:layout_height="0dip"
+            <TextView
+                android:id="@+id/textGroup"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:divider="#2b2b3b"
-                android:dividerHeight="1dip" />
+                android:text="Group"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:paddingLeft="8dip" />
         </LinearLayout>
 
-        <View
-            android:layout_width="1dip"
-            android:layout_height="fill_parent"
-            android:background="#2b2b3b" />
+        <TabWidget
+            android:id="@android:id/tabs"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="#1e1e2e" />
 
-        <!-- Coluna da Direita: Lista de Membros (Fica exatamente entre o topo e a bottom bar) -->
-        <ListView
-            android:id="@+id/listViewMembers"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:background="#282c37"
-            android:divider="#2a2a3c"
-            android:dividerHeight="1dip"
-            android:scrollingCache="false" />
+        <FrameLayout
+            android:id="@android:id/tabcontent"
+            android:layout_width="fill_parent"
+            android:layout_height="0dip"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/tabChannels"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:orientation="vertical"
+                android:padding="4dip">
+
+                <Button
+                    android:id="@+id/btnAddChannel"
+                    android:layout_width="fill_parent"
+                    android:layout_height="36dip"
+                    android:text="+ New channel"
+                    android:textSize="11sp"
+                    android:layout_marginBottom="4dip" 
+                    android:visibility="gone"/>
+
+                <ListView
+                    android:id="@+id/listChannels"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:scrollingCache="false"
+                    android:divider="#2a2a3c"
+                    android:dividerHeight="1dip" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tabOptions"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:orientation="vertical"
+                android:padding="4dip">
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="6dip">
+
+                    <Button
+                        android:id="@+id/btnAddMember"
+                        android:layout_width="0dip"
+                        android:layout_height="36dip"
+                        android:layout_weight="1"
+                        android:text="+ Add Member"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/btnConfig"
+                        android:layout_width="0dip"
+                        android:layout_height="36dip"
+                        android:layout_weight="1"
+                        android:text="Configurations"
+                        android:textSize="11sp"
+                        android:layout_marginLeft="4dip" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Group members"
+                    android:textColor="#AAAAAA"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dip" />
+
+                <ListView
+                    android:id="@+id/listViewMembers"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:scrollingCache="false"
+                    android:divider="#2a2a3c"
+                    android:dividerHeight="1dip" />
+            </LinearLayout>
+
+        </FrameLayout>
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="40dip"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#11111b">
+
+            <ImageButton
+                android:id="@+id/btnHome"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:src="@drawable/home"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent" />
+
+            <ImageButton
+                android:id="@+id/btnChat"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:src="@drawable/chat"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent" />
+
+            <ImageButton
+                android:id="@+id/btnOptions"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:src="@drawable/options"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent" />
+
+            <ImageButton
+                android:id="@+id/btnProfile"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:src="@drawable/account"
+                android:scaleType="centerInside"
+                android:background="@android:color/transparent" />
+        </LinearLayout>
 
     </LinearLayout>
-
-    <!-- Bottom Bar (Fixa no rodapé) -->
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="48dip"
-        android:background="#11111b"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <ImageButton
-            android:id="@+id/btnHome"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:scaleType="centerInside"
-            android:src="@drawable/home" />
-
-        <ImageButton
-            android:id="@+id/btnChat"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:scaleType="centerInside"
-            android:src="@drawable/chat" />
-
-        <ImageButton
-            android:id="@+id/btnOptions"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:scaleType="centerInside"
-            android:src="@drawable/options" />
-
-        <ImageButton
-            android:id="@+id/btnProfile"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:scaleType="centerInside"
-            android:src="@drawable/account" />
-    </LinearLayout>
-
-</LinearLayout>
+</TabHost>
