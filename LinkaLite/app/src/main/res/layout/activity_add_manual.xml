@@ -20,7 +20,6 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:hint="Federation url"
-            android:textColor="#FFFFFF"
             android:textColorHint="#666666"
             android:textSize="13sp"
             android:singleLine="true" />

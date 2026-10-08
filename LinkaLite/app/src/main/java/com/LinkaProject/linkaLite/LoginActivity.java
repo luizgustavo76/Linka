@@ -65,7 +65,6 @@ public class LoginActivity extends Activity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Log.d(TAG, "Lendo configurações de arquivo em background...");
                 config cfg = new config();
                 if (!config.configFileExists(LoginActivity.this, "config.cfg")) {
                     Log.d(TAG, "Arquivo config.cfg não existe. Criando padrão...");

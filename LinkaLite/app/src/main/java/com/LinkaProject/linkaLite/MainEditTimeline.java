@@ -50,8 +50,10 @@ public class MainEditTimeline extends Activity{
                 switch (position) {
                     case 0:
                         startActivity(new Intent(MainEditTimeline.this, EditTimeline.class));
+                        break;
                     case 2:
                         startActivity(new Intent(MainEditTimeline.this, AddManualUrl.class));
+                        break;
                 }
             }
         });

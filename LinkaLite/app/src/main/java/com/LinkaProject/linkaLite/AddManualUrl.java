@@ -28,7 +28,7 @@ public class AddManualUrl extends Activity{
     private ImageButton btnOptions;
     private ImageButton btnProfile;
     private EditText edtUrl;
-    private Button btnSend;
+    private Button btnAdd;
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_manual);
@@ -36,6 +36,21 @@ public class AddManualUrl extends Activity{
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        edtUrl = (EditText) findViewById(R.id.edtUrl);
+        btnAdd = (Button) findViewById(R.id.btnAdd);
+        if (btnAdd != null) {
+            btnAdd.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String inputUrl = edtUrl.getText().toString().trim();
+                    if (!inputUrl.isEmpty()) {
+                        config cfg = new config();
+                        cfg.toggleUrl(AddManualUrl.this, inputUrl);
+                        edtUrl.setText("");
+                    }
+                }
+            });
+        }
         btnHome.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){

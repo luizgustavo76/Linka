@@ -40,8 +40,6 @@ public class EditTimeline extends Activity {
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         listView = (ListView) findViewById(R.id.listFederations);
-        edtUrl = (EditText) findViewById(R.id.edtUrl);
-        btnAdd = (Button) findViewById(R.id.btnAdd);
 
         try {
             config cfg = new config();
