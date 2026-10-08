@@ -101,13 +101,37 @@ def fetch_mastodon_posts(
         "User-Agent": "LinkaLiteApp/1.0",
     }
 
-    try:
-        response = requests.get(
-            url, headers=headers, params={"limit": limit}, timeout=10
-        )
-        if response.status_code != 200:
-            return []
-        return formate(response.json())
-    except Exception as e:
-        print(f"[MASTODON EXCEPTION] {e}")
-        return []
+    raw_posts = []
+    max_id = None
+
+    # Paginação para ultrapassar a trava de 40 posts por requisição
+    while len(raw_posts) < limit:
+        fetch_limit = min(limit - len(raw_posts), 40)
+        params = {"limit": fetch_limit}
+
+        if max_id:
+            params["max_id"] = max_id
+
+        try:
+            response = requests.get(
+                url, headers=headers, params=params, timeout=10
+            )
+
+            if response.status_code != 200:
+                print(f"[MASTODON ERROR] Status Code: {response.status_code}")
+                break
+
+            data = response.json()
+
+            if not isinstance(data, list) or not data:
+                break
+
+            raw_posts.extend(data)
+            max_id = data[-1].get("id")
+
+        except Exception as e:
+            print(f"[MASTODON EXCEPTION] {e}")
+            break
+
+    formatted_posts = formate(raw_posts)
+    return formatted_posts[:limit]
