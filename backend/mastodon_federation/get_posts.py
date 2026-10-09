@@ -1,12 +1,23 @@
 import json
+import os
 import unicodedata
 from datetime import datetime
+from pathlib import Path
 from bs4 import BeautifulSoup
-import requests
 import dotenv
-import os
-dotenv.load_dotenv()
-MASTODON_KEY = os.getenv("MASTODON_KEY")
+import requests
+
+# Resolve o caminho do .env na raiz do backend (sobe de mastodon_federation/ para backend/)
+BASE_DIR = Path(__file__).resolve().parent.parent
+env_path = BASE_DIR / ".env"
+
+# Carrega o .env explicitamente
+dotenv.load_dotenv(dotenv_path=env_path)
+
+# Padrão "" para evitar que fique como None caso a variável não exista no .env
+MASTODON_KEY = os.getenv("MASTODON_KEY", "").strip()
+
+
 def formate(posts):
     if isinstance(posts, str):
         try:
@@ -99,9 +110,12 @@ def fetch_mastodon_posts(
     url = f"https://{instance}/api/v1/timelines/tag/{tag}"
 
     headers = {
-        "Authorization": "Bearer " + MASTODON_KEY,
         "User-Agent": "LinkaLiteApp/1.0",
     }
+
+    # Adiciona o cabeçalho Authorization APENAS se houver token definido
+    if MASTODON_KEY:
+        headers["Authorization"] = f"Bearer {MASTODON_KEY}"
 
     raw_posts = []
     max_id = None
