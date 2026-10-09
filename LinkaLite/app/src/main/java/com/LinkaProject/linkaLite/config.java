@@ -181,6 +181,8 @@ public class config {
             StringBuilder iniBuilder = new StringBuilder();
             iniBuilder.append("[FEDERATION-TIMELINE]\n");
             iniBuilder.append("urls=\n");
+            iniBuilder.append("[FILTERS]\n");
+            iniBuilder.append("tags=\n");
             
             String iniString = iniBuilder.toString();
             saveCfg(context, fileName, iniString);
@@ -237,6 +239,65 @@ public class config {
             }
         }
         updateCfg(context, "config-timeline.cfg", "FEDERATION-TIMELINE", "urls", sb.toString());
+    }
+
+    // --- MÉTODOS PARA O CAMPO [FILTERS] ---
+
+    public List<String> getSavedFilters(Context context) {
+        List<String> list = new ArrayList<String>();
+        try {
+            String rawTimeline = loadCfgAsJson(context, "config-timeline.cfg");
+            if (rawTimeline != null && !rawTimeline.isEmpty()) {
+                JSONObject jsonTimeline = new JSONObject(rawTimeline);
+                JSONObject filterSection = jsonTimeline.optJSONObject("FILTERS");
+                if (filterSection != null) {
+                    String tagsValue = filterSection.optString("tags", "");
+                    if (!tagsValue.isEmpty()) {
+                        String[] parts = tagsValue.split(",");
+                        for (String part : parts) {
+                            String clean = part.trim();
+                            if (!clean.isEmpty() && !list.contains(clean)) {
+                                list.add(clean);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public void addFilter(Context context, String tag) {
+        if (tag == null || tag.trim().isEmpty()) return;
+        String cleanTag = tag.trim().replace(",", ""); // evita quebrar o CSV
+        List<String> current = getSavedFilters(context);
+        if (!current.contains(cleanTag)) {
+            current.add(cleanTag);
+            saveFiltersList(context, current);
+        }
+    }
+
+    public void removeFilter(Context context, String tag) {
+        if (tag == null || tag.trim().isEmpty()) return;
+        String cleanTag = tag.trim();
+        List<String> current = getSavedFilters(context);
+        if (current.contains(cleanTag)) {
+            current.remove(cleanTag);
+            saveFiltersList(context, current);
+        }
+    }
+
+    private void saveFiltersList(Context context, List<String> current) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < current.size(); i++) {
+            sb.append(current.get(i));
+            if (i < current.size() - 1) {
+                sb.append(",");
+            }
+        }
+        updateCfg(context, "config-timeline.cfg", "FILTERS", "tags", sb.toString());
     }
 
     public String deleteFileLinka(Context context, String filename) {
