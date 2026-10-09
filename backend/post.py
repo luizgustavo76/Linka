@@ -11,6 +11,7 @@ import mentions_module
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
+
 base_dir = os.path.dirname(os.path.abspath(__file__))
 json_path = os.path.join(base_dir, "backend.json")
 
@@ -21,13 +22,16 @@ root_flags = modules_flags["modules-flags"]
 base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = os.path.join(base_dir, "DB")
 post_dir = os.path.join(db_dir, "post.db")
-if root_flags["bluesky-federation"]:
+
+if root_flags.get("bluesky-federation"):
     import bluesky_federation.posts as bluesky
-if root_flags["reddit-federation"]:
+if root_flags.get("reddit-federation"):
     import reddit_federation.posts as reddit
-if root_flags["mastodon-federation"]:
+if root_flags.get("mastodon-federation"):
     import mastodon_federation.posts as mastodon
+
 post_bp = Blueprint("post", __name__)
+
 if not os.path.exists(db_dir):
     os.makedirs(db_dir)
 
@@ -35,22 +39,25 @@ if not os.path.exists(db_dir):
 def get_db():
     conn = sqlite3.connect(post_dir, timeout=10)
     conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.execute("PRAGMA cache_size=-10000;")
     return conn
+
+
 def create_db():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS federated_posts(
-        federation_name TEXT,
-        text_post TEXT,
-        username TEXT,
-        post_id TEXT,
-        created_at TEXT,
-        platform TEXT)""")
+            federation_name TEXT,
+            text_post TEXT,
+            username TEXT,
+            post_id TEXT,
+            created_at TEXT,
+            platform TEXT
+        )
+    """)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS posts(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +66,6 @@ def create_db():
             datetime TEXT
         )
     """)
-
     cur.execute("""
         CREATE TABLE IF NOT EXISTS stars(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,15 +76,19 @@ def create_db():
     """)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS comments(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                text_comment TEXT,
-                post_id INTEGER,
-                username TEXT
-            )
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            text_comment TEXT,
+            post_id INTEGER,
+            username TEXT
+        )
     """)
     conn.commit()
     conn.close()
+
+
 create_db()
+
+
 @post_bp.route("/view-profile-posts", methods=["POST"])
 def view_profile_posts():
     data = request.get_json(silent=True) or {}
@@ -86,10 +96,13 @@ def view_profile_posts():
     if isinstance(username, list) and len(username) > 0:
         username = username[0]
     username = str(username).strip() if username else ""
+    
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM posts WHERE username = ? ORDER by datetime DESC", (username,))
     result = cur.fetchall()
+    conn.close()
+
     posts = []
     for single_posts in result:
         posts.append({
@@ -99,19 +112,24 @@ def view_profile_posts():
             "datetime": single_posts[3]
         })
     return jsonify(posts)
+
+
 @post_bp.route("/view-post", methods=["POST"])
 def view_post():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     post_id = data.get("post_id")
     conn = get_db()
     cur = conn.cursor()
-    posts = cur.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    cur.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
+    posts = cur.fetchall()
+    conn.close()
     return jsonify([dict(row) for row in posts])
+
+
 @post_bp.route("/comments", methods=["POST"])
 def new_comment():
-    data = request.get_json(force=True)
+    data = request.get_json(force=True) or {}
     username = data.get("username")
-    
     current_user = getattr(g, "username", None)
 
     if username and username == current_user:
@@ -128,6 +146,7 @@ def new_comment():
         op = cur.fetchone()
         conn.commit()
         conn.close()
+
         linkosModule.add_linkos(username, 2)
         post_owner = op[0] if op else None        
         date = datetime.now()
@@ -136,26 +155,30 @@ def new_comment():
         return jsonify({"status": "the comment has been created with sucess!"}), 200
     else:
         return jsonify({"status": "forbidden"}), 403
+
+
 @post_bp.route("/view-comments", methods=["POST"])
 def view_comments():
-    data = request.get_json(force=True)
+    data = request.get_json(force=True) or {}
     post_id = data.get("post_id")
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT * FROM comments WHERE post_id = ?", (post_id,))      
     rows = cur.fetchall()
     conn.close()
+
     comments = []
     for row in rows:
         comments.append({
-            "username":row["username"],
-            "text_comment":row["text_comment"],
-            "post_id":row["post_id"],
-            "comment_id":row["id"]
+            "username": row["username"],
+            "text_comment": row["text_comment"],
+            "post_id": row["post_id"],
+            "comment_id": row["id"]
         })
-    return jsonify({"comments":comments})
+    return jsonify({"comments": comments})
+
+
 def get_internal_feed_posts():
-    """Busca os posts locais do banco de dados sem usar jsonify()."""
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT id, username, text_post, datetime FROM posts ORDER BY id DESC")
@@ -178,29 +201,22 @@ def fetch_single_federation(node_url):
     netloc = parsed.netloc.lower()
     path = parsed.path.rstrip('/')
 
-    # Trata requisições internas para o próprio servidor
     if "linkaproject.pythonanywhere.com" in netloc or "127.0.0.1" in netloc or "localhost" in netloc:
         try:
-            # 1. Feed Local
             if path == "/feed":
-                return get_internal_feed_posts()
-
-            # 2. Reddit (chama a função de busca do módulo diretamente se estiver ativo)
+                return get_internal_feed_posts() 
             elif path.startswith("/feed/reddit/"):
                 if root_flags.get("reddit-federation") and 'reddit' in globals():
                     sub_name = path.replace("/feed/reddit/", "")
-                    # Se houver função interna no módulo reddit, chame-a aqui
                     if hasattr(reddit, "fetch_reddit_posts"):
                         return reddit.fetch_reddit_posts(subreddit=sub_name)
 
-            # 3. Mastodon (chama fetch_mastodon_posts diretamente sem jsonify)
             elif path.startswith("/feed/mastodon/"):
                 if root_flags.get("mastodon-federation") and 'mastodon' in globals():
                     tag_name = path.replace("/feed/mastodon/", "")
                     if hasattr(mastodon, "fetch_mastodon_posts"):
                         return mastodon.fetch_mastodon_posts(tag=tag_name, limit=100)
 
-            # 4. Bluesky (chama fetch_bluesky_posts diretamente sem jsonify)
             elif path.startswith("/feed/bluesky/"):
                 if root_flags.get("bluesky-federation") and 'bluesky' in globals():
                     tag_name = path.replace("/feed/bluesky/", "")
@@ -211,7 +227,6 @@ def fetch_single_federation(node_url):
             print(f"DEBUG - Erro na rota interna {path}: {e}")
             return None
 
-    # Requisição externa para outros servidores na internet
     try:
         response = requests.get(node_url, timeout=3.0)
         if response.status_code == 200:
@@ -221,9 +236,11 @@ def fetch_single_federation(node_url):
         return None
 
     return None
+
+
 @post_bp.route("/view-external-posts", methods=["POST"])
 def view_external_posts():
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     urls = data.get("urls")
     filters = data.get("filters")
     if not urls or not isinstance(urls, list):
@@ -234,43 +251,53 @@ def view_external_posts():
 
     aggregated_posts = []
 
-   with ThreadPoolExecutor(max_workers=20) as executor:  # 20 workers é mais seguro contra limites do PythonAnywhere
-    futures = [executor.submit(fetch_single_federation, url) for url in urls]
-    
-    for future in as_completed(futures):
-        try:
-            result = future.result()
-            print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") 
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        futures = [executor.submit(fetch_single_federation, url) for url in urls]
+        
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") 
 
-            if not result:
-                continue
-            posts_list = []
-            if isinstance(result, list):
-                posts_list = result
-            elif isinstance(result, dict) and "posts" in result and isinstance(result["posts"], list):
-                posts_list = result["posts"]
-            for post in posts_list:
-                if not isinstance(post, dict):
+                if not result:
                     continue
-                
-                text = post.get("text_post", "")
-                if filters is None or (filters not in text):
+                posts_list = []
+                if isinstance(result, list):
+                    posts_list = result
+                elif isinstance(result, dict) and "posts" in result and isinstance(result["posts"], list):
+                    posts_list = result["posts"]
+
+                for post in posts_list:
+                    if not isinstance(post, dict):
+                        continue
+                    
+                    text = post.get("text_post", "")
+
+                    # Trata o filtro com suporte seguro a string ou lista de tags
+                    if filters:
+                        if isinstance(filters, list) and any(f.lower() in text.lower() for f in filters if f):
+                            continue
+                        elif isinstance(filters, str) and filters.lower() in text.lower():
+                            continue
+
                     aggregated_posts.append(post)
 
-        except Exception as e:
-            print(f"DEBUG - Erro na thread: {e}")
+            except Exception as e:
+                print(f"DEBUG - Erro na thread: {e}")
 
     if not aggregated_posts:
         return jsonify([]), 200
+
     random.shuffle(aggregated_posts)
     formated_feed = []
     for index, post in enumerate(aggregated_posts, start=1):
         if isinstance(post, dict):
-            
             post["id"] = index
             formated_feed.append(post)
 
     return jsonify(formated_feed), 200
+
+
 @post_bp.route("/new", methods=["POST"])
 def new_post():
     try:
@@ -280,21 +307,24 @@ def new_post():
             return jsonify({"status": "JSON inválido ou vazio"}), 400
 
         username = data.get("username")
-        if username == g.username:
+        current_user = getattr(g, "username", None)
+
+        if username == current_user:
             text_post = data.get("text_post")
             datetime_post = data.get("datetime")
-            if "@" in text_post:
-                users_mention = re.findall(r'@([^\s]+)', text_post)
-                for user in users_mention:
-                    date = datetime.now()
-                    notificationsModule.CreateNotification(username, user, date, "mention", f"{username} mentioned you in a post")
-                    mentions_module.createMention(username, user, text_post, None, None, "post")
 
             if not username:
                 return jsonify({"status": "username not send"}), 400
 
             if not text_post:
                 return jsonify({"status": "its not possible create a post with no cotent"}), 400
+
+            if "@" in text_post:
+                users_mention = re.findall(r'@([^\s]+)', text_post)
+                for user in users_mention:
+                    date = datetime.now()
+                    notificationsModule.CreateNotification(username, user, date, "mention", f"{username} mentioned you in a post")
+                    mentions_module.createMention(username, user, text_post, None, None, "post")
 
             conn = get_db()
             cur = conn.cursor()
@@ -309,10 +339,12 @@ def new_post():
             linkosModule.add_linkos(username, "5")
             return jsonify({"status": "post created with sucess"}), 200
         else:
-            return jsonify({"status":"forbidden"}),403
+            return jsonify({"status": "forbidden"}), 403
     except Exception as e:
         print("ERROR", e)
-    return jsonify({"status":"ok"}),200
+        return jsonify({"status": "error", "message": "Erro interno no servidor"}), 500
+
+
 @post_bp.route("/trending-feed", methods=["GET"])
 def trending_feed():
     posts_id = []
@@ -327,17 +359,19 @@ ORDER BY total_stars DESC;""")
     for row in result:
         posts_id.append(row[0])
     for i in posts_id:
-        cur.execute("SELECT * FROM posts WHERE id = ?",(i,))
+        cur.execute("SELECT * FROM posts WHERE id = ?", (i,))
         result = cur.fetchall()
         for row in result:
             posts.append({
-                "id":row[0],
-                "username":row[1],
-                "text_post":row[2],
-                "datetime":row[3]
+                "id": row[0],
+                "username": row[1],
+                "text_post": row[2],
+                "datetime": row[3]
             })
     conn.close()    
     return jsonify(posts)
+
+
 @post_bp.route("/feed", methods=["GET"])
 def feed():
     conn = get_db()
@@ -370,13 +404,12 @@ def feed():
     return jsonify(lista_posts), 200
 
 
-
 @post_bp.route("/star", methods=["POST"])
 def star():
-    data = request.get_json(force=True)
+    data = request.get_json(force=True) or {}
 
     post_id = data.get("post_id")
-    username = g.username 
+    username = getattr(g, "username", None)
 
     if not username:
         return jsonify({"status": "forbidden"}), 403
@@ -410,20 +443,23 @@ def star():
         
         cur.execute("SELECT username FROM posts WHERE id = ?", (post_id,))
         op = cur.fetchone()
-        linkosModule.add_linkos(op, "3")
-        date = datetime.now()
+        post_owner = op[0] if op else None
         
-        notificationsModule.CreateNotification(
-            username, 
-            op, 
-            date, 
-            "star", 
-            f"{username} starred your post!"
-        )
+        if post_owner:
+            linkosModule.add_linkos(post_owner, "3")
+            date = datetime.now()
+            notificationsModule.CreateNotification(
+                username, 
+                post_owner, 
+                date, 
+                "star", 
+                f"{username} starred your post!"
+            )
         
         conn.commit()
         conn.close()
         return jsonify({"status": "added"}), 200
+
 
 @post_bp.route("/return-stars/<int:post_id>", methods=["GET"])
 def return_stars(post_id):
@@ -431,7 +467,8 @@ def return_stars(post_id):
     cur = conn.cursor()
 
     cur.execute("SELECT COUNT(*) FROM stars WHERE post_id = ?", (post_id,))
-    qtd = cur.fetchone()[0]
+    row = cur.fetchone()
+    qtd = row[0] if row else 0
 
     conn.close()
 
@@ -440,11 +477,11 @@ def return_stars(post_id):
 
 @post_bp.route("/has-star", methods=["POST"])
 def has_star():
-    data = request.get_json(force=True)
+    data = request.get_json(force=True) or {}
 
     post_id = data.get("post_id")
-    username = data.get("username")
-    username = g.username
+    username = getattr(g, "username", None)
+
     if not post_id or not username:
         return jsonify({"starred": False}), 200
 

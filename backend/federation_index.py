@@ -14,7 +14,11 @@ def create_table():
                 name TEXT,
                 url TEXT,
                 description TEXT,
-                cover_image TEXT)""")
+                cover_image TEXT,
+                theme TEXT)""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS themes_timeline(
+                name_theme TEXT,
+                description TEXT,)""")
     conn.commit()
     conn.close()
 create_table()
@@ -30,7 +34,21 @@ def view_index():
             "name":i[0],
             "url":i[1],
             "description":i[2],
-            "cover_image":i[3]
+            "cover_image":i[3],
+            "theme":i[4]
+        })
+    return jsonify(formatted_index)
+@federation_index_bp.route("/view-index-themes")
+def view_index_themes():
+    conn = get_db()
+    formatted_index = []
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM themes_timeline")
+    result = cur.fetchall()
+    for i in result:
+        formatted_index.append({
+            "name_theme":i[0],
+            "description":i[1]
         })
     return jsonify(formatted_index)
 @federation_index_bp.route("/register-federation",methods=["POST"])
@@ -40,11 +58,12 @@ def register_federation():
     url = data.get("url")
     description = data.get("description")
     cover_image = data.get("cover_image")
+    theme = data.get("theme")
     conn = get_db()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO federation_index (name, url, description, cover_image) VALUES (?, ?, ?, ?)",
-        (name, url, description, cover_image)
+        "INSERT INTO federation_index (name, url, description, cover_image, theme) VALUES (?, ?, ?, ?, ?)",
+        (name, url, description, cover_image, theme)
     )
     conn.commit()
     conn.close()
