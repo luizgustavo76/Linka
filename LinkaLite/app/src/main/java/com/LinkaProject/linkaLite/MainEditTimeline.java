@@ -51,6 +51,9 @@ public class MainEditTimeline extends Activity{
                     case 0:
                         startActivity(new Intent(MainEditTimeline.this, EditTimeline.class));
                         break;
+                    case 1:
+                        startActivity(new Intent(MainEditTimeline.this, TimelineFilters.class));
+                        break;
                     case 2:
                         startActivity(new Intent(MainEditTimeline.this, AddManualUrl.class));
                         break;

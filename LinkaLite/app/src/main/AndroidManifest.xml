@@ -32,6 +32,10 @@
             android:label="Register"
             android:exported="false" />
         <activity 
+            android:name=".TimelineFilters" 
+            android:label="Filters"
+            android:exported="false" />
+        <activity 
             android:name=".AddManualUrl" 
             android:label="Add a External url"
             android:exported="false" />
