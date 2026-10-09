@@ -18,7 +18,7 @@ def create_table():
                 theme TEXT)""")
     cur.execute("""CREATE TABLE IF NOT EXISTS themes_timeline(
                 name_theme TEXT,
-                description TEXT,)""")
+                description TEXT)""")
     conn.commit()
     conn.close()
 create_table()
