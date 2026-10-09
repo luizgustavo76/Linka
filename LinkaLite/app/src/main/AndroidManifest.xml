@@ -36,6 +36,10 @@
             android:label="Filters"
             android:exported="false" />
         <activity 
+            android:name=".TimelineThemes" 
+            android:label="Themes"
+            android:exported="false" />
+        <activity 
             android:name=".AddManualUrl" 
             android:label="Add a External url"
             android:exported="false" />

@@ -44,7 +44,22 @@ def add_theme():
             return jsonify({"status":"forget admin key.... or you are a invasor.. nice to meet you"}),400
     else:
         return jsonify({"status":"forbidden"}),403
-@federation_index_bp.route("/view-index")
+@federation_index_bp.route("/view-index/<path:theme>")
+def view_index_by_theme(theme):
+    conn = get_db()
+    formatted_index = []
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM federation_index WHERE theme = ?",(theme,))
+    result = cur.fetchall()
+    for i in result:
+        formatted_index.append({
+            "name":i[0],
+            "url":i[1],
+            "description":i[2],
+            "cover_image":i[3],
+            "theme":i[4]
+        })
+    return jsonify(formatted_index)
 def view_index():
     conn = get_db()
     formatted_index = []
@@ -60,6 +75,7 @@ def view_index():
             "theme":i[4]
         })
     return jsonify(formatted_index)
+    
 @federation_index_bp.route("/view-index-themes")
 def view_index_themes():
     conn = get_db()

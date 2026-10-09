@@ -31,7 +31,6 @@ public class notificationsParser {
                 try {
                     JSONObject obj = array.getJSONObject(i);
 
-                    // optInt/optString evitam que o código quebre caso venha nulo ou com outro nome de chave
                     int id = obj.optInt("id", i + 1);
                     String content = obj.optString("content", obj.optString("message", ""));
                     String datetime = obj.optString("datetime", obj.optString("date", ""));

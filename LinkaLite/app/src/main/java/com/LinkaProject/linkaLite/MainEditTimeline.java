@@ -49,7 +49,7 @@ public class MainEditTimeline extends Activity{
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
                     case 0:
-                        startActivity(new Intent(MainEditTimeline.this, EditTimeline.class));
+                        startActivity(new Intent(MainEditTimeline.this, TimelineThemes.class));
                         break;
                     case 1:
                         startActivity(new Intent(MainEditTimeline.this, TimelineFilters.class));
