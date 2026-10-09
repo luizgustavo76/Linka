@@ -36,7 +36,7 @@ def add_theme():
         if admin_master_key == ADMIN_MASTER_KEY:
             conn = get_db()
             cur = conn.cursor()
-            cur.execute("INSERT INTO themes (name, description) VALUES(?, ?)",(name, description))
+            cur.execute("INSERT INTO themes_timeline (name_theme, description) VALUES(?, ?)",(name, description))
             conn.commit()
             conn.close()
             return jsonify({"status":"theme created"}),200
