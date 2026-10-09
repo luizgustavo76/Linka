@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import requests
 import dotenv
 import os
-dotenv.load_dotenv("")
+dotenv.load_dotenv()
 MASTODON_KEY = os.getenv("MASTODON_KEY")
 def formate(posts):
     if isinstance(posts, str):
