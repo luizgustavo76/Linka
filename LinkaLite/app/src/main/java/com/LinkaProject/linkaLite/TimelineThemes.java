@@ -14,13 +14,21 @@ import org.json.JSONObject;
 public class TimelineThemes extends Activity {
     private String url = "";
     private LinearLayout containerMain;
-
+    private LinearLayout layoutRemoveChannel;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.themes_timeline);
-
+        layoutRemoveChannel = (LinearLayout) findViewById(R.id.layoutRemoveManual);
         containerMain = (LinearLayout) findViewById(R.id.containerMain);
+        layoutRemoveChannel.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(TimelineThemes.this, EditTimeline.class);
+                intent.putExtra("isManual", true);
+                startActivity(intent);
+            }
+        });
         LayoutInflater inflater = getLayoutInflater();
 
         try {
@@ -64,7 +72,6 @@ public class TimelineThemes extends Activity {
                         txtThemeName.setText(currentTheme);
                         txtThemeDesc.setText(jsonTheme.optString("description", ""));
 
-                        // Listener configurado diretamente no card individual
                         cardView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {

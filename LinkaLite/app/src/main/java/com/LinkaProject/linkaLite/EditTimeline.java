@@ -30,6 +30,7 @@ public class EditTimeline extends Activity {
     private ListView listView;
     private String url = "";
     private String nameTheme = "";
+    private boolean isManual = false;
     private List<FederationItem> itemList = new ArrayList<FederationItem>();
 
     @Override
@@ -46,6 +47,7 @@ public class EditTimeline extends Activity {
         edtUrl = (EditText) findViewById(R.id.edtUrl);
 
         nameTheme = getIntent().getStringExtra("nameTheme");
+        isManual = getIntent().getBooleanExtra("isManual", false);
         if (nameTheme == null || nameTheme.isEmpty()) {
             nameTheme = getIntent().getStringExtra("theme");
         }
@@ -53,8 +55,10 @@ public class EditTimeline extends Activity {
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(EditTimeline.this, "config.cfg"));
-            JSONObject server = jsonCfg.getJSONObject("SERVER");
-            url = server.optString("url", "");
+            if (jsonCfg.has("SERVER")) {
+                JSONObject server = jsonCfg.getJSONObject("SERVER");
+                url = server.optString("url", "");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -118,6 +122,10 @@ public class EditTimeline extends Activity {
 
         @Override
         protected String doInBackground(String... params) {
+            if (isManual) {
+                // Modo manual nao precisa fazer requisicao HTTP na API de temas
+                return null;
+            }
             String targetUrl = params[0];
             try {
                 return request.requestHTTP(targetUrl, "get", new JSONObject(), EditTimeline.this);
@@ -130,33 +138,51 @@ public class EditTimeline extends Activity {
         @Override
         protected void onPostExecute(String response) {
             itemList.clear();
-            itemList.add(new FederationItem(
-                "", 
-                "Servidor local padrão", 
-                "Linka-local", 
-                "http://linkaProject.pythonanywhere.com"
-            ));
+            
+            config cfg = new config();
+            List<String> savedUrls = cfg.getSavedUrls(EditTimeline.this);
+            if (savedUrls == null) {
+                savedUrls = new ArrayList<String>();
+            }
 
-            if (response != null && !response.trim().isEmpty()) {
-                try {
-                    JSONArray jsonArray = new JSONArray(response);
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        JSONObject obj = jsonArray.getJSONObject(i);
-                        itemList.add(new FederationItem(
-                            obj.optString("cover_image", ""),
-                            obj.optString("description", ""),
-                            obj.optString("name", ""),
-                            obj.optString("url", "")
-                        ));
+            if (isManual) {
+                // Se for gerenciamento manual, popula a itemList com as URLs do arquivo config.cfg
+                for (String savedUrl : savedUrls) {
+                    itemList.add(new FederationItem(
+                        "", 
+                        "Adicionado manualmente", 
+                        savedUrl, 
+                        savedUrl
+                    ));
+                }
+            } else {
+                // Fluxo normal por tema: adiciona o servidor local + respostas HTTP
+                itemList.add(new FederationItem(
+                    "", 
+                    "Local server", 
+                    "Linka-local", 
+                    "http://linkaProject.pythonanywhere.com"
+                ));
+
+                if (response != null && !response.trim().isEmpty()) {
+                    try {
+                        JSONArray jsonArray = new JSONArray(response);
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject obj = jsonArray.getJSONObject(i);
+                            itemList.add(new FederationItem(
+                                obj.optString("cover_image", ""),
+                                obj.optString("description", ""),
+                                obj.optString("name", ""),
+                                obj.optString("url", "")
+                            ));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                } catch (JSONException e) {
-                    e.printStackTrace();
                 }
             }
 
             if (listView != null && !isFinishing()) {
-                config cfg = new config();
-                List<String> savedUrls = cfg.getSavedUrls(EditTimeline.this);
                 FederationsAdapter adapter = new FederationsAdapter(EditTimeline.this, itemList, savedUrls);
                 listView.setAdapter(adapter);
             }

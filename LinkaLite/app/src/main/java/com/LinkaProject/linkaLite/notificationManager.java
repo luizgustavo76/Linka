@@ -43,7 +43,6 @@ public class notificationManager {
                 String fromUser = msg.getFromUser();
                 String content = msg.getContent();
 
-                // Ícone do app ou o padrão de chat do sistema
                 int icon = R.drawable.icon; // ou android.R.drawable.stat_notify_chat
                 CharSequence tickerText = fromUser + ": " + content;
                 long when = System.currentTimeMillis();

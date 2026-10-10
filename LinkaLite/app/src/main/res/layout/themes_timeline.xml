@@ -1,12 +1,57 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
-
     <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dip" >
+        <LinearLayout
         android:id="@+id/containerMain"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="8dip" />
+    <LinearLayout
+        android:id="@+id/layoutRemoveManual"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dip"
+        android:background="#252830"
+        android:clickable="true"
+        android:focusable="true">
 
+        <View
+            android:id="@+id/viewColorIndicator"
+            android:layout_width="14dip"
+            android:layout_height="14dip"
+            android:layout_marginBottom="6dip"
+            android:background="@drawable/circle_shape" />
+
+        <TextView
+            android:id="@+id/txtThemeName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Manual Urls"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/txtThemeDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Remove here your manual urls"
+            android:textColor="#A0A5B5"
+            android:textSize="11sp"
+            android:layout_marginTop="2dip"
+            android:maxLines="3"
+            android:ellipsize="end" />
+
+    </LinearLayout>
+    </LinearLayout>
 </ScrollView>
