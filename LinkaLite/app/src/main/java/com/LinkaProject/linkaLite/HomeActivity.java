@@ -257,9 +257,9 @@ public class HomeActivity extends TabActivity {
                             urlsArray.put(cleanUrl);
                         }
                     }
-                    String[] partsFilters = .split(",");
+                    String[] partsFilters = tagsValue.split(",");
                     for (String partFilters : parts) {
-                        String cleanUrl = part.trim();
+                        String cleanUrl = partFilters.trim();
                         if (cleanUrl.length() > 0) {
                             tags.put(cleanUrl);
                         }
