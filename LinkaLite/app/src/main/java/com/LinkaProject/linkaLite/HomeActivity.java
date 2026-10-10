@@ -120,7 +120,7 @@ public class HomeActivity extends TabActivity {
             JSONObject server = jsonCfg.getJSONObject("SERVER");
             String url = server.optString("url", "http://linkaProject.pythonanywhere.com");
             String token = fastLogin.optString("token_session", "");
-            if (!token.isEmpty()) {
+            if (token.length() > 0) {
                 tokenManager.valideToken(token, url, HomeActivity.this);
             }
         } catch (JSONException e) {
@@ -234,7 +234,7 @@ public class HomeActivity extends TabActivity {
             config cfg = new config();
             
             String rawCfg = cfg.loadCfgAsJson(HomeActivity.this, "config.cfg");
-            if (rawCfg != null && !rawCfg.isEmpty()) {
+            if (rawCfg != null && rawCfg.length() > 0) {
                 JSONObject jsonCfg = new JSONObject(rawCfg);
                 JSONObject server = jsonCfg.optJSONObject("SERVER");
                 if (server != null) {
@@ -243,7 +243,7 @@ public class HomeActivity extends TabActivity {
             }
 
             String rawTimeline = cfg.loadCfgAsJson(HomeActivity.this, "config-timeline.cfg");
-            if (rawTimeline != null && !rawTimeline.isEmpty()) {
+            if (rawTimeline != null && rawTimeline.length() > 0) {
                 JSONObject jsonTimeline = new JSONObject(rawTimeline);
                 JSONObject fedSection = jsonTimeline.optJSONObject("FEDERATION-TIMELINE");
                 
@@ -261,7 +261,7 @@ public class HomeActivity extends TabActivity {
                     String[] parts = urlsValue.split(",");
                     for (String part : parts) {
                         String cleanUrl = part.trim();
-                        if (!cleanUrl.isEmpty()) {
+                        if (cleanUrl.length() > 0) {
                             urlsArray.put(cleanUrl);
                         }
                     }
@@ -313,7 +313,7 @@ public class HomeActivity extends TabActivity {
 
             targetList.clear();
 
-            if (result == null || result.trim().isEmpty()) {
+            if (result == null || result.trim().length() == 0) {
                 targetAdapter.notifyDataSetChanged();
                 Toast.makeText(HomeActivity.this, "Error loading feed", Toast.LENGTH_SHORT).show();
                 return;
@@ -430,7 +430,7 @@ public class HomeActivity extends TabActivity {
                     for (String line : lines) {
                         if (line.contains("[IMAGE]")) {
                             String newUrl = line.replace("[IMAGE]", "").trim();
-                            if (!newUrl.isEmpty()) {
+                            if (newUrl.length() > 0) {
                                 photos.add(newUrl);
                             }
                             textPost = textPost.replace(line, "").trim();
@@ -438,7 +438,7 @@ public class HomeActivity extends TabActivity {
                     }
 
                     // 3. Processa a exibição das imagens
-                    if (!photos.isEmpty()) {
+                    if (photos.size() > 0) {
                         if (photos.size() == 1) {
                             final String singleUrl = photos.get(0);
                             imgPost.setVisibility(View.VISIBLE);

@@ -112,7 +112,7 @@ public class BanUserGroup extends Activity {
     }
 
     private void fetchMembers() {
-        if (groupId == -1 || url.isEmpty() || myUsername.isEmpty()) {
+        if (groupId == -1 || url.length() == 0 || myUsername.length() == 0) {
             Log.e("BanUserGroup", "Parametros invalidos: url=" + url + ", myUsername=" + myUsername + ", groupId=" + groupId);
             return;
         }
@@ -134,7 +134,7 @@ public class BanUserGroup extends Activity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (response == null || response.trim().isEmpty()) {
+                            if (response == null || response.trim().length() == 0) {
                                 Log.e("BanUserGroup", "Resposta do servidor veio nula ou vazia");
                                 return;
                             }

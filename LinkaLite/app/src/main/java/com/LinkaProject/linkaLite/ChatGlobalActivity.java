@@ -37,7 +37,7 @@ public class ChatGlobalActivity extends Activity {
         try {
             config cfg = new config();
             String rawCfg = cfg.loadCfgAsJson(this, "config.cfg");
-            if (rawCfg != null && !rawCfg.isEmpty()) {
+            if (rawCfg != null && rawCfg.length() > 0) {
                 JSONObject jsonCfg = new JSONObject(rawCfg);
                 JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
                 JSONObject server = jsonCfg.getJSONObject("SERVER");
@@ -61,7 +61,7 @@ public class ChatGlobalActivity extends Activity {
             @Override
             public void onClick(View v) {
                 String text_message = edtInputMessage.getText().toString();
-                if (!text_message.trim().isEmpty()) {
+                if (text_message.trim().length() > 0) {
                     edtInputMessage.setText(""); 
                     new SendMessageTask(text_message).execute();
                 }
@@ -97,7 +97,7 @@ public class ChatGlobalActivity extends Activity {
         protected String doInBackground(Void... params) {
             try {
                 String fullUrl = url + "/view-global-message";
-                if (url == null || url.trim().isEmpty()) return null;
+                if (url == null || url.trim().length() == 0) return null;
                 JSONObject json_chat = new JSONObject();
                 json_chat.put("id", 0);
                 return request.requestHTTP(fullUrl, "post", json_chat, 0, ChatGlobalActivity.this);
@@ -108,7 +108,7 @@ public class ChatGlobalActivity extends Activity {
         }
         @Override
         protected void onPostExecute(String response) {
-            if (response == null || response.trim().isEmpty()) return;
+            if (response == null || response.trim().length() == 0) return;
             try {
                 chatContainer.removeAllViews();
                 JSONArray jsonArray = new JSONArray(response);
@@ -117,7 +117,7 @@ public class ChatGlobalActivity extends Activity {
                     String text = obj.getString("message");
                     String sender = obj.getString("sender");
                     boolean isMe = sender.equalsIgnoreCase(username);
-                    String displayText = sender.isEmpty() ? text : sender + ": " + text;
+                    String displayText = sender.length() == 0 ? text : sender + ": " + text;
                     ChatBubbleView bubble = new ChatBubbleView(ChatGlobalActivity.this, displayText, isMe);
                     chatContainer.addView(bubble);
                 }

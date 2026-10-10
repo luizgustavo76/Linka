@@ -92,8 +92,7 @@ public class FederationsFeed extends Activity {
         if (intent != null
                 && intent.hasExtra("url")
                 && intent.getStringExtra("url") != null
-                && !intent.getStringExtra("url").isEmpty()) {
-
+                && intent.getStringExtra("url").length() > 0) {
             currentUrl = intent.getStringExtra("url");
         } else {
             currentUrl = config.getUrl();
@@ -152,7 +151,7 @@ public class FederationsFeed extends Activity {
     protected void onResume() {
         super.onResume();
 
-        if (currentUrl == null || currentUrl.isEmpty()) {
+        if (currentUrl == null || currentUrl.length() == 0) {
             AppConfig config = new AppConfig(this);
             currentUrl = formatUrl(config.getUrl());
         }
@@ -166,7 +165,7 @@ public class FederationsFeed extends Activity {
     }
 
     private String formatUrl(String rawUrl) {
-        if (rawUrl == null || rawUrl.trim().isEmpty()) {
+        if (rawUrl == null || rawUrl.trim().length() == 0) {
             return "";
         }
 
@@ -185,7 +184,7 @@ public class FederationsFeed extends Activity {
     }
 
     private String sanitizarUrlImagem(String rawUrl) {
-        if (rawUrl == null || rawUrl.trim().isEmpty()) {
+        if (rawUrl == null || rawUrl.trim().length() == 0) {
             return "";
         }
 
@@ -196,7 +195,7 @@ public class FederationsFeed extends Activity {
      * Extrai a primeira imagem marcada no texto do post.
      */
     private String extractImageUrl(String text) {
-        if (text == null || text.isEmpty()) {
+        if (text == null || text.length() == 0) {
             return "";
         }
 
@@ -213,7 +212,7 @@ public class FederationsFeed extends Activity {
      * Remove todas as marcacoes [IMAGE]URL do texto que sera exibido.
      */
     private String removeImageMarkers(String text) {
-        if (text == null || text.isEmpty()) {
+        if (text == null || text.length() == 0) {
             return "";
         }
 
@@ -465,7 +464,7 @@ public class FederationsFeed extends Activity {
               
                 final String imageUrl = extractImageUrl(textPost);
 
-                if (!imageUrl.isEmpty()) {
+                if (imageUrl.length() > 0) {
                     holder.imgPost.setVisibility(View.VISIBLE);
 
                     holder.imgPost.setTag(imageUrl);

@@ -48,7 +48,7 @@ public class EditTimeline extends Activity {
 
         nameTheme = getIntent().getStringExtra("nameTheme");
         isManual = getIntent().getBooleanExtra("isManual", false);
-        if (nameTheme == null || nameTheme.isEmpty()) {
+        if (nameTheme == null || nameTheme.length() == 0) {
             nameTheme = getIntent().getStringExtra("theme");
         }
 
@@ -69,7 +69,7 @@ public class EditTimeline extends Activity {
                 public void onClick(View v) {
                     if (edtUrl != null) {
                         String inputUrl = edtUrl.getText().toString().trim();
-                        if (!inputUrl.isEmpty()) {
+                        if (inputUrl.length() > 0) {
                             config cfg = new config();
                             cfg.toggleUrl(EditTimeline.this, inputUrl);
                             edtUrl.setText("");
@@ -110,7 +110,7 @@ public class EditTimeline extends Activity {
     private void fetchData() {
         String baseUrl = (url != null && url.endsWith("/")) ? url.substring(0, url.length() - 1) : url;
         String targetEndpoint;
-        if (nameTheme != null && !nameTheme.trim().isEmpty()) {
+        if (nameTheme != null && nameTheme.trim().length() > 0) {
             targetEndpoint = baseUrl + "/view-index/" + nameTheme.trim().toLowerCase(Locale.ROOT);
         } else {
             targetEndpoint = baseUrl + "/view-index";
@@ -164,7 +164,7 @@ public class EditTimeline extends Activity {
                     "http://linkaProject.pythonanywhere.com"
                 ));
 
-                if (response != null && !response.trim().isEmpty()) {
+                if (response != null && response.trim().length() > 0) {
                     try {
                         JSONArray jsonArray = new JSONArray(response);
                         for (int i = 0; i < jsonArray.length(); i++) {

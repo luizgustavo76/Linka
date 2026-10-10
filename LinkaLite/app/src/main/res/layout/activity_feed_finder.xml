@@ -5,16 +5,16 @@
     android:layout_height="match_parent"
     android:background="#282c37"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dip">
 
     <!-- A lista agora ocupa todo o espaço disponível e gerencia a rolagem sozinha -->
     <ListView
         android:id="@+id/listFederations"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="0dip"
         android:layout_weight="1"
         android:divider="@null"
-        android:dividerHeight="8dp" />
+        android:dividerHeight="8dip" />
 
     <!-- Campo de texto e botão de envio fixos na parte inferior -->
     <LinearLayout 
@@ -22,12 +22,12 @@
         android:layout_height="wrap_content" 
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp">
+        android:layout_marginTop="8dip"
+        android:layout_marginBottom="8dip">
 
         <EditText
             android:id="@+id/edtUrl"
-            android:layout_width="0dp"
+            android:layout_width="0dip"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="federation url"/>
@@ -43,14 +43,14 @@
     <!-- Barra de navegação inferior fixa -->
     <LinearLayout 
         android:layout_width="match_parent"
-        android:layout_height="40dp" 
+        android:layout_height="40dip" 
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="#11111b">
 
         <ImageButton
             android:id="@+id/btnHome"
-            android:layout_width="0dp"
+            android:layout_width="0dip"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:src="@drawable/home"
@@ -59,7 +59,7 @@
 
         <ImageButton
             android:id="@+id/btnChat"
-            android:layout_width="0dp"
+            android:layout_width="0dip"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:src="@drawable/chat"
@@ -68,7 +68,7 @@
 
         <ImageButton
             android:id="@+id/btnOptions"
-            android:layout_width="0dp"
+            android:layout_width="0dip"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:src="@drawable/options"
@@ -77,7 +77,7 @@
 
         <ImageButton
             android:id="@+id/btnProfile"
-            android:layout_width="0dp"
+            android:layout_width="0dip"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:src="@drawable/account"

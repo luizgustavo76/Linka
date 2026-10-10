@@ -92,12 +92,12 @@ public class request {
                 try {
                     config cfg = new config();
                     String rawCfg = cfg.loadCfgAsJson(context, "config.cfg");
-                    if (rawCfg != null && !rawCfg.isEmpty()) {
+                    if (rawCfg != null && rawCfg.length() > 0) {
                         JSONObject jsonCfg = new JSONObject(rawCfg);
                         if (jsonCfg.has("FAST_LOGIN")) {
                             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
                             String token = fastLogin.optString("token_session", "");
-                            if (!token.isEmpty()) {
+                            if (token.length() > 0) {
                                 connection.setRequestProperty("Authorization", "Bearer " + token);
                             }
                         }
@@ -107,7 +107,7 @@ public class request {
             int responseCode = connection.getResponseCode();
             if (responseCode == 403 && context != null) {
                 String newToken = tokenManager.newSession(context);
-                if (newToken != null && !newToken.isEmpty()) {
+                if (newToken != null && newToken.length() > 0) {
                     config cfg = new config();
                     cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "token_session", newToken);
                 }
@@ -151,12 +151,12 @@ public class request {
             try {
                 config cfg = new config();
                 String rawCfg = cfg.loadCfgAsJson(context, "config.cfg");
-                if (rawCfg != null && !rawCfg.isEmpty()) {
+                if (rawCfg != null && rawCfg.length() > 0) {
                     JSONObject jsonCfg = new JSONObject(rawCfg);
                     if (jsonCfg.has("FAST_LOGIN")) {
                         JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
                         String token = fastLogin.optString("token_session", "");
-                        if (!token.isEmpty()) {
+                        if (token.length() > 0) {
                             connection.setRequestProperty("Authorization", "Bearer " + token);
                         }
                     }
@@ -178,7 +178,7 @@ public class request {
 
         if (responseCode == 403 && context != null) {
             String newToken = tokenManager.newSession(context);
-            if (newToken != null && !newToken.isEmpty()) {
+            if (newToken != null && newToken.length() > 0) {
                 config cfg = new config();
                 cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "token_session", newToken);
             }

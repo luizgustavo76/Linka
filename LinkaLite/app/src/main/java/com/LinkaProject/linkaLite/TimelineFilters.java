@@ -109,7 +109,7 @@ public class TimelineFilters extends Activity {
         builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 String newTag = input.getText().toString().trim();
-                if (!newTag.isEmpty()) {
+                if (newTag.length() > 0) {
                     cfg.addFilter(TimelineFilters.this, newTag);
                     refreshFilterList();
                     Toast.makeText(TimelineFilters.this, "Filter added!", Toast.LENGTH_SHORT).show();

@@ -114,7 +114,7 @@ public class config {
 
             while ((line = br.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty() || line.startsWith("#") || line.startsWith(";") || line.startsWith("{")) {
+                if (line.length() == 0 || line.startsWith("#") || line.startsWith(";") || line.startsWith("{")) {
                     continue;
                 }
                 if (line.startsWith("[") && line.endsWith("]")) {
@@ -198,16 +198,16 @@ public class config {
         List<String> list = new ArrayList<String>();
         try {
             String rawTimeline = loadCfgAsJson(context, "config-timeline.cfg");
-            if (rawTimeline != null && !rawTimeline.isEmpty()) {
+            if (rawTimeline != null && rawTimeline.length() > 0) {
                 JSONObject jsonTimeline = new JSONObject(rawTimeline);
                 JSONObject fedSection = jsonTimeline.optJSONObject("FEDERATION-TIMELINE");
                 if (fedSection != null) {
                     String urlsValue = fedSection.optString("urls", "");
-                    if (!urlsValue.isEmpty()) {
+                    if (urlsValue.length() > 0) {
                         String[] parts = urlsValue.split(",");
                         for (String part : parts) {
                             String clean = part.trim();
-                            if (!clean.isEmpty() && !list.contains(clean)) {
+                            if (clean.length() > 0 && !list.contains(clean)) {
                                 list.add(clean);
                             }
                         }
@@ -221,7 +221,7 @@ public class config {
     }
 
     public void toggleUrl(Context context, String targetUrl) {
-        if (targetUrl == null || targetUrl.trim().isEmpty()) {
+        if (targetUrl == null || targetUrl.trim().length() == 0) {
             return;
         }
         String cleanUrl = targetUrl.trim();
@@ -247,16 +247,16 @@ public class config {
         List<String> list = new ArrayList<String>();
         try {
             String rawTimeline = loadCfgAsJson(context, "config-timeline.cfg");
-            if (rawTimeline != null && !rawTimeline.isEmpty()) {
+            if (rawTimeline != null && rawTimeline.length() > 0) {
                 JSONObject jsonTimeline = new JSONObject(rawTimeline);
                 JSONObject filterSection = jsonTimeline.optJSONObject("FILTERS");
                 if (filterSection != null) {
                     String tagsValue = filterSection.optString("tags", "");
-                    if (!tagsValue.isEmpty()) {
+                    if (tagsValue.length() > 0) {
                         String[] parts = tagsValue.split(",");
                         for (String part : parts) {
                             String clean = part.trim();
-                            if (!clean.isEmpty() && !list.contains(clean)) {
+                            if (clean.length() > 0 && !list.contains(clean)) {
                                 list.add(clean);
                             }
                         }
@@ -270,7 +270,7 @@ public class config {
     }
 
     public void addFilter(Context context, String tag) {
-        if (tag == null || tag.trim().isEmpty()) return;
+        if (tag == null || tag.trim().length() == 0) return;
         String cleanTag = tag.trim().replace(",", ""); // evita quebrar o CSV
         List<String> current = getSavedFilters(context);
         if (!current.contains(cleanTag)) {
@@ -280,7 +280,7 @@ public class config {
     }
 
     public void removeFilter(Context context, String tag) {
-        if (tag == null || tag.trim().isEmpty()) return;
+        if (tag == null || tag.trim().length() == 0) return;
         String cleanTag = tag.trim();
         List<String> current = getSavedFilters(context);
         if (current.contains(cleanTag)) {

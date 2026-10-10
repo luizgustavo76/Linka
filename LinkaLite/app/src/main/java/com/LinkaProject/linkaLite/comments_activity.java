@@ -60,15 +60,15 @@ public class comments_activity extends Activity {
             @Override
             public void onClick(View v) {
                 String textComment = commentEdt.getText().toString().trim();
-                if (username == null || username.trim().isEmpty()) {
+                if (username == null || username.trim().length() == 0) {
                     Toast.makeText(comments_activity.this, "Erro: user not registred!", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if (postId == null || postId.trim().isEmpty()) {
+                if (postId == null || postId.trim().length() == 0) {
                     Toast.makeText(comments_activity.this, "Erro: ID do Post inválido!", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if (textComment.isEmpty()) {
+                if (textComment.length() == 0) {
                     Toast.makeText(comments_activity.this, "Escreva um comentário!", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -88,7 +88,7 @@ public class comments_activity extends Activity {
                 }
             }
         });
-        if (postId != null && !postId.trim().isEmpty()) {
+        if (postId != null && postId.trim().length() > 0) {
             new FetchCommentsTask().execute(postId);
         }
     }
@@ -166,7 +166,7 @@ public class comments_activity extends Activity {
         }
         @Override
         protected void onPostExecute(String result) {
-            if (result != null && !result.trim().isEmpty()) {
+            if (result != null && result.trim().length() > 0) {
                 popularLista(result);
             } else {
                 Toast.makeText(comments_activity.this, "Erro ao carregar comentários", Toast.LENGTH_SHORT).show();

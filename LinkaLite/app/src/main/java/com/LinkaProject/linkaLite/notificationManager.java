@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.lang.reflect.Method;
@@ -31,7 +32,7 @@ public class notificationManager {
             String responseRaw = request.requestHTTP(url + "/notifications", "post", jsonNotifications, context);
             List<NotificationMessage> notifications = notificationsParser.parseJson(responseRaw);
 
-            if (notifications == null || notifications.isEmpty()) {
+            if (notifications == null || notifications.size() == 0) {
                 return;
             }
 
@@ -43,18 +44,17 @@ public class notificationManager {
                 String fromUser = msg.getFromUser();
                 String content = msg.getContent();
 
-                int icon = R.drawable.icon; // ou android.R.drawable.stat_notify_chat
+                int icon = R.drawable.icon;
                 CharSequence tickerText = fromUser + ": " + content;
                 long when = System.currentTimeMillis();
 
                 Notification notification = new Notification(icon, tickerText, when);
 
-                // Correção do Título x Conteúdo
                 CharSequence contentTitle = fromUser; 
                 CharSequence contentText = content;
 
                 Intent notificationIntent = new Intent(context, HomeActivity.class);
-                notificationIntent.putExtra("NOTIFICATION_ID", id); // Passa o ID para a HomeActivity marcar como lida ao abrir
+                notificationIntent.putExtra("NOTIFICATION_ID", id);
                 
                 PendingIntent contentIntent = PendingIntent.getActivity(
                     context, 
@@ -74,10 +74,23 @@ public class notificationManager {
 
                 notification.defaults |= Notification.DEFAULT_SOUND;
                 notification.defaults |= Notification.DEFAULT_VIBRATE;
-                notification.flags |= Notification.FLAG_AUTO_CANCEL; // Limpa a notificação da barra quando clicada
+                notification.flags |= Notification.FLAG_AUTO_CANCEL;
+
+                // ANDROID 5.0+ (Lollipop / API 21): Define prioridade maxima/alta para virar "Heads-Up" (pop-up flutuante na tela)
+                if (Integer.parseInt(Build.VERSION.SDK) >= Build.VERSION_CODES.JELLY_BEAN) {
+                    notification.priority = Notification.PRIORITY_HIGH; // Ou Notification.PRIORITY_MAX
+                }
 
                 int notifyId = (id > 0) ? id : (int) (System.currentTimeMillis() % 10000);
                 navManager.notify(notifyId, notification);
+
+                try {
+                    JSONObject jsonRead = new JSONObject();
+                    jsonRead.put("id", id);
+                    request.requestHTTP(url + "/set-read-notification", "post", jsonRead, context);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
         } catch (JSONException e) {

@@ -76,10 +76,10 @@ public class FederationsAdapter extends BaseAdapter {
         final FederationItem item = items.get(position);
 
         String displayName = item.getName();
-        if (displayName == null || displayName.trim().isEmpty() || displayName.equalsIgnoreCase("null")) {
+        if (displayName == null || displayName.trim().length() == 0 || displayName.equalsIgnoreCase("null")) {
             displayName = item.getUrl();
         }
-        if (displayName == null || displayName.trim().isEmpty() || displayName.equalsIgnoreCase("null")) {
+        if (displayName == null || displayName.trim().length() == 0 || displayName.equalsIgnoreCase("null")) {
             displayName = "Sem nome";
         }
         holder.btnFederation.setText(displayName);
@@ -95,7 +95,7 @@ public class FederationsAdapter extends BaseAdapter {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 item.setChecked(isChecked);
                 String link = item.getUrl();
-                if (link != null && !link.trim().isEmpty()) {
+                if (link != null && link.trim().length() > 0) {
                     config cfg = new config();
                     cfg.toggleUrl(context, link);
                     if (savedUrls != null) {

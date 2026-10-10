@@ -49,7 +49,7 @@ public class DmChat extends Activity {
         try {
             config cfg = new config();
             String rawCfg = cfg.loadCfgAsJson(this, "config.cfg");
-            if (rawCfg != null && !rawCfg.isEmpty()) {
+            if (rawCfg != null && rawCfg.length() > 0) {
                 JSONObject jsonCfg = new JSONObject(rawCfg);
                 JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
                 JSONObject server = jsonCfg.getJSONObject("SERVER");
@@ -65,14 +65,14 @@ public class DmChat extends Activity {
         edtInputMessage = (EditText) findViewById(R.id.edtInputMessage);
         chatContainer = (LinearLayout) findViewById(R.id.layoutMessagesContainer);
         if (txtHeaderTitle != null) {
-            txtHeaderTitle.setText(cleanOtherUser.isEmpty() ? "Chat" : cleanOtherUser);
+            txtHeaderTitle.setText(cleanOtherUser.length() == 0 ? "Chat" : cleanOtherUser);
         }
         if (btnSend != null) {
             btnSend.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     String text_message = edtInputMessage.getText().toString();
-                    if (!text_message.trim().isEmpty()) {
+                    if (text_message.trim().length() > 0) {
                         edtInputMessage.setText(""); 
                         new SendMessageTask(text_message).execute();
                     }
@@ -124,7 +124,7 @@ public class DmChat extends Activity {
         }
         @Override
         protected void onPostExecute(String response) {
-            if (response == null || response.trim().isEmpty() || chatContainer == null) {
+            if (response == null || response.trim().length() == 0 || chatContainer == null) {
                 return;
             }
             try {
@@ -140,7 +140,7 @@ public class DmChat extends Activity {
                     String text = msgObj.optString("message", "");
                     String sender = msgObj.optString("sender", "");
                     boolean isMe = sender.equalsIgnoreCase(username);
-                    String displayText = sender.isEmpty() ? text : sender + ": " + text;
+                    String displayText = sender.length() == 0 ? text : sender + ": " + text;
                     ChatBubbleView bubble = new ChatBubbleView(DmChat.this, displayText, isMe);
                     chatContainer.addView(bubble);
                 }
@@ -157,7 +157,7 @@ public class DmChat extends Activity {
         @Override
         protected Boolean doInBackground(Void... params) {
             try {
-                if (url == null || url.isEmpty() || other_user == null || other_user.isEmpty()) {
+                if (url == null || url.length() == 0 || other_user == null || other_user.length() == 0) {
                     return false;
                 }
                 String cleanOtherUser = other_user.replace("@", "").trim();
@@ -167,7 +167,7 @@ public class DmChat extends Activity {
                 json_chat.put("receiver", cleanOtherUser);
                 json_chat.put("message", messageToSend);
                 String response = request.requestHTTP(fullUrl, "post", json_chat, DmChat.this);
-                return response != null && !response.trim().isEmpty();
+                return response != null && response.trim().length() > 0;
             } catch (Exception e) {
                 return false;
             }

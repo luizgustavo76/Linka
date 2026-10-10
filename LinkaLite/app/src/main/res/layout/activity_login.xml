@@ -14,12 +14,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginTop="16dip"
+            android:layout_marginBottom="16dip"
             android:src="@drawable/linka_app_login_banner"
             android:scaleType="fitCenter"
-            android:adjustViewBounds="true"
-            android:contentDescription="Logo Linka" />
+            android:adjustViewBounds="true" />
         <EditText
             android:id="@+id/edtUsername"
             android:layout_width="fill_parent"

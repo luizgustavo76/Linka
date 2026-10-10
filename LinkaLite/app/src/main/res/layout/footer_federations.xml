@@ -5,7 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="16dp">
+    android:padding="16dip">
 
     <TextView
         android:id="@+id/tvFooterText"
@@ -21,7 +21,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Personalize it!"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="8dip"
         android:onClick="personalizeTimeline" />
 
 </LinearLayout>

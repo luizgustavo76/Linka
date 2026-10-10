@@ -43,7 +43,7 @@ public class AddManualUrl extends Activity{
                 @Override
                 public void onClick(View v) {
                     String inputUrl = edtUrl.getText().toString().trim();
-                    if (!inputUrl.isEmpty()) {
+                    if (inputUrl.length() > 0) {
                         config cfg = new config();
                         cfg.toggleUrl(AddManualUrl.this, inputUrl);
                         edtUrl.setText("");

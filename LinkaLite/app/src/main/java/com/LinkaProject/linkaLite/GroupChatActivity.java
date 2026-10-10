@@ -44,7 +44,7 @@ public class GroupChatActivity extends Activity {
             String rawCfg = cfg.loadCfgAsJson(this, "config.cfg");
             Log.d(TAG, "Config bruto lido: " + rawCfg);
 
-            if (rawCfg != null && !rawCfg.isEmpty()) {
+            if (rawCfg != null && rawCfg.length() > 0) {
                 JSONObject jsonCfg = new JSONObject(rawCfg);
                 JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
                 JSONObject server = jsonCfg.optJSONObject("SERVER");
@@ -68,7 +68,7 @@ public class GroupChatActivity extends Activity {
             @Override
             public void onClick(View v) {
                 String textMessage = edtInputMessage.getText().toString();
-                if (!textMessage.trim().isEmpty()) {
+                if (textMessage.trim().length() > 0) {
                     edtInputMessage.setText("");
                     new SendMessageTask(textMessage).execute();
                 }
@@ -110,7 +110,7 @@ public class GroupChatActivity extends Activity {
         @Override
         protected String doInBackground(Void... params) {
             try {
-                if (url == null || url.trim().isEmpty()) {
+                if (url == null || url.trim().length() == 0) {
                     Log.e(TAG, "FetchMessagesTask abortado: URL esta VAZIA ou NULA!");
                     return null;
                 }
@@ -142,7 +142,7 @@ public class GroupChatActivity extends Activity {
 
         @Override
         protected void onPostExecute(String response) {
-            if (response == null || response.trim().isEmpty()) {
+            if (response == null || response.trim().length() == 0) {
                 Log.e(TAG, "FetchMessagesTask onPostExecute: Resposta veio NULA ou VAZIA do servidor.");
                 return;
             }
@@ -162,7 +162,7 @@ public class GroupChatActivity extends Activity {
                         String sender = obj.optString("sender", "");
 
                         boolean isMe = sender.equalsIgnoreCase(username);
-                        String displayText = sender.isEmpty() ? text : sender + ": " + text;
+                        String displayText = sender.length() == 0 ? text : sender + ": " + text;
 
                         ChatBubbleView bubble = new ChatBubbleView(GroupChatActivity.this, displayText, isMe);
 

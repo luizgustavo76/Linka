@@ -18,7 +18,7 @@ public class tokenManager {
             config cfg = new config();
             String rawJson = cfg.loadCfgAsJson(context, "config.cfg");
             
-            if (rawJson != null && !rawJson.isEmpty()) {
+            if (rawJson != null && rawJson.length() > 0) {
                 JSONObject jsonCfg = new JSONObject(rawJson);
                 
                 if (jsonCfg.has("FAST_LOGIN") && jsonCfg.has("SERVER")) {
@@ -29,7 +29,7 @@ public class tokenManager {
                     String password = fastLogin.optString("password", "");
                     String baseUrl = server.optString("url", "http://linkaProject.pythonanywhere.com"); 
 
-                    if (username.isEmpty() || password.isEmpty()) {
+                    if (username.length() == 0 || password.length() == 0) {
                         return "";
                     }
 

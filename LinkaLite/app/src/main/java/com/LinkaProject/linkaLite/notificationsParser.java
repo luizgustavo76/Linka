@@ -11,7 +11,7 @@ public class notificationsParser {
     public static List<NotificationMessage> parseJson(String jsonRaw) {
         List<NotificationMessage> messageList = new ArrayList<NotificationMessage>();
 
-        if (jsonRaw == null || jsonRaw.trim().isEmpty()) {
+        if (jsonRaw == null || jsonRaw.trim().length() == 0) {
             return messageList;
         }
 

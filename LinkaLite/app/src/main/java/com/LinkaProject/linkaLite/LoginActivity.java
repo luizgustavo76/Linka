@@ -99,7 +99,7 @@ public class LoginActivity extends Activity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (!isFinishing() && !finalUser.isEmpty() && !finalPass.isEmpty()) {
+                        if (!isFinishing() && finalUser.length() > 0 && finalPass.length() > 0) {
                             Log.d(TAG, "Executando Fast Login para: " + finalUser);
                             executeLogin(finalUser, finalPass);
                         }
@@ -121,7 +121,7 @@ public class LoginActivity extends Activity {
             public void onClick(View v) {
                 String username = edtUsername.getText().toString().trim();
                 String password = edtPassword.getText().toString().trim();
-                if (username.isEmpty() || password.isEmpty()) {
+                if (username.length() == 0 || password.length() == 0) {
                     Toast.makeText(LoginActivity.this, "fill all the fields", Toast.LENGTH_SHORT).show();
                 } else {
                     executeLogin(username, password);

@@ -74,7 +74,7 @@ public class ImageLoader {
     }
 
     public void LoadImageUrl(final String imageUrl, final ImageView targetView) {
-        if (targetView == null || imageUrl == null || imageUrl.trim().isEmpty() || imageUrl.equals("null")) {
+        if (targetView == null || imageUrl == null || imageUrl.trim().length() == 0 || imageUrl.equals("null")) {
             return;
         }
 
@@ -113,7 +113,7 @@ public class ImageLoader {
     }
 
     public void viewProfilePicture(final Context context, final String username, final ImageView targetImageView) {
-        if (targetImageView == null || username == null || username.trim().isEmpty()) {
+        if (targetImageView == null || username == null || username.trim().length() == 0) {
             return;
         }
 
@@ -143,13 +143,13 @@ public class ImageLoader {
 
                     if (!tagKey.equals(targetImageView.getTag())) return;
 
-                    if (jsonResponse != null && !jsonResponse.trim().isEmpty()) {
+                    if (jsonResponse != null && jsonResponse.trim().length() > 0) {
                         JSONObject responseData = new JSONObject(jsonResponse);
 
                         if (!responseData.isNull("profile-picture")) {
                             String avatarUrl = responseData.optString("profile-picture", "");
 
-                            if (!avatarUrl.isEmpty() && !avatarUrl.equals("null")) {
+                            if (avatarUrl.length() > 0 && !avatarUrl.equals("null")) {
                                 String proxyUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(avatarUrl, "UTF-8");
 
                                 int[] dims = getDensityBasedDimensions(context, true);

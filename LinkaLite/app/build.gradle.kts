@@ -1,9 +1,14 @@
 import java.io.File
 
+plugins {
+    id("com.android.application")
+}
+
+// Task personalizada para redimensionar ícones via ImageMagick
 tasks.register("gerarResolucoesIcons") {
     doLast {
-        val pastaOriginal = file("${projectDir}/")
-        val pastaRes = file("${projectDir}/src/main/res/drawable")
+        val pastaOriginal = file("${projectDir}")
+        val pastaRes = file("${projectDir}/src/main/res")
 
         if (pastaOriginal.exists() && pastaOriginal.isDirectory) {
             pastaOriginal.listFiles()?.forEach { file ->
@@ -25,7 +30,6 @@ tasks.register("gerarResolucoesIcons") {
 
                         val arquivoDestino = File(destinoPasta, nome)
 
-                        // Usando ProcessBuilder do Java raiz: sem erros de escopo do Gradle!
                         ProcessBuilder("convert", file.absolutePath, "-resize", dimensao, arquivoDestino.absolutePath)
                             .inheritIO()
                             .start()
@@ -33,8 +37,6 @@ tasks.register("gerarResolucoesIcons") {
                     }
                 }
             }
-        } else {
-            println("⚠️ Pasta 'imagens_originais' não encontrada em: ${pastaOriginal.absolutePath}")
         }
     }
 }
@@ -42,50 +44,36 @@ tasks.register("gerarResolucoesIcons") {
 tasks.named("preBuild") {
     dependsOn("gerarResolucoesIcons")
 }
-plugins {
-    id("com.android.application")
-}
 
 android {
-    // CORREÇÃO 1: Mudado para 'linkaLite' com L maiúsculo para bater com seu Java
     namespace = "com.LinkaProject.linkaLite"
     compileSdk = 34
 
     defaultConfig {
         applicationId = "com.LinkaProject.linkaLite"
-
-        // Mantido em 9 (Android 2.3), o limite máximo de retrocompatibilidade do Gradle moderno
         minSdk = 3
         targetSdk = 9
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.2"
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+    // Bloco moderno substituindo o 'aaptOptions' legado para evitar os avisos de depreciação
+    androidResources {
+        // O AAPT2 gerencia o empacotamento de recursos para o Android 1.5
     }
+
     signingConfigs {
         getByName("debug") {
             enableV1Signing = true
             enableV2Signing = false
         }
-    }
-    lint {
-        checkReleaseBuilds = false
-        abortOnError = false
-    }
-    signingConfigs {
         create("release") {
-            storeFile = file("chave-linka.jks") // ou file("../chave-linka.jks") se o arquivo estiver na raiz do projeto
+            storeFile = file("chave-linka.jks")
             storePassword = "Luiz08102012"
             keyAlias = "linka_key"
             keyPassword = "Luiz08102012"
+            enableV1Signing = true
+            enableV2Signing = false
         }
     }
 
@@ -93,21 +81,24 @@ android {
         getByName("release") {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
-    
-    // CORREÇÃO 2: Removido o conflito do Java 8. 
-    // Deixando o Java 17, o JDK 21 compila feliz e sem avisos obsoletos.
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 }
 
-dependencies {
-    // Se precisar de alguma biblioteca antiga de JSON, ela entraria aqui.
-    // Como estamos usando o org.json nativo do Android, pode deixar vazio por enquanto.
-}
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(17))

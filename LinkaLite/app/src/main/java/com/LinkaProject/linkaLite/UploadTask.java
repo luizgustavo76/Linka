@@ -19,7 +19,7 @@ public class UploadTask {
     private static final String TAG = "Linka_UploadTask";
 
     public static String uploadProfilePicture(Context context, Uri imageUri, String requestUrl) {
-        if (context == null || imageUri == null || requestUrl == null || requestUrl.trim().isEmpty()) {
+        if (context == null || imageUri == null || requestUrl == null || requestUrl.trim().length() == 0) {
             return makeJsonError("UploadTask", "Parâmetros de entrada inválidos (null/vazio).");
         }
 
