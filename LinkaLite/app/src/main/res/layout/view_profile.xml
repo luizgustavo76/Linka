@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
     android:background="@drawable/bg_material_card">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dip">
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
@@ -35,7 +35,7 @@
 
                 <!-- Linha com Username e Botão de Amizade -->
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
@@ -60,7 +60,7 @@
                 <!-- Bio logo abaixo do Username/Botão -->
                 <TextView
                     android:id="@+id/txtBio"
-                    android:layout_width="match_parent"
+                    android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dip"
                     android:text="This is the user biography..."
@@ -74,14 +74,14 @@
 
         <!-- Divisor/Espaçamento -->
         <View
-            android:layout_width="match_parent"
+            android:layout_width="fill_parent"
             android:layout_height="1dip"
             android:layout_marginTop="16dip"
             android:layout_marginBottom="16dip"
             android:background="#33FFFFFF" />
         <LinearLayout
             android:id="@+id/postsContainer"
-            android:layout_width="match_parent"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />
 

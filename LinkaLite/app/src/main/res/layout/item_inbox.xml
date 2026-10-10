@@ -21,7 +21,7 @@
         android:layout_width="0dip"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:text="@username"
+        android:text="\@username"
         android:textStyle="bold"
         android:textSize="14sp" 
         android:textColor="#FFFFFF" />

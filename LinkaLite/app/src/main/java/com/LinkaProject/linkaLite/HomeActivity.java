@@ -52,7 +52,7 @@ public class HomeActivity extends TabActivity {
 
     private View footerForYou;
     private View footerNewest;
-
+    private JSONArray tags;
     private boolean isGuest = false;
     private ScheduledExecutorService scheduler;
     private ScheduledExecutorService schedulerNotifications;
@@ -246,23 +246,22 @@ public class HomeActivity extends TabActivity {
             if (rawTimeline != null && rawTimeline.length() > 0) {
                 JSONObject jsonTimeline = new JSONObject(rawTimeline);
                 JSONObject fedSection = jsonTimeline.optJSONObject("FEDERATION-TIMELINE");
-                
+                JSONObject filtersSection = jsonTimeline.optJSONObject("FILTERS");
                 if (fedSection != null) {
                     String urlsValue = fedSection.optString("urls", "");
-                    
-                    if (urlsValue.contains("#")) {
-                        urlsValue = urlsValue.split("#")[0].trim();
-                    }
-                    
-                    if (urlsValue.contains(":/data/data/")) {
-                        urlsValue = urlsValue.split(":/data/data/")[0].trim();
-                    }
-
+                    String tagsValue = filtersSection.optString("tags", "");
                     String[] parts = urlsValue.split(",");
                     for (String part : parts) {
                         String cleanUrl = part.trim();
                         if (cleanUrl.length() > 0) {
                             urlsArray.put(cleanUrl);
+                        }
+                    }
+                    String[] partsFilters = .split(",");
+                    for (String partFilters : parts) {
+                        String cleanUrl = part.trim();
+                        if (cleanUrl.length() > 0) {
+                            tags.put(cleanUrl);
                         }
                     }
                 }
@@ -275,6 +274,7 @@ public class HomeActivity extends TabActivity {
             JSONObject body = new JSONObject();
             try {
                 body.put("urls", urlsArray);
+                body.put("filters", tags);
             } catch (JSONException e) {
                 e.printStackTrace();
             }

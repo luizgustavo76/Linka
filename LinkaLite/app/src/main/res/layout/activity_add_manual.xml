@@ -39,49 +39,48 @@
         android:layout_height="0dip"
         android:layout_weight="1" />
 
-    <!-- Barra de Navegação Inferior -->
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="48dip"
-        android:background="#11111b"
+        android:layout_height="40dip" 
+        android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:background="#11111b">
 
         <ImageButton
             android:id="@+id/btnHome"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:background="@android:color/transparent"
+            android:src="@drawable/home"
             android:scaleType="centerInside"
-            android:src="@drawable/home" />
+            android:background="@android:color/transparent" />
 
         <ImageButton
             android:id="@+id/btnChat"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:background="@android:color/transparent"
+            android:src="@drawable/chat"
             android:scaleType="centerInside"
-            android:src="@drawable/chat" />
+            android:background="@android:color/transparent" />
 
         <ImageButton
             android:id="@+id/btnOptions"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:background="@android:color/transparent"
+            android:src="@drawable/options"
             android:scaleType="centerInside"
-            android:src="@drawable/options" />
+            android:background="@android:color/transparent" />
 
         <ImageButton
             android:id="@+id/btnProfile"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:background="@android:color/transparent"
+            android:src="@drawable/account"
             android:scaleType="centerInside"
-            android:src="@drawable/account" />
+            android:background="@android:color/transparent" />
 
     </LinearLayout>
 

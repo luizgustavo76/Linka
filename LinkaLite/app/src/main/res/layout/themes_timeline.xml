@@ -1,57 +1,118 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
-    <LinearLayout
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:background="#282c37">
+
+    <!-- Conteúdo que ROLA (Toma todo o espaço restante) -->
+    <ScrollView
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dip" >
+        android:layout_height="0dip"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
         <LinearLayout
-        android:id="@+id/containerMain"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dip" />
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dip">
+
+            <LinearLayout
+                android:id="@+id/containerMain"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dip" />
+
+            <LinearLayout
+                android:id="@+id/layoutRemoveManual"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="8dip"
+                android:background="#252830"
+                android:clickable="true"
+                android:focusable="true">
+
+                <View
+                    android:id="@+id/viewColorIndicator"
+                    android:layout_width="14dip"
+                    android:layout_height="14dip"
+                    android:layout_marginBottom="6dip"
+                    android:background="@drawable/circle_shape" />
+
+                <TextView
+                    android:id="@+id/txtThemeName"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Manual Urls"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/txtThemeDesc"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Remove here your manual urls"
+                    android:textColor="#A0A5B5"
+                    android:textSize="11sp"
+                    android:layout_marginTop="2dip"
+                    android:maxLines="3"
+                    android:ellipsize="end" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Barra de Navegação FIXA no Rodapé -->
     <LinearLayout
-        android:id="@+id/layoutRemoveManual"
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dip"
-        android:background="#252830"
-        android:clickable="true"
-        android:focusable="true">
+        android:layout_width="fill_parent"
+        android:layout_height="40dip" 
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#11111b">
 
-        <View
-            android:id="@+id/viewColorIndicator"
-            android:layout_width="14dip"
-            android:layout_height="14dip"
-            android:layout_marginBottom="6dip"
-            android:background="@drawable/circle_shape" />
+        <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/home"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
 
-        <TextView
-            android:id="@+id/txtThemeName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Manual Urls"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end" />
+        <ImageButton
+            android:id="@+id/btnChat"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/chat"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
 
-        <TextView
-            android:id="@+id/txtThemeDesc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Remove here your manual urls"
-            android:textColor="#A0A5B5"
-            android:textSize="11sp"
-            android:layout_marginTop="2dip"
-            android:maxLines="3"
-            android:ellipsize="end" />
+        <ImageButton
+            android:id="@+id/btnOptions"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/options"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
+
+        <ImageButton
+            android:id="@+id/btnProfile"
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="1"
+            android:src="@drawable/account"
+            android:scaleType="centerInside"
+            android:background="@android:color/transparent" />
 
     </LinearLayout>
-    </LinearLayout>
-</ScrollView>
+
+</LinearLayout>

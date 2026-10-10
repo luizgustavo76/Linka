@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.LinkaProject.linkaLite">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application 
+        android:label="Linka Lite"
+        android:icon="@drawable/icon">
+
+        <service android:name=".AuthenticatorService">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/authenticator" />
+        </service>
+
+        <activity 
+            android:name=".LoginActivity" 
+            android:label="Linka">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".SignupActivity" android:label="Register" />
+        <activity android:name=".TimelineFilters" android:label="Filters" />
+        <activity android:name=".TimelineThemes" android:label="Themes" />
+        <activity android:name=".AddManualUrl" android:label="Add a External url" />
+        <activity android:name=".HomeActivity" android:label="Feed" />
+        <activity android:name=".MainEditTimeline" android:label="Edit timeline" />
+        <activity android:name=".EditTimeline" android:label="Add new sources" />
+        <activity android:name=".newPost" android:label="New post" />
+        <activity android:name=".comments_activity" />
+        <activity android:name=".chatActivity" android:label="Chat" />
+        <activity android:name=".ChatGlobalActivity" android:label="Global Chat" />
+        <activity android:name=".profile" android:label="My profile" />
+        <activity android:name=".optionActivity" android:label="Options" />
+        <activity android:name=".addFriendActivity" android:label="Add friends" />
+        <activity android:name=".InboxActivity" android:label="Inbox" />
+        <activity android:name=".DmChat" android:label="chat" />
+        <activity android:name=".ChangeServer" android:label="change server" />
+        <activity android:name=".feedFinder" android:label="Feed Finder" />
+        <activity android:name=".FederationsFeed" android:label="Federations feed" />
+        <activity android:name=".newChat" android:label="New chat" />
+        <activity android:name=".NewGroupActivity" android:label="New group" />
+        <activity android:name=".EditAccount" android:label="Edit account" />
+        <activity android:name=".ChannelsGroupActivity" android:label="Channels" />
+        <activity android:name=".GroupChatActivity" android:label="Group Chat" />
+        <activity android:name=".ExternalChat" android:label="External chat" />
+        <activity android:name=".DmExternalChat" android:label="External chat" />
+        <activity android:name=".ViewProfile" android:label="View profile" />
+        <activity android:name=".ChangeBiography" android:label="Change biography" />
+        <activity android:name=".EnterGroup" android:label="Enter group with code" />
+        <activity android:name=".AddGroupChannel" android:label="Add group channel" />
+        <activity android:name=".AddGroupMember" android:label="Add group Member" />
+        <activity android:name=".ConfigGroup" android:label="Config group" />
+        <activity android:name=".BanUserGroup" android:label="Ban user" />
+        <activity android:name=".ChangeGroupName" android:label="Change name Group" />
+        <activity android:name=".RemoveGroupChannel" android:label="Remove channel" />
+        <activity android:name=".ViewPicture" android:label="picture" />
+        <activity android:name=".GenerateInvite" android:label="Generate invite" />
+
+    </application>
+</manifest>

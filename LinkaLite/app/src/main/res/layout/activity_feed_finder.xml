@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
     android:background="#282c37"
     android:orientation="vertical"
     android:padding="16dip">
@@ -10,7 +10,7 @@
     <!-- A lista agora ocupa todo o espaço disponível e gerencia a rolagem sozinha -->
     <ListView
         android:id="@+id/listFederations"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
         android:divider="@null"
@@ -18,7 +18,7 @@
 
     <!-- Campo de texto e botão de envio fixos na parte inferior -->
     <LinearLayout 
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content" 
         android:orientation="horizontal"
         android:gravity="center_vertical"
@@ -42,7 +42,7 @@
 
     <!-- Barra de navegação inferior fixa -->
     <LinearLayout 
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="40dip" 
         android:orientation="horizontal"
         android:gravity="center_vertical"
@@ -51,7 +51,7 @@
         <ImageButton
             android:id="@+id/btnHome"
             android:layout_width="0dip"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:src="@drawable/home"
             android:scaleType="centerInside"
@@ -60,7 +60,7 @@
         <ImageButton
             android:id="@+id/btnChat"
             android:layout_width="0dip"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:src="@drawable/chat"
             android:scaleType="centerInside"
@@ -69,7 +69,7 @@
         <ImageButton
             android:id="@+id/btnOptions"
             android:layout_width="0dip"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:src="@drawable/options"
             android:scaleType="centerInside"
@@ -78,7 +78,7 @@
         <ImageButton
             android:id="@+id/btnProfile"
             android:layout_width="0dip"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:src="@drawable/account"
             android:scaleType="centerInside"

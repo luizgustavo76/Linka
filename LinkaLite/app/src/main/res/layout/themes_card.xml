@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
+    android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="8dip"
@@ -19,7 +19,7 @@
 
     <TextView
         android:id="@+id/txtThemeName"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="Name"
         android:textColor="#FFFFFF"
@@ -30,7 +30,7 @@
 
     <TextView
         android:id="@+id/txtThemeDesc"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="Desc"
         android:textColor="#A0A5B5"

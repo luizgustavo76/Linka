@@ -36,7 +36,38 @@ public class MainEditTimeline extends Activity{
         optionsListView = (ListView) findViewById(R.id.optionsListView);
         addItem(data, "Add new sources", "Add new post sources here.");
         addItem(data, "Filters", "Filter the hashtags you want to see—or not—and the order of your feed here.");
-        addItem(data, "Manual", "Add the URL here manually..");        
+        addItem(data, "Manual", "Add the URL here manually..");    
+        btnHome = (ImageButton) findViewById(R.id.btnHome);
+        btnChat = (ImageButton) findViewById(R.id.btnChat);
+        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainEditTimeline.this, HomeActivity.class));
+            }
+        });
+
+        btnOptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainEditTimeline.this, optionActivity.class));
+            }
+        });
+
+        btnProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainEditTimeline.this, profile.class));
+            }
+        });
+
+        btnChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainEditTimeline.this, chatActivity.class));
+            }
+        });    
         SimpleAdapter adapter = new SimpleAdapter(
                 this,
                 data,

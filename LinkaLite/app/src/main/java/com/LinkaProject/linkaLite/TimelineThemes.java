@@ -1,5 +1,5 @@
 package com.LinkaProject.linkaLite;
-
+import android.widget.ImageButton;
 import android.content.Intent;
 import android.app.Activity;
 import android.os.Bundle;
@@ -13,6 +13,10 @@ import org.json.JSONObject;
 
 public class TimelineThemes extends Activity {
     private String url = "";
+    private ImageButton btnHome;
+    private ImageButton btnChat;
+    private ImageButton btnOptions;
+    private ImageButton btnProfile;
     private LinearLayout containerMain;
     private LinearLayout layoutRemoveChannel;
     @Override
@@ -27,6 +31,37 @@ public class TimelineThemes extends Activity {
                 Intent intent = new Intent(TimelineThemes.this, EditTimeline.class);
                 intent.putExtra("isManual", true);
                 startActivity(intent);
+            }
+        });
+        btnHome = (ImageButton) findViewById(R.id.btnHome);
+        btnChat = (ImageButton) findViewById(R.id.btnChat);
+        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(TimelineThemes.this, HomeActivity.class));
+            }
+        });
+
+        btnOptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(TimelineThemes.this, optionActivity.class));
+            }
+        });
+
+        btnProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(TimelineThemes.this, profile.class));
+            }
+        });
+
+        btnChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(TimelineThemes.this, chatActivity.class));
             }
         });
         LayoutInflater inflater = getLayoutInflater();

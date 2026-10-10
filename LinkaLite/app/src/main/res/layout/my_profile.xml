@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
     android:background="@drawable/bg_material_card">
 
     <LinearLayout
         android:id="@+id/navigationBar"
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="40dip"
         android:layout_alignParentBottom="true"
         android:background="#11111b"
@@ -16,7 +16,7 @@
         <ImageButton
             android:id="@+id/btnHome"
             android:layout_width="0dip"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:scaleType="centerInside"
@@ -25,7 +25,7 @@
         <ImageButton
             android:id="@+id/btnChat"
             android:layout_width="0dip"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:scaleType="centerInside"
@@ -34,7 +34,7 @@
         <ImageButton
             android:id="@+id/btnOptions"
             android:layout_width="0dip"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:scaleType="centerInside"
@@ -43,7 +43,7 @@
         <ImageButton
             android:id="@+id/btnProfile"
             android:layout_width="0dip"
-            android:layout_height="match_parent"
+            android:layout_height="fill_parent"
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:scaleType="centerInside"
@@ -52,18 +52,18 @@
     </LinearLayout>
 
     <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
         android:layout_above="@id/navigationBar">
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dip">
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
@@ -84,7 +84,7 @@
                     android:orientation="vertical">
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
@@ -101,7 +101,7 @@
 
                     <TextView
                         android:id="@+id/txtBio"
-                        android:layout_width="match_parent"
+                        android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dip"
                         android:text="this is my bio ;)..."
@@ -109,7 +109,7 @@
                         android:textSize="14sp" />
 
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:padding="16dip">
@@ -130,7 +130,7 @@
             </LinearLayout>
 
             <View
-                android:layout_width="match_parent"
+                android:layout_width="fill_parent"
                 android:layout_height="1dip"
                 android:layout_marginTop="16dip"
                 android:layout_marginBottom="16dip"
@@ -138,7 +138,7 @@
 
             <LinearLayout
                 android:id="@+id/postsContainer"
-                android:layout_width="match_parent"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical" />
 

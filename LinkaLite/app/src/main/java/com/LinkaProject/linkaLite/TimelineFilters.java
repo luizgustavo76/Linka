@@ -1,5 +1,5 @@
 package com.LinkaProject.linkaLite;
-
+import android.content.Intent;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -47,7 +47,33 @@ public class TimelineFilters extends Activity {
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+        btnHome.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(TimelineFilters.this, HomeActivity.class));
+            }
+        });
 
+        btnOptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(TimelineFilters.this, optionActivity.class));
+            }
+        });
+
+        btnProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(TimelineFilters.this, profile.class));
+            }
+        });
+
+        btnChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(TimelineFilters.this, chatActivity.class));
+            }
+        });
         refreshFilterList();
 
         txtAdd.setOnClickListener(new View.OnClickListener() {
