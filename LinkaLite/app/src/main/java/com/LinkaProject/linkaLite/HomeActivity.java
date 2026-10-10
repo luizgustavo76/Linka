@@ -31,7 +31,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class HomeActivity extends TabActivity {
-
+    public void personalizeTimeline(View view){
+        Intent intent = new Intent(HomeActivity.this, MainEditTimeline.class);
+        startActivity(intent);
+    }
     private ImageButton btnHome;
     private ImageButton btnProfile;
     private ImageButton btnOptions;
@@ -363,7 +366,7 @@ public class HomeActivity extends TabActivity {
         public long getItemId(int position) {
             return position;
         }
-
+        
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
