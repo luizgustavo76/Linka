@@ -10,13 +10,14 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
-
+import android.content.Intent;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class EditTimeline extends Activity {
     private Button btnNewer;
@@ -28,6 +29,7 @@ public class EditTimeline extends Activity {
     private ImageButton btnProfile;
     private ListView listView;
     private String url = "";
+    private String nameTheme = "";
     private List<FederationItem> itemList = new ArrayList<FederationItem>();
 
     @Override
@@ -40,12 +42,19 @@ public class EditTimeline extends Activity {
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         listView = (ListView) findViewById(R.id.listFederations);
+        btnAdd = (Button) findViewById(R.id.btnAdd);
+        edtUrl = (EditText) findViewById(R.id.edtUrl);
+
+        nameTheme = getIntent().getStringExtra("nameTheme");
+        if (nameTheme == null || nameTheme.isEmpty()) {
+            nameTheme = getIntent().getStringExtra("theme");
+        }
 
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(EditTimeline.this, "config.cfg"));
             JSONObject server = jsonCfg.getJSONObject("SERVER");
-            url = server.getString("url");
+            url = server.optString("url", "");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -54,12 +63,14 @@ public class EditTimeline extends Activity {
             btnAdd.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    String inputUrl = edtUrl.getText().toString().trim();
-                    if (!inputUrl.isEmpty()) {
-                        config cfg = new config();
-                        cfg.toggleUrl(EditTimeline.this, inputUrl);
-                        edtUrl.setText("");
-                        new FetchFederationsTask().execute(url + "/view-index");
+                    if (edtUrl != null) {
+                        String inputUrl = edtUrl.getText().toString().trim();
+                        if (!inputUrl.isEmpty()) {
+                            config cfg = new config();
+                            cfg.toggleUrl(EditTimeline.this, inputUrl);
+                            edtUrl.setText("");
+                            fetchData();
+                        }
                     }
                 }
             });
@@ -83,13 +94,24 @@ public class EditTimeline extends Activity {
                         FederationItem item = (FederationItem) obj;
                         config cfg = new config();
                         cfg.toggleUrl(EditTimeline.this, item.getUrl());
-                        new FetchFederationsTask().execute(url + "/view-index");
+                        fetchData();
                     }
                 }
             });
         }
 
-        new FetchFederationsTask().execute(url + "/view-index");
+        fetchData();
+    }
+
+    private void fetchData() {
+        String baseUrl = (url != null && url.endsWith("/")) ? url.substring(0, url.length() - 1) : url;
+        String targetEndpoint;
+        if (nameTheme != null && !nameTheme.trim().isEmpty()) {
+            targetEndpoint = baseUrl + "/view-index/" + nameTheme.trim().toLowerCase(Locale.ROOT);
+        } else {
+            targetEndpoint = baseUrl + "/view-index";
+        }
+        new FetchFederationsTask().execute(targetEndpoint);
     }
 
     private class FetchFederationsTask extends AsyncTask<String, Void, String> {
@@ -107,39 +129,36 @@ public class EditTimeline extends Activity {
 
         @Override
         protected void onPostExecute(String response) {
-            if (response == null || response.trim().isEmpty()) {
-                Toast.makeText(EditTimeline.this, "Error in loading data", Toast.LENGTH_SHORT).show();
-                return;
+            itemList.clear();
+            itemList.add(new FederationItem(
+                "", 
+                "Servidor local padrão", 
+                "Linka-local", 
+                "http://linkaProject.pythonanywhere.com"
+            ));
+
+            if (response != null && !response.trim().isEmpty()) {
+                try {
+                    JSONArray jsonArray = new JSONArray(response);
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject obj = jsonArray.getJSONObject(i);
+                        itemList.add(new FederationItem(
+                            obj.optString("cover_image", ""),
+                            obj.optString("description", ""),
+                            obj.optString("name", ""),
+                            obj.optString("url", "")
+                        ));
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
 
-            try {
-                itemList.clear();
-                itemList.add(new FederationItem(
-                    "", 
-                    "Servidor local padrão", 
-                    "Linka-local", 
-                    "http://linkaProject.pythonanywhere.com"
-                ));
-
-                JSONArray jsonArray = new JSONArray(response);
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject obj = jsonArray.getJSONObject(i);
-                    itemList.add(new FederationItem(
-                        obj.optString("cover_image"),
-                        obj.optString("description"),
-                        obj.optString("name"),
-                        obj.optString("url")
-                    ));
-                }
-
-                if (listView != null && !isFinishing()) {
-                    config cfg = new config();
-                    List<String> savedUrls = cfg.getSavedUrls(EditTimeline.this);
-                    FederationsAdapter adapter = new FederationsAdapter(EditTimeline.this, itemList, savedUrls);
-                    listView.setAdapter(adapter);
-                }
-            } catch (JSONException e) {
-                e.printStackTrace();
+            if (listView != null && !isFinishing()) {
+                config cfg = new config();
+                List<String> savedUrls = cfg.getSavedUrls(EditTimeline.this);
+                FederationsAdapter adapter = new FederationsAdapter(EditTimeline.this, itemList, savedUrls);
+                listView.setAdapter(adapter);
             }
         }
     }
