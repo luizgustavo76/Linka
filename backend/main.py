@@ -6,15 +6,11 @@ import secrets
 from werkzeug.security import check_password_hash
 from flask import Flask, Blueprint, request, jsonify, g
 from flask_cors import CORS
-
 base_dir = os.path.dirname(os.path.abspath(__file__))
 json_path = os.path.join(base_dir, "backend.json")
-
 with open(json_path, "r") as f:
     modules_flags = json.load(f)
-
 root_flags = modules_flags["modules-flags"]
-
 from jobs import jobs_bp
 
 if root_flags["reddit-federation"]:
@@ -27,6 +23,18 @@ if root_flags["post"]:
     from post import post_bp
 if root_flags["chat"]:
     from chat import chat_bp
+tos = ""
+if root_flags["automoderator"]:
+    import sys
+    from pathlib import Path
+
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    sys.path.append(str(BASE_DIR / "bots" / "Automoderator"))
+    TOS_PATH = BASE_DIR / "bots" / "Automoderator" /"terms_of_service.txt"
+
+    with open(TOS_PATH, "r", encoding="utf-8") as f:
+        tos = f.read()
+    import AutoModerator
 if root_flags["friends"]:
     from friends import friends_bp
 from login import login_bp
@@ -114,7 +122,36 @@ def verificar_hash(senha, hash_salvo):
 
 def gerar_token():
     return secrets.token_hex(16)
-
+@app.route("/tos")
+def tos_route():
+    
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Linka - Terms of Service</title>
+        <style>
+            body {{
+                background-color: #121212;
+                color: #e0e0e0;
+                font-family: monospace;
+                padding: 20px;
+            }}
+            pre {{
+                white-space: pre-wrap; /* Quebra linha na tela automaticamente */
+                word-wrap: break-word;
+            }}
+        </style>
+    </head>
+    <body>
+        <pre>{tos}</pre>
+    </body>
+    </html>
+    """
+    return html
 @app.route("/new-session", methods=["POST"])
 def new_session():
     data = request.get_json()

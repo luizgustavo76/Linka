@@ -1,17 +1,32 @@
 import json
+import sqlite3
+from pathlib import Path
 import os
 import requests
 import setup
 from . import token_manager
+from dotenv import load_dotenv
+
+CURRENT_DIR = Path(__file__).resolve().parent
+BASE_DIR = CURRENT_DIR.parent.parent
+DB_PATH = BASE_DIR / "backend" / "DB" / "post.db"
+CONFIG_PATH = CURRENT_DIR / "config-login.json"
+MASTER_KEY = os.getenv("MASTER_KEY")
+
+def get_post_db():
+    conn = sqlite3.connect(DB_PATH)
+    return conn
+
 class LinkaBotSdk:
     def __init__(self):
-        if not os.path.exists("config-login.json"):
+        if not CONFIG_PATH.exists():
             print("[SDK] Configuration not found. Starting setup...")
             setup.main()
         self._load_config()
+
     def _load_config(self):
         try:
-            with open("config-login.json", "r") as f:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
                 json_login = json.load(f)
             self.name = json_login.get("username")
             self.password = json_login.get("password")
@@ -19,68 +34,40 @@ class LinkaBotSdk:
             self.token = token_manager.new_session(self.url, self.name, self.password)
         except Exception as e:
             print(f"[SDK Error] Failed to load configuration: {e}")
+
     def _get_bearer_headers(self) -> dict:
         token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
         return {"Authorization": f"Bearer {token_str}"}
-    def get_last_interaction(self, receiver: str):
+    def comment(self, text, post_id):
         try:
-            response = requests.post(f"{self.url}/view", json={"user1": self.name, "user2": receiver}, headers=self._get_bearer_headers(), timeout=10)
-            if response.status_code == 200:
-                messages_array = response.json().get("messages", [])
-                return messages_array[-1] if messages_array else None
-            return None
-        except Exception as e:
-            print(f"[SDK Error] Failed to get last interaction with {receiver}: {e}")
-            return None
-    def mentions(self):
-        my_name = str(self.name) if self.name else ""
-        token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
-        payload = {
-            "username":my_name
-        }
-        headers = {"Authorization":"Bearer " + token_str}
-        response = requests.post(self.url + "/view-mentions", json=payload, headers=headers)
-        response_json = response.json()
-        return response_json
-    def accept_group(self, code):
-        my_name = str(self.name) if self.name else ""
-        token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
-        payload = {
-            "username":my_name,
-            "code":code
-        }
-        headers = {"Authorization":"Bearer " + token_str}
-        response = requests.post(self.url + "/join-group", json=payload, headers=headers)
-        response_json = response.json()
-        return response_json
-    def inbox(self):
-        my_name = str(self.name) if self.name else ""
-        token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
-        payload = {
-            "username":my_name
-        }
-        headers = {"Authorization":"Bearer " + token_str}
-        response = requests.post(self.url + "/inbox", json=payload, headers=headers)
-        response_json = response.json()
-        return response_json
-    def accept_invite(self, receiver, sender):
-        my_name = str(self.name) if self.name else ""
-        token_str = self.token.get("token") if isinstance(self.token, dict) else str(self.token) if self.token else ""
-        payload = {
-            "receiver":my_name,
-            "remittee":sender
-        }
-        headers = {"Authorization":"Bearer " + token_str}
-        response = requests.post(self.url + "/accept", json=payload, headers=headers)
-        response_json = response.json()
-        return response_json
-    def view_posts(self) -> list:
-        try:
-            posts = []
-            posts = requests.get(url=self.url + "/feed")
-            return posts
+            payload = {
+                "username":self.username,
+                "text_comment":text,
+                "post_id":post_id
+            }
+            requests.post(self.url + "/comments",
+                          json=payload,
+                          headers=self._get_bearer_headers())
         except:
             pass
+    def delete_post(self, master_key, post_id, text):
+        if master_key == MASTER_KEY:
+            conn = get_post_db()
+            cur = conn.cursor()
+            cur.execute("UPDATE posts SET text_post = ? WHERE id = ?", (text, post_id))
+            conn.commit()
+            conn.close()
+
+    def view_posts(self) -> list:
+        try:
+            response = requests.get(url=self.url + "/feed", timeout=10)
+            if response.status_code == 200:
+                return response.json() # Retorna o JSON (lista de dicts)
+            return []
+        except Exception as e:
+            print(f"[SDK Error] Failed to fetch feed: {e}")
+            return []
+
     def view_friends(self) -> list:
         try:
             my_name = str(self.name) if self.name else ""

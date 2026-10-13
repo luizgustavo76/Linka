@@ -17,6 +17,7 @@
         "themes":true,
         "reddit-federation":true,
         "mastodon-federation":true,
-        "bluesky-federation":true
+        "bluesky-federation":true,
+        "automoderator":true
     }
 }

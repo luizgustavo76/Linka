@@ -41,7 +41,7 @@ def register(url):
                 json={"username": username, "password": password, "email": email},
             )
 
-            if response.status_code == 200:
+            if response.status_code in (200, 201):
                 print(f"welcome {username}")
                 json_write = {
                     "url": url,
