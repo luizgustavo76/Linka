@@ -6,24 +6,26 @@ import time
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Garante a resolução correta dos diretórios para importação
+# Garante que a pasta ATUAL (Automoderator) tem prioridade absoluta no sys.path
 BOT_DIR = Path(__file__).resolve().parent
-SDK_DIR = Path("/home/LinkaProject/Linka/SDKs/linkaBotsSdk")
+if str(BOT_DIR) in sys.path:
+    sys.path.remove(str(BOT_DIR))
+sys.path.insert(0, str(BOT_DIR))
 
-for path in [BOT_DIR, SDK_DIR]:
-    if path.exists() and str(path) not in sys.path:
-        sys.path.insert(0, str(path))
+# Remove qualquer referência externa da pasta SDKs que esteja poluindo o sys.path
+sys.path = [p for p in sys.path if "SDKs" not in p]
 
-# Importação robusta da classe do SDK
-try:
-    from linkaBotsSdk import LinkaBotSdk as bot_client
-except ImportError:
-    import linkaBotsSdk
-    bot_client = getattr(linkaBotsSdk, "LinkaBotSdk", None) or getattr(linkaBotsSdk, "linkaBotsSdk")
+# Se o módulo já foi importado incorretamente do SDK externo, remove do cache do Python
+if "linkaBotsSdk" in sys.modules:
+    del sys.modules["linkaBotsSdk"]
+
+# Agora importa 100% o arquivo local da mesma pasta
+from linkaBotsSdk import LinkaBotSdk as bot_client
 
 load_dotenv()
 
 bot = bot_client()
+
 WORDS_JSON_PATH = BOT_DIR / "words.json"
 MASTER_KEY = os.getenv("MASTER_KEY")
 

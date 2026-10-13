@@ -4,21 +4,17 @@ from pathlib import Path
 import os
 import requests
 import setup
-from Automoderator import token_manager
+import token_manager  # Importa direto o arquivo que está do lado
 from dotenv import load_dotenv
-
 load_dotenv()
 
 CURRENT_DIR = Path(__file__).resolve().parent
 
-# Procura a pasta real da aplicação navegando até encontrar a estrutura 'backend/DB/post.db'
-# ou define o caminho absoluto baseado no diretório da máquina
 PROJECT_ROOT = CURRENT_DIR
 while PROJECT_ROOT.name != "Linka" and PROJECT_ROOT != PROJECT_ROOT.parent:
     PROJECT_ROOT = PROJECT_ROOT.parent
 
 DB_PATH = (PROJECT_ROOT / "backend" / "DB" / "post.db").resolve()
-
 CONFIG_PATH = CURRENT_DIR / "config-login.json"
 MASTER_KEY = os.getenv("MASTER_KEY")
 
