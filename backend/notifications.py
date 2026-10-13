@@ -32,7 +32,6 @@ def create_db():
     """)
     conn.commit()
     conn.close()
-    print(f"[DEBUG Notifications] DB verificado em: {notifications_dir}")
 
 create_db()
 
@@ -41,10 +40,8 @@ def notifications():
     data = request.get_json(force=True) or {}
     username = data.get("username")
     
-    print(f"\n[DEBUG /notifications] Requisição recebida com JSON: {data}")
 
     if not username:
-        print(" [DEBUG /notifications] Erro: Requisição sem 'username'!")
         return jsonify([]), 200
 
     username = str(username).strip()
@@ -55,7 +52,6 @@ def notifications():
     # INSPEÇÃO DO BANCO: Lista todos os registros existentes no log do servidor
     cur.execute("SELECT id, receiver, from_user, read, content FROM notifications")
     raw_all = cur.fetchall()
-    print(f" [DEBUG /notifications] Total de registros no arquivo DB: {len(raw_all)}")
     for row in raw_all:
         print(f"   -> ID: {row[0]} | Receiver: '{row[1]}' | From: '{row[2]}' | Read: {row[3]} | Content: '{row[4]}'")
 
@@ -79,7 +75,6 @@ def notifications():
             "id": items[6] 
         })
         
-    print(f" [DEBUG /notifications] Retornando {len(notifications_list)} notificações para '{username}'")
     return jsonify(notifications_list), 200
 
 @notifications_blueprint.route("/set-read-notification", methods=["POST"])
@@ -87,7 +82,6 @@ def set_read():
     data = request.get_json(force=True) or {}
     id_notif = data.get("id")
     
-    print(f"\n[DEBUG /set-read-notification] Payload recebido: {data}")
 
     if id_notif is None:
         return jsonify({"error": "Missing notification id"}), 400
@@ -102,6 +96,4 @@ def set_read():
     cur.execute("UPDATE notifications SET read = 1 WHERE id = ?", (id_notif,))
     conn.commit()
     conn.close()
-    
-    print(f" [DEBUG /set-read-notification] Notificação ID {id_notif} marcada como LIDA!")
     return jsonify({"status": "success"}), 200
