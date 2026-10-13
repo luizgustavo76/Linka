@@ -5,6 +5,7 @@ cross-plataform/third-party/
 backend/DB/
 build-*/
 build/
+*config-login.json
 debug/
 # Diretórios de compilação
 build/
