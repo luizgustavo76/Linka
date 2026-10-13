@@ -6,13 +6,18 @@ import secrets
 from werkzeug.security import check_password_hash
 from flask import Flask, Blueprint, request, jsonify, g
 from flask_cors import CORS
+
 base_dir = os.path.dirname(os.path.abspath(__file__))
 json_path = os.path.join(base_dir, "backend.json")
+
 with open(json_path, "r") as f:
     modules_flags = json.load(f)
+
 root_flags = modules_flags["modules-flags"]
+
 from jobs import jobs_bp
 from mentions import mentions_bp
+
 if root_flags["reddit-federation"]:
     from reddit_federation.posts import post_bp as reddit_post_bp
 if root_flags["mastodon-federation"]:
@@ -23,29 +28,43 @@ if root_flags["post"]:
     from post import post_bp
 if root_flags["chat"]:
     from chat import chat_bp
+
+# Configuração do AutoModerator & Terms of Service
 tos_content = ""
-if root_flags["automoderator"]:
+if root_flags.get("automoderator"):
     import sys
     import threading
     import time
     from pathlib import Path
 
+    # BASE_DIR aponta para a raiz (/home/LinkaProject/Linka)
     BASE_DIR = Path(__file__).resolve().parent.parent
-    sys.path.append(str(BASE_DIR / "bots" / "Automoderator"))
-    TOS_PATH = BASE_DIR / "bots" / "Automoderator" / "terms_of_service.txt"
+    AUTOMOD_DIR = BASE_DIR / "bots" / "Automoderator"
+    SDK_DIR = BASE_DIR / "SDKs" / "linkaBotsSdk"
 
-    with open(TOS_PATH, "r", encoding="utf-8") as f:
-        tos_content = f.read()
+    # Adiciona as pastas no início do sys.path do Python
+    for path_to_add in [AUTOMOD_DIR, SDK_DIR, BASE_DIR]:
+        if path_to_add.exists() and str(path_to_add) not in sys.path:
+            sys.path.insert(0, str(path_to_add))
+
+    TOS_PATH = AUTOMOD_DIR / "terms_of_service.txt"
+    if TOS_PATH.exists():
+        with open(TOS_PATH, "r", encoding="utf-8") as f:
+            tos_content = f.read()
 
     import AutoModerator
 
     def start_automod_loop():
-        # Aguarda 3 segundos para o Flask abrir a porta 5000 no boot
-        time.sleep(3)
-        print("[AutoMod] Daemon iniciado. Rodando varredura a cada 2 minutos...")
-        AutoModerator.main()
+        # Aguarda 5 segundos para o uWSGI / Flask liberar a porta/rotas no boot
+        time.sleep(5)
+        print("[AutoMod] Daemon iniciado no PythonAnywhere. Rodando varredura a cada 2 minutos...")
+        try:
+            AutoModerator.main()
+        except Exception as e:
+            print(f"[AutoMod Error] Falha na execução da thread: {e}")
 
     threading.Thread(target=start_automod_loop, daemon=True).start()
+
 if root_flags["friends"]:
     from friends import friends_bp
 from login import login_bp
@@ -133,10 +152,9 @@ def verificar_hash(senha, hash_salvo):
 
 def gerar_token():
     return secrets.token_hex(16)
+
 @app.route("/tos")
 def tos_route():
-    
-    
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -152,17 +170,18 @@ def tos_route():
                 padding: 20px;
             }}
             pre {{
-                white-space: pre-wrap; /* Quebra linha na tela automaticamente */
+                white-space: pre-wrap;
                 word-wrap: break-word;
             }}
         </style>
     </head>
     <body>
-        <pre>{tos}</pre>
+        <pre>{tos_content}</pre>
     </body>
     </html>
     """
     return html
+
 @app.route("/new-session", methods=["POST"])
 def new_session():
     data = request.get_json()
@@ -170,11 +189,11 @@ def new_session():
     password = data.get("password")
     
     if None in (username, password):
-        return jsonify({"status":"the json is empty or is missing data"}), 401
+        return jsonify({"status": "the json is empty or is missing data"}), 401
         
     conn = get_db_login()
     cur = conn.cursor()
-    cur.execute("SELECT password FROM login WHERE username = ?",(username,))
+    cur.execute("SELECT password FROM login WHERE username = ?", (username,))
     result = cur.fetchone()
     conn.close()
     
@@ -190,7 +209,7 @@ def new_session():
         cur.execute("INSERT INTO tokens(username, token, emission_date, expire_date) VALUES(?, ?, ?, ?)", (username, token, emission_date, expire_date))
         conn.commit()
         conn.close()
-        return jsonify({"status":"the session has created", "token":token}), 200
+        return jsonify({"status": "the session has created", "token": token}), 200
         
     return jsonify({"status": "wrong password"}), 401
 
@@ -213,7 +232,7 @@ public_routes = [
 
 @app.before_request
 def valide():
-    if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post", "/lite-render"]:
+    if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post", "/lite-render", "/tos"]:
         return None
 
     if request.method == "GET":
@@ -275,7 +294,7 @@ def valide():
 
 @app.route("/valide-session", methods=["POST"])
 def valideManual():
-    public_paths = ["/login", "/register", "/new-session", "/create-profile"]
+    public_paths = ["/login", "/register", "/new-session", "/create-profile", "/tos"]
     
     if request.path in public_paths:
         return None  
@@ -304,7 +323,7 @@ def valideManual():
         if datetime.now() > expire_date:
             return jsonify({"status": "the token has been expired"}), 403
         else:
-            return jsonify({"status":"the token is valid"}), 200
+            return jsonify({"status": "the token is valid"}), 200
     else:
         return jsonify({"status": "the token is invalid"}), 403
 
