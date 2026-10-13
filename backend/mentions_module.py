@@ -8,6 +8,7 @@ def get_db():
 def createMention(username, author, content, post_id, comment_id, type):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO MENTIONS (username , author, content, post_id, comment_id, type) VALUES(?, ?, ?, ?, ?, ?)",(username , author, content, post_id, comment_id, type))
-    conn.close()
+    cur.execute("INSERT INTO mentions (username , author, content, post_id, comment_id, type) VALUES(?, ?, ?, ?, ?, ?)",(username , author, content, post_id, comment_id, type))
     conn.commit()
+    conn.close()
+    

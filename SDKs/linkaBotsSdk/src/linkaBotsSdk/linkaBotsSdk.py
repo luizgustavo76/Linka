@@ -7,16 +7,26 @@ import setup
 from . import token_manager
 from dotenv import load_dotenv
 
+load_dotenv()
+
 CURRENT_DIR = Path(__file__).resolve().parent
-BASE_DIR = CURRENT_DIR.parent.parent
-DB_PATH = BASE_DIR / "backend" / "DB" / "post.db"
+
+# Procura a pasta real da aplicação navegando até encontrar a estrutura 'backend/DB/post.db'
+# ou define o caminho absoluto baseado no diretório da máquina
+PROJECT_ROOT = CURRENT_DIR
+while PROJECT_ROOT.name != "Linka" and PROJECT_ROOT != PROJECT_ROOT.parent:
+    PROJECT_ROOT = PROJECT_ROOT.parent
+
+DB_PATH = (PROJECT_ROOT / "backend" / "DB" / "post.db").resolve()
+
 CONFIG_PATH = CURRENT_DIR / "config-login.json"
 MASTER_KEY = os.getenv("MASTER_KEY")
 
 def get_post_db():
-    conn = sqlite3.connect(DB_PATH)
+    if not DB_PATH.exists():
+        print(f"[SDK Error] ATENÇÃO: Banco oficial não encontrado no caminho: {DB_PATH}")
+    conn = sqlite3.connect(str(DB_PATH))
     return conn
-
 class LinkaBotSdk:
     def __init__(self):
         if not CONFIG_PATH.exists():
@@ -41,7 +51,7 @@ class LinkaBotSdk:
     def comment(self, text, post_id):
         try:
             payload = {
-                "username":self.username,
+                "username":self.name,
                 "text_comment":text,
                 "post_id":post_id
             }
@@ -52,6 +62,7 @@ class LinkaBotSdk:
             pass
     def delete_post(self, master_key, post_id, text):
         if master_key == MASTER_KEY:
+            print("[SDk]deleting post")
             conn = get_post_db()
             cur = conn.cursor()
             cur.execute("UPDATE posts SET text_post = ? WHERE id = ?", (text, post_id))

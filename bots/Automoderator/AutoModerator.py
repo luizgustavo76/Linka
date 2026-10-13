@@ -1,30 +1,43 @@
+import os
 import json
 import re
-from linkaBotsSdk import LinkaBotSdk as bot_client
-from dotenv import load_dotenv
-import os
-load_dotenv()
 from pathlib import Path
+from dotenv import load_dotenv
+from linkaBotsSdk import LinkaBotSdk as bot_client
+
+load_dotenv()
+
 bot = bot_client()
 BOT_DIR = Path(__file__).resolve().parent
 WORDS_JSON_PATH = BOT_DIR / "words.json"
-
-# Abre o arquivo usando o caminho absoluto garantido
-with open(WORDS_JSON_PATH, "r", encoding="utf-8") as f:
-    words = json.load(f)
 MASTER_KEY = os.getenv("MASTER_KEY")
 
-sorted_words = sorted(words, key=len, reverse=True)
-escaped_words = [re.escape(w) for w in sorted_words]
-pattern = r'\b(' + '|'.join(escaped_words) + r')\b'
-bad_words_regex = re.compile(pattern, re.IGNORECASE)
+# Termos de ódio/spam gravíssimos para bloquear SEMPRE (mesmo se o words.json falhar)
+CRITICAL_HATE_WORDS = [
+    "hitler", "nigger", "niggers", "n1gger", "n1gg3r", "niga", "nigga",
+    "nazism", "nazi", "heil", "white supremacy", "white supramacy", "kkk"
+]
 
-pt_regex = re.compile(r'\b(olá|opa|eai|cara|bom|dia|tarde|noite|como|você|tudo|bem|mano|não|sim|obrigado|vlw)\b', re.IGNORECASE)
+# Palavras normais em PT/ES para garantir que NUNCA sejam bloqueadas
+IGNORE_WORDS = {"cara", "como", "estan", "estais", "hola", "bien", "escaravelho"}
 
-def moderate_text(text: str) -> str:
-    if bad_words_regex.search(text):
-        return "[ This post was removed by AutoModerator. Read ToS: https://linkaProject.pythonanywhere.com/tos ]"
-    return text
+# Carrega palavras do words.json se existir
+json_words = []
+if WORDS_JSON_PATH.exists():
+    with open(WORDS_JSON_PATH, "r", encoding="utf-8") as f:
+        json_words = json.load(f)
+
+# Junta tudo, limpa os ignorados e termos de 1~2 letras
+all_bad_words = set(CRITICAL_HATE_WORDS + json_words)
+valid_words = [w for w in all_bad_words if w.lower() not in IGNORE_WORDS and len(w) > 2]
+
+# Compila Regex para palavras exatas
+pattern_str = r'\b(' + '|'.join(map(re.escape, valid_words)) + r')\b'
+bad_words_regex = re.compile(pattern_str, re.IGNORECASE)
+
+# Expressão para detectar português informal
+PT_WORDS = {"olá", "opa", "eai", "bom", "dia", "tarde", "noite", "você", "tudo", "bem", "mano", "não", "sim", "obrigado", "vlw"}
+pt_regex = re.compile(r'\b(' + '|'.join(map(re.escape, PT_WORDS)) + r')\b', re.IGNORECASE)
 
 response_for_pt = (
     "Olá... aqui no linka recomendamos que fale inglês sabe, comunidade pequena e "
@@ -38,17 +51,31 @@ response_deleted_post = (
     "I am a bot, beep boop."
 )
 
+def normalize_text(text: str) -> str:
+    """Substitui caracteres de leetspeak comuns para impedir desvios."""
+    substitutions = {'@': 'a', '4': 'a', '1': 'i', '!': 'i', '0': 'o', '3': 'e', '$': 's'}
+    normalized = text.lower()
+    for char, replacement in substitutions.items():
+        normalized = normalized.replace(char, replacement)
+    return normalized
+
 def main():
     feed = bot.view_posts()
     if feed is not None:
         for post in feed:
             post_id = post["id"]
-            text_post = post["text_post"]
+            text_post = post.get("text_post", "")
             username = post.get("username", "")
+
+            # Ignora posts do próprio bot ou posts já deletados
             if username == "AutoModerator" or "[ This post was removed" in text_post:
                 continue
-            if bad_words_regex.search(text_post):
-                bot.delete_post(post_id, MASTER_KEY, response_deleted_post)
+
+            # Checagem com texto normalizado
+            normalized_post = normalize_text(text_post)
+
+            if bad_words_regex.search(text_post) or bad_words_regex.search(normalized_post):
+                bot.delete_post(MASTER_KEY, post_id, response_deleted_post)
                 bot.comment(post_id, response_deleted_post)
                 print(f"[AutoMod] Post #{post_id} moderado por violação de ToS.")
                 continue
@@ -57,4 +84,5 @@ def main():
                 bot.comment(post_id, response_for_pt)
                 print(f"[AutoMod] Aviso de idioma enviado para o post #{post_id}.")
 
-main()
+if __name__ == "__main__":
+    main()

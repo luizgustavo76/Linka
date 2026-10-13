@@ -12,7 +12,7 @@ with open(json_path, "r") as f:
     modules_flags = json.load(f)
 root_flags = modules_flags["modules-flags"]
 from jobs import jobs_bp
-
+from mentions import mentions_bp
 if root_flags["reddit-federation"]:
     from reddit_federation.posts import post_bp as reddit_post_bp
 if root_flags["mastodon-federation"]:
@@ -23,18 +23,33 @@ if root_flags["post"]:
     from post import post_bp
 if root_flags["chat"]:
     from chat import chat_bp
-tos = ""
+tos_content = ""
 if root_flags["automoderator"]:
     import sys
+    import threading
+    import time
     from pathlib import Path
 
     BASE_DIR = Path(__file__).resolve().parent.parent
     sys.path.append(str(BASE_DIR / "bots" / "Automoderator"))
-    TOS_PATH = BASE_DIR / "bots" / "Automoderator" /"terms_of_service.txt"
+    TOS_PATH = BASE_DIR / "bots" / "Automoderator" / "terms_of_service.txt"
 
     with open(TOS_PATH, "r", encoding="utf-8") as f:
-        tos = f.read()
+        tos_content = f.read()
+
     import AutoModerator
+
+    def run_automod_in_background():
+        # Aguarda 3 segundos para o Flask abrir a porta 5000 e aceitar conexões
+        time.sleep(3)
+        print("[AutoMod] Servidor pronto. Disparando varredura inicial do feed...")
+        try:
+            AutoModerator.main()
+        except Exception as e:
+            print(f"[AutoMod Error] Falha ao rodar o bot na inicialização: {e}")
+
+    # Roda o AutoModerator em uma Thread paralela para não travar a subida do Flask
+    threading.Thread(target=run_automod_in_background, daemon=True).start()
 if root_flags["friends"]:
     from friends import friends_bp
 from login import login_bp
@@ -337,6 +352,7 @@ if root_flags["federations"]:
     app.register_blueprint(federations_bp)
 if root_flags["federation_index"]:
     app.register_blueprint(federation_index_bp)
+app.register_blueprint(mentions_bp)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
