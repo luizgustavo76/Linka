@@ -1,6 +1,6 @@
-from flask import Flask, jsonify, request, Blueprint
 import os
 import sqlite3
+from flask import Blueprint, jsonify, request
 
 notifications_blueprint = Blueprint("notifications", __name__)
 
@@ -9,12 +9,14 @@ db_dir = os.path.join(base_dir, "DB")
 os.makedirs(db_dir, exist_ok=True)
 notifications_dir = os.path.join(db_dir, "notifications.db")
 
+
 def get_db():
     conn = sqlite3.connect(notifications_dir)
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.execute("PRAGMA cache_size=-10000;")
     return conn
+
 
 def create_db():
     conn = get_db()
@@ -33,13 +35,14 @@ def create_db():
     conn.commit()
     conn.close()
 
+
 create_db()
+
 
 @notifications_blueprint.route("/notifications", methods=["POST"])
 def notifications():
     data = request.get_json(force=True) or {}
     username = data.get("username")
-    
 
     if not username:
         return jsonify([]), 200
@@ -49,20 +52,16 @@ def notifications():
     conn = get_db()
     cur = conn.cursor()
 
-    # INSPEÇÃO DO BANCO: Lista todos os registros existentes no log do servidor
-    cur.execute("SELECT id, receiver, from_user, read, content FROM notifications")
-    raw_all = cur.fetchall()
-    for row in raw_all:
-        print(f"   -> ID: {row[0]} | Receiver: '{row[1]}' | From: '{row[2]}' | Read: {row[3]} | Content: '{row[4]}'")
-
     # Busca registros correspondentes ao usuário e pendentes de leitura
     cur.execute(
-        "SELECT receiver, from_user, datetime, type, content, read, id FROM notifications WHERE receiver = ? AND (read = 0 OR read IS NULL OR read = FALSE)", 
-        (username,)
+        "SELECT receiver, from_user, datetime, type, content, read, id FROM"
+        " notifications WHERE receiver = ? AND (read = 0 OR read IS NULL OR"
+        " read = FALSE)",
+        (username,),
     )
     result = cur.fetchall()
     conn.close()
-    
+
     notifications_list = []
     for items in result:
         notifications_list.append({
@@ -72,20 +71,20 @@ def notifications():
             "type": items[3],
             "content": items[4],
             "read": bool(items[5]),
-            "id": items[6] 
+            "id": items[6],
         })
-        
+
     return jsonify(notifications_list), 200
+
 
 @notifications_blueprint.route("/set-read-notification", methods=["POST"])
 def set_read():
     data = request.get_json(force=True) or {}
     id_notif = data.get("id")
-    
 
     if id_notif is None:
         return jsonify({"error": "Missing notification id"}), 400
-        
+
     try:
         id_notif = int(id_notif)
     except ValueError:
