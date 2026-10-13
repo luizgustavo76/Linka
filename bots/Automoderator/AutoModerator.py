@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from dotenv import load_dotenv
 from linkaBotsSdk import LinkaBotSdk as bot_client
-
+import time
 load_dotenv()
 
 bot = bot_client()
@@ -60,29 +60,35 @@ def normalize_text(text: str) -> str:
     return normalized
 
 def main():
-    feed = bot.view_posts()
-    if feed is not None:
-        for post in feed:
-            post_id = post["id"]
-            text_post = post.get("text_post", "")
-            username = post.get("username", "")
+    while True:
+        try:
+            feed = bot.view_posts()
+            if feed is not None:
+                for post in feed:
+                    post_id = post["id"]
+                    text_post = post.get("text_post", "")
+                    username = post.get("username", "")
 
-            # Ignora posts do próprio bot ou posts já deletados
-            if username == "AutoModerator" or "[ This post was removed" in text_post:
-                continue
+                    # Ignora posts do próprio bot ou posts já deletados
+                    if username == "AutoModerator" or "[ This post was removed" in text_post:
+                        continue
 
-            # Checagem com texto normalizado
-            normalized_post = normalize_text(text_post)
+                    # Checagem com texto normalizado
+                    normalized_post = normalize_text(text_post)
 
-            if bad_words_regex.search(text_post) or bad_words_regex.search(normalized_post):
-                bot.delete_post(MASTER_KEY, post_id, response_deleted_post)
-                bot.comment(post_id, response_deleted_post)
-                print(f"[AutoMod] Post #{post_id} moderado por violação de ToS.")
-                continue
+                    if bad_words_regex.search(text_post) or bad_words_regex.search(normalized_post):
+                        bot.delete_post(MASTER_KEY, post_id, response_deleted_post)
+                        print(f"[AutoMod] Post #{post_id} moderado por violação de ToS.")
+                        continue
 
-            if pt_regex.search(text_post):
-                bot.comment(post_id, response_for_pt)
-                print(f"[AutoMod] Aviso de idioma enviado para o post #{post_id}.")
+                    if pt_regex.search(text_post):
+                        bot.comment(response_for_pt, post_id)
+                        print(f"[AutoMod] Aviso de idioma enviado para o post #{post_id}.")
+
+        except Exception as e:
+            print(f"[AutoMod Error] Erro durante a varredura: {e}")
+
+        time.sleep(120)
 
 if __name__ == "__main__":
     main()

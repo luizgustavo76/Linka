@@ -39,17 +39,13 @@ if root_flags["automoderator"]:
 
     import AutoModerator
 
-    def run_automod_in_background():
-        # Aguarda 3 segundos para o Flask abrir a porta 5000 e aceitar conexões
+    def start_automod_loop():
+        # Aguarda 3 segundos para o Flask abrir a porta 5000 no boot
         time.sleep(3)
-        print("[AutoMod] Servidor pronto. Disparando varredura inicial do feed...")
-        try:
-            AutoModerator.main()
-        except Exception as e:
-            print(f"[AutoMod Error] Falha ao rodar o bot na inicialização: {e}")
+        print("[AutoMod] Daemon iniciado. Rodando varredura a cada 2 minutos...")
+        AutoModerator.main()
 
-    # Roda o AutoModerator em uma Thread paralela para não travar a subida do Flask
-    threading.Thread(target=run_automod_in_background, daemon=True).start()
+    threading.Thread(target=start_automod_loop, daemon=True).start()
 if root_flags["friends"]:
     from friends import friends_bp
 from login import login_bp
