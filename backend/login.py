@@ -146,7 +146,7 @@ def register():
                 )
                 conn_profile.commit()
 
-        return jsonify({"status": "account created with success!"}), 201
+        return jsonify({"status": "account created with success!"}), 200
 
     except Exception as e:
         return jsonify({"status": "an error has occurred", "error": str(e)}), 500

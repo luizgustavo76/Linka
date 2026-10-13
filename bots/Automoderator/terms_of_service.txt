@@ -1,0 +1,64 @@
+LINKA COMMUNITY GUIDELINES & ToS
+                                Effective Date: 10/13/2026
+
+Ensuring a safe, respectful, and functional global feed for everyone. By using Linka, 
+you agree to strictly follow these rules.
+
+SECTION 1 — COMMUNITY SAFETY & CONDUCT
+--------------------------------------------------------------------------------------------------------
+1.1 Hate Speech & Discrimination
+    Promoting, encouraging, or displaying hate speech, racial slurs, homophobia, Nazism, 
+    extremism, or dehumanizing language is STRICTLY PROHIBITED.
+    Penalty: Permanent IP & Account Ban.
+
+1.2 Harassment, Doxxing & Threats
+    Do not harass, stalk, threaten physical harm, or share non-consensual personally 
+    identifiable information (PII/Doxxing) of any individual.
+    Penalty: Permanent IP & Account Ban.
+
+1.3 Explicit Content (NSFW, Gore & Child Safety)
+    Posting pornographic material, sexually explicit media, animal cruelty, or shocking/gore 
+    content is strictly forbidden. Content depicting or promoting Child Sexual Abuse Material (CSAM) 
+    will be reported directly to law enforcement authorities.
+    Penalty: Permanent IP & Account Ban + Legal Escalation.
+
+1.4 Self-Harm & Violence
+    Glorifying, encouraging, or displaying self-harm, suicide, or violent extremism is prohibited.
+    Penalty: Account Ban / Content Removal.
+
+
+SECTION 2 — PLATFORM INTEGRITY & BOT SDK RULES
+--------------------------------------------------------------------------------------------------------
+2.1 Spam, Phishing & Malicious Activity
+    Automated mass-posting, sending malicious links, phishing scams, or flooding the feed 
+    with unauthenticated traffic is forbidden.
+    Penalty: Permanent Account Ban + API Token Revocation.
+
+2.2 Ban Evasion
+    Creating new accounts or proxy routes to bypass an active temporary or permanent ban 
+    is strictly prohibited.
+    Penalty: Immediate Subnet / Range IP Ban.
+
+2.3 Bot Ecosystem & API Usage
+    All automated bots interacting with the Linka API must use official tokens issued via 
+    the `linkaBotsSdk`. Unofficial scraping, user-account automation (self-bots), or API 
+    abuse meant to bypass rate limits will result in blacklisting.
+    Penalty: Developer Key Revocation + Account Termination.
+
+2.4 Account Fraud & Impersonation
+    Impersonating other users, staff members, or entities, as well as buying or selling 
+    Linka accounts or usernames, is prohibited.
+    Penalty: Account Termination.
+
+
+SECTION 3 — LEGAL & COMPLIANCE
+--------------------------------------------------------------------------------------------------------
+3.1 Copyright & Intellectual Property
+    Sharing pirated material, game hacks/cheats, or content that infringes upon third-party 
+    intellectual property is not allowed.
+    Penalty: Content Removal / Repeated Offender Ban.
+
+3.2 Illegal Goods & Services
+    Using Linka to facilitate, organize, or conduct illegal activities, including the sale 
+    of regulated goods, weapons, or illegal substances, is strictly forbidden.
+    Penalty: Permanent IP Ban + Legal Escalation.

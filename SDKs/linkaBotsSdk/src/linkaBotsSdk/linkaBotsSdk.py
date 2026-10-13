@@ -74,6 +74,13 @@ class LinkaBotSdk:
         response = requests.post(self.url + "/accept", json=payload, headers=headers)
         response_json = response.json()
         return response_json
+    def view_posts(self) -> list:
+        try:
+            posts = []
+            posts = requests.get(url=self.url + "/feed")
+            return posts
+        except:
+            pass
     def view_friends(self) -> list:
         try:
             my_name = str(self.name) if self.name else ""
