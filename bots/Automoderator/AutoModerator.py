@@ -1,14 +1,29 @@
 import os
 import json
 import re
+import sys
+import time
 from pathlib import Path
 from dotenv import load_dotenv
-from linkaBotsSdk import LinkaBotSdk as bot_client
-import time
+
+# Garante a resolução correta dos diretórios para importação
+BOT_DIR = Path(__file__).resolve().parent
+SDK_DIR = Path("/home/LinkaProject/Linka/SDKs/linkaBotsSdk")
+
+for path in [BOT_DIR, SDK_DIR]:
+    if path.exists() and str(path) not in sys.path:
+        sys.path.insert(0, str(path))
+
+# Importação robusta da classe do SDK
+try:
+    from linkaBotsSdk import LinkaBotSdk as bot_client
+except ImportError:
+    import linkaBotsSdk
+    bot_client = getattr(linkaBotsSdk, "LinkaBotSdk", None) or getattr(linkaBotsSdk, "linkaBotsSdk")
+
 load_dotenv()
 
 bot = bot_client()
-BOT_DIR = Path(__file__).resolve().parent
 WORDS_JSON_PATH = BOT_DIR / "words.json"
 MASTER_KEY = os.getenv("MASTER_KEY")
 
@@ -51,6 +66,9 @@ response_deleted_post = (
     "I am a bot, beep boop."
 )
 
+# Evita o envio repetido de avisos de idioma para os mesmos posts
+WARNED_POSTS = set()
+
 def normalize_text(text: str) -> str:
     """Substitui caracteres de leetspeak comuns para impedir desvios."""
     substitutions = {'@': 'a', '4': 'a', '1': 'i', '!': 'i', '0': 'o', '3': 'e', '$': 's'}
@@ -81,8 +99,9 @@ def main():
                         print(f"[AutoMod] Post #{post_id} moderado por violação de ToS.")
                         continue
 
-                    if pt_regex.search(text_post):
+                    if pt_regex.search(text_post) and post_id not in WARNED_POSTS:
                         bot.comment(response_for_pt, post_id)
+                        WARNED_POSTS.add(post_id)
                         print(f"[AutoMod] Aviso de idioma enviado para o post #{post_id}.")
 
         except Exception as e:
