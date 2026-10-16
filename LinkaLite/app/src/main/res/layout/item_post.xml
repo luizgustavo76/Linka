@@ -1,105 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="#181820"
     android:orientation="vertical"
-    android:padding="10dip"
-    android:layout_marginBottom="4dip">
+    android:paddingLeft="8dip"
+    android:paddingRight="8dip"
+    android:paddingTop="6dip"
+    android:paddingBottom="6dip"
+    android:background="@android:color/transparent">
 
+    <!-- Card Branco com Espaçamento Interno -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:orientation="vertical"
+        android:background="#FFFFFF"
+        android:padding="10dip">
 
-        <ImageView
-            android:id="@+id/postAvatar"
-            android:layout_width="32dip"
-            android:layout_height="32dip"
-            android:scaleType="centerCrop" />
-
-        <TextView
-            android:id="@+id/postUsername"
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="\@username"
-            android:textStyle="bold"
-            android:textSize="13sp"
-            android:layout_marginLeft="8dip"
-            android:textColor="#FFFFFF" />
-
-        <TextView
-            android:id="@+id/postDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="12m"
-            android:textSize="11sp"
-            android:textColor="#9BA1B0" />
-    </LinearLayout>
-    <Gallery
-        android:id="@+id/galleryImages"
-        android:layout_width="fill_parent"
-        android:layout_height="200dip"
-        android:layout_marginTop="6dip"
-        android:layout_marginBottom="6dip"
-        android:spacing="8dip"
-        android:unselectedAlpha="0.6"
-        android:visibility="gone" />
-    <ImageView
-        android:id="@+id/imgPost"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:maxHeight="250dip"
-        android:scaleType="centerCrop"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="8dip"
-        android:layout_marginBottom="8dip"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/postText"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Text post"
-        android:autoLink="web|email"
-        android:textSize="13sp"
-        android:layout_marginTop="4dip"
-        android:layout_marginBottom="6dip"
-        android:textColor="#EFEFEF"
-        android:textColorLink="#7f6786" />
-
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingTop="2dip"
-        android:paddingBottom="2dip">
-
-        <View
-            android:layout_height="fill_parent"
+        <!-- Header: Avatar, Nome do Usuário e Data -->
+        <RelativeLayout
             android:layout_width="fill_parent"
-            android:layout_weight="1"/>
-        <ImageButton
-            android:id="@+id/btnComments"
-            android:layout_width="24dip"
-            android:layout_height="24dip"
-            android:background="@null"
-            android:scaleType="fitCenter"
-            android:src="@drawable/icon_comments" />
-        <TextView
-            android:id="@+id/txtCommentCount"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0"
-            android:textStyle="bold"
-            android:textSize="12sp"
-            android:textColor="#8C93A8"
-            android:layout_marginLeft="6dip" />
+            android:layout_marginBottom="8dip">
+
+            <ImageView
+                android:id="@+id/postAvatar"
+                android:layout_width="36dip"
+                android:layout_height="36dip"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_myplaces" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/postAvatar"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="8dip"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/postUsername"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:textColor="#262626"
+                    android:text="@username" />
+
+                <TextView
+                    android:id="@+id/postDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="10sp"
+                    android:textColor="#888888"
+                    android:text="2026-10-16 21:26:28" />
+            </LinearLayout>
+
+        </RelativeLayout>
+
+        <!-- Texto do Post -->
+        <TextView
+            android:id="@+id/postText"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="#333333"
+            android:layout_marginBottom="8dip" />
+
+        <!-- Imagem do Post (Ajusta à proporção original) -->
+        <ImageView
+            android:id="@+id/imgPost"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:visibility="gone"
+            android:layout_marginBottom="8dip" />
+        <Gallery
+            android:id="@+id/galleryImages"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginBottom="8dip" />
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dip">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/btnComments"
+                    android:layout_width="28dip"
+                    android:layout_height="28dip"
+                    android:background="@android:color/transparent"
+                    android:scaleType="centerInside"
+                    android:src="@android:drawable/ic_menu_send" />
+
+                <TextView
+                    android:id="@+id/txtCommentCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="#666666"
+                    android:layout_marginLeft="4dip"
+                    android:text="0" />
+            </LinearLayout>
+
+        </RelativeLayout>
+
     </LinearLayout>
 
 </LinearLayout>

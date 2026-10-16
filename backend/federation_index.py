@@ -59,7 +59,7 @@ def view_index_by_theme(theme):
             "cover_image":i[3],
             "theme":i[4]
         })
-    return jsonify(formatted_index)
+    return jsonify(formatted_index),200
 def view_index():
     conn = get_db()
     formatted_index = []

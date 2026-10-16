@@ -4,9 +4,8 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical"
-    android:background="#282c37">
+    android:background="#000000">
 
-    <!-- Lista de Opções no estilo Android 2.x -->
     <ListView
         android:id="@+id/optionsListView"
         android:layout_width="fill_parent"
@@ -16,7 +15,6 @@
         android:dividerHeight="1dip"
         android:cacheColorHint="#000000" />
 
-    <!-- Barra de Navegação Inferior -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="40dip" 

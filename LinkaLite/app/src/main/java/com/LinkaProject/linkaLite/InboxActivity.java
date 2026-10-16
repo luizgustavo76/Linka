@@ -45,7 +45,19 @@ public class InboxActivity extends Activity {
             jsonInbox.put("username", username);
             String responseStr = request.requestHTTP(url + "/inbox", "post", jsonInbox, InboxActivity.this);
             String responseNotifications = request.requestHTTP(url + "/notifications", "post", jsonInbox, InboxActivity.this);
-            
+            if (responseStr != null && !responseStr.trim().equals("")) {
+                JSONObject rootObject = new JSONObject(responseStr);
+                JSONArray inboxArray = rootObject.getJSONArray("inbox");
+                for (int i = 0; i < inboxArray.length(); i++) {
+                    JSONArray subArray = inboxArray.getJSONArray(i);
+                    if (subArray.length() >= 3) {
+                        String sender = subArray.getString(1);
+                        String message = subArray.getString(2);
+                        InboxItem item = new InboxItem(sender, message);
+                        itemList.add(item);
+                    }
+                }
+            }
             if (responseStr != null && !responseStr.trim().equals("")) {
                 JSONObject rootObject = new JSONObject(responseStr);
                 JSONArray inboxArray = rootObject.getJSONArray("inbox");

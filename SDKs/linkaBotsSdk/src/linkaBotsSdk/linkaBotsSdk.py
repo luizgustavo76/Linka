@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 import requests
 import setup
-from . import token_manager
+from .....bots.Automoderator import token_manager
 from dotenv import load_dotenv
 
 load_dotenv()

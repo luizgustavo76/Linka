@@ -1,186 +1,217 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TabHost xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@android:id/tabhost"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#282c37">
+    android:orientation="vertical"
+    android:background="#FFFFFF">
 
-    <LinearLayout
+    <!-- 1. Top Bar Preta com Ações Rápidas -->
+    <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:orientation="vertical">
-        <TabWidget
-            android:id="@android:id/tabs"
-            android:layout_width="fill_parent"
+        android:layout_height="48dip"
+        android:background="#1C1C1C"
+        android:paddingLeft="8dip"
+        android:paddingRight="8dip">
+        <View
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"/>
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="#1e1e2e" />
-        <Button 
-            android:id="@+id/newPost"
-            android:layout_width="fill_parent"
-            android:layout_height="32dip"
-            android:padding="0dip"
-            android:text="+ New Post"
-            android:textSize="11sp"
-            android:layout_margin="2dip" />
-        <FrameLayout
-            android:id="@android:id/tabcontent"
-            android:layout_width="fill_parent"
-            android:layout_height="0dip"
-            android:layout_weight="1">
-            <LinearLayout
-                android:id="@+id/tabForYou"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:orientation="vertical">
-                <ListView
-                    android:id="@+id/listViewForYou"
-                    android:layout_width="fill_parent"
-                    android:layout_height="fill_parent"
-                    android:scrollingCache="false"   
-                    android:divider="#2a2a3c"
-                    android:dividerHeight="1dip" />
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/tabNewest"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:orientation="vertical">
+            android:layout_centerVertical="true"
+            android:src="@drawable/linka_app_login_banner" />
 
-                <ListView
-                    android:id="@+id/listViewNewest"
-                    android:layout_width="fill_parent"
-                    android:layout_height="fill_parent"
-                    android:scrollingCache="false"   
-                    android:divider="#2a2a3c"
-                    android:dividerHeight="1dip" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/emptyView"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="20dip"
-                android:visibility="gone">
-
-                <TextView
-                    android:id="@+id/tvEmptyTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="No posts yet!"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#FFFFFF"
-                    android:gravity="center" />
-
-                <TextView
-                    android:id="@+id/tvEmptySubtitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Check out federations to explore Reddit, Mastodon, and Bluesky feeds."
-                    android:textSize="14sp"
-                    android:textColor="#AAAAAA"
-                    android:gravity="center"
-                    android:layout_marginTop="8dip" />
-
-                <Button
-                    android:id="@+id/btnEmptyFederations"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Visit Federations"
-                    android:layout_marginTop="16dip" />
-            </LinearLayout>
-
-        </FrameLayout>
-
-        <LinearLayout 
-            android:layout_width="fill_parent"
-            android:layout_height="40dip" 
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentRight="true"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="#11111b">
+            android:gravity="center_vertical">
 
             <ImageButton
-                android:id="@+id/btnHome"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:src="@drawable/home"
+                android:id="@+id/newPost"
+                android:layout_width="40dip"
+                android:layout_height="40dip"
+                android:background="@android:color/transparent"
                 android:scaleType="centerInside"
-                android:background="@android:color/transparent" />
+                android:src="@android:drawable/ic_menu_edit" />
 
             <ImageButton
-                android:id="@+id/btnChat"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:src="@drawable/chat"
+                android:id="@+id/btnInbox"
+                android:layout_width="40dip"
+                android:layout_height="40dip"
+                android:background="@android:color/transparent"
                 android:scaleType="centerInside"
-                android:background="@android:color/transparent" />
-
-            <ImageButton
-                android:id="@+id/btnOptions"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:src="@drawable/options"
-                android:scaleType="centerInside"
-                android:background="@android:color/transparent" />
+                android:src="@android:drawable/sym_action_chat" />
 
             <ImageButton
                 android:id="@+id/btnProfile"
-                android:layout_width="0dip"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:src="@drawable/account"
+                android:layout_width="40dip"
+                android:layout_height="40dip"
+                android:background="@android:color/transparent"
                 android:scaleType="centerInside"
-                android:background="@android:color/transparent" />
+                android:src="@android:drawable/ic_menu_myplaces" />
 
         </LinearLayout>
+    </RelativeLayout>
 
-        <!-- Barra de Convidado -->
-        <LinearLayout 
-            android:id="@+id/layoutGuest"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content" 
-            android:orientation="horizontal"
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="32dip"
+        android:background="#E0E0E0">
+
+        <TextView
+            android:id="@+id/tabPrev"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentLeft="true"
             android:gravity="center_vertical"
-            android:background="#11111b"
-            android:padding="4dip"
-            android:visibility="gone">
+            android:paddingLeft="12dip"
+            android:paddingRight="12dip"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:visibility="invisible" />
 
-            <TextView
-                android:id="@+id/tvGuest"
-                android:layout_width="0dip"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="You are navigating as guest, for more options login!"
-                android:textSize="11sp"
-                android:textColor="#AAAAAA"
-                android:gravity="center_vertical" />
+        <TextView
+            android:id="@+id/tabCurrent"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_centerInParent="true"
+            android:gravity="center_vertical"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:textColor="#000000"
+            android:text="Timeline" />
 
-            <Button 
-                android:id="@+id/btnLogin"
+        <TextView
+            android:id="@+id/tabNext"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentRight="true"
+            android:gravity="center_vertical"
+            android:paddingLeft="12dip"
+            android:paddingRight="12dip"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:text="Local Feed ▶" />
+    </RelativeLayout>
+
+    <!-- 3. Área de Conteúdo Pagina/Deslizável na Horizontal -->
+    <HorizontalScrollView
+        android:id="@+id/scrollViewPages"
+        android:layout_width="fill_parent"
+        android:layout_height="0dip"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:orientation="horizontal">
+
+            <!-- Página 1: Timeline -->
+            <FrameLayout
+                android:id="@+id/pageTimeline"
                 android:layout_width="wrap_content"
-                android:layout_height="32dip"
-                android:paddingLeft="8dip"
-                android:paddingRight="8dip"
-                android:text="Go to Login"
-                android:textSize="11sp"
-                android:layout_marginLeft="4dip"
-                android:layout_marginRight="2dip" />
+                android:layout_height="fill_parent">
+                <ListView
+                    android:id="@+id/listViewTimeline"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:scrollingCache="false"
+                    android:divider="#E0E0E0"
+                    android:dividerHeight="1dip" />
+            </FrameLayout>
 
-            <Button 
-                android:id="@+id/btnClose"
+            <!-- Página 2: Local Feed -->
+            <FrameLayout
+                android:id="@+id/pageLocal"
                 android:layout_width="wrap_content"
-                android:layout_height="32dip"
-                android:paddingLeft="8dip"
-                android:paddingRight="8dip"
-                android:text="X"
-                android:textSize="11sp"
-                android:layout_marginLeft="2dip" />
+                android:layout_height="fill_parent">
+                <ListView
+                    android:id="@+id/listViewLocal"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:scrollingCache="false"
+                    android:divider="#E0E0E0"
+                    android:dividerHeight="1dip" />
+            </FrameLayout>
+
+            <!-- Página 3: Chat -->
+            <FrameLayout
+                android:id="@+id/pageChat"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent">
+                <ListView
+                    android:id="@+id/listViewChat"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:scrollingCache="false"
+                    android:divider="#E0E0E0"
+                    android:dividerHeight="1dip" />
+            </FrameLayout>
+
+            <!-- Página 4: Options -->
+            <FrameLayout
+                android:id="@+id/pageOptions"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Settings &amp; Options"
+                    android:textColor="#666666" />
+            </FrameLayout>
+
         </LinearLayout>
+    </HorizontalScrollView>
 
+    <!-- Barra de Convidado -->
+    <LinearLayout 
+        android:id="@+id/layoutGuest"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" 
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#333333"
+        android:padding="4dip"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvGuest"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="You are browsing as a guest. Log in for full options!"
+            android:textSize="11sp"
+            android:textColor="#FFFFFF"
+            android:gravity="center_vertical" />
+
+        <Button 
+            android:id="@+id/btnLogin"
+            android:layout_width="wrap_content"
+            android:layout_height="32dip"
+            android:paddingLeft="8dip"
+            android:paddingRight="8dip"
+            android:text="Login"
+            android:textSize="11sp"
+            android:layout_marginLeft="4dip"
+            android:layout_marginRight="2dip" />
+
+        <Button 
+            android:id="@+id/btnClose"
+            android:layout_width="wrap_content"
+            android:layout_height="32dip"
+            android:paddingLeft="8dip"
+            android:paddingRight="8dip"
+            android:text="X"
+            android:textSize="11sp"
+            android:layout_marginLeft="2dip" />
     </LinearLayout>
-</TabHost>
+
+</LinearLayout>

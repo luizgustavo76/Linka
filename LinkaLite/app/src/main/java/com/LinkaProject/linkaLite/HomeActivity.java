@@ -1,145 +1,185 @@
 package com.LinkaProject.linkaLite;
 
-import android.app.TabActivity;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.Display;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import org.json.JSONArray;
 import org.json.JSONException;
-import android.widget.Gallery;
-import java.util.List;
-import java.util.ArrayList;
-import android.widget.Gallery;
-import android.widget.AdapterView;
 import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class HomeActivity extends TabActivity {
+public class HomeActivity extends Activity {
+
     public void personalizeTimeline(View view){
         Intent intent = new Intent(HomeActivity.this, MainEditTimeline.class);
         startActivity(intent);
     }
-    private ImageButton btnHome;
+
+    private ImageButton newPost;
+    private ImageButton btnInbox;
     private ImageButton btnProfile;
-    private ImageButton btnOptions;
-    private ImageButton btnChat;
-    private Button newPost;
     private Button btnClose;
     private Button btnLogin;
 
-    private ListView listViewForYou;
-    private ListView listViewNewest;
-    private PostAdapter adapterForYou;
-    private PostAdapter adapterNewest;
-    private ArrayList<JSONObject> postsForYou = new ArrayList<JSONObject>();
-    private ArrayList<JSONObject> postsNewest = new ArrayList<JSONObject>();
+    private HorizontalScrollView scrollViewPages;
+    private TextView tabPrev, tabCurrent, tabNext;
+    private int screenWidth;
+    private int currentPage = 0;
+    private String[] pageTitles = new String[]{"Timeline", "Local Feed", "Chat", "Options"};
 
-    private View footerForYou;
-    private View footerNewest;
-    private JSONArray tags;
+    private ListView listViewTimeline;
+    private ListView listViewLocal;
+    private ListView listViewChat;
+    
+    private PostAdapter adapterTimeline;
+    private PostAdapter adapterLocal;
+    
+    private ArrayList<JSONObject> postsTimeline = new ArrayList<JSONObject>();
+    private ArrayList<JSONObject> postsLocal = new ArrayList<JSONObject>();
+
+    private View footerTimeline;
+    private View footerLocal;
+    private JSONArray tags = new JSONArray();
     private boolean isGuest = false;
     private ScheduledExecutorService scheduler;
     private ScheduledExecutorService schedulerNotifications;
-    private Gallery galleryImages;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        TabHost tabHost = getTabHost();
 
-        TabHost.TabSpec specForYou = tabHost.newTabSpec("foryou");
-        specForYou.setIndicator("For You");
-        specForYou.setContent(R.id.tabForYou);
-        tabHost.addTab(specForYou);
+        Display display = getWindowManager().getDefaultDisplay();
+        screenWidth = display.getWidth();
 
-        TabHost.TabSpec specNewest = tabHost.newTabSpec("newest");
-        specNewest.setIndicator("Newest");
-        specNewest.setContent(R.id.tabNewest);
-        tabHost.addTab(specNewest);
+        scrollViewPages = (HorizontalScrollView) findViewById(R.id.scrollViewPages);
+        tabPrev = (TextView) findViewById(R.id.tabPrev);
+        tabCurrent = (TextView) findViewById(R.id.tabCurrent);
+        tabNext = (TextView) findViewById(R.id.tabNext);
 
-        tabHost.setCurrentTab(0);
+        setPageWidth(R.id.pageTimeline);
+        setPageWidth(R.id.pageLocal);
+        setPageWidth(R.id.pageChat);
+        setPageWidth(R.id.pageOptions);
 
-        tabHost.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
+        tabPrev.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onTabChanged(String tabId) {
-                loadFeedForTab(tabId);
+            public void onClick(View v) {
+                if (currentPage > 0) {
+                    currentPage--;
+                    scrollToPage(currentPage);
+                }
             }
         });
 
-        schedulerNotifications = Executors.newSingleThreadScheduledExecutor();
-        scheduler = Executors.newSingleThreadScheduledExecutor();
-
-        Runnable notificationsTask = new Runnable() {
+        tabNext.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                notificationManager.createNotification(HomeActivity.this);
-            }
-        };
-
-        Runnable tokenTask = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    config cfg = new config();
-                    JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
-                    JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-                    JSONObject server = jsonCfg.getJSONObject("SERVER");
-                    String token = fastLogin.getString("token_session");
-                    String url = server.getString("url");
-                    tokenManager.valideToken(token, url, HomeActivity.this);
-                } catch (JSONException e) {
-                    e.printStackTrace();
+            public void onClick(View v) {
+                if (currentPage < pageTitles.length - 1) {
+                    currentPage++;
+                    scrollToPage(currentPage);
                 }
             }
-        };
+        });
 
-        schedulerNotifications.scheduleAtFixedRate(notificationsTask, 0, 15, TimeUnit.SECONDS);
-        scheduler.scheduleAtFixedRate(tokenTask, 0, 2, TimeUnit.MINUTES);
+        scrollViewPages.setOnTouchListener(new View.OnTouchListener() {
+            private float downX;
 
-        config cfg = new config();
-        try {
-            String rawJson = cfg.loadCfgAsJson(this, "config.cfg");
-            JSONObject jsonCfg = new JSONObject(rawJson);
-            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-            JSONObject server = jsonCfg.getJSONObject("SERVER");
-            String url = server.optString("url", "http://linkaProject.pythonanywhere.com");
-            String token = fastLogin.optString("token_session", "");
-            if (token.length() > 0) {
-                tokenManager.valideToken(token, url, HomeActivity.this);
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    downX = event.getRawX();
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    float upX = event.getRawX();
+                    float deltaX = downX - upX;
+                    int minSwipeDistance = screenWidth / 4;
+
+                    if (Math.abs(deltaX) > minSwipeDistance) {
+                        if (deltaX > 0 && currentPage < pageTitles.length - 1) {
+                            currentPage++;
+                        } else if (deltaX < 0 && currentPage > 0) {
+                            currentPage--;
+                        }
+                    } else {
+                        int scrollX = scrollViewPages.getScrollX();
+                        currentPage = (scrollX + (screenWidth / 2)) / screenWidth;
+                        if (currentPage < 0) currentPage = 0;
+                        if (currentPage >= pageTitles.length) currentPage = pageTitles.length - 1;
+                    }
+
+                    scrollToPage(currentPage);
+                    return true;
+                }
+                return false;
             }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        });
 
+        updateTabHeader();
+
+        newPost = (ImageButton) findViewById(R.id.newPost);
+        btnInbox = (ImageButton) findViewById(R.id.btnInbox);
+        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         btnClose = (Button) findViewById(R.id.btnClose);
         btnLogin = (Button) findViewById(R.id.btnLogin);
-        newPost = (Button) findViewById(R.id.newPost);
-        btnHome = (ImageButton) findViewById(R.id.btnHome);
-        btnChat = (ImageButton) findViewById(R.id.btnChat);
-        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
-        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
+
         LinearLayout layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
-        galleryImages = (Gallery) findViewById(R.id.galleryImages);
         Intent intent = getIntent();
         isGuest = intent.getBooleanExtra("isGuest", false);
         if (isGuest && layoutGuest != null) {
             layoutGuest.setVisibility(View.VISIBLE);
+        }
+
+        if (newPost != null) {
+            newPost.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(HomeActivity.this, newPost.class);
+                    intent.putExtra("isGuest", isGuest);
+                    startActivity(intent);
+                }
+            });
+        }
+
+        if (btnInbox != null) {
+            btnInbox.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(HomeActivity.this, chatActivity.class);
+                    intent.putExtra("isGuest", isGuest);
+                    startActivity(intent);
+                }
+            });
+        }
+
+        if (btnProfile != null) {
+            btnProfile.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new Intent(HomeActivity.this, profile.class));
+                }
+            });
         }
 
         if (btnLogin != null) {
@@ -156,83 +196,109 @@ public class HomeActivity extends TabActivity {
             btnClose.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (layoutGuest != null) layoutGuest.setVisibility(View.INVISIBLE);
+                    if (layoutGuest != null) layoutGuest.setVisibility(View.GONE);
                 }
             });
         }
 
-        if (btnChat != null) {
-            btnChat.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(HomeActivity.this, chatActivity.class);
-                    intent.putExtra("isGuest", isGuest);
-                    startActivity(intent);
-                }
-            });
-        }
+        listViewTimeline = (ListView) findViewById(R.id.listViewTimeline);
+        listViewLocal = (ListView) findViewById(R.id.listViewLocal);
+        listViewChat = (ListView) findViewById(R.id.listViewChat);
 
-        if (btnOptions != null) {
-            btnOptions.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startActivity(new Intent(HomeActivity.this, optionActivity.class));
-                }
-            });
-        }
-
-        if (btnProfile != null) {
-            btnProfile.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    startActivity(new Intent(HomeActivity.this, profile.class));
-                }
-            });
-        }
-
-        if (newPost != null) {
-            newPost.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(HomeActivity.this, newPost.class);
-                    intent.putExtra("isGuest", isGuest);
-                    startActivity(intent);
-                }
-            });
-        }
-
-        listViewForYou = (ListView) findViewById(R.id.listViewForYou);
-        listViewNewest = (ListView) findViewById(R.id.listViewNewest);
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        footerForYou = inflater.inflate(R.layout.footer_federations, null);
-        footerNewest = inflater.inflate(R.layout.footer_federations, null);
-        if (listViewForYou != null) {
-            listViewForYou.addFooterView(footerForYou);
-            adapterForYou = new PostAdapter(this, postsForYou, "foryou");
-            listViewForYou.setAdapter(adapterForYou);
+        footerTimeline = inflater.inflate(R.layout.footer_federations, null);
+        footerLocal = inflater.inflate(R.layout.footer_federations, null);
+
+        if (listViewTimeline != null) {
+            listViewTimeline.addFooterView(footerTimeline);
+            adapterTimeline = new PostAdapter(this, postsTimeline, "timeline");
+            listViewTimeline.setAdapter(adapterTimeline);
         }
 
-        if (listViewNewest != null) {
-            listViewNewest.addFooterView(footerNewest);
-            adapterNewest = new PostAdapter(this, postsNewest, "newest");
-            listViewNewest.setAdapter(adapterNewest);
+        if (listViewLocal != null) {
+            listViewLocal.addFooterView(footerLocal);
+            adapterLocal = new PostAdapter(this, postsLocal, "local");
+            listViewLocal.setAdapter(adapterLocal);
+        }
+
+        schedulerNotifications = Executors.newSingleThreadScheduledExecutor();
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+
+        schedulerNotifications.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                notificationManager.createNotification(HomeActivity.this);
+            }
+        }, 0, 15, TimeUnit.SECONDS);
+
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    config cfg = new config();
+                    JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
+                    JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
+                    JSONObject server = jsonCfg.getJSONObject("SERVER");
+                    String token = fastLogin.getString("token_session");
+                    String url = server.getString("url");
+                    tokenManager.valideToken(token, url, HomeActivity.this);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, 0, 2, TimeUnit.MINUTES);
+    }
+
+    private void setPageWidth(int pageResId) {
+        View page = findViewById(pageResId);
+        if (page != null) {
+            ViewGroup.LayoutParams params = page.getLayoutParams();
+            params.width = screenWidth;
+            page.setLayoutParams(params);
+        }
+    }
+
+    private void scrollToPage(final int page) {
+        scrollViewPages.post(new Runnable() {
+            @Override
+            public void run() {
+                scrollViewPages.smoothScrollTo(page * screenWidth, 0);
+            }
+        });
+        updateTabHeader();
+        loadFeedForTab(pageTitles[page]);
+    }
+
+    private void updateTabHeader() {
+        tabCurrent.setText(pageTitles[currentPage]);
+
+        if (currentPage > 0) {
+            tabPrev.setText("◀ " + pageTitles[currentPage - 1]);
+            tabPrev.setVisibility(View.VISIBLE);
+        } else {
+            tabPrev.setVisibility(View.INVISIBLE);
+        }
+
+        if (currentPage < pageTitles.length - 1) {
+            tabNext.setText(pageTitles[currentPage + 1] + " ▶");
+            tabNext.setVisibility(View.VISIBLE);
+        } else {
+            tabNext.setVisibility(View.INVISIBLE);
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        String currentTab = getTabHost().getCurrentTabTag();
-        loadFeedForTab(currentTab != null ? currentTab : "foryou");
+        loadFeedForTab(pageTitles[currentPage]);
     }
 
-    private void loadFeedForTab(String tabId) {
+    private void loadFeedForTab(String tabName) {
         String baseUrl = "http://linkaProject.pythonanywhere.com";
         JSONArray urlsArray = new JSONArray();
 
         try {
             config cfg = new config();
-            
             String rawCfg = cfg.loadCfgAsJson(HomeActivity.this, "config.cfg");
             if (rawCfg != null && rawCfg.length() > 0) {
                 JSONObject jsonCfg = new JSONObject(rawCfg);
@@ -246,22 +312,13 @@ public class HomeActivity extends TabActivity {
             if (rawTimeline != null && rawTimeline.length() > 0) {
                 JSONObject jsonTimeline = new JSONObject(rawTimeline);
                 JSONObject fedSection = jsonTimeline.optJSONObject("FEDERATION-TIMELINE");
-                JSONObject filtersSection = jsonTimeline.optJSONObject("FILTERS");
                 if (fedSection != null) {
                     String urlsValue = fedSection.optString("urls", "");
-                    String tagsValue = filtersSection.optString("tags", "");
                     String[] parts = urlsValue.split(",");
                     for (String part : parts) {
                         String cleanUrl = part.trim();
                         if (cleanUrl.length() > 0) {
                             urlsArray.put(cleanUrl);
-                        }
-                    }
-                    String[] partsFilters = tagsValue.split(",");
-                    for (String partFilters : parts) {
-                        String cleanUrl = partFilters.trim();
-                        if (cleanUrl.length() > 0) {
-                            tags.put(cleanUrl);
                         }
                     }
                 }
@@ -270,7 +327,7 @@ public class HomeActivity extends TabActivity {
             e.printStackTrace();
         }
 
-        if ("foryou".equals(tabId)) {
+        if ("Timeline".equals(tabName)) {
             JSONObject body = new JSONObject();
             try {
                 body.put("urls", urlsArray);
@@ -278,20 +335,20 @@ public class HomeActivity extends TabActivity {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            new FetchFeedTask("foryou", baseUrl + "/view-external-posts", "POST", body).execute();
-        } else {
-            new FetchFeedTask("newest", baseUrl + "/feed", "GET", null).execute();
+            new FetchFeedTask("timeline", baseUrl + "/view-external-posts", "POST", body).execute();
+        } else if ("Local Feed".equals(tabName)) {
+            new FetchFeedTask("local", baseUrl + "/feed", "GET", null).execute();
         }
     }
 
     private class FetchFeedTask extends AsyncTask<Void, Void, String> {
-        private String tabId;
+        private String tabType;
         private String url;
         private String method;
         private JSONObject jsonBody;
 
-        public FetchFeedTask(String tabId, String url, String method, JSONObject jsonBody) {
-            this.tabId = tabId;
+        public FetchFeedTask(String tabType, String url, String method, JSONObject jsonBody) {
+            this.tabType = tabType;
             this.url = url;
             this.method = method;
             this.jsonBody = jsonBody;
@@ -304,8 +361,8 @@ public class HomeActivity extends TabActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            ArrayList<JSONObject> targetList = "foryou".equals(tabId) ? postsForYou : postsNewest;
-            PostAdapter targetAdapter = "foryou".equals(tabId) ? adapterForYou : adapterNewest;
+            ArrayList<JSONObject> targetList = "timeline".equals(tabType) ? postsTimeline : postsLocal;
+            PostAdapter targetAdapter = "timeline".equals(tabType) ? adapterTimeline : adapterLocal;
 
             if (targetList == null || targetAdapter == null) {
                 return;
@@ -342,13 +399,13 @@ public class HomeActivity extends TabActivity {
     private class PostAdapter extends BaseAdapter {
         private Context context;
         private ArrayList<JSONObject> list;
-        private String tabId;
+        private String tabType;
         private ImageLoader imageLoader;
 
-        public PostAdapter(Context context, ArrayList<JSONObject> list, String tabId) {
+        public PostAdapter(Context context, ArrayList<JSONObject> list, String tabType) {
             this.context = context;
             this.list = list;
-            this.tabId = tabId;
+            this.tabType = tabType;
             this.imageLoader = new ImageLoader();
         }
 
@@ -366,7 +423,7 @@ public class HomeActivity extends TabActivity {
         public long getItemId(int position) {
             return position;
         }
-        
+
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
@@ -381,14 +438,13 @@ public class HomeActivity extends TabActivity {
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
             ImageButton btnComments = (ImageButton) convertView.findViewById(R.id.btnComments);
             TextView txtCommentCount = (TextView) convertView.findViewById(R.id.txtCommentCount);
+
             avatarPost.setTag(null);
             avatarPost.setImageBitmap(null);
 
             imgPost.setTag(null);
             imgPost.setImageBitmap(null);
             imgPost.setVisibility(View.GONE);
-            imgPost.setAdjustViewBounds(true);
-            imgPost.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
             tvUsername.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -418,6 +474,7 @@ public class HomeActivity extends TabActivity {
                         startActivity(intent);
                     }
                 });
+
                 txtCommentCount.setText(commentsCount);
                 tvUsername.setText("@" + username);
                 tvDate.setText(datetime);
@@ -425,7 +482,7 @@ public class HomeActivity extends TabActivity {
                 imageLoader.viewProfilePicture(context, username, avatarPost);
 
                 if (textPost.contains("[IMAGE]")) {
-                    List<String> photos = new ArrayList<String>();
+                    final List<String> photos = new ArrayList<String>();
                     String[] lines = textPost.split("\n");
                     for (String line : lines) {
                         if (line.contains("[IMAGE]")) {
@@ -437,53 +494,25 @@ public class HomeActivity extends TabActivity {
                         }
                     }
 
-                    // 3. Processa a exibição das imagens
                     if (photos.size() > 0) {
-                        if (photos.size() == 1) {
-                            final String singleUrl = photos.get(0);
-                            imgPost.setVisibility(View.VISIBLE);
-                            if (galleryImages != null) {
-                                galleryImages.setVisibility(View.GONE);
-                            }
-                            final String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + singleUrl;
-                            imgPost.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
-                                    intent.putExtra("type", "Image");
-                                    intent.putExtra("url", urlProxy);
-                                    startActivity(intent);
-                                }
-                            });
+                        final String rawUrl = photos.get(0);
+                        imgPost.setVisibility(View.VISIBLE);
+                        imgPost.setAdjustViewBounds(true);
+                        imgPost.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
-                            if ("foryou".equals(tabId)) {
-                                imageLoader.LoadImageUrl("https://fancy-fire-49d2.luizsgustavo76.workers.dev/?url=" + singleUrl, imgPost);
-                            } else {
-                                imageLoader.LoadImageUrl(urlProxy, imgPost);
-                            }
-                        } else {
-                            imgPost.setVisibility(View.GONE);
+                        final String proxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + rawUrl;
 
-                            if (galleryImages != null) {
-                                galleryImages.setVisibility(View.VISIBLE);
-                                
-                                ImageGalleryAdapter galleryAdapter = new ImageGalleryAdapter(HomeActivity.this, photos);
-                                galleryImages.setAdapter(galleryAdapter);
-
-                                galleryImages.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                                    @Override
-                                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                                        String selectedUrl = photos.get(position);
-                                        String urlProxy = "http://linkaProject.pythonanywhere.com/lite-render?url=" + selectedUrl;
-                                        
-                                        Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
-                                        intent.putExtra("type", "Image");
-                                        intent.putExtra("url", urlProxy);
-                                        startActivity(intent);
-                                    }
-                                });
+                        imgPost.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
+                                intent.putExtra("type", "Image");
+                                intent.putExtra("url", proxyUrl);
+                                startActivity(intent);
                             }
-                        }
+                        });
+
+                        imageLoader.LoadImageUrl(proxyUrl, imgPost);
                     }
                 }
                 tvText.setText(textPost);
