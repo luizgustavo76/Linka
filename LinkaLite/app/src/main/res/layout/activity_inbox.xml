@@ -1,70 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:background="#282c37" 
+<LinearLayout 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="#ffffff"
     android:orientation="vertical">
 
-    <TextView
+    <!-- Barra Superior / Header estilo Retro -->
+    <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="Solicitations/ Inbox"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:padding="16dip" 
-        android:textColor="#FFFFFF" />
+        android:background="#d2d2d2"
+        android:orientation="horizontal"
+        android:padding="6dip">
 
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="6dip"
+            android:gravity="center"
+            android:text="Solicitações / Inbox"
+            android:textColor="#000000"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Lista de Solicitações -->
     <ListView
         android:id="@+id/lvInbox"
         android:layout_width="fill_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
-        android:divider="#2a2a3c"
+        android:divider="#e0e0e0"
         android:dividerHeight="1dip" />
 
-    <LinearLayout 
+    <!-- Barra de Navegação Inferior -->
+    <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="40dip" 
-        android:orientation="horizontal"
+        android:layout_height="48dip"
+        android:background="#d2d2d2"
         android:gravity="center_vertical"
-        android:background="#11111b">
+        android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/btnHome"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:src="@drawable/home"
+            android:background="?android:attr/selectableItemBackground"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+            android:src="@drawable/home" />
 
         <ImageButton
             android:id="@+id/btnChat"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:src="@drawable/chat"
+            android:background="?android:attr/selectableItemBackground"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+            android:src="@drawable/chat" />
 
         <ImageButton
             android:id="@+id/btnOptions"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:src="@drawable/options"
+            android:background="?android:attr/selectableItemBackground"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+            android:src="@drawable/options" />
 
         <ImageButton
             android:id="@+id/btnProfile"
             android:layout_width="0dip"
             android:layout_height="fill_parent"
             android:layout_weight="1"
-            android:src="@drawable/account"
+            android:background="?android:attr/selectableItemBackground"
             android:scaleType="centerInside"
-            android:background="@android:color/transparent" />
+            android:src="@drawable/account" />
 
     </LinearLayout>
 </LinearLayout>

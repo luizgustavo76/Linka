@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
@@ -17,10 +16,6 @@ import java.util.Map;
 public class optionActivity extends Activity {
 
     private ListView optionsListView;
-    private ImageButton btnHome;
-    private ImageButton btnChat;
-    private ImageButton btnProfile;
-    private ImageButton btnOptions;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -28,27 +23,22 @@ public class optionActivity extends Activity {
         setContentView(R.layout.activity_options);
 
         optionsListView = (ListView) findViewById(R.id.optionsListView);
-        btnHome = (ImageButton) findViewById(R.id.btnHome);
-        btnChat = (ImageButton) findViewById(R.id.btnChat);
-        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
-        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
-
-        // Monta os itens do menu no formato Título + Subtítulo/Descrição
         List<Map<String, String>> data = new ArrayList<Map<String, String>>();
         
-        addItem(data, "Generate a invite", "Create invitation codes for new users");
+        // Adicionando os 5 itens em ordem exata com os cases do switch
+        addItem(data, "Generate invite", "Create an invitation code for a friend");
         addItem(data, "Edit timeline", "Customize feeds, federations and post sources");
         addItem(data, "Inbox", "View messages and notifications");
         addItem(data, "Friends", "Manage your contacts and federation friends");
         addItem(data, "Change server", "Switch or configure your current node server");
 
-        // Utiliza o layout NATIVO do Android (simple_list_item_2) para renderizar 2 linhas
+        // Utiliza o layout customizado da v3.0 (R.layout.item_option)
         SimpleAdapter adapter = new SimpleAdapter(
                 this,
                 data,
-                android.R.layout.simple_list_item_2,
+                R.layout.item_option,
                 new String[] {"title", "subtitle"},
-                new int[] {android.R.id.text1, android.R.id.text2}
+                new int[] {R.id.txtOptionTitle, R.id.txtOptionSubtitle}
         );
 
         optionsListView.setAdapter(adapter);
@@ -58,44 +48,22 @@ public class optionActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
-                    case 0: // Generate a invite
+                    case 0: // Generate invite
                         startActivity(new Intent(optionActivity.this, GenerateInvite.class));
                         break;
                     case 1: // Edit timeline
                         startActivity(new Intent(optionActivity.this, MainEditTimeline.class));
                         break;
-                    case 2: 
+                    case 2: // Inbox
                         startActivity(new Intent(optionActivity.this, InboxActivity.class));
                         break;
-                    case 3:
+                    case 3: // Friends
                         startActivity(new Intent(optionActivity.this, addFriendActivity.class));
                         break;
                     case 4: // Change server
                         startActivity(new Intent(optionActivity.this, ChangeServer.class));
                         break;
                 }
-            }
-        });
-
-        // Botões de Navegação Inferior
-        btnHome.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(optionActivity.this, HomeActivity.class));
-            }
-        });
-
-        btnChat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(optionActivity.this, chatActivity.class));
-            }
-        });
-
-        btnProfile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(optionActivity.this, profile.class));
             }
         });
     }
