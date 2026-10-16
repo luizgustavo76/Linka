@@ -9,6 +9,7 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import org.json.JSONArray;
 import org.json.JSONException;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import org.json.JSONObject;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ public class chatActivity extends Activity {
     private Button btnNewChat;
     private ListView lvFriends;
     private FriendsAdapter adapter;
+    private ImageView imgChannelIcon;
     private List<FriendItem> friendsList;
     private boolean isGuest;
     private String url = "";
@@ -26,6 +28,7 @@ public class chatActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
+        imgChannelIcon = (ImageView) findViewById(R.id.imgChannelIcon);
         btnGlobalChat = (Button) findViewById(R.id.btnGlobalChat);
         lvFriends = (ListView) findViewById(R.id.lvFriends);
         btnNewChat = (Button) findViewById(R.id.btnNewChat);
@@ -69,6 +72,8 @@ public class chatActivity extends Activity {
                     for (int i = 0; i < friends.length(); i++) {
                         JSONArray pair = friends.getJSONArray(i);
                         String friend = pair.getString(0).equalsIgnoreCase(myUsername) ? pair.getString(1) : pair.getString(0);
+                        ImageLoader imageLoader = new ImageLoader();
+                        imageLoader.viewProfilePicture(chatActivity.this, friend, imgChannelIcon);
                         friendsList.add(new FriendItem(friend));
                     }
                 }

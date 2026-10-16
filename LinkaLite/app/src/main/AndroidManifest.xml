@@ -7,8 +7,9 @@
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application 
-        android:label="Linka Lite"
-        android:icon="@drawable/icon">  
+        android:label="Linka"
+        android:icon="@drawable/icon"
+        android:theme="@android:style/Theme.NoTitleBar">  
 
         <activity 
             android:name=".LoginActivity" 

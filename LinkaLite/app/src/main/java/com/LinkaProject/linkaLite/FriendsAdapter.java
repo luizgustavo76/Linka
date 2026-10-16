@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 import java.util.List;
 public class FriendsAdapter extends BaseAdapter {
@@ -44,6 +45,7 @@ public class FriendsAdapter extends BaseAdapter {
     private static class ViewHolder {
         TextView txtName;
         TextView txtSubtitle;
+        ImageView imgChannelIcon;
     }
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -56,6 +58,7 @@ public class FriendsAdapter extends BaseAdapter {
             holder = new ViewHolder();
             holder.txtName = (TextView) convertView.findViewById(R.id.txtChannelName);
             holder.txtSubtitle = (TextView) convertView.findViewById(R.id.txtChannelDescription);
+            holder.imgChannelIcon = (ImageView) convertView.findViewById(R.id.imgChannelIcon);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
@@ -71,6 +74,8 @@ public class FriendsAdapter extends BaseAdapter {
             } else {
                 holder.txtName.setText(item.getUsername() != null ? item.getUsername() : "Usuário");
                 holder.txtSubtitle.setText("DM");
+                ImageLoader imageLoader = new ImageLoader();
+                imageLoader.viewProfilePicture(context, item.getUsername(), holder.imgChannelIcon);
             }
         }
         return convertView;
