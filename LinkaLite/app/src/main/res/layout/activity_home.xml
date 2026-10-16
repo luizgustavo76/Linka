@@ -5,7 +5,6 @@
     android:orientation="vertical"
     android:background="#FFFFFF">
 
-    <!-- 1. Top Bar Preta com Ações Rápidas -->
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="48dip"

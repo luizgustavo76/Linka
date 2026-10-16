@@ -1,6 +1,6 @@
 package com.LinkaProject.linkaLite;
 
-import android.app.Activity;
+import android.app.ActivityGroup;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -10,8 +10,10 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -30,7 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class HomeActivity extends Activity {
+public class HomeActivity extends ActivityGroup {
 
     public void personalizeTimeline(View view){
         Intent intent = new Intent(HomeActivity.this, MainEditTimeline.class);
@@ -51,7 +53,6 @@ public class HomeActivity extends Activity {
 
     private ListView listViewTimeline;
     private ListView listViewLocal;
-    private ListView listViewChat;
     
     private PostAdapter adapterTimeline;
     private PostAdapter adapterLocal;
@@ -166,9 +167,8 @@ public class HomeActivity extends Activity {
             btnInbox.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(HomeActivity.this, chatActivity.class);
-                    intent.putExtra("isGuest", isGuest);
-                    startActivity(intent);
+                    currentPage = 2;
+                    scrollToPage(currentPage);
                 }
             });
         }
@@ -203,7 +203,6 @@ public class HomeActivity extends Activity {
 
         listViewTimeline = (ListView) findViewById(R.id.listViewTimeline);
         listViewLocal = (ListView) findViewById(R.id.listViewLocal);
-        listViewChat = (ListView) findViewById(R.id.listViewChat);
 
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         footerTimeline = inflater.inflate(R.layout.footer_federations, null);
@@ -293,6 +292,17 @@ public class HomeActivity extends Activity {
         loadFeedForTab(pageTitles[currentPage]);
     }
 
+    private void loadActivityInFrame(String id, Intent intent, FrameLayout container) {
+        if (container != null) {
+            container.removeAllViews();
+            Window window = getLocalActivityManager().startActivity(id, intent);
+            View view = window.getDecorView();
+            container.addView(view, new ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.FILL_PARENT,
+                    ViewGroup.LayoutParams.FILL_PARENT));
+        }
+    }
+
     private void loadFeedForTab(String tabName) {
         String baseUrl = "http://linkaProject.pythonanywhere.com";
         JSONArray urlsArray = new JSONArray();
@@ -336,8 +346,21 @@ public class HomeActivity extends Activity {
                 e.printStackTrace();
             }
             new FetchFeedTask("timeline", baseUrl + "/view-external-posts", "POST", body).execute();
+
         } else if ("Local Feed".equals(tabName)) {
             new FetchFeedTask("local", baseUrl + "/feed", "GET", null).execute();
+
+        } else if ("Chat".equals(tabName)) {
+            FrameLayout pageChat = (FrameLayout) findViewById(R.id.pageChat);
+            Intent intent = new Intent(HomeActivity.this, chatActivity.class);
+            intent.putExtra("isGuest", isGuest);
+            loadActivityInFrame("ChatActivityID", intent, pageChat);
+
+        } else if ("Options".equals(tabName)) {
+            FrameLayout pageOptions = (FrameLayout) findViewById(R.id.pageOptions);
+            Intent intent = new Intent(HomeActivity.this, optionActivity.class);
+            intent.putExtra("isGuest", isGuest);
+            loadActivityInFrame("OptionActivityID", intent, pageOptions);
         }
     }
 

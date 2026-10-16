@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- Fundo Branco do Card -->
+    <solid android:color="#FFFFFF" />
+    
+    <!-- Borda fina cinza para dar destaque em telas antigas -->
+    <stroke
+        android:width="1dip"
+        android:color="#E0E0E0" />
+    
+    <!-- Cantos levemente arredondados (estilo Google+) -->
+    <corners android:radius="4dip" />
+</shape>

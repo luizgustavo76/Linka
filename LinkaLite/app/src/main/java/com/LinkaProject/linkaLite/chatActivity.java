@@ -15,10 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 public class chatActivity extends Activity {
     private Button btnGlobalChat;
-    private ImageButton btnHome;
-    private ImageButton btnChat;
-    private ImageButton btnOptions;
-    private ImageButton btnProfile;
     private Button btnNewChat;
     private ListView lvFriends;
     private FriendsAdapter adapter;
@@ -31,10 +27,6 @@ public class chatActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
         btnGlobalChat = (Button) findViewById(R.id.btnGlobalChat);
-        btnHome = (ImageButton) findViewById(R.id.btnHome);
-        btnChat = (ImageButton) findViewById(R.id.btnChat);
-        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
-        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
         lvFriends = (ListView) findViewById(R.id.lvFriends);
         btnNewChat = (Button) findViewById(R.id.btnNewChat);
         isGuest = getIntent().getBooleanExtra("isGuest", false);
@@ -114,29 +106,6 @@ public class chatActivity extends Activity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(chatActivity.this, ChatGlobalActivity.class);
-                intent.putExtra("isGuest", isGuest);
-                startActivity(intent);
-            }
-        });
-        btnHome.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(chatActivity.this, HomeActivity.class);
-                intent.putExtra("isGuest", isGuest);
-                startActivity(intent);
-            }
-        });
-        btnOptions.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(chatActivity.this, optionActivity.class);
-                startActivity(intent);
-            }
-        });
-        btnProfile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(chatActivity.this, profile.class);
                 intent.putExtra("isGuest", isGuest);
                 startActivity(intent);
             }
