@@ -72,8 +72,6 @@ public class chatActivity extends Activity {
                     for (int i = 0; i < friends.length(); i++) {
                         JSONArray pair = friends.getJSONArray(i);
                         String friend = pair.getString(0).equalsIgnoreCase(myUsername) ? pair.getString(1) : pair.getString(0);
-                        ImageLoader imageLoader = new ImageLoader();
-                        imageLoader.viewProfilePicture(chatActivity.this, friend, imgChannelIcon);
                         friendsList.add(new FriendItem(friend));
                     }
                 }

@@ -59,7 +59,7 @@ public class HomeActivity extends ActivityGroup {
     
     private ArrayList<JSONObject> postsTimeline = new ArrayList<JSONObject>();
     private ArrayList<JSONObject> postsLocal = new ArrayList<JSONObject>();
-
+    private String actualTab = "";
     private View footerTimeline;
     private View footerLocal;
     private JSONArray tags = new JSONArray();
@@ -339,6 +339,7 @@ public class HomeActivity extends ActivityGroup {
 
         if ("Timeline".equals(tabName)) {
             JSONObject body = new JSONObject();
+            actualTab = "timeline";
             try {
                 body.put("urls", urlsArray);
                 body.put("filters", tags);
@@ -348,6 +349,7 @@ public class HomeActivity extends ActivityGroup {
             new FetchFeedTask("timeline", baseUrl + "/view-external-posts", "POST", body).execute();
 
         } else if ("Local Feed".equals(tabName)) {
+            actualTab = "local";
             new FetchFeedTask("local", baseUrl + "/feed", "GET", null).execute();
 
         } else if ("Chat".equals(tabName)) {
@@ -522,20 +524,25 @@ public class HomeActivity extends ActivityGroup {
                         imgPost.setVisibility(View.VISIBLE);
                         imgPost.setAdjustViewBounds(true);
                         imgPost.setScaleType(ImageView.ScaleType.FIT_CENTER);
-
-                        final String proxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + rawUrl;
-
+                        String computedUrl = "";
+                        if (actualTab.equals("local")) {
+                            computedUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + rawUrl;
+                        } else if (actualTab.equals("timeline")) {
+                            computedUrl = "http://wsrv.nl/?url=" + rawUrl + "&output=jpg";
+                        } else {
+                            computedUrl = rawUrl;
+                        }
+                        final String finalProxyUrl = computedUrl;
                         imgPost.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
                                 Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
                                 intent.putExtra("type", "Image");
-                                intent.putExtra("url", proxyUrl);
+                                intent.putExtra("url", finalProxyUrl);
                                 startActivity(intent);
                             }
                         });
-
-                        imageLoader.LoadImageUrl(proxyUrl, imgPost);
+                        imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
                     }
                 }
                 tvText.setText(textPost);
