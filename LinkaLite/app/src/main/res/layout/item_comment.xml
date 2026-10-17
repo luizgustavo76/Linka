@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:background="#282c37"
-    android:layout_marginBottom="4dip"
-    android:padding="10dip" xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:background="@drawable/card_background"
+    android:layout_marginTop="4dip"
+    android:layout_marginBottom="4dip"
+    android:layout_marginLeft="8dip"
+    android:layout_marginRight="8dip"
+    android:padding="12dip"
+    android:gravity="center_vertical">
 
-    <!-- Avatar do usuário -->
     <ImageView
         android:id="@+id/imgCommentAvatar"
-        android:layout_width="32dip"
-        android:layout_height="32dip"
-        android:layout_marginRight="8dip"
-        android:scaleType="centerCrop" />
+        android:layout_width="36dip"
+        android:layout_height="36dip"
+        android:layout_marginRight="12dip"
+        android:scaleType="centerInside"
+        android:src="@drawable/account" />
 
-    <!-- Bloco de dados -->
     <LinearLayout
         android:layout_width="0dip"
         android:layout_height="wrap_content"
@@ -26,18 +29,31 @@
             android:id="@+id/commentUsername"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:textSize="15sp"
             android:textStyle="bold"
-            android:textSize="13sp" 
-        android:textColor="#FFFFFF" /> 
+            android:textColor="#212121"
+            android:singleLine="true"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/textComment"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textSize="13sp"
+            android:textColor="#303030"
             android:layout_marginTop="2dip"
             android:autoLink="web|email" 
-        android:textColor="#FFFFFF" /> 
+            android:singleLine="true"
+            android:ellipsize="end" />
     </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="›"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#B0BEC5"
+        android:paddingLeft="8dip" />
 
 </LinearLayout>

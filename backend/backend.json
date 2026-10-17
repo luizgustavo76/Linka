@@ -1,5 +1,4 @@
 {
-    "url-server":"http://linkaProject.pythonanywhere.com",
     "modules-flags":{
         "chat_global":true,
         "chat_group":true,
@@ -19,6 +18,8 @@
         "reddit-federation":true,
         "mastodon-federation":true,
         "bluesky-federation":true,
-        "automoderator":true
+        "automoderator":true,
+        "url-server":"http://linkaProject.pythonanywhere.com"
+
     }
 }

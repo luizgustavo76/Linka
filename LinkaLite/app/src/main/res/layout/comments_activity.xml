@@ -3,7 +3,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical"
-    android:background="#282c37">
+    android:background="#d6d6d6">
 
     <ListView
         android:id="@+id/lvComments"
@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="6dip"
-        android:background="#181825">
+        android:background="#d1d1d1">
 
         <EditText
             android:id="@+id/commentEdt"
@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="Comment..."
-            android:textColor="#cdd6f4"
+            android:textColor="#191919"
             android:textSize="13sp"
             android:singleLine="true" />
 
@@ -50,7 +50,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#cdd6f4"
+            android:textColor="#2e2e2e"
             android:text="You are a guest! Login to comment in post and more"
             android:textStyle="bold"/>
     </LinearLayout>

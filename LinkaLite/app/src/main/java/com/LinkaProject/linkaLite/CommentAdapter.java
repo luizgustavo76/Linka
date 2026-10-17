@@ -37,9 +37,10 @@ public class CommentAdapter extends ArrayAdapter<Comment> {
             holder = (ViewHolder) convertView.getTag();
         }
         Comment comment = comments.get(position);
-        // Preenche as Views
         holder.tvUsername.setText("@" + comment.getUsername());
         holder.tvText.setText(comment.getTextComment());
+        ImageLoader imageLoader = new ImageLoader();
+        imageLoader.viewProfilePicture(context, comment.getUsername(), holder.imgAvatar);
         return convertView;
     }
 }
