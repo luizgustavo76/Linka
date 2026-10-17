@@ -7,18 +7,37 @@ from bs4 import BeautifulSoup
 import dotenv
 import requests
 
-# Resolve o caminho do .env na raiz do backend (sobe de mastodon_federation/ para backend/)
 BASE_DIR = Path(__file__).resolve().parent.parent
 env_path = BASE_DIR / ".env"
-
-# Carrega o .env explicitamente
 dotenv.load_dotenv(dotenv_path=env_path)
 
-# Padrão "" para evitar que fique como None caso a variável não exista no .env
 MASTODON_KEY = os.getenv("MASTODON_KEY", "").strip()
 
 
-def formate(posts):
+def fetch_mastodon_user_avatar(username, instance="mastodon.social"):
+    clean_username = username.lstrip("@")
+    if "@" in clean_username:
+        clean_username = clean_username.split("@")[0]
+
+    url = f"https://{instance}/api/v1/accounts/lookup"
+    headers = {"User-Agent": "LinkaLiteApp/1.0"}
+
+    if MASTODON_KEY:
+        headers["Authorization"] = f"Bearer {MASTODON_KEY}"
+
+    try:
+        response = requests.get(
+            url, headers=headers, params={"acct": clean_username}, timeout=5
+        )
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("avatar_static") or data.get("avatar") or ""
+    except Exception as e:
+        print(f"[MASTODON AVATAR EXCEPTION] {e}")
+
+    return ""
+
+def formate(posts, instance="mastodon.social"):
     if isinstance(posts, str):
         try:
             posts = json.loads(posts)
@@ -48,6 +67,9 @@ def formate(posts):
             or account_info.get("username")
             or "desconhecido"
         )
+        
+        # Guarda o ID da conta para buscar o avatar de forma independente
+        account_id = str(account_info.get("id", ""))
 
         datetime_formatado = None
         raw_created_at = target_post.get("created_at")
@@ -96,8 +118,13 @@ def formate(posts):
                         if not username.startswith("@")
                         else username
                     ),
+                    "account_id": account_id,
                     "text_post": text_final,
+                    "comments_count": target_post.get("replies_count", 0),
                     "datetime": datetime_formatado,
+                    "origin_server": f"https://linkaProject.pythonanywhere.com/feed/mastodon",
+                    "platform": "mastodon",
+                    "unique_id": str(target_post.get("id")),
                 }
             )
 
@@ -108,19 +135,14 @@ def fetch_mastodon_posts(
     tag="retrocomputing", instance="mastodon.social", limit=100
 ):
     url = f"https://{instance}/api/v1/timelines/tag/{tag}"
+    headers = {"User-Agent": "LinkaLiteApp/1.0"}
 
-    headers = {
-        "User-Agent": "LinkaLiteApp/1.0",
-    }
-
-    # Adiciona o cabeçalho Authorization APENAS se houver token definido
     if MASTODON_KEY:
         headers["Authorization"] = f"Bearer {MASTODON_KEY}"
 
     raw_posts = []
     max_id = None
 
-    # Paginação para ultrapassar a trava de 40 posts por requisição
     while len(raw_posts) < limit:
         fetch_limit = min(limit - len(raw_posts), 40)
         params = {"limit": fetch_limit}
@@ -138,7 +160,6 @@ def fetch_mastodon_posts(
                 break
 
             data = response.json()
-
             if not isinstance(data, list) or not data:
                 break
 
@@ -149,5 +170,26 @@ def fetch_mastodon_posts(
             print(f"[MASTODON EXCEPTION] {e}")
             break
 
-    formatted_posts = formate(raw_posts)
+    formatted_posts = formate(raw_posts, instance=instance)
     return formatted_posts[:limit]
+
+
+def fetch_mastodon_comments(original_post_id, instance="mastodon.social"):
+    url = f"https://{instance}/api/v1/statuses/{original_post_id}/context"
+    headers = {"User-Agent": "LinkaLiteApp/1.0"}
+
+    if MASTODON_KEY:
+        headers["Authorization"] = f"Bearer {MASTODON_KEY}"
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code != 200:
+            return []
+
+        data = response.json()
+        descendants = data.get("descendants", [])
+        return formate(descendants, instance=instance)
+
+    except Exception as e:
+        print(f"[MASTODON COMMENTS EXCEPTION] {e}")
+        return []
