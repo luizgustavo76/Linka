@@ -1,9 +1,9 @@
-import json
+import os
 import unicodedata
 from datetime import datetime
 import requests
 from dotenv import load_dotenv
-import os
+
 load_dotenv()
 
 BSKY_HANDLE = os.getenv("BSKY_HANDLE")
@@ -16,17 +16,17 @@ def get_bluesky_token():
         "identifier": BSKY_HANDLE,
         "password": BSKY_APP_PASSWORD,
     }
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        )
-    }
+    # Removido o User-Agent sintético de browser para evitar block no Cloudflare
+    headers = {"Content-Type": "application/json"}
     try:
         response = requests.post(
-            url, json=payload, headers=headers, timeout=4
+            url, json=payload, headers=headers, timeout=10
         )
         if response.status_code == 200:
             return response.json().get("accessJwt")
+        print(
+            f"[BLUESKY AUTH ERROR] Status: {response.status_code} - {response.text}"
+        )
         return None
     except Exception as e:
         print(f"[BLUESKY AUTH EXCEPTION] {e}")
@@ -47,51 +47,66 @@ def formate_bluesky(posts):
             or "anonimo"
         )
 
-        raw_created_at = post.get("record", {}).get(
-            "createdAt"
-        ) or post.get("indexedAt")
-        datetime_formatado = None
-        if raw_created_at:
-            try:
-                dt = datetime.fromisoformat(
-                    raw_created_at.replace("Z", "+00:00")
-                )
-                datetime_formatado = dt.strftime("%Y-%m-%d %H:%M:%S")
-            except Exception:
-                datetime_formatado = raw_created_at
-
+        # O 'record' contem os dados puros gravados na rede AT Protocol
         record = post.get("record") or {}
-        text_post = record.get("text", "")
+
+        # Busca texto no record ou direto na view (fallback)
+        text_post = record.get("text") or post.get("text") or ""
         text_post = unicodedata.normalize("NFKC", text_post)
         text_post = "\n".join(
             line.strip() for line in text_post.splitlines()
         ).strip()
 
+        raw_created_at = (
+            record.get("createdAt")
+            or post.get("indexedAt")
+            or post.get("createdAt")
+        )
+        datetime_formatado = None
+        if raw_created_at:
+            try:
+                dt = datetime.fromisoformat(
+                    str(raw_created_at).replace("Z", "+00:00")
+                )
+                datetime_formatado = dt.strftime("%Y-%m-%d %H:%M:%S")
+            except Exception:
+                datetime_formatado = str(raw_created_at)
+
         images = []
         embed = post.get("embed") or {}
         record_embed = record.get("embed") or {}
 
-        imgs = embed.get("images") or record_embed.get("images") or []
-
-        if not imgs and "media" in embed:
-            imgs = embed.get("media", {}).get("images") or []
+        # Mapeamento estendido de imagens no Bluesky ATProto
+        imgs = (
+            embed.get("images")
+            or record_embed.get("images")
+            or embed.get("media", {}).get("images")
+            or []
+        )
 
         for img in imgs:
             if isinstance(img, dict):
-                img_url = img.get("fullsize") or img.get("thumb")
-                if not img_url and "image" in img:
-                    ref = img["image"].get("ref", {}).get("$link")
-                    if ref:
-                        img_url = f"https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:{author_info.get('did')}/{ref}@jpeg"
+                img_url = (
+                    img.get("fullsize")
+                    or img.get("thumb")
+                    or img.get("image", {}).get("ref", {}).get("$link")
+                )
+
+                # Se for apenas a referencia CID/Link da imagem no Did
+                if img_url and not img_url.startswith("http"):
+                    did = author_info.get("did")
+                    img_url = f"https://cdn.bsky.app/img/feed_fullsize/plain/{did}/{img_url}@jpeg"
+
                 if img_url:
                     images.append(img_url)
 
+        # Se não tiver texto nem imagem, pula
         if not text_post and not images:
             continue
 
         if images:
-            links_formatados = "".join(f"[IMAGE]{url}\n" for url in images)
-            text_final = f"{text_post}\n{links_formatados}".strip()
+            links_formatados = "".join(f"\n[IMAGE]{url}" for url in images)
+            text_final = f"{text_post}{links_formatados}".strip()
         else:
             text_final = text_post
 
@@ -113,20 +128,22 @@ def formate_bluesky(posts):
 def fetch_bluesky_posts(query="retrocomputing", limit=40):
     token = get_bluesky_token()
     if not token:
-        print("[BLUESKY] Falha de autenticação.")
+        print("[BLUESKY] Falha de autenticação. Verifique .env")
         return []
 
     url = "https://bsky.social/xrpc/app.bsky.feed.searchPosts"
     headers = {
         "Authorization": f"Bearer {token}",
-        "User-Agent": "LinkaLiteApp/1.0",
     }
     params = {"q": query, "limit": limit}
     try:
         response = requests.get(
-            url, headers=headers, params=params, timeout=4
+            url, headers=headers, params=params, timeout=10
         )
         if response.status_code != 200:
+            print(
+                f"[BLUESKY SEARCH ERROR] Status: {response.status_code} - {response.text}"
+            )
             return []
 
         data = response.json()
@@ -134,3 +151,4 @@ def fetch_bluesky_posts(query="retrocomputing", limit=40):
     except Exception as e:
         print(f"[BLUESKY EXCEPTION] {e}")
         return []
+

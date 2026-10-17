@@ -21,7 +21,8 @@ public class comments_activity extends Activity {
     private EditText commentEdt;
     private Button btnSend;
     private String username = "";
-    private String baseUrl = "";
+    private String externalUrl = "";
+    private boolean isExternal = false;
     private LinearLayout layoutComment;
     private LinearLayout layoutGuest;
     @Override
@@ -53,6 +54,8 @@ public class comments_activity extends Activity {
         btnSend = (Button) findViewById(R.id.btnSend);
         Intent intent = getIntent();
         boolean isGuest = intent.getBooleanExtra("isGuest", false);
+        isExternal = intent.getBooleanExtra("isExternal", false);
+        externalUrl = intent.getStringExtra("externalUrl", "");
         if (isGuest){
             layoutComment.setVisibility(View.INVISIBLE);
             layoutGuest.setVisibility(View.VISIBLE);
@@ -77,7 +80,6 @@ public class comments_activity extends Activity {
                     JSONObject commentJson = new JSONObject();
                     commentJson.put("username", username);
                     commentJson.put("text_comment", textComment);
-                    // Tenta converter para número se for numérico, caso contrário envia String
                     try {
                         commentJson.put("post_id", Integer.parseInt(postId));
                     } catch (NumberFormatException e) {
@@ -99,8 +101,11 @@ public class comments_activity extends Activity {
             try {
                 String jsonPayload = params[0];
                 JSONObject commentJson = new JSONObject(jsonPayload);
-                // Executa o POST e traz o corpo da resposta do Flask
-                return request.requestHTTP(baseUrl + "/comments", "post", commentJson, comments_activity.this);
+                if (isExternal){
+                    return request.requestHTTP(externalUrl + "/comments", "post", commentJson, comments_activity.this);
+                }else{
+                    return request.requestHTTP(baseUrl + "/comments", "post", commentJson, comments_activity.this);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
