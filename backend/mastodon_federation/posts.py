@@ -13,8 +13,6 @@ def get_comments():
     data = request.get_json()
     post_id = data.get("post_id")
     comments = fetch_mastodon_comments(post_id)
-@post_bp.route("feed/mastodon/profile_picture", methods=["post"])
-def get_profile_picture():
-    data = request.get_json()
-    username = data.get("username")
+@post_bp.route("feed/mastodon/profile_picture/<path:username>", methods=["get"])
+def get_profile_picture(username):
     fetch_mastodon_user_avatar(username)

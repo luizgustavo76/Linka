@@ -56,7 +56,6 @@ public class HomeActivity extends ActivityGroup {
     
     private PostAdapter adapterTimeline;
     private PostAdapter adapterLocal;
-    
     private ArrayList<JSONObject> postsTimeline = new ArrayList<JSONObject>();
     private ArrayList<JSONObject> postsLocal = new ArrayList<JSONObject>();
     private String actualTab = "";
@@ -486,18 +485,23 @@ public class HomeActivity extends ActivityGroup {
                 JSONObject post = list.get(position);
                 String username = post.optString("username", post.optString("user", "entity404"));
                 String textPost = post.optString("text_post", post.optString("text", ""));
-                String origin_server = post.optString("origin_server", "");
+                final String origin_server = post.optString("origin_server", "");
                 String datetime = post.optString("datetime", post.optString("date", ""));
                 String commentsCount = post.optString("comment_count", "0");
+                
+                final String postUniqueId = post.optString("unique_id", "");
                 final String id = post.optString("id", "");
 
                 btnComments.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Intent intent = new Intent(HomeActivity.this, comments_activity.class);
-                        if (actualTab.equals("timeline")){
+                        if ("timeline".equals(actualTab)) {
                             intent.putExtra("isExternal", true);
                             intent.putExtra("externalUrl", origin_server);
+                            intent.putExtra("uniqueId", postUniqueId);
+                        } else {
+                            intent.putExtra("isExternal", false);
                         }
                         intent.putExtra("isGuest", isGuest);
                         intent.putExtra("post_id", id);
