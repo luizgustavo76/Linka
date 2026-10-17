@@ -4,8 +4,8 @@ from datetime import datetime
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()
-
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 BSKY_HANDLE = os.getenv("BSKY_HANDLE")
 BSKY_APP_PASSWORD = os.getenv("BSKY_APP_PASSWORD")
 
