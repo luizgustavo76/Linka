@@ -2,7 +2,7 @@ import os
 import unicodedata
 from datetime import datetime
 import requests
-from pathlib import Pat
+from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent
