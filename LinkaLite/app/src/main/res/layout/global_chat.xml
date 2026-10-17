@@ -3,63 +3,88 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical"
-    android:background="#282c37">
+    android:background="#FFFFFF">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dip">
+        android:layout_height="48dip"
+        android:background="#1C1C1C"
+        android:paddingLeft="8dip"
+        android:paddingRight="8dip">
 
-     <ImageButton
-        android:id="@+id/btnHeaderImage"
-        android:layout_width="40dip"
-        android:layout_height="40dip"
-        android:padding="8dip"
-        android:scaleType="fitCenter"
-        android:src="@drawable/back"
-        android:background="#373754" />
+        <ImageButton
+            android:id="@+id/btnHeaderImage"
+            android:layout_width="40dip"
+            android:layout_height="40dip"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:src="@drawable/back" />
 
         <TextView
             android:id="@+id/txtHeaderTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="GlobalChat" 
-        android:textColor="#FFFFFF" />
-    </LinearLayout>
-
+            android:layout_centerInParent="true"
+            android:text="GlobalChat"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="32dip"
+        android:background="#E0E0E0"
+        android:paddingLeft="12dip"
+        android:paddingRight="12dip">
+    </RelativeLayout>
     <ScrollView
         android:id="@+id/scrollMessages"
         android:layout_width="fill_parent"
         android:layout_height="0dip"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:fillViewport="true">
 
         <LinearLayout
             android:id="@+id/layoutMessagesContainer"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:background="#ffffff"
+            android:padding="6dip">
         </LinearLayout>
     </ScrollView>
-
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dip">
+        android:background="#333333"
+        android:padding="4dip"
+        android:gravity="center_vertical">
 
         <EditText
             android:id="@+id/edtInputMessage"
             android:layout_width="0dip"
-            android:layout_height="wrap_content"
+            android:layout_height="36dip"
             android:layout_weight="1"
-            android:hint="Type your message..." />
+            android:background="#FFFFFF"
+            android:hint="Type a Message"
+            android:paddingLeft="8dip"
+            android:paddingRight="8dip"
+            android:textColor="#000000"
+            android:textSize="13sp" />
 
         <Button
             android:id="@+id/btnSend"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Send" />
+            android:layout_height="36dip"
+            android:layout_marginLeft="4dip"
+            android:paddingLeft="10dip"
+            android:paddingRight="10dip"
+            android:text="send"
+            android:textSize="11sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
 </LinearLayout>

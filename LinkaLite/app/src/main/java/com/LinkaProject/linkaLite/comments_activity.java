@@ -24,6 +24,7 @@ public class comments_activity extends Activity {
     private String externalUrl = "";
     private boolean isExternal = false;
     private LinearLayout layoutComment;
+    private String baseUrl = "";
     private LinearLayout layoutGuest;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +56,7 @@ public class comments_activity extends Activity {
         Intent intent = getIntent();
         boolean isGuest = intent.getBooleanExtra("isGuest", false);
         isExternal = intent.getBooleanExtra("isExternal", false);
-        externalUrl = intent.getStringExtra("externalUrl", "");
+        externalUrl = intent.getStringExtra("externalUrl");
         if (isGuest){
             layoutComment.setVisibility(View.INVISIBLE);
             layoutGuest.setVisibility(View.VISIBLE);

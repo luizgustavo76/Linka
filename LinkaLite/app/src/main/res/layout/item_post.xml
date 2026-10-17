@@ -60,7 +60,6 @@
 
         </RelativeLayout>
 
-        <!-- Texto do Post -->
         <TextView
             android:id="@+id/postText"
             android:layout_width="fill_parent"
@@ -69,7 +68,6 @@
             android:textColor="#333333"
             android:layout_marginBottom="8dip" />
 
-        <!-- Imagem do Post (Ajusta à proporção original) -->
         <ImageView
             android:id="@+id/imgPost"
             android:layout_width="fill_parent"
