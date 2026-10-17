@@ -270,10 +270,7 @@ def view_external_posts():
                 for post in posts_list:
                     if not isinstance(post, dict):
                         continue
-                    
                     text = post.get("text_post", "")
-
-                    # Trata o filtro com suporte seguro a string ou lista de tags
                     if filters:
                         if isinstance(filters, list) and any(f.lower() in text.lower() for f in filters if f):
                             continue
@@ -398,7 +395,9 @@ def feed():
             "username": post[1],
             "text_post": post[2],
             "datetime": post[3],
-            "comment_count": post[4] 
+            "comment_count": post[4],
+            "platform":"linka",
+            "origin_server":root_flags["url-server"]
         })
 
     return jsonify(lista_posts), 200

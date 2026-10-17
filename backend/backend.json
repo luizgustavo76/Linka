@@ -1,4 +1,5 @@
 {
+    "url-server":"http://linkaProject.pythonanywhere.com",
     "modules-flags":{
         "chat_global":true,
         "chat_group":true,
