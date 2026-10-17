@@ -10,9 +10,12 @@ def get_posts(tag):
     return jsonify(dados_limpos)
 @post_bp.route("/feed/mastodon/comments", methods=["post"])
 def get_comments():
-    data = request.get_json()
-    post_id = data.get("post_id")
+    data = request.get_json() or {}
+    post_id = data.get("post_id") or data.get("unique_id")
     comments = fetch_mastodon_comments(post_id)
+    return jsonify({"comments": comments}) 
+
 @post_bp.route("/feed/mastodon/profile_picture/<path:username>", methods=["get"])
 def get_profile_picture(username):
-    fetch_mastodon_user_avatar(username)
+    avatar_url = fetch_mastodon_user_avatar(username)
+    return jsonify({"avatar_url": avatar_url}) 
