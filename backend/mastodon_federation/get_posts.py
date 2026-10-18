@@ -139,7 +139,7 @@ def formate(posts, instance="mastodon.social"):
                     ),
                     "account_id": account_id,
                     "text_post": text_final,
-                    "comments_count": comments_count,
+                    "comment_count": comments_count,
                     "datetime": datetime_formatado,
                     "origin_server": "https://linkaProject.pythonanywhere.com/feed/mastodon",
                     "platform": "mastodon",
