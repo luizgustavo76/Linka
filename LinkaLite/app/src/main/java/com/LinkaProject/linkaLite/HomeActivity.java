@@ -487,10 +487,15 @@ public class HomeActivity extends ActivityGroup {
                 String textPost = post.optString("text_post", post.optString("text", ""));
                 final String origin_server = post.optString("origin_server", "");
                 String datetime = post.optString("datetime", post.optString("date", ""));
-                String commentsCount = post.optString("comment_count", "0");
+                
+                // CORREÇÃO: Tenta ler 'comments_count' primeiro, depois 'comment_count'
+                String commentsCount = post.optString("comments_count", post.optString("comment_count", "0"));
                 
                 final String postUniqueId = post.optString("unique_id", "");
                 final String id = post.optString("id", "");
+                
+                // CORREÇÃO: Extrai a original_url para repassar via Intent
+                final String originalUrl = post.optString("original_url", "");
 
                 btnComments.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -500,6 +505,7 @@ public class HomeActivity extends ActivityGroup {
                             intent.putExtra("isExternal", true);
                             intent.putExtra("externalUrl", origin_server);
                             intent.putExtra("uniqueId", postUniqueId);
+                            intent.putExtra("originalUrl", originalUrl); // <--- ENVIADO AQUI
                         } else {
                             intent.putExtra("isExternal", false);
                         }
@@ -510,7 +516,7 @@ public class HomeActivity extends ActivityGroup {
                 });
 
                 txtCommentCount.setText(commentsCount);
-                tvUsername.setText("@" + username);
+                tvUsername.setText(username.startsWith("@") ? username : "@" + username);
                 tvDate.setText(datetime);
 
                 imageLoader.viewProfilePicture(context, username, avatarPost);

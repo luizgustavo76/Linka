@@ -49,12 +49,19 @@ public class CommentAdapter extends ArrayAdapter<Comment> {
 
         Comment comment = comments.get(position);
 
-        holder.tvUsername.setText("@" + comment.getUsername());
+        // CORREÇÃO: Evita a duplicação do '@' na exibição do username
+        String user = comment.getUsername();
+        if (user != null && user.startsWith("@")) {
+            holder.tvUsername.setText(user);
+        } else {
+            holder.tvUsername.setText("@" + (user != null ? user : "Anonimo"));
+        }
+
         holder.tvText.setText(comment.getTextComment());
 
         ImageLoader imageLoader = new ImageLoader();
 
-        // Faz o roteamento da imagem baseado nos metadados da federação
+        // Roteamento da imagem de perfil
         if (!isExternal) {
             imageLoader.viewProfilePicture(context, comment.getUsername(), holder.imgAvatar);
         } else {
