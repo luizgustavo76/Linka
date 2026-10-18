@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#fcfcfc"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="16dip">
+
+    <ImageView
+        android:id="@+id/networkLogo"
+        android:layout_width="96dip"
+        android:layout_height="96dip"
+        android:layout_marginBottom="16dip"
+        android:scaleType="centerInside" />
+
+    <EditText
+        android:id="@+id/edtUsername"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dip"
+        android:hint="Username"
+        android:inputType="text"
+        android:singleLine="true" />
+
+    <EditText
+        android:id="@+id/edtToken"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dip"
+        android:hint="Your API Token"
+        android:inputType="textPassword"
+        android:singleLine="true" />
+
+    <Button
+        android:id="@+id/btnSend"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="Send" />
+
+</LinearLayout>

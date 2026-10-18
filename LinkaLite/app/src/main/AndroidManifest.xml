@@ -19,7 +19,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity android:name=".ExternalLogin" android:label="External Login" />
         <activity android:name=".SignupActivity" android:label="Register" />
         <activity android:name=".TimelineFilters" android:label="Filters" />
         <activity android:name=".TimelineThemes" android:label="Themes" />

@@ -81,8 +81,48 @@
             android:gravity="center"
             android:layout_marginTop="8dip"
             android:layout_marginBottom="10dip" 
-        android:textColor="#FFFFFF" />  
-            
+        android:textColor="#FFFFFF" />
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Post in"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginTop="8dip"
+            android:layout_marginBottom="10dip" 
+        android:textColor="#FFFFFF" />
+        <CheckBox
+            android:id="@+id/btnLinka"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Linka"
+            android:textColor="#FFFFFF"
+            android:focusable="false"
+            android:focusableInTouchMode="false" />
+        <CheckBox
+            android:id="@+id/btnReddit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reddit"
+            android:textColor="#FFFFFF"
+            android:focusable="false"
+            android:focusableInTouchMode="false" />
+        <CheckBox
+            android:id="@+id/btnMastodon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mastodon"
+            android:textColor="#FFFFFF"
+            android:focusable="false"
+            android:focusableInTouchMode="false" />
+        <CheckBox
+            android:id="@+id/btnBluesky"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bluesky"
+            android:textColor="#FFFFFF"
+            android:focusable="false"
+            android:focusableInTouchMode="false" />    
 
     </LinearLayout>
 </ScrollView>

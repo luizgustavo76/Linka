@@ -193,7 +193,27 @@
                 return "";
             }
         }
-
+        public String createDefaultConfigExternal(Context context, String fileName) {
+            try {
+                StringBuilder iniBuilder = new StringBuilder();
+                iniBuilder.append("[MASTODON]\n");
+                iniBuilder.append("username=\n");
+                iniBuilder.append("token=\n");
+                iniBuilder.append("[REDDIT]\n");
+                iniBuilder.append("username=\n");
+                iniBuilder.append("token=\n");
+                iniBuilder.append("[BLUESKY]\n");
+                iniBuilder.append("username=\n");
+                iniBuilder.append("token=\n");
+                String iniString = iniBuilder.toString();
+                saveCfg(context, fileName, iniString);
+                
+                return loadCfgAsJson(context, fileName);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return "";
+            }
+        }
         public List<String> getSavedUrls(Context context) {
             List<String> list = new ArrayList<String>();
             try {
@@ -241,7 +261,6 @@
             updateCfg(context, "config-timeline.cfg", "FEDERATION-TIMELINE", "urls", sb.toString());
         }
 
-        // --- MÉTODOS PARA O CAMPO [FILTERS] ---
 
         public List<String> getSavedFilters(Context context) {
             List<String> list = new ArrayList<String>();

@@ -10,7 +10,6 @@ def get_posts(tag):
 
 @post_bp.route("/feed/mastodon/comments", methods=["POST"])
 def get_comments():
-    # Garante parsing seguro do JSON enviado pelo Android
     data = request.get_json(force=True, silent=True) or {}
     
     post_id = data.get("post_id") or data.get("unique_id")
@@ -22,10 +21,8 @@ def get_comments():
     if not post_id and not original_url:
         return jsonify({"comments": [], "error": "Parâmetros 'post_id' ou 'original_url' ausentes"}), 400
 
-    # Chama a função otimizada passando ambos os identificadores
     comments = fetch_mastodon_comments(original_post_id=post_id, original_url=original_url)
     
-    # Retorna o dicionário envelopado conforme esperado pelo Android
     return jsonify({"comments": comments})
 
 @post_bp.route("/feed/mastodon/profile_picture/<path:username>", methods=["GET"])

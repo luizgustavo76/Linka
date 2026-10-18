@@ -8,10 +8,14 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class newPost extends Activity {
@@ -26,6 +30,14 @@ public class newPost extends Activity {
     private LinearLayout layoutGuest;
     private boolean isGuest;
 
+    // Caixas de seleção das redes sociais
+    private CheckBox btnLinka;
+    private CheckBox btnReddit;
+    private CheckBox btnMastodon;
+    private CheckBox btnBluesky;
+
+    private static final String CFG_EXTERNAL_FILE = "config-external.cfg";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);        
@@ -39,7 +51,19 @@ public class newPost extends Activity {
         btnSend = (Button) findViewById(R.id.btnSend);
         btnImage = (Button) findViewById(R.id.btnImage);
 
+        // Mapeamento dos CheckBoxes
+        btnLinka = (CheckBox) findViewById(R.id.btnLinka);
+        btnReddit = (CheckBox) findViewById(R.id.btnReddit);
+        btnMastodon = (CheckBox) findViewById(R.id.btnMastodon);
+        btnBluesky = (CheckBox) findViewById(R.id.btnBluesky);
+
+        // Linka vem marcado por padrão
+        if (btnLinka != null) {
+            btnLinka.setChecked(true);
+        }
+
         isGuest = getIntent().getBooleanExtra("isGuest", false);
+
         if (isGuest) {
             if (layoutGuest != null) layoutGuest.setVisibility(View.VISIBLE);
             if (newPostText != null) newPostText.setVisibility(View.GONE);
@@ -57,13 +81,19 @@ public class newPost extends Activity {
                 });
             }
         } else {
-            if (layoutGuest != null) layoutGuest.setVisibility(View.GONE);else{
-                layoutGuest.setVisibility(View.VISIBLE);
+            // Esconde o layout de guest quando logado
+            if (layoutGuest != null) {
+                layoutGuest.setVisibility(View.GONE);
             }
             if (newPostText != null) newPostText.setVisibility(View.VISIBLE);
             if (textPost != null) textPost.setVisibility(View.VISIBLE);
             if (btnSend != null) btnSend.setVisibility(View.VISIBLE);
             if (btnImage != null) btnImage.setVisibility(View.VISIBLE);
+
+            // Listeners para checar se o usuário possui login na rede selecionada
+            setupPlatformListener(btnMastodon, "MASTODON");
+            setupPlatformListener(btnReddit, "REDDIT");
+            setupPlatformListener(btnBluesky, "BLUESKY");
 
             if (btnSend != null) {
                 btnSend.setOnClickListener(new View.OnClickListener() {
@@ -89,6 +119,54 @@ public class newPost extends Activity {
                 });
             }
         }
+    }
+
+    /**
+     * Intercepta o clique no CheckBox e valida se existe token salvo para a plataforma
+     */
+    private void setupPlatformListener(final CheckBox checkBox, final String platform) {
+        if (checkBox == null) return;
+
+        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    if (!hasValidCredentials(platform)) {
+                        // Desmarca temporariamente a caixinha até fazer login
+                        checkBox.setChecked(false);
+                        
+                        Toast.makeText(newPost.this, "Faça login no " + platform + " para postar!", Toast.LENGTH_SHORT).show();
+                        
+                        // Abre a tela de login externo passando a rede desejada
+                        Intent intent = new Intent(newPost.this, ExternalLogin.class);
+                        intent.putExtra("platform", platform);
+                        startActivity(intent);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Verifica no config-external.cfg se a plataforma já possui token salvo
+     */
+    private boolean hasValidCredentials(String platform) {
+        config cfg = new config();
+        String jsonRaw = cfg.loadCfgAsJson(newPost.this, CFG_EXTERNAL_FILE);
+
+        if (jsonRaw != null && jsonRaw.length() > 0) {
+            try {
+                JSONObject jsonCfg = new JSONObject(jsonRaw);
+                JSONObject section = jsonCfg.optJSONObject(platform);
+                if (section != null) {
+                    String token = section.optString("token", "");
+                    return token.trim().length() > 0;
+                }
+            } catch (JSONException e) {
+                Log.e(TAG, "Erro ao validar credenciais externas: " + e.getMessage());
+            }
+        }
+        return false;
     }
 
     private void openGallery() {
@@ -191,6 +269,21 @@ public class newPost extends Activity {
                 jsonResponse.put("text_post", postTextValue);
                 jsonResponse.put("datetime", TimeUtils.getDateTime());
 
+                // Mapeia quais plataformas foram selecionadas
+                JSONObject targetPlatforms = new JSONObject();
+                targetPlatforms.put("linka", btnLinka != null && btnLinka.isChecked());
+                targetPlatforms.put("mastodon", btnMastodon != null && btnMastodon.isChecked());
+                targetPlatforms.put("reddit", btnReddit != null && btnReddit.isChecked());
+                targetPlatforms.put("bluesky", btnBluesky != null && btnBluesky.isChecked());
+                jsonResponse.put("platforms", targetPlatforms);
+
+                // Carrega credenciais salvas de redes externas para enviar no payload se marcadas
+                String rawExternal = cfg.loadCfgAsJson(newPost.this, CFG_EXTERNAL_FILE);
+                if (rawExternal != null && rawExternal.length() > 0) {
+                    JSONObject jsonExt = new JSONObject(rawExternal);
+                    jsonResponse.put("external_credentials", jsonExt);
+                }
+
                 if (url.endsWith("/")) {
                     url = url.substring(0, url.length() - 1);
                 }
@@ -205,7 +298,7 @@ public class newPost extends Activity {
         protected void onPostExecute(String result) {
             if (btnSend != null) btnSend.setEnabled(true);
             if (result != null && result.length() > 0) {
-                Toast.makeText(newPost.this, "post was send!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(newPost.this, "post was sent!", Toast.LENGTH_SHORT).show();
                 finish();
             } else {
                 Toast.makeText(newPost.this, "Error in post sending.", Toast.LENGTH_SHORT).show();
