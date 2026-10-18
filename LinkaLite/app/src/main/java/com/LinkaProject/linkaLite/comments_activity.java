@@ -1,18 +1,20 @@
 package com.LinkaProject.linkaLite;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.content.Intent;
 import android.view.View;
-import android.widget.LinearLayout;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +25,7 @@ public class comments_activity extends Activity {
     private Button btnSend;
     private String username = "";
     private String externalUrl = "";
+    private String originalUrl = "";
     private boolean isExternal = false;
     private LinearLayout layoutComment;
     private String baseUrl = "";
@@ -43,10 +46,12 @@ public class comments_activity extends Activity {
             isExternal = intent.getBooleanExtra("isExternal", false);
             externalUrl = intent.getStringExtra("externalUrl");
             uniqueId = intent.getStringExtra("uniqueId");
+            originalUrl = intent.getStringExtra("originalUrl");
 
             // Garante que Strings não fiquem null
             if (externalUrl == null) externalUrl = "";
             if (uniqueId == null) uniqueId = "";
+            if (originalUrl == null) originalUrl = "";
         }
 
         try {
@@ -69,7 +74,7 @@ public class comments_activity extends Activity {
         btnSend = (Button) findViewById(R.id.btnSend);
 
         boolean isGuest = intent.getBooleanExtra("isGuest", false);
-        if (isGuest) {
+        if (isGuest && layoutComment != null && layoutGuest != null) {
             layoutComment.setVisibility(View.INVISIBLE);
             layoutGuest.setVisibility(View.VISIBLE);
         }
@@ -84,7 +89,7 @@ public class comments_activity extends Activity {
                     return;
                 }
 
-                // CORREÇÃO 1: Validação de ID flexível para Local vs Externo
+                // Validação de ID flexível para Local vs Externo
                 if (!isExternal && (postId == null || postId.trim().length() == 0)) {
                     Toast.makeText(comments_activity.this, "Erro: ID do Post inválido!", Toast.LENGTH_SHORT).show();
                     return;
@@ -104,10 +109,11 @@ public class comments_activity extends Activity {
                     commentJson.put("username", username);
                     commentJson.put("text_comment", textComment);
 
-                    // CORREÇÃO 2: Envia uniqueId se for externo, postId se for local
+                    // Envia uniqueId e originalUrl se for externo, postId se for local
                     if (isExternal) {
                         commentJson.put("post_id", uniqueId);
                         commentJson.put("unique_id", uniqueId);
+                        commentJson.put("original_url", originalUrl);
                     } else {
                         try {
                             commentJson.put("post_id", Integer.parseInt(postId));
@@ -123,7 +129,7 @@ public class comments_activity extends Activity {
             }
         });
 
-        // CORREÇÃO 3: Dispara a busca se tiver ID Local OU se for Externo com UniqueID
+        // Dispara a busca se tiver ID Local OU se for Externo com UniqueID
         if (isExternal && uniqueId.length() > 0) {
             new FetchCommentsTask().execute(uniqueId);
         } else if (postId != null && postId.trim().length() > 0) {
@@ -144,7 +150,8 @@ public class comments_activity extends Activity {
                     targetUrl = targetUrl.substring(0, targetUrl.length() - 1);
                 }
 
-                return request.requestHTTP(targetUrl + "/comments", "post", commentJson, comments_activity.this);
+                String endpoint = isExternal ? "/feed/mastodon/comments" : "/comments";
+                return request.requestHTTP(targetUrl + endpoint, "post", commentJson, comments_activity.this);
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
@@ -168,9 +175,19 @@ public class comments_activity extends Activity {
     public List<Comment> parseCommentsResponse(String jsonResponse) {
         List<Comment> commentsList = new ArrayList<Comment>();
         try {
-            JSONObject rootObject = new JSONObject(jsonResponse);
-            if (rootObject.has("comments")) {
-                JSONArray commentsArray = rootObject.getJSONArray("comments");
+            String trimmed = jsonResponse.trim();
+            JSONArray commentsArray = null;
+
+            if (trimmed.startsWith("{")) {
+                JSONObject rootObject = new JSONObject(trimmed);
+                if (rootObject.has("comments")) {
+                    commentsArray = rootObject.getJSONArray("comments");
+                }
+            } else if (trimmed.startsWith("[")) {
+                commentsArray = new JSONArray(trimmed);
+            }
+
+            if (commentsArray != null) {
                 for (int i = 0; i < commentsArray.length(); i++) {
                     JSONObject commentObj = commentsArray.getJSONObject(i);
                     int commentId = commentObj.optInt("comment_id", -1);
@@ -211,6 +228,7 @@ public class comments_activity extends Activity {
                 if (isExternal) {
                     jsonComment.put("post_id", uniqueId);
                     jsonComment.put("unique_id", uniqueId);
+                    jsonComment.put("original_url", originalUrl);
                 } else {
                     try {
                         jsonComment.put("post_id", Integer.parseInt(targetPostId));
@@ -224,7 +242,8 @@ public class comments_activity extends Activity {
                     targetUrl = targetUrl.substring(0, targetUrl.length() - 1);
                 }
 
-                return request.requestHTTP(targetUrl + "/view-comments", "post", jsonComment, comments_activity.this);
+                String endpoint = isExternal ? "/feed/mastodon/comments" : "/view-comments";
+                return request.requestHTTP(targetUrl + endpoint, "post", jsonComment, comments_activity.this);
             } catch (Exception e) {
                 e.printStackTrace();
             }
