@@ -1,8 +1,10 @@
 import json
 import os
+import re
 import unicodedata
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 import dotenv
 import requests
@@ -37,6 +39,7 @@ def fetch_mastodon_user_avatar(username, instance="mastodon.social"):
 
     return ""
 
+
 def formate(posts, instance="mastodon.social"):
     if isinstance(posts, str):
         try:
@@ -67,7 +70,7 @@ def formate(posts, instance="mastodon.social"):
             or account_info.get("username")
             or "desconhecido"
         )
-        
+
         account_id = str(account_info.get("id", ""))
 
         datetime_formatado = None
@@ -82,6 +85,8 @@ def formate(posts, instance="mastodon.social"):
                 datetime_formatado = raw_created_at
 
         html_content = target_post.get("content", "")
+        
+        # Trata quebras de linha no HTML
         html_content = (
             html_content.replace("<br />", "\n")
             .replace("<br>", "\n")
@@ -89,11 +94,16 @@ def formate(posts, instance="mastodon.social"):
         )
 
         soup = BeautifulSoup(html_content, "html.parser")
+
+        # Remove elementos de hashtags (links com a classe 'hashtag')
+        for hashtag_element in soup.find_all("a", class_="hashtag"):
+            hashtag_element.decompose()
+
         text_post = soup.get_text()
 
         text_post = unicodedata.normalize("NFKC", text_post)
         text_post = "\n".join(
-            line.strip() for line in text_post.splitlines()
+            line.strip() for line in text_post.splitlines() if line.strip()
         ).strip()
 
         images = []
@@ -109,10 +119,15 @@ def formate(posts, instance="mastodon.social"):
         else:
             text_final = text_post
 
-        # Pega a quantidade exata de respostas do post na API do Mastodon
-        replies_cnt = target_post.get("replies_count")
-        if replies_cnt is None:
-            replies_cnt = 0
+        # Garante a conversão correta e segura do contador de respostas
+        raw_replies = target_post.get("replies_count")
+        try:
+            comments_count = int(raw_replies) if raw_replies is not None else 0
+        except (ValueError, TypeError):
+            comments_count = 0
+
+        # Tenta pegar a URL original do post para rastrear a instância de origem
+        original_url = target_post.get("url", "")
 
         if text_final or images:
             posts_formatados.append(
@@ -124,15 +139,18 @@ def formate(posts, instance="mastodon.social"):
                     ),
                     "account_id": account_id,
                     "text_post": text_final,
-                    "comments_count": int(replies_cnt),  # <--- RETORNA A QUANTIDADE DE COMENTÁRIOS NO FEED!
+                    "comments_count": comments_count,
                     "datetime": datetime_formatado,
                     "origin_server": "https://linkaProject.pythonanywhere.com/feed/mastodon",
                     "platform": "mastodon",
                     "unique_id": str(target_post.get("id")),
+                    "original_url": original_url,
                 }
             )
 
     return posts_formatados
+
+
 def fetch_mastodon_posts(
     tag="retrocomputing", instance="mastodon.social", limit=100
 ):
@@ -175,31 +193,49 @@ def fetch_mastodon_posts(
     formatted_posts = formate(raw_posts, instance=instance)
     return formatted_posts[:limit]
 
-def fetch_mastodon_comments(original_post_id, instance="mastodon.social"):
+
+def fetch_mastodon_comments(original_post_id, instance="mastodon.social", original_url=None):
     if not original_post_id:
         print("[MASTODON COMMENTS ERROR] ID do post não foi informado.")
         return []
 
-    # Garante que o ID venha limpo
     clean_id = str(original_post_id).strip().replace('"', '')
+    target_instance = instance
 
-    url = f"https://{instance}/api/v1/statuses/{clean_id}/context"
+    # Se receber a URL original do post, descobre a instância real de origem
+    if original_url:
+        parsed_url = urlparse(original_url)
+        if parsed_url.netloc:
+            target_instance = parsed_url.netloc
+            # Extrai o ID nativo da instância de origem a partir da URL se necessário
+            url_id = parsed_url.path.split("/")[-1]
+            if url_id.isdigit():
+                clean_id = url_id
+
+    url = f"https://{target_instance}/api/v1/statuses/{clean_id}/context"
     headers = {"User-Agent": "LinkaLiteApp/1.0"}
 
-    if MASTODON_KEY:
+    if MASTODON_KEY and target_instance == instance:
         headers["Authorization"] = f"Bearer {MASTODON_KEY}"
 
     try:
         response = requests.get(url, headers=headers, timeout=10)
-        
+
+        # Se falhar na instância remota, faz fallback para a instância padrão
+        if response.status_code != 200 and target_instance != instance:
+            print(f"[MASTODON COMMENTS FALLBACK] Falhou em {target_instance}. Tentando {instance}...")
+            url = f"https://{instance}/api/v1/statuses/{original_post_id}/context"
+            clean_id = str(original_post_id)
+            response = requests.get(url, headers=headers, timeout=10)
+
         if response.status_code != 200:
             print(f"[MASTODON COMMENTS ERROR] Status {response.status_code} na URL: {url}")
             return []
 
         data = response.json()
         descendants = data.get("descendants", [])
-        
-        print(f"[DEBUG MASTODON] A API achou {len(descendants)} comentários para o post {clean_id}!")
+
+        print(f"[DEBUG MASTODON] A API achou {len(descendants)} comentários para o post {clean_id} em {target_instance}!")
 
         comments_formatados = []
         for item in descendants:
@@ -209,6 +245,11 @@ def fetch_mastodon_comments(original_post_id, instance="mastodon.social"):
             html_content = item.get("content", "")
             html_content = html_content.replace("<br />", "\n").replace("<br>", "\n").replace("</p>", "\n")
             soup = BeautifulSoup(html_content, "html.parser")
+
+            # Remove tags dentro dos comentários também
+            for hashtag_element in soup.find_all("a", class_="hashtag"):
+                hashtag_element.decompose()
+
             text_comment = soup.get_text()
             text_comment = unicodedata.normalize("NFKC", text_comment).strip()
 
