@@ -8,13 +8,20 @@ def get_posts(tag):
     dados_limpos = fetch_mastodon_posts(tag=tag, limit=100)
 
     return jsonify(dados_limpos)
-@post_bp.route("/feed/mastodon/comments", methods=["post"])
+@post_bp.route("/feed/mastodon/comments", methods=["POST", "post"])
 def get_comments():
-    data = request.get_json() or {}
+    data = request.get_json(force=True, silent=True) or {}
+    
     post_id = data.get("post_id") or data.get("unique_id")
-    comments = fetch_mastodon_comments(post_id)
-    return jsonify({"comments": comments}) 
+    
+    print(f"\n[DEBUG THUNDER] JSON recebido: {data}")
+    print(f"[DEBUG THUNDER] ID extraído: {post_id}\n")
+    
+    if not post_id:
+        return jsonify({"erro": "O Thunder Client não enviou o post_id ou enviou errado!"}), 400
 
+    comments = fetch_mastodon_comments(post_id)
+    return jsonify({"comments": comments})
 @post_bp.route("/feed/mastodon/profile_picture/<path:username>", methods=["get"])
 def get_profile_picture(username):
     avatar_url = fetch_mastodon_user_avatar(username)

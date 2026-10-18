@@ -68,7 +68,6 @@ def formate(posts, instance="mastodon.social"):
             or "desconhecido"
         )
         
-        # Guarda o ID da conta para buscar o avatar de forma independente
         account_id = str(account_info.get("id", ""))
 
         datetime_formatado = None
@@ -110,6 +109,11 @@ def formate(posts, instance="mastodon.social"):
         else:
             text_final = text_post
 
+        # Pega a quantidade exata de respostas do post na API do Mastodon
+        replies_cnt = target_post.get("replies_count")
+        if replies_cnt is None:
+            replies_cnt = 0
+
         if text_final or images:
             posts_formatados.append(
                 {
@@ -120,17 +124,15 @@ def formate(posts, instance="mastodon.social"):
                     ),
                     "account_id": account_id,
                     "text_post": text_final,
-                    "comments_count": target_post.get("replies_count", 0),
+                    "comments_count": int(replies_cnt),  # <--- RETORNA A QUANTIDADE DE COMENTÁRIOS NO FEED!
                     "datetime": datetime_formatado,
-                    "origin_server": f"https://linkaProject.pythonanywhere.com/feed/mastodon",
+                    "origin_server": "https://linkaProject.pythonanywhere.com/feed/mastodon",
                     "platform": "mastodon",
                     "unique_id": str(target_post.get("id")),
                 }
             )
 
     return posts_formatados
-
-
 def fetch_mastodon_posts(
     tag="retrocomputing", instance="mastodon.social", limit=100
 ):
@@ -173,9 +175,15 @@ def fetch_mastodon_posts(
     formatted_posts = formate(raw_posts, instance=instance)
     return formatted_posts[:limit]
 
-
 def fetch_mastodon_comments(original_post_id, instance="mastodon.social"):
-    url = f"https://{instance}/api/v1/statuses/{original_post_id}/context"
+    if not original_post_id:
+        print("[MASTODON COMMENTS ERROR] ID do post não foi informado.")
+        return []
+
+    # Garante que o ID venha limpo
+    clean_id = str(original_post_id).strip().replace('"', '')
+
+    url = f"https://{instance}/api/v1/statuses/{clean_id}/context"
     headers = {"User-Agent": "LinkaLiteApp/1.0"}
 
     if MASTODON_KEY:
@@ -183,12 +191,35 @@ def fetch_mastodon_comments(original_post_id, instance="mastodon.social"):
 
     try:
         response = requests.get(url, headers=headers, timeout=10)
+        
         if response.status_code != 200:
+            print(f"[MASTODON COMMENTS ERROR] Status {response.status_code} na URL: {url}")
             return []
 
         data = response.json()
         descendants = data.get("descendants", [])
-        return formate(descendants, instance=instance)
+        
+        print(f"[DEBUG MASTODON] A API achou {len(descendants)} comentários para o post {clean_id}!")
+
+        comments_formatados = []
+        for item in descendants:
+            account_info = item.get("account") or {}
+            username = account_info.get("acct") or account_info.get("username") or "Anonimo"
+
+            html_content = item.get("content", "")
+            html_content = html_content.replace("<br />", "\n").replace("<br>", "\n").replace("</p>", "\n")
+            soup = BeautifulSoup(html_content, "html.parser")
+            text_comment = soup.get_text()
+            text_comment = unicodedata.normalize("NFKC", text_comment).strip()
+
+            comments_formatados.append({
+                "comment_id": item.get("id"),
+                "post_id": clean_id,
+                "username": f"@{username}" if not username.startswith("@") else username,
+                "text_comment": text_comment
+            })
+
+        return comments_formatados
 
     except Exception as e:
         print(f"[MASTODON COMMENTS EXCEPTION] {e}")
