@@ -156,13 +156,13 @@ public class ImageLoader {
 
                                 if (rawBytes != null && rawBytes.length > 0) {
                                     final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
-
+                                    final Bitmap circularBitmap = profile.getCircularBitmap(decodedBitmap);
                                     if (decodedBitmap != null) {
                                         mainHandler.post(new Runnable() {
                                             @Override
                                             public void run() {
                                                 if (tagKey.equals(targetImageView.getTag())) {
-                                                    targetImageView.setImageBitmap(decodedBitmap);
+                                                    targetImageView.setImageBitmap(circularBitmap);
                                                 }
                                             }
                                         });

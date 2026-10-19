@@ -4,4 +4,5 @@ flask_cors
 pyjwt
 dotenv
 supabase
-gunicorn
+Mastodon.py
+atproto

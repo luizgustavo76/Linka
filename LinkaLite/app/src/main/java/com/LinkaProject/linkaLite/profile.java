@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
@@ -33,45 +35,10 @@ public class profile extends Activity {
     private Button btnEdit;
     private Button btnExit;
     private String usernameProfile = "";
-    private ImageButton btnHome;
-    private ImageButton btnChat;
-    private ImageButton btnOptions;
-    private ImageButton btnProfile;
+
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.my_profile);
-        btnHome = (ImageButton) findViewById(R.id.btnHome);
-        btnChat = (ImageButton) findViewById(R.id.btnChat);
-        btnOptions = (ImageButton) findViewById(R.id.btnOptions);
-        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
-        btnHome.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(profile.this, HomeActivity.class);
-                startActivity(intent);
-            }
-        });
-        btnOptions.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(profile.this, optionActivity.class);
-                startActivity(intent);
-            }
-        });
-        btnProfile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(profile.this, profile.class);
-                startActivity(intent);
-            }
-        });
-        btnChat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(profile.this, chatActivity.class);
-                startActivity(intent);
-            }
-        });
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(profile.this, "config.cfg"));
@@ -82,7 +49,6 @@ public class profile extends Activity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
 
         try {
             JSONObject jsonProfile = new JSONObject();
@@ -100,8 +66,24 @@ public class profile extends Activity {
         txtUsername.setText(usernameProfile);
         txtBio.setText(biography);
         btnEdit = (Button) findViewById(R.id.btnEdit);
+        
         ImageLoader imageLoader = new ImageLoader();
         imageLoader.viewProfilePicture(profile.this, usernameProfile, imgProfilePicture);
+
+        imgProfilePicture.post(new Runnable() {
+            @Override
+            public void run() {
+                Drawable drawable = imgProfilePicture.getDrawable();
+                if (drawable instanceof BitmapDrawable) {
+                    Bitmap originalBitmap = ((BitmapDrawable) drawable).getBitmap();
+                    Bitmap circularBitmap = getCircularBitmap(originalBitmap);
+                    if (circularBitmap != null) {
+                        imgProfilePicture.setImageBitmap(circularBitmap);
+                    }
+                }
+            }
+        });
+
         btnExit.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -112,6 +94,7 @@ public class profile extends Activity {
                 startActivity(intent);
             }
         });
+
         imgProfilePicture.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -121,6 +104,7 @@ public class profile extends Activity {
                 startActivity(intent);
             }
         });
+
         btnEdit.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -128,7 +112,34 @@ public class profile extends Activity {
                 startActivity(intent);
             }
         });
+
         loadPosts(usernameProfile);
+    }
+
+    public static Bitmap getCircularBitmap(Bitmap bitmap) {
+        if (bitmap == null) return null;
+
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int size = Math.min(width, height);
+
+        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas canvas = new android.graphics.Canvas(output);
+
+        final android.graphics.Paint paint = new android.graphics.Paint();
+        final android.graphics.Rect rect = new android.graphics.Rect((width - size) / 2, (height - size) / 2, (width + size) / 2, (height + size) / 2);
+        final android.graphics.Rect targetRect = new android.graphics.Rect(0, 0, size, size);
+        final android.graphics.RectF rectF = new android.graphics.RectF(targetRect);
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(0xFF424242);
+        canvas.drawOval(rectF, paint);
+
+        paint.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, targetRect, paint);
+
+        return output;
     }
 
     private void loadPosts(String usernameProfile) {
@@ -155,16 +166,17 @@ public class profile extends Activity {
                 );
                 cardParams.setMargins(0, 0, 0, 24);
                 postCard.setLayoutParams(cardParams);
-                postCard.setPadding(16, 16, 16, 16);
+                postCard.setPadding(24, 24, 24, 24);
+                postCard.setBackgroundColor(0xFFF5F5F5);
 
                 TextView txtDate = new TextView(profile.this);
                 txtDate.setText(datetime);
-                txtDate.setTextColor(0x88FFFFFF);
+                txtDate.setTextColor(0xFF666666);
                 txtDate.setTextSize(12);
 
                 TextView txtContent = new TextView(profile.this);
                 txtContent.setText(textPost);
-                txtContent.setTextColor(0xFFFFFFFF);
+                txtContent.setTextColor(0xFF000000);
                 txtContent.setTextSize(14);
                 txtContent.setPadding(0, 8, 0, 0);
 
