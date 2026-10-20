@@ -73,6 +73,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:gravity="center"
+                android:maxLines="5"
                 android:text="Bio"
                 android:textColor="#444444"
                 android:textSize="14sp" />
@@ -84,7 +85,7 @@
                 android:paddingTop="4dp"
                 android:paddingBottom="8dp"
                 android:text="Read More..."
-                android:textColor="#0066CC"
+                android:textColor="#a2a2a2"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:visibility="gone" />

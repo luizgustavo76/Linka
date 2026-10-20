@@ -66,7 +66,33 @@ public class profile extends Activity {
         txtUsername.setText(usernameProfile);
         txtBio.setText(biography);
         btnEdit = (Button) findViewById(R.id.btnEdit);
-        
+        TextView btnReadMore = findViewById(R.id.btnReadMore);
+        txtBio.post(new Runnable() {
+            @Override
+            public void run() {
+                int lineCount = txtBio.getLineCount();
+                if (lineCount >= 5) {
+                    btnReadMore.setVisibility(View.VISIBLE);
+                } else {
+                    btnReadMore.setVisibility(View.GONE);
+                }
+            }
+        });
+        btnReadMore.setOnClickListener(new View.OnClickListener() {
+            boolean isExpanded = false;
+            @Override
+            public void onClick(View v) {
+                if (isExpanded) {
+                    txtBio.setMaxLines(2);
+                    btnReadMore.setText("Read More...");
+                    isExpanded = false;
+                } else {
+                    txtBio.setMaxLines(Integer.MAX_VALUE);
+                    btnReadMore.setText("Show Less");
+                    isExpanded = true;
+                }
+            }
+        });
         ImageLoader imageLoader = new ImageLoader();
         imageLoader.viewProfilePicture(profile.this, usernameProfile, imgProfilePicture);
 
