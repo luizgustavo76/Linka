@@ -57,6 +57,7 @@ def view_status():
 def view_online():
     data = request.get_json()
     target = data.get("target")
+    target_user = data.get("target_user")
     if target == "global":
         conn = get_db()
         cur = conn.cursor()
@@ -64,3 +65,11 @@ def view_online():
         result = cur.fetchone()
         conn.close()
         return jsonify(result)
+    if target == "dm":
+        if target_user != None:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("SELECT username FROM status WHERE status = ? AND username = ?",("online", target_user))
+            result = cur.fetchone()
+            conn.close()
+            return jsonify(result)
