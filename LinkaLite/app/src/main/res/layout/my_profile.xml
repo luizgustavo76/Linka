@@ -9,31 +9,82 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- HEADER COM GRADIENTE E FOTO CENTRALIZADA -->
+        <RelativeLayout
+            android:id="@+id/header_bar"
+            android:layout_width="fill_parent"
+            android:layout_height="45dp"
+            android:background="#DCDCDC"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
+
+            <TextView
+                android:id="@+id/backButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_centerVertical="true"
+                android:gravity="center"
+                android:text="&lt;"
+                android:textColor="#4F4F4F"
+                android:textSize="20sp" />
+
+            <ImageView
+                android:id="@+id/imgHeaderLogo"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="6dp"
+                android:layout_toRightOf="@id/backButton"
+                android:src="@drawable/icon" />
+
+            <TextView
+                android:id="@+id/txtHeaderTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/imgHeaderLogo"
+                android:text="My Account"
+                android:textColor="#333333"
+                android:textSize="17sp" />
+
+            <TextView
+                android:id="@+id/btnHeaderAction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:padding="8dp"
+                android:text="&#8285;"
+                android:textColor="#4F4F4F"
+                android:textSize="20sp" />
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:layout_alignParentBottom="true"
+                android:background="#B5B5B5" />
+        </RelativeLayout>
+
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="140dp">
 
-            <!-- Banner de fundo com Gradiente (100dp de altura) -->
             <View
                 android:id="@+id/headerColor"
                 android:layout_width="fill_parent"
                 android:layout_height="100dp"
                 android:background="@drawable/profile_header_gradient" />
 
-            <!-- Botão de Opções (Três pontinhos no canto do banner) -->
             <TextView
                 android:id="@+id/btnOptions"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:padding="12dp"
-                android:text="⋮"
+                android:text="&#8285;"
                 android:textColor="#FFFFFF"
-                android:textSize="22sp"
-                android:textStyle="bold" />
+                android:textSize="22sp" />
 
-            <!-- Foto de Perfil (Centralizada na metade da borda do banner) -->
             <ImageView
                 android:id="@+id/imgProfilePicture"
                 android:layout_width="80dp"
@@ -43,30 +94,25 @@
                 android:background="@drawable/circle_white_bg"
                 android:padding="3dp"
                 android:scaleType="centerCrop" />
-
         </RelativeLayout>
 
-        <!-- INFORMAÇÕES DO PERFIL (CENTRALIZADAS) -->
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:orientation="vertical"
             android:paddingLeft="16dp"
-            android:paddingRight="16dp"
-            android:paddingTop="8dp">
+            android:paddingTop="8dp"
+            android:paddingRight="16dp">
 
-            <!-- Nome do Usuário Centralizado -->
             <TextView
                 android:id="@+id/txtUsername"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Username"
                 android:textColor="#222222"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textSize="20sp" />
 
-            <!-- Biografia Centralizada -->
             <TextView
                 android:id="@+id/txtBio"
                 android:layout_width="fill_parent"
@@ -85,12 +131,10 @@
                 android:paddingTop="4dp"
                 android:paddingBottom="8dp"
                 android:text="Read More..."
-                android:textColor="#a2a2a2"
+                android:textColor="#A2A2A2"
                 android:textSize="12sp"
-                android:textStyle="bold"
                 android:visibility="gone" />
 
-            <!-- Botões Editar / Sair Lado a Lado -->
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
@@ -102,7 +146,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Editar Conta" />
+                    android:text="Edit Profile" />
 
                 <Button
                     android:id="@+id/btnExit"
@@ -110,12 +154,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="8dp"
                     android:layout_weight="1"
-                    android:text="Sair" />
+                    android:text="Log Out" />
             </LinearLayout>
-
         </LinearLayout>
 
-        <!-- Linha Divisória de Seção -->
         <View
             android:layout_width="fill_parent"
             android:layout_height="1dp"
@@ -123,7 +165,6 @@
             android:layout_marginBottom="12dp"
             android:background="#DDDDDD" />
 
-        <!-- Feed de Posts -->
         <LinearLayout
             android:id="@+id/postsContainer"
             android:layout_width="fill_parent"
