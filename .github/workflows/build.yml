@@ -14,14 +14,12 @@ jobs:
       - name: Checkout do Código
         uses: actions/checkout@v4
 
-      # Usamos o Java 8 / 11 para garantir compatibilidade com o SDK Manager e builds antigos do Gradle
-      - name: Configurar Java JDK 8
+      - name: Configurar Java JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '8'
+          java-version: '17'
           distribution: 'temurin'
 
-      # Instalação da plataforma antiga usando o SDK Manager oficial pré-instalado no Runner
       - name: Instalar Android SDK Legado (API 5 - Android 2.0)
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses

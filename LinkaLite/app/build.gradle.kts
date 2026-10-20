@@ -14,7 +14,7 @@ tasks.register("gerarResolucoesIcons") {
             pastaOriginal.listFiles()?.forEach { file ->
                 if (file.isFile && file.name.endsWith(".png")) {
                     val nome = file.name
-                    println("⚙️ Redimensionando ícone com Java Process: $nome")
+                    println("⚙️ Redimensionando ícone com ImageMagick: $nome")
                     
                     val tamanhos = mapOf(
                         "drawable-ldpi" to "24x24",
@@ -30,10 +30,14 @@ tasks.register("gerarResolucoesIcons") {
 
                         val arquivoDestino = File(destinoPasta, nome)
 
-                        ProcessBuilder("convert", file.absolutePath, "-resize", dimensao, arquivoDestino.absolutePath)
-                            .inheritIO()
-                            .start()
-                            .waitFor()
+                        try {
+                            ProcessBuilder("convert", file.absolutePath, "-resize", dimensao, arquivoDestino.absolutePath)
+                                .inheritIO()
+                                .start()
+                                .waitFor()
+                        } catch (e: Exception) {
+                            println("⚠️ Aviso: Falha ao executar 'convert'. Certifique-se de ter o ImageMagick instalado.")
+                        }
                     }
                 }
             }
@@ -57,9 +61,8 @@ android {
         versionName = "2.2"
     }
 
-    // Bloco moderno substituindo o 'aaptOptions' legado para evitar os avisos de depreciação
     androidResources {
-        // O AAPT2 gerencia o empacotamento de recursos para o Android 1.5
+        // Gerenciamento de recursos nativos via AAPT2
     }
 
     signingConfigs {
@@ -96,11 +99,5 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-}
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
