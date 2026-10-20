@@ -15,6 +15,7 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 db_dir = (base_dir + "/DB")
 profile_dir = (db_dir + "/profile.db")
 profile_bp = Blueprint("profile", __name__)
+
 def get_db():
     conn = sqlite3.connect(profile_dir)
     cursor = conn.cursor()
@@ -22,6 +23,7 @@ def get_db():
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.execute("PRAGMA cache_size=-10000;")
     return conn
+
 def get_db_friends():
     conn = sqlite3.connect(db_dir + "/friends.db")
     cursor = conn.cursor()
@@ -29,6 +31,7 @@ def get_db_friends():
     conn.execute("PRAGMA synchronous=NORMAL;")
     conn.execute("PRAGMA cache_size=-10000;")
     return conn
+
 def create_table():
     conn = get_db()
     cur = conn.cursor()
@@ -51,12 +54,21 @@ def create_table():
             actual_badge TEXT,
             ProfilePicture TEXT,
             followers INTEGER,
-            following INTEGER
+            following INTEGER,
+            hex_banner TEXT,
+            profile_banner_color TEXT DEFAULT '#FF5722'
         )
         """)
+
+    try:
+        cur.execute("ALTER TABLE profile ADD COLUMN profile_banner_color TEXT DEFAULT '#FF5722';")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
+
 create_table()
+
 @profile_bp.route("/edit", methods=["POST"])
 def edit():
     data = request.get_json()
@@ -71,10 +83,25 @@ def edit():
             conn.commit()
             conn.close()
             return jsonify({"status":"edit is sucessful"}),200
+        elif edit_mode == "dm_header_color":
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("UPDATE profile SET dm_header_color = ? WHERE username = ?", (content, username))
+            conn.commit()
+            conn.close()
+            return jsonify({"status":"edit is sucessful"}),200
+        elif edit_mode == "profile_banner_color":
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("UPDATE profile SET profile_banner_color = ? WHERE username = ?", (content, username))
+            conn.commit()
+            conn.close()
+            return jsonify({"status":"edit is sucessful"}),200
         else:
             return jsonify({"status":"method not allowed"}),401
     else:
         return jsonify({"status":"forbidden"}),403
+
 @profile_bp.route("/create_profile",methods=["post"])
 def create():
     data = request.get_json()
@@ -87,12 +114,11 @@ def create():
     conn.close()
     return jsonify({"status":"Ok"})
 
-        
 @profile_bp.route("/view_profile/<username>")
 def view(username):
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM profile WHERE username = ?",(username,))
+    cur.execute("SELECT username, bio, dm_header_color, profile_banner_color FROM profile WHERE username = ?",(username,))
     response = cur.fetchone()
     conn_friends = get_db_friends()
     cur_friends = conn_friends.cursor()
@@ -105,18 +131,36 @@ def view(username):
     result = cur_friends.fetchone()
     if result:
         is_friend = True
-    else:
-        pass
     conn.close()
-    row = {
-        "username":response[0],
-        "bio":response[1],
-        "is_friend":is_friend
-    }
-    return jsonify(row), 200
+    conn_friends.close()
+    if response:
+        row = {
+            "username": response[0],
+            "bio": response[1],
+            "profile_banner_color": response[2] if len(response) > 2 and response[2] else "#99D6FF",
+            "is_friend": is_friend
+        }
+        return jsonify(row), 200
+    return jsonify({"status": "profile not found"}), 404
+
 UPLOAD_FOLDER = "../profile-pictures"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
+@profile_bp.route("/update-hex-banner", methods=["POST"])
+def update_hex_banner():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        hex_color = data.get("hex_color")
+        if not hex_color:
+            return jsonify({"status":"hex color not be null"}),400
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("UPDATE profile SET profile_banner_color = ? WHERE username = ?", (hex_color, username))
+        conn.commit()
+        conn.close()
+        return jsonify({"status":"banner color updated"}),200
+    else:
+        return jsonify({"status":"forbidden"}),403
 @profile_bp.route("/upload-profile", methods=["POST"])
 def upload_profile_pic():
     if g.username:
@@ -154,7 +198,6 @@ def upload_profile_pic():
             }), 200
 
         except Exception as e:
-            print(e)
             return jsonify({"status": "error", "message": str(e)}), 500
 
 @profile_bp.route("/view-profile-picture",methods=["POST"])
@@ -165,6 +208,7 @@ def get_profile_pic():
     cur = conn.cursor()
     cur.execute("SELECT ProfilePicture FROM profile WHERE username = ?", (username,))
     result = cur.fetchone()
+    conn.close()
     if result:
         return jsonify({"profile-picture":result[0]}),200
     else:
