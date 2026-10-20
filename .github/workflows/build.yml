@@ -20,6 +20,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Instalar ImageMagick no Runner
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
       - name: Instalar Android SDK Legado (API 5 - Android 2.0)
         run: |
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
@@ -32,7 +35,7 @@ jobs:
 
       - name: Compilar APK com Gradle
         working-directory: ./LinkaLite
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug -Dorg.gradle.java.home=$JAVA_HOME
 
       - name: Guardar o APK como Artifact
         uses: actions/upload-artifact@v4
