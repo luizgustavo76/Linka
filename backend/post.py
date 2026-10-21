@@ -237,62 +237,44 @@ def fetch_single_federation(node_url):
 
     return None
 
+def sort_and_interleave_posts(all_posts):
+    for post in all_posts:
+        try:
+            post['_dt_obj'] = datetime.strptime(post['datetime'], '%Y-%m-%d %H:%M:%S')
+        except (ValueError, KeyError):
+            post['_dt_obj'] = datetime.min
+    sorted_posts = sorted(all_posts, key=lambda x: x['_dt_obj'], reverse=True)
+    final_feed = []
+    consecutive_count = 0
+    last_platform = None
+    i = 0
+    while i < len(sorted_posts):
+        current_post = sorted_posts[i]
+        current_platform = current_post.get('platform', 'unknown')
 
-@post_bp.route("/view-external-posts", methods=["POST"])
-def view_external_posts():
-    data = request.get_json(silent=True) or {}
-    urls = data.get("urls")
-    filters = data.get("filters")
-    if not urls or not isinstance(urls, list):
-        return jsonify({"error": "url invalid or bad formatted"}), 400
+        if current_platform == last_platform and consecutive_count >= 2:
+            swap_index = -1
+            for j in range(i + 1, min(i + 6, len(sorted_posts))):
+                if sorted_posts[j].get('platform') != current_platform:
+                    swap_index = j
+                    break
+            if swap_index != -1:
+                current_post = sorted_posts.pop(swap_index)
+                current_platform = current_post.get('platform', 'unknown')
+                sorted_posts.insert(i, current_post)
 
-    if len(urls) > 50:
-        return jsonify({"status": "max limit with federation url"}), 400
+        del current_post['_dt_obj']
+        final_feed.append(current_post)
 
-    aggregated_posts = []
+        if current_platform == last_platform:
+            consecutive_count += 1
+        else:
+            consecutive_count = 1
+            last_platform = current_platform
 
-    with ThreadPoolExecutor(max_workers=20) as executor:
-        futures = [executor.submit(fetch_single_federation, url) for url in urls]
-        
-        for future in as_completed(futures):
-            try:
-                result = future.result()
-                print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") 
+        i += 1
 
-                if not result:
-                    continue
-                posts_list = []
-                if isinstance(result, list):
-                    posts_list = result
-                elif isinstance(result, dict) and "posts" in result and isinstance(result["posts"], list):
-                    posts_list = result["posts"]
-
-                for post in posts_list:
-                    if not isinstance(post, dict):
-                        continue
-                    text = post.get("text_post", "")
-                    if filters:
-                        if isinstance(filters, list) and any(f.lower() in text.lower() for f in filters if f):
-                            continue
-                        elif isinstance(filters, str) and filters.lower() in text.lower():
-                            continue
-
-                    aggregated_posts.append(post)
-
-            except Exception as e:
-                print(f"DEBUG - Erro na thread: {e}")
-
-    if not aggregated_posts:
-        return jsonify([]), 200
-
-    random.shuffle(aggregated_posts)
-    formated_feed = []
-    for index, post in enumerate(aggregated_posts, start=1):
-        if isinstance(post, dict):
-            post["id"] = index
-            formated_feed.append(post)
-
-    return jsonify(formated_feed), 200
+    return final_feed
 
 
 @post_bp.route("/new", methods=["POST"])
