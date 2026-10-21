@@ -1,42 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#fcfcfc"
-    android:gravity="center_horizontal"
-    android:orientation="vertical"
-    android:padding="16dip">
+    android:fillViewport="true"
+    android:background="#E0E0E0">
 
-    <ImageView
-        android:id="@+id/networkLogo"
-        android:layout_width="96dip"
-        android:layout_height="96dip"
-        android:layout_marginBottom="16dip"
-        android:scaleType="centerInside" />
-
-    <EditText
-        android:id="@+id/edtUsername"
+    <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dip"
-        android:hint="Username"
-        android:inputType="text"
-        android:singleLine="true" />
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingLeft="16dip"
+        android:paddingTop="24dip"
+        android:paddingRight="16dip"
+        android:paddingBottom="20dip">
 
-    <EditText
-        android:id="@+id/edtToken"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dip"
-        android:hint="Your API Token"
-        android:inputType="textPassword"
-        android:singleLine="true" />
+        <!-- LOGO REDE FEDERADA -->
+        <ImageView
+            android:id="@+id/networkLogo"
+            android:layout_width="64dip"
+            android:layout_height="64dip"
+            android:layout_marginBottom="12dip"
+            android:scaleType="fitCenter"
+            android:src="@drawable/account" />
 
-    <Button
-        android:id="@+id/btnSend"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="Send" />
+        <!-- TÍTULO DA TELA -->
+        <TextView
+            android:id="@+id/txtLoginTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dip"
+            android:text="Connect Account"
+            android:textColor="#212121"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
-</LinearLayout>
+        <!-- CARD DE AUTENTICAÇÃO (Fundo branco plano embutido) -->
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="16dip"
+            android:layout_marginBottom="16dip">
+
+            <!-- USERNAME FIELD -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dip"
+                android:text="USERNAME"
+                android:textColor="#00796B"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/edtUsername"
+                android:layout_width="fill_parent"
+                android:layout_height="40dip"
+                android:layout_marginBottom="14dip"
+                android:background="#F5F5F5"
+                android:paddingLeft="10dip"
+                android:paddingRight="10dip"
+                android:hint="e.g. @user@mastodon.social"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:textColor="#212121"
+                android:textColorHint="#9E9E9E"
+                android:textSize="13sp" />
+
+            <!-- ACCESS TOKEN FIELD -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dip"
+                android:text="ACCESS TOKEN"
+                android:textColor="#00796B"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/edtToken"
+                android:layout_width="fill_parent"
+                android:layout_height="40dip"
+                android:background="#F5F5F5"
+                android:paddingLeft="10dip"
+                android:paddingRight="10dip"
+                android:hint="Paste your API token here"
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:textColor="#212121"
+                android:textColorHint="#9E9E9E"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <!-- BOTÃO COM COR SOLIDA INLINE (Sem arquivo na pasta drawable) -->
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="fill_parent"
+            android:layout_height="44dip"
+            android:background="#00796B"
+            android:text="AUTHENTICATE &amp; LINK"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+
+</ScrollView>
