@@ -1,14 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:background="#fcfdff" xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/bubbleContainer"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:orientation="vertical"
+    android:background="#fcfdff"
     android:paddingLeft="10dip"
     android:paddingTop="5dip"
     android:paddingRight="10dip"
     android:paddingBottom="5dip">
+
+    <!-- Cabeçalho (Avatar + Username) -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dip">
+
+        <ImageView
+            android:id="@+id/imgProfile"
+            android:layout_width="28dip"
+            android:layout_height="28dip"
+            android:scaleType="centerCrop"
+            android:src="@drawable/account" />
+
+        <TextView
+            android:id="@+id/txtUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="6dip"
+            android:textColor="#2e2e2e"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:text="Username" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/txtMessage"

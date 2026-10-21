@@ -17,11 +17,11 @@
         android:background="#FFFFFF"
         android:padding="10dip">
 
-        <!-- Header: Avatar, Nome do Usuário e Data -->
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dip">
+            android:layout_marginBottom="8dip"
+            android:background="#0000">
 
             <ImageView
                 android:id="@+id/postAvatar"

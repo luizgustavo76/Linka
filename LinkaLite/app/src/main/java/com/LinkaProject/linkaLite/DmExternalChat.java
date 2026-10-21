@@ -152,7 +152,7 @@ public class DmExternalChat extends Activity {
                     String sender = msgObj.optString("sender", "");
                     boolean isMe = sender.equalsIgnoreCase(username);
                     String displayText = sender.length() == 0 ? text : sender + ": " + text;
-                    ChatBubbleView bubble = new ChatBubbleView(DmExternalChat.this, displayText, isMe);
+                    ChatBubbleView bubble = new ChatBubbleView(DmExternalChat.this, displayText, isMe, sender);
                     chatContainer.addView(bubble);
                 }
             } catch (JSONException e) {

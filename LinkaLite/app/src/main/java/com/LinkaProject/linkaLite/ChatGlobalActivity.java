@@ -118,7 +118,7 @@ public class ChatGlobalActivity extends Activity {
                     String sender = obj.getString("sender");
                     boolean isMe = sender.equalsIgnoreCase(username);
                     String displayText = sender.length() == 0 ? text : sender + ": " + text;
-                    ChatBubbleView bubble = new ChatBubbleView(ChatGlobalActivity.this, displayText, isMe);
+                    ChatBubbleView bubble = new ChatBubbleView(ChatGlobalActivity.this, displayText, isMe, sender);
                     chatContainer.addView(bubble);
                 }
             } catch (JSONException e) {

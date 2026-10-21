@@ -164,7 +164,7 @@ public class GroupChatActivity extends Activity {
                         boolean isMe = sender.equalsIgnoreCase(username);
                         String displayText = sender.length() == 0 ? text : sender + ": " + text;
 
-                        ChatBubbleView bubble = new ChatBubbleView(GroupChatActivity.this, displayText, isMe);
+                        ChatBubbleView bubble = new ChatBubbleView(GroupChatActivity.this, displayText, isMe, sender);
 
                         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.MATCH_PARENT,
