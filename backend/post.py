@@ -336,7 +336,7 @@ def view_external_posts():
     if not aggregated_posts:
         return jsonify([]), 200
 
-    random.shuffle(aggregated_posts)
+    aggregated_posts = sort_and_interleave_posts(aggregated_posts)
     formated_feed = []
     for index, post in enumerate(aggregated_posts, start=1):
         if isinstance(post, dict):
