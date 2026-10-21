@@ -33,7 +33,7 @@ def new_post():
     access_token = data.get("access_token")
     text_post = data.get("text_post")
     if access_token not in("", None):
-        post_to_mastodon("mastodon.social", access_token, text_post)
+        post_to_mastodon("https://mastodon.social", access_token, text_post)
         return jsonify({"status":"post was created"}),200
     else:
         return jsonify({"status":"your token is empty"}),403
