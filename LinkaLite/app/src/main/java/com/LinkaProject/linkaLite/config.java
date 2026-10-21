@@ -197,13 +197,16 @@
             try {
                 StringBuilder iniBuilder = new StringBuilder();
                 iniBuilder.append("[MASTODON]\n");
+                iniBuilder.append("url=\n");
                 iniBuilder.append("username=\n");
                 iniBuilder.append("token=\n");
                 iniBuilder.append("[REDDIT]\n");
                 iniBuilder.append("username=\n");
+                iniBuilder.append("url=\n");
                 iniBuilder.append("token=\n");
                 iniBuilder.append("[BLUESKY]\n");
                 iniBuilder.append("username=\n");
+                iniBuilder.append("url=\n");
                 iniBuilder.append("token=\n");
                 String iniString = iniBuilder.toString();
                 saveCfg(context, fileName, iniString);

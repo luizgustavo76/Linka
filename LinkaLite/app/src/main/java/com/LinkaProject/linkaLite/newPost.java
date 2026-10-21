@@ -30,7 +30,6 @@ public class newPost extends Activity {
     private LinearLayout layoutGuest;
     private boolean isGuest;
 
-    // Caixas de seleção das redes sociais
     private CheckBox btnLinka;
     private CheckBox btnReddit;
     private CheckBox btnMastodon;
@@ -43,7 +42,6 @@ public class newPost extends Activity {
         super.onCreate(savedInstanceState);        
         setContentView(R.layout.new_post_activity);
 
-        // Mapeamento dos componentes da tela
         layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
         btnLogin = (Button) findViewById(R.id.btnLogin);
         newPostText = (TextView) findViewById(R.id.newPostText);
@@ -51,13 +49,11 @@ public class newPost extends Activity {
         btnSend = (Button) findViewById(R.id.btnSend);
         btnImage = (Button) findViewById(R.id.btnImage);
 
-        // Mapeamento dos CheckBoxes
         btnLinka = (CheckBox) findViewById(R.id.btnLinka);
         btnReddit = (CheckBox) findViewById(R.id.btnReddit);
         btnMastodon = (CheckBox) findViewById(R.id.btnMastodon);
         btnBluesky = (CheckBox) findViewById(R.id.btnBluesky);
 
-        // Linka vem marcado por padrão
         if (btnLinka != null) {
             btnLinka.setChecked(true);
         }
@@ -81,7 +77,6 @@ public class newPost extends Activity {
                 });
             }
         } else {
-            // Esconde o layout de guest quando logado
             if (layoutGuest != null) {
                 layoutGuest.setVisibility(View.GONE);
             }
@@ -90,7 +85,6 @@ public class newPost extends Activity {
             if (btnSend != null) btnSend.setVisibility(View.VISIBLE);
             if (btnImage != null) btnImage.setVisibility(View.VISIBLE);
 
-            // Listeners para checar se o usuário possui login na rede selecionada
             setupPlatformListener(btnMastodon, "MASTODON");
             setupPlatformListener(btnReddit, "REDDIT");
             setupPlatformListener(btnBluesky, "BLUESKY");
@@ -121,9 +115,6 @@ public class newPost extends Activity {
         }
     }
 
-    /**
-     * Intercepta o clique no CheckBox e valida se existe token salvo para a plataforma
-     */
     private void setupPlatformListener(final CheckBox checkBox, final String platform) {
         if (checkBox == null) return;
 
@@ -132,12 +123,8 @@ public class newPost extends Activity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
                     if (!hasValidCredentials(platform)) {
-                        // Desmarca temporariamente a caixinha até fazer login
                         checkBox.setChecked(false);
-                        
-                        Toast.makeText(newPost.this, "Faça login no " + platform + " para postar!", Toast.LENGTH_SHORT).show();
-                        
-                        // Abre a tela de login externo passando a rede desejada
+                        Toast.makeText(newPost.this, "Login required for " + platform, Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(newPost.this, ExternalLogin.class);
                         intent.putExtra("platform", platform);
                         startActivity(intent);
@@ -147,9 +134,6 @@ public class newPost extends Activity {
         });
     }
 
-    /**
-     * Verifica no config-external.cfg se a plataforma já possui token salvo
-     */
     private boolean hasValidCredentials(String platform) {
         config cfg = new config();
         String jsonRaw = cfg.loadCfgAsJson(newPost.this, CFG_EXTERNAL_FILE);
@@ -163,7 +147,7 @@ public class newPost extends Activity {
                     return token.trim().length() > 0;
                 }
             } catch (JSONException e) {
-                Log.e(TAG, "Erro ao validar credenciais externas: " + e.getMessage());
+                Log.e(TAG, "Error checking credentials: " + e.getMessage());
             }
         }
         return false;
@@ -181,11 +165,8 @@ public class newPost extends Activity {
 
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             Uri selectedImageUri = data.getData();
-            Log.d(TAG, "Selected Image Uri: " + selectedImageUri.toString());
             if (btnImage != null) btnImage.setEnabled(false);
             new UploadImageTask().execute(selectedImageUri);
-        } else {
-            Log.w(TAG, "Image selection canceled or failed. ResultCode: " + resultCode);
         }
     }
 
@@ -207,13 +188,9 @@ public class newPost extends Activity {
                 }
 
                 String fullUrl = url + "/upload-image";
-                Log.d(TAG, "Uploading to URL: " + fullUrl + " | Uri: " + selectedImageUri);
-
-                String res = UploadTask.uploadProfilePicture(newPost.this, selectedImageUri, fullUrl);
-                Log.d(TAG, "Raw upload result from server: " + res);
-                return res;
+                return UploadTask.uploadProfilePicture(newPost.this, selectedImageUri, fullUrl);
             } catch (Exception e) {
-                Log.e(TAG, "Exception during upload in doInBackground", e);
+                Log.e(TAG, "Exception during upload", e);
                 lastError = e.getClass().getSimpleName() + ": " + e.getMessage();
             }
             return null;
@@ -230,21 +207,15 @@ public class newPost extends Activity {
                     if (imageUrl.length() > 0) {
                         if (textPost != null) textPost.append("\n[IMAGE]" + imageUrl);
                         Toast.makeText(newPost.this, "Image uploaded!", Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, "Upload SUCCESS: " + imageUrl);
                     } else {
-                        String serverError = jsonResponse.optString("error", jsonResponse.optString("status", jsonResponse.optString("message", "Unknown server error")));
-                        String msg = "Server error: " + serverError;
-                        Log.e(TAG, msg);
-                        Toast.makeText(newPost.this, msg, Toast.LENGTH_LONG).show();
+                        String serverError = jsonResponse.optString("error", "Upload failed");
+                        Toast.makeText(newPost.this, serverError, Toast.LENGTH_LONG).show();
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "JSON Parse error on response: " + result, e);
-                    Toast.makeText(newPost.this, "Raw server response: " + result, Toast.LENGTH_LONG).show();
+                    Toast.makeText(newPost.this, "Response parse error", Toast.LENGTH_LONG).show();
                 }
             } else {
-                String errMsg = (lastError != null) ? "Upload failed: " + lastError : "Error: Null/Empty response from UploadTask";
-                Log.e(TAG, errMsg);
-                Toast.makeText(newPost.this, errMsg, Toast.LENGTH_LONG).show();
+                Toast.makeText(newPost.this, "Upload error", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -259,39 +230,67 @@ public class newPost extends Activity {
                 JSONObject jsonCfg = new JSONObject(rawCfg);
                 JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
                 JSONObject server = jsonCfg.optJSONObject("SERVER");
-                String url = (server != null) ? server.optString("url", "http://linkaProject.pythonanywhere.com") : "http://linkaProject.pythonanywhere.com";
+                String baseUrl = (server != null) ? server.optString("url", "http://linkaProject.pythonanywhere.com") : "http://linkaProject.pythonanywhere.com";
                 String username = (fastLogin != null) ? fastLogin.optString("username", "") : "";
                 String token = (fastLogin != null) ? fastLogin.optString("token_session", "") : "";
 
-                JSONObject jsonResponse = new JSONObject();
-                jsonResponse.put("username", username);
-                jsonResponse.put("token_session", token);
-                jsonResponse.put("text_post", postTextValue);
-                jsonResponse.put("datetime", TimeUtils.getDateTime());
+                if (baseUrl.endsWith("/")) {
+                    baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+                }
 
-                // Mapeia quais plataformas foram selecionadas
-                JSONObject targetPlatforms = new JSONObject();
-                targetPlatforms.put("linka", btnLinka != null && btnLinka.isChecked());
-                targetPlatforms.put("mastodon", btnMastodon != null && btnMastodon.isChecked());
-                targetPlatforms.put("reddit", btnReddit != null && btnReddit.isChecked());
-                targetPlatforms.put("bluesky", btnBluesky != null && btnBluesky.isChecked());
-                jsonResponse.put("platforms", targetPlatforms);
-
-                // Carrega credenciais salvas de redes externas para enviar no payload se marcadas
                 String rawExternal = cfg.loadCfgAsJson(newPost.this, CFG_EXTERNAL_FILE);
-                if (rawExternal != null && rawExternal.length() > 0) {
-                    JSONObject jsonExt = new JSONObject(rawExternal);
+                JSONObject jsonExt = (rawExternal != null && rawExternal.length() > 0) ? new JSONObject(rawExternal) : new JSONObject();
+
+                String mainResult = "";
+                if (btnLinka != null && btnLinka.isChecked()) {
+                    JSONObject jsonResponse = new JSONObject();
+                    jsonResponse.put("username", username);
+                    jsonResponse.put("token_session", token);
+                    jsonResponse.put("text_post", postTextValue);
+                    jsonResponse.put("datetime", TimeUtils.getDateTime());
                     jsonResponse.put("external_credentials", jsonExt);
+
+                    mainResult = request.requestHTTP(baseUrl + "/new", "post", jsonResponse, newPost.this);
                 }
 
-                if (url.endsWith("/")) {
-                    url = url.substring(0, url.length() - 1);
-                }
-                return request.requestHTTP(url + "/new", "post", jsonResponse, newPost.this);
+                dispatchExternalNetwork(btnMastodon, "MASTODON", baseUrl, postTextValue, jsonExt, cfg);
+                dispatchExternalNetwork(btnBluesky, "BLUESKY", baseUrl, postTextValue, jsonExt, cfg);
+                dispatchExternalNetwork(btnReddit, "REDDIT", baseUrl, postTextValue, jsonExt, cfg);
+
+                return mainResult.length() > 0 ? mainResult : "ok";
             } catch (Exception e) {
                 Log.e(TAG, "Error sending post", e);
             }
             return null;
+        }
+
+        private void dispatchExternalNetwork(CheckBox checkBox, String networkKey, String defaultUrl, String postText, JSONObject jsonExt, config cfg) {
+            if (checkBox == null || !checkBox.isChecked()) return;
+
+            try {
+                JSONObject netObj = jsonExt.optJSONObject(networkKey);
+                String token = (netObj != null) ? netObj.optString("token", "") : "";
+                String handle = (netObj != null) ? netObj.optString("username", "") : "";
+                String customUrl = (netObj != null) ? netObj.optString("url", "") : "";
+
+                String proxyUrl = (customUrl != null && customUrl.trim().length() > 0) ? customUrl.trim() : defaultUrl;
+                if (proxyUrl.endsWith("/")) {
+                    proxyUrl = proxyUrl.substring(0, proxyUrl.length() - 1);
+                }
+
+                String endpoint = proxyUrl + "/feed/" + networkKey.toLowerCase() + "/new";
+
+                JSONObject payload = new JSONObject();
+                payload.put("access_token", token);
+                payload.put("acess_token", token);
+                payload.put("handle", handle);
+                payload.put("username", handle);
+                payload.put("text_post", postText);
+
+                request.requestHTTP(endpoint, "post", payload, newPost.this);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to dispatch to " + networkKey, e);
+            }
         }
 
         @Override

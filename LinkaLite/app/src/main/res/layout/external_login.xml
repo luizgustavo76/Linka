@@ -12,20 +12,18 @@
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:paddingLeft="16dip"
-        android:paddingTop="24dip"
+        android:paddingTop="20dip"
         android:paddingRight="16dip"
         android:paddingBottom="20dip">
 
-        <!-- LOGO REDE FEDERADA -->
         <ImageView
             android:id="@+id/networkLogo"
-            android:layout_width="64dip"
-            android:layout_height="64dip"
-            android:layout_marginBottom="12dip"
+            android:layout_width="56dip"
+            android:layout_height="56dip"
+            android:layout_marginBottom="10dip"
             android:scaleType="fitCenter"
             android:src="@drawable/account" />
 
-        <!-- TÍTULO DA TELA -->
         <TextView
             android:id="@+id/txtLoginTitle"
             android:layout_width="wrap_content"
@@ -36,16 +34,14 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <!-- CARD DE AUTENTICAÇÃO (Fundo branco plano embutido) -->
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="#FFFFFF"
-            android:padding="16dip"
-            android:layout_marginBottom="16dip">
+            android:padding="14dip"
+            android:layout_marginBottom="12dip">
 
-            <!-- USERNAME FIELD -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -59,7 +55,7 @@
                 android:id="@+id/edtUsername"
                 android:layout_width="fill_parent"
                 android:layout_height="40dip"
-                android:layout_marginBottom="14dip"
+                android:layout_marginBottom="12dip"
                 android:background="#F5F5F5"
                 android:paddingLeft="10dip"
                 android:paddingRight="10dip"
@@ -70,7 +66,6 @@
                 android:textColorHint="#9E9E9E"
                 android:textSize="13sp" />
 
-            <!-- ACCESS TOKEN FIELD -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -96,16 +91,91 @@
 
         </LinearLayout>
 
-        <!-- BOTÃO COM COR SOLIDA INLINE (Sem arquivo na pasta drawable) -->
         <Button
             android:id="@+id/btnSend"
             android:layout_width="fill_parent"
-            android:layout_height="44dip"
+            android:layout_height="42dip"
+            android:layout_marginBottom="8dip"
             android:background="#00796B"
             android:text="AUTHENTICATE &amp; LINK"
             android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/btnProxy"
+            android:layout_width="fill_parent"
+            android:layout_height="38dip"
+            android:background="#757575"
+            android:text="Change Proxy Settings"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:id="@+id/layoutProxy"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="14dip"
+            android:layout_marginTop="12dip"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dip"
+                android:text="PROXY URL"
+                android:textColor="#00796B"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dip"
+                android:text="The proxy must communicate with Linka protocol, not directly with the social media API."
+                android:textColor="#616161"
+                android:textSize="11sp" />
+
+            <EditText
+                android:id="@+id/edtProxy"
+                android:layout_width="fill_parent"
+                android:layout_height="40dip"
+                android:layout_marginBottom="12dip"
+                android:background="#F5F5F5"
+                android:paddingLeft="10dip"
+                android:paddingRight="10dip"
+                android:hint="https://proxy.example.com"
+                android:inputType="textUri"
+                android:singleLine="true"
+                android:textColor="#212121"
+                android:textColorHint="#9E9E9E"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnSendProxy"
+                android:layout_width="fill_parent"
+                android:layout_height="40dip"
+                android:layout_marginBottom="10dip"
+                android:background="#00796B"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:text="Save Proxy URL" />
+
+            <TextView
+                android:id="@+id/txtDefaultApi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:padding="6dip"
+                android:text="Restore Default API"
+                android:textColor="#1976D2"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

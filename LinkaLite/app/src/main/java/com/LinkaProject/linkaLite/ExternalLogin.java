@@ -9,7 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
-
+import android.widget.LinearLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -19,7 +19,10 @@ public class ExternalLogin extends Activity {
     private EditText edtUsername;
     private EditText edtToken;
     private Button btnSend;
-    private String platform = "MASTODON"; // Fallback padrão
+    private boolean isProxy = false;
+    private String platform = "MASTODON";
+    private Button btnProxy;
+    private LinearLayout layoutProxy;
     private static final String CFG_EXTERNAL_FILE = "config-external.cfg";
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -29,6 +32,8 @@ public class ExternalLogin extends Activity {
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtToken = (EditText) findViewById(R.id.edtToken);
         btnSend = (Button) findViewById(R.id.btnSend);
+        layoutProxy = (LinearLayout) findViewById(R.id.layoutProxy);
+        btnProxy = (Button) findViewById(R.id.btnProxy);
         Intent intent = getIntent();
         if (intent != null) {
             String intentPlatform = intent.getStringExtra("platform");
@@ -44,14 +49,21 @@ public class ExternalLogin extends Activity {
         } else if ("BLUESKY".equals(platform)) {
             if (networkLogo != null) networkLogo.setImageResource(R.drawable.bluesky);
         } else {
-            // MASTODON por padrão
             if (networkLogo != null) networkLogo.setImageResource(R.drawable.mastodon);
         }
-
-        // 3. Preenche os campos caso já existam dados salvos no config-external.cfg
         loadExistingCredentials();
-
-        // 4. Clique do botão Salvar
+        btnProxy.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                if (isProxy){
+                    layoutProxy.setVisibility(View.INVISIBLE);
+                    isProxy = false;
+                }else{
+                    layoutProxy.setVisibility(View.VISIBLE);
+                    isProxy = true;
+                }
+            }
+        });
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

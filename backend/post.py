@@ -201,34 +201,47 @@ def fetch_single_federation(node_url):
     netloc = parsed.netloc.lower()
     path = parsed.path.rstrip('/')
 
-    if "linkaproject.pythonanywhere.com" in netloc or "127.0.0.1" in netloc or "localhost" in netloc:
+    if "linkaproject.pythonanywhere.com" in netloc or "127.0.0.1" in netloc or "localhost" in netloc or netloc.startswith("192.168."):
         try:
             if path == "/feed":
                 return get_internal_feed_posts() 
+            
             elif path.startswith("/feed/reddit/"):
                 if root_flags.get("reddit-federation") and 'reddit' in globals():
                     sub_name = path.replace("/feed/reddit/", "")
                     if hasattr(reddit, "fetch_reddit_posts"):
-                        return reddit.fetch_reddit_posts(subreddit=sub_name)
+                        posts = reddit.fetch_reddit_posts(subreddit=sub_name)
+                        for p in (posts or []):
+                            if isinstance(p, dict):
+                                p["platform"] = "reddit"
+                        return posts
 
             elif path.startswith("/feed/mastodon/"):
                 if root_flags.get("mastodon-federation") and 'mastodon' in globals():
                     tag_name = path.replace("/feed/mastodon/", "")
                     if hasattr(mastodon, "fetch_mastodon_posts"):
-                        return mastodon.fetch_mastodon_posts(tag=tag_name, limit=100)
+                        posts = mastodon.fetch_mastodon_posts(tag=tag_name, limit=100)
+                        for p in (posts or []):
+                            if isinstance(p, dict):
+                                p["platform"] = "mastodon"
+                        return posts
 
             elif path.startswith("/feed/bluesky/"):
                 if root_flags.get("bluesky-federation") and 'bluesky' in globals():
                     tag_name = path.replace("/feed/bluesky/", "")
                     if hasattr(bluesky, "fetch_bluesky_posts"):
-                        return bluesky.fetch_bluesky_posts(query=tag_name, limit=100)
+                        posts = bluesky.fetch_bluesky_posts(query=tag_name, limit=100)
+                        for p in (posts or []):
+                            if isinstance(p, dict):
+                                p["platform"] = "bluesky"
+                        return posts
 
         except Exception as e:
             print(f"DEBUG - Erro na rota interna {path}: {e}")
             return None
 
     try:
-        response = requests.get(node_url, timeout=3.0)
+        response = requests.get(node_url, timeout=5.0)
         if response.status_code == 200:
             return response.json()
     except Exception as e:
@@ -275,6 +288,62 @@ def sort_and_interleave_posts(all_posts):
         i += 1
 
     return final_feed
+
+@post_bp.route("/view-external-posts", methods=["POST"])
+def view_external_posts():
+    data = request.get_json(silent=True) or {}
+    urls = data.get("urls")
+    filters = data.get("filters")
+    if not urls or not isinstance(urls, list):
+        return jsonify({"error": "url invalid or bad formatted"}), 400
+
+    if len(urls) > 50:
+        return jsonify({"status": "max limit with federation url"}), 400
+
+    aggregated_posts = []
+
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        futures = [executor.submit(fetch_single_federation, url) for url in urls]
+        
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") 
+
+                if not result:
+                    continue
+                posts_list = []
+                if isinstance(result, list):
+                    posts_list = result
+                elif isinstance(result, dict) and "posts" in result and isinstance(result["posts"], list):
+                    posts_list = result["posts"]
+
+                for post in posts_list:
+                    if not isinstance(post, dict):
+                        continue
+                    text = post.get("text_post", "")
+                    if filters:
+                        if isinstance(filters, list) and any(f.lower() in text.lower() for f in filters if f):
+                            continue
+                        elif isinstance(filters, str) and filters.lower() in text.lower():
+                            continue
+
+                    aggregated_posts.append(post)
+
+            except Exception as e:
+                print(f"DEBUG - Erro na thread: {e}")
+
+    if not aggregated_posts:
+        return jsonify([]), 200
+
+    random.shuffle(aggregated_posts)
+    formated_feed = []
+    for index, post in enumerate(aggregated_posts, start=1):
+        if isinstance(post, dict):
+            post["id"] = index
+            formated_feed.append(post)
+
+    return jsonify(formated_feed), 200
 
 
 @post_bp.route("/new", methods=["POST"])
