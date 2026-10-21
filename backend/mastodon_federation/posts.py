@@ -27,7 +27,7 @@ def get_comments():
 def get_profile_picture(username):
     avatar_url = fetch_mastodon_user_avatar(username)
     return jsonify({"avatar_url": avatar_url})
-@post_bp.route("/feed/mastodon/new", mtehods=["POST"])
+@post_bp.route("/feed/mastodon/new", methods=["POST"])
 def new_post():
     data = request.get_json()
     access_token = data.get("access_token")
