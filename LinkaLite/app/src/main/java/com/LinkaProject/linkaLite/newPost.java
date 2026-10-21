@@ -287,7 +287,8 @@ public class newPost extends Activity {
                 payload.put("username", handle);
                 payload.put("text_post", postText);
 
-                request.requestHTTP(endpoint, "post", payload, newPost.this);
+                String response = request.requestHTTP(endpoint, "post", payload, newPost.this);
+                Toast.makeText(newPost.this, "Response: " + response, Toast.LENGTH_LONG).show();
             } catch (Exception e) {
                 Log.e(TAG, "Failed to dispatch to " + networkKey, e);
             }
