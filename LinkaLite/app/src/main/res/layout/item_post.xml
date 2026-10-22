@@ -17,7 +17,6 @@
         android:background="#EEEEEE"
         android:padding="10dip">
 
-        <!-- Header: foto, username e data com cinza BEM clarinho (#F5F5F5) -->
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

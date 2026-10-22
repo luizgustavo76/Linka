@@ -2,127 +2,178 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@drawable/bg_material_card">
+    android:fillViewport="true"
+    android:background="#F5F5F5">
 
-    <LinearLayout 
+    <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dip">
-        <LinearLayout 
+        android:padding="12dip">
+
+        <!-- Card de Alerta do Convidado -->
+        <LinearLayout
             android:id="@+id/layoutGuest"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="8dip"
+            android:background="#FFEBEE"
+            android:padding="12dip"
+            android:layout_marginBottom="12dip"
             android:visibility="gone">
+
             <TextView
                 android:id="@+id/guestText"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:text="You are a guest! create or login with a account to Create a post"
-                android:textSize="20sp"
-                android:textStyle="bold"
                 android:gravity="center"
-                android:layout_marginTop="8dip"
-                android:layout_marginBottom="10dip" 
-            android:textColor="#FFFFFF" />
+                android:text="You are a guest! Create or login with an account to post."
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#C62828" />
+
             <Button
                 android:id="@+id/btnLogin"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dip"
                 android:text="Click here to login"
+                android:textSize="12sp"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- Card Principal (Fundo Branco com Padded Interno) -->
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="14dip">
+
+            <!-- Cabeçalho -->
+            <TextView
+                android:id="@+id/newPostText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="New Post"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#212121" />
+
+            <TextView
+                android:id="@+id/newPostContent"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="Links are supported now"
+                android:textSize="11sp"
+                android:textColor="#757575"
+                android:layout_marginBottom="12dip" />
+
+            <!-- Caixa de Texto Estilo Material -->
+            <EditText
+                android:id="@+id/textPost"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="What's on your mind?"
                 android:textSize="14sp"
-                android:layout_marginTop="10dip" />
+                android:minLines="4"
+                android:gravity="top"
+                android:padding="10dip"
+                android:background="#F0F0F0"
+                android:textColor="#212121"
+                android:textColorHint="#9E9E9E"
+                android:layout_marginBottom="12dip" />
+
+            <!-- Secção "Post in" -->
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="Post in:"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#424242"
+                android:layout_marginBottom="6dip" />
+
+            <!-- Grelha de Checkboxes (Linha 1) -->
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dip">
+
+                <CheckBox
+                    android:id="@+id/btnLinka"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Linka"
+                    android:textSize="12sp"
+                    android:textColor="#212121"
+                    android:checked="true" />
+
+                <CheckBox
+                    android:id="@+id/btnReddit"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Reddit"
+                    android:textSize="12sp"
+                    android:textColor="#212121" />
+            </LinearLayout>
+
+            <!-- Grelha de Checkboxes (Linha 2) -->
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dip">
+
+                <CheckBox
+                    android:id="@+id/btnMastodon"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Mastodon"
+                    android:textSize="12sp"
+                    android:textColor="#212121" />
+
+                <CheckBox
+                    android:id="@+id/btnBluesky"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Bluesky"
+                    android:textSize="12sp"
+                    android:textColor="#212121" />
+            </LinearLayout>
+
+            <!-- Botões de Ação Alinhados -->
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnImage"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Attach image"
+                    android:textSize="12sp"
+                    android:layout_marginRight="4dip" />
+
+                <Button
+                    android:id="@+id/btnSend"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Send!"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginLeft="4dip" />
+            </LinearLayout>
 
         </LinearLayout>
-        <TextView
-            android:id="@+id/newPostText"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="New Post"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginTop="8dip"
-            android:layout_marginBottom="10dip" 
-        android:textColor="#FFFFFF" />
-
-        <EditText
-            android:id="@+id/textPost"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="What's on your mind?"
-            android:textSize="14sp"
-            android:minLines="3"
-            android:gravity="top"
-            android:singleLine="false"/>
-
-        <Button
-            android:id="@+id/btnSend"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Send!"
-            android:textSize="14sp"
-            android:layout_marginTop="10dip" />
-        <Button
-            android:id="@+id/btnImage"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Enter a image"
-            android:textSize="14sp"
-            android:layout_marginTop="10dip" />
-        <TextView
-            android:id="@+id/newPostContent"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Links are supported now"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginTop="8dip"
-            android:layout_marginBottom="10dip" 
-        android:textColor="#FFFFFF" />
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Post in"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginTop="8dip"
-            android:layout_marginBottom="10dip" 
-        android:textColor="#FFFFFF" />
-        <CheckBox
-            android:id="@+id/btnLinka"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Linka"
-            android:textColor="#FFFFFF"
-            android:focusable="false"
-            android:focusableInTouchMode="false" />
-        <CheckBox
-            android:id="@+id/btnReddit"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Reddit"
-            android:textColor="#FFFFFF"
-            android:focusable="false"
-            android:focusableInTouchMode="false" />
-        <CheckBox
-            android:id="@+id/btnMastodon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Mastodon"
-            android:textColor="#FFFFFF"
-            android:focusable="false"
-            android:focusableInTouchMode="false" />
-        <CheckBox
-            android:id="@+id/btnBluesky"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Bluesky"
-            android:textColor="#FFFFFF"
-            android:focusable="false"
-            android:focusableInTouchMode="false" />    
 
     </LinearLayout>
 </ScrollView>
