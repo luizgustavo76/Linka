@@ -9,19 +9,21 @@
     android:paddingBottom="6dip"
     android:background="@android:color/transparent">
 
-    <!-- Card Branco com Espaçamento Interno -->
+    <!-- Card com fundo todo branco -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#FFFFFF"
+        android:background="#EEEEEE"
         android:padding="10dip">
 
+        <!-- Header: foto, username e data com cinza BEM clarinho (#F5F5F5) -->
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dip"
-            android:background="#0000">
+            android:background="#F5F5F5"
+            android:padding="8dip">
 
             <ImageView
                 android:id="@+id/postAvatar"
@@ -60,12 +62,15 @@
 
         </RelativeLayout>
 
+        <!-- Corpo do texto: fundo cinza um pouco mais escuro, mas ainda claro (#EEEEEE) -->
         <TextView
             android:id="@+id/postText"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:textSize="13sp"
             android:textColor="#333333"
+            android:background="#ffff"
+            android:padding="8dip"
             android:layout_marginBottom="8dip" />
 
         <ImageView
@@ -76,12 +81,15 @@
             android:scaleType="fitCenter"
             android:visibility="gone"
             android:layout_marginBottom="8dip" />
+
         <Gallery
             android:id="@+id/galleryImages"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
             android:layout_marginBottom="8dip" />
+
+        <!-- Rodapé do Card (botões de comentário/interação) -->
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
