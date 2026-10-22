@@ -250,34 +250,49 @@ def fetch_single_federation(node_url):
 
     return None
 
+def parse_datetime_flexible(dt_str):
+    if not dt_str:
+        return datetime.min
+    if isinstance(dt_str, (int, float)): # Se for timestamp UNIX
+        return datetime.fromtimestamp(dt_str)
+    
+    # Substitui 'T' e 'Z' se vier de APIs tipo Mastodon/Bluesky ISO8601
+    dt_clean = str(dt_str).replace('T', ' ').replace('Z', '')
+    
+    formats = [
+        '%Y-%m-%d %H:%M:%S',
+        '%Y-%m-%d %H:%M:%S.%f',
+        '%Y-%m-%d'
+    ]
+    for fmt in formats:
+        try:
+            return datetime.strptime(dt_clean, fmt)
+        except ValueError:
+            pass
+    return datetime.min
+
 def sort_and_interleave_posts(all_posts):
     for post in all_posts:
-        try:
-            post['_dt_obj'] = datetime.strptime(post['datetime'], '%Y-%m-%d %H:%M:%S')
-        except (ValueError, KeyError):
-            post['_dt_obj'] = datetime.min
+        post['_dt_obj'] = parse_datetime_flexible(post.get('datetime'))
     sorted_posts = sorted(all_posts, key=lambda x: x['_dt_obj'], reverse=True)
+
     final_feed = []
     consecutive_count = 0
     last_platform = None
-    i = 0
-    while i < len(sorted_posts):
-        current_post = sorted_posts[i]
-        current_platform = current_post.get('platform', 'unknown')
 
-        if current_platform == last_platform and consecutive_count >= 2:
-            swap_index = -1
-            for j in range(i + 1, min(i + 6, len(sorted_posts))):
-                if sorted_posts[j].get('platform') != current_platform:
-                    swap_index = j
+    while sorted_posts:
+        chosen_idx = 0
+        if consecutive_count >= 2 and len(sorted_posts) > 1:
+            for idx in range(1, min(6, len(sorted_posts))):
+                if sorted_posts[idx].get('platform') != last_platform:
+                    chosen_idx = idx
                     break
-            if swap_index != -1:
-                current_post = sorted_posts.pop(swap_index)
-                current_platform = current_post.get('platform', 'unknown')
-                sorted_posts.insert(i, current_post)
 
-        del current_post['_dt_obj']
-        final_feed.append(current_post)
+        post = sorted_posts.pop(chosen_idx)
+        current_platform = post.get('platform', 'unknown')
+
+        del post['_dt_obj']
+        final_feed.append(post)
 
         if current_platform == last_platform:
             consecutive_count += 1
@@ -285,10 +300,7 @@ def sort_and_interleave_posts(all_posts):
             consecutive_count = 1
             last_platform = current_platform
 
-        i += 1
-
     return final_feed
-
 @post_bp.route("/view-external-posts", methods=["POST"])
 def view_external_posts():
     data = request.get_json(silent=True) or {}
