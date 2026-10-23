@@ -488,15 +488,14 @@ public class HomeActivity extends ActivityGroup {
                 String textPost = post.optString("text_post", post.optString("text", ""));
                 final String origin_server = post.optString("origin_server", "");
                 String datetime = post.optString("datetime", post.optString("date", ""));
-                
-                // CORREÇÃO: Tenta ler 'comments_count' primeiro, depois 'comment_count'
                 String commentsCount = post.optString("comments_count", post.optString("comment_count", "0"));
-                
                 final String postUniqueId = post.optString("unique_id", "");
                 final String id = post.optString("id", "");
-                
                 final String originalUrl = post.optString("original_url", "");
-
+                String avatarUrl = "";
+                if (actualTab.equals("timeline")){
+                    avatarUrl = post.optString("avatar_url", "");                    
+                }
                 btnComments.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -519,8 +518,8 @@ public class HomeActivity extends ActivityGroup {
                 tvUsername.setText(username.startsWith("@") ? username : "@" + username);
                 tvDate.setText(datetime);
                 if (actualTab.equals("timeline")){
-                    String avatarUrl = url + "/profile-picture?username=" + username;
-                    imageLoader.LoadImageUrl(avatarUrl, avatarPost);
+                    String avatar = "http://wsrv.nl/?url=" + avatarUrl;
+                    imageLoader.LoadImageUrl(avatar, avatarPost);
                 }else{
                     imageLoader.viewProfilePicture(context, username, avatarPost);
                 }
