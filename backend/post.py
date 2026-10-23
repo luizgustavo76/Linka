@@ -156,7 +156,21 @@ def new_comment():
     else:
         return jsonify({"status": "forbidden"}), 403
 
-
+@post_bp.route("/edit-post", methods=["POST"])
+def edit_post():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        text_post = data.get("text_post")
+        post_id = data.get("post_id")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("UPDATE posts SET text_post = ? WHERE id = ?",(text_post, post_id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status":"the post has edited"}),200
+    else:
+        return jsonify({"status":"forbidden"}),403
 @post_bp.route("/view-comments", methods=["POST"])
 def view_comments():
     data = request.get_json(force=True) or {}
