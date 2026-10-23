@@ -171,6 +171,20 @@ def edit_post():
         return jsonify({"status":"the post has edited"}),200
     else:
         return jsonify({"status":"forbidden"}),403
+@post_bp.route("/delete-post", methods=["POST"])
+def delete_post():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        post_id = data.get("post_id")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM posts WHERE id = ?",(post_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status":"the post has deleted"}),200
+    else:
+        return jsonify({"status":"forbidden"}),403
 @post_bp.route("/view-comments", methods=["POST"])
 def view_comments():
     data = request.get_json(force=True) or {}
