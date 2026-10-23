@@ -112,14 +112,17 @@ def formate(posts, instance="mastodon.social"):
                 img_url = media.get("url") or media.get("preview_url")
                 if img_url:
                     images.append(img_url)
-
+        avatar_url = (
+            account_info.get("avatar_static") 
+            or account_info.get("avatar") 
+            or ""
+        )
         if images:
             links_formatados = "".join(f"[IMAGE]{url}\n" for url in images)
             text_final = f"{text_post}\n{links_formatados}".strip()
         else:
             text_final = text_post
 
-        # Garante a conversão correta e segura do contador de respostas
         raw_replies = target_post.get("replies_count")
         try:
             comments_count = int(raw_replies) if raw_replies is not None else 0
@@ -140,6 +143,7 @@ def formate(posts, instance="mastodon.social"):
                     "account_id": account_id,
                     "text_post": text_final,
                     "comment_count": comments_count,
+                    "avatar_url": avatar_url,
                     "datetime": datetime_formatado,
                     "origin_server": "https://linkaProject.pythonanywhere.com/feed/mastodon",
                     "platform": "mastodon",

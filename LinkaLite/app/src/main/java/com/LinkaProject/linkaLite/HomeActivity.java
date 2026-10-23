@@ -50,7 +50,7 @@ public class HomeActivity extends ActivityGroup {
     private int screenWidth;
     private int currentPage = 0;
     private String[] pageTitles = new String[]{"Timeline", "Local Feed", "Chat", "Options"};
-
+    private String url = "";
     private ListView listViewTimeline;
     private ListView listViewLocal;
     
@@ -314,6 +314,7 @@ public class HomeActivity extends ActivityGroup {
                 JSONObject server = jsonCfg.optJSONObject("SERVER");
                 if (server != null) {
                     baseUrl = server.optString("url", baseUrl);
+                    url = baseUrl;
                 }
             }
 
@@ -494,7 +495,6 @@ public class HomeActivity extends ActivityGroup {
                 final String postUniqueId = post.optString("unique_id", "");
                 final String id = post.optString("id", "");
                 
-                // CORREÇÃO: Extrai a original_url para repassar via Intent
                 final String originalUrl = post.optString("original_url", "");
 
                 btnComments.setOnClickListener(new View.OnClickListener() {
@@ -518,9 +518,12 @@ public class HomeActivity extends ActivityGroup {
                 txtCommentCount.setText(commentsCount);
                 tvUsername.setText(username.startsWith("@") ? username : "@" + username);
                 tvDate.setText(datetime);
-
-                imageLoader.viewProfilePicture(context, username, avatarPost);
-
+                if (actualTab.equals("timeline")){
+                    String avatarUrl = url + "/profile-picture?username=" + username;
+                    imageLoader.LoadImageUrl(avatarUrl, avatarPost);
+                }else{
+                    imageLoader.viewProfilePicture(context, username, avatarPost);
+                }
                 if (textPost.contains("[IMAGE]")) {
                     final List<String> photos = new ArrayList<String>();
                     String[] lines = textPost.split("\n");
