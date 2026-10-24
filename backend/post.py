@@ -482,6 +482,10 @@ def feed():
             p.username, 
             p.text_post, 
             p.datetime, 
+            p.media,
+            p.media_type,
+            p.width,
+            p.heigth,
             COUNT(c.id) AS comment_count
         FROM posts p
         LEFT JOIN comments c ON c.post_id = p.id
@@ -499,6 +503,10 @@ def feed():
             "text_post": post[2],
             "datetime": post[3],
             "comment_count": post[4],
+            "media":{
+                "media_url":post[5],
+                "media_type":post[6]
+            },
             "platform":"linka",
             "origin_server":root_flags["url-server"]
         })
