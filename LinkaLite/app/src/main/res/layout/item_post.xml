@@ -66,11 +66,12 @@
             android:layout_height="wrap_content"
             android:textSize="13sp"
             android:textColor="#333333"
+            android:autoLink="web"
+            android:textColorLink="#3f85c3"
             android:background="#ffff"
             android:padding="8dip"
             android:layout_marginBottom="8dip" />
 
-        <!-- CONTAINER DE MÍDIA ESTILO REDDIT (SUPORTA 1 OU MAIS IMAGENS) -->
         <RelativeLayout
             android:id="@+id/containerMedia"
             android:layout_width="fill_parent"
@@ -118,7 +119,6 @@
                 android:textSize="12sp"
                 android:visibility="gone" />
 
-            <!-- Seta Direita -->
             <Button
                 android:id="@+id/btnNextImage"
                 android:layout_width="36dip"
