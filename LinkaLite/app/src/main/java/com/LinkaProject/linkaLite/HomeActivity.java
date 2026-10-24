@@ -629,8 +629,7 @@ public class HomeActivity extends ActivityGroup {
                         });
                     }
                 }
-
-                String cleanText = textPost.replace("[IMAGE]", "");
+                String cleanText = textPost.replaceAll("\\[IMAGE\\].*", "").trim();
                 if (cleanText.length() == 0) {
                     tvText.setVisibility(View.GONE);
                 } else {

@@ -11,6 +11,7 @@ import mentions_module
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
+from PIL import ImageFile
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 json_path = os.path.join(base_dir, "backend.json")
@@ -34,6 +35,29 @@ post_bp = Blueprint("post", __name__)
 
 if not os.path.exists(db_dir):
     os.makedirs(db_dir)
+
+
+def get_image_dimensions(url):
+    """
+    Faz o download do cabeçalho da imagem (Stream) e extrai 
+    a largura e a altura sem carregar a imagem inteira na RAM.
+    """
+    if not url or not isinstance(url, str) or not url.startswith(("http://", "https://")):
+        return "", ""
+    try:
+        response = requests.get(url, stream=True, timeout=3.0, headers={"User-Agent": "LinkaBackend/1.0"})
+        if response.status_code == 200:
+            parser = ImageFile.Parser()
+            for chunk in response.iter_content(chunk_size=1024):
+                parser.feed(chunk)
+                if parser.image:
+                    w, h = parser.image.size
+                    return str(w), str(h)
+                if len(chunk) == 0:
+                    break
+    except Exception as e:
+        print(f"[DEBUG MEDIA DIMENSIONS ERROR] {url}: {e}")
+    return "", ""
 
 
 def get_db():
@@ -168,18 +192,24 @@ def parse_media_list(media_raw, media_type_raw, width_raw, height_raw):
             if isinstance(parsed, list):
                 for item in parsed:
                     if isinstance(item, dict):
+                        m_url = item.get("media_url", item.get("url", ""))
+                        m_w = str(item.get("width", ""))
+                        m_h = str(item.get("heigth", item.get("height", "")))
+                        if not m_w or not m_h:
+                            m_w, m_h = get_image_dimensions(m_url)
                         media_items.append({
-                            "media_url": item.get("media_url", item.get("url", "")),
+                            "media_url": m_url,
                             "media_type": item.get("media_type", "image"),
-                            "width": str(item.get("width", "")),
-                            "heigth": str(item.get("heigth", item.get("height", "")))
+                            "width": m_w,
+                            "heigth": m_h
                         })
                     elif isinstance(item, str):
+                        m_w, m_h = get_image_dimensions(item)
                         media_items.append({
                             "media_url": item,
                             "media_type": "image",
-                            "width": "",
-                            "heigth": ""
+                            "width": m_w,
+                            "heigth": m_h
                         })
                 return media_items
         except Exception:
@@ -188,19 +218,28 @@ def parse_media_list(media_raw, media_type_raw, width_raw, height_raw):
     if isinstance(media_raw, str) and "," in media_raw:
         urls = [u.strip() for u in media_raw.split(",") if u.strip()]
         for u in urls:
+            m_w = str(width_raw or "")
+            m_h = str(height_raw or "")
+            if not m_w or not m_h:
+                m_w, m_h = get_image_dimensions(u)
             media_items.append({
                 "media_url": u,
                 "media_type": media_type_raw or "image",
-                "width": str(width_raw or ""),
-                "heigth": str(height_raw or "")
+                "width": m_w,
+                "heigth": m_h
             })
         return media_items
+
+    m_w = str(width_raw or "")
+    m_h = str(height_raw or "")
+    if not m_w or not m_h:
+        m_w, m_h = get_image_dimensions(media_raw)
 
     media_items.append({
         "media_url": media_raw,
         "media_type": media_type_raw or "image",
-        "width": str(width_raw or ""),
-        "heigth": str(height_raw or "")
+        "width": m_w,
+        "heigth": m_h
     })
     return media_items
 
@@ -565,6 +604,12 @@ def new_post():
                 elif isinstance(first_item, str):
                     main_media = first_item
 
+            # Preenche width e height automaticamente caso estejam vazios
+            if main_media and (not width or not heigth):
+                auto_w, auto_h = get_image_dimensions(main_media)
+                width = width or auto_w
+                heigth = heigth or auto_h
+
             cur.execute(
                 "INSERT INTO posts(username, text_post, datetime, media, media_type, width, heigth) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (username, text_post, datetime_post, main_media, media_type, width, heigth)
@@ -583,6 +628,9 @@ def new_post():
                         m_type = "image"
                         m_w = ""
                         m_h = ""
+
+                    if m_url and (not m_w or not m_h):
+                        m_w, m_h = get_image_dimensions(m_url)
 
                     if m_url:
                         cur.execute(
@@ -668,14 +716,24 @@ def feed():
         media_list = []
         if media_rows:
             for row in media_rows:
+                m_w = row["width"] or ""
+                m_h = row["heigth"] or ""
+                if row["media_url"] and (not m_w or not m_h):
+                    m_w, m_h = get_image_dimensions(row["media_url"])
+
                 media_list.append({
                     "media_url": row["media_url"],
                     "media_type": row["media_type"] or "image",
-                    "width": row["width"] or "",
-                    "heigth": row["heigth"] or ""
+                    "width": m_w,
+                    "heigth": m_h
                 })
         else:
             media_list = parse_media_list(media_url, media_type, post["width"], post["heigth"])
+
+        main_width = post["width"] or ""
+        main_heigth = post["heigth"] or ""
+        if media_url and (not main_width or not main_heigth):
+            main_width, main_heigth = get_image_dimensions(media_url)
 
         lista_posts.append({
             "id": post["id"],
@@ -687,8 +745,8 @@ def feed():
             "media": {
                 "media_url": media_url or "",
                 "media_type": media_type or "image",
-                "width": post["width"] or "",
-                "heigth": post["heigth"] or ""
+                "width": main_width,
+                "heigth": main_heigth
             },
             "media_list": media_list,
             "media_attachments": media_list,
