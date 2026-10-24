@@ -33,7 +33,6 @@ if root_flags.get("mastodon-federation"):
 
 post_bp = Blueprint("post", __name__)
 
-# Executor de threads para background tasks
 bg_executor = ThreadPoolExecutor(max_workers=5)
 
 if not os.path.exists(db_dir):
@@ -48,7 +47,7 @@ def get_image_dimensions(url):
     if not url or not isinstance(url, str) or not url.startswith(("http://", "https://")):
         return "", ""
     try:
-        response = requests.get(url, stream=True, timeout=3.0, headers={"User-Agent": "LinkaBackend/1.0"})
+        response = requests.get(url, stream=True, timeout=2.5, headers={"User-Agent": "LinkaBackend/1.0"})
         if response.status_code == 200:
             parser = ImageFile.Parser()
             for chunk in response.iter_content(chunk_size=1024):
@@ -65,14 +64,12 @@ def get_image_dimensions(url):
 
 def process_dimensions_in_background(post_id, main_media, media_items):
     """
-    Task de fundo que roda de forma assíncrona, extrai a resolução
-    das imagens e atualiza o banco de dados sem travar a API.
+    Task de fundo que roda de forma assíncrona para não travar conexões.
     """
     try:
         conn = get_db()
         cur = conn.cursor()
 
-        # 1. Processa a mídia principal
         if main_media:
             w, h = get_image_dimensions(main_media)
             if w and h:
@@ -81,7 +78,6 @@ def process_dimensions_in_background(post_id, main_media, media_items):
                     (w, h, post_id)
                 )
 
-        # 2. Processa cada item do carrossel/post_media
         if media_items and isinstance(media_items, list):
             for item in media_items:
                 media_url = item.get("media_url")
@@ -96,7 +92,6 @@ def process_dimensions_in_background(post_id, main_media, media_items):
 
         conn.commit()
         conn.close()
-        print(f"[BACKGROUND TASK] Dimensões do post #{post_id} atualizadas com sucesso!")
     except Exception as e:
         print(f"[BACKGROUND TASK ERROR] Falha ao processar post #{post_id}: {e}")
 
@@ -457,7 +452,7 @@ def fetch_single_federation(node_url):
             return None
 
     try:
-        response = requests.get(node_url, timeout=5.0)
+        response = requests.get(node_url, timeout=2.5)
         if response.status_code == 200:
             return response.json()
     except Exception as e:
@@ -539,8 +534,6 @@ def view_external_posts():
         for future in as_completed(futures):
             try:
                 result = future.result()
-                print(f"DEBUG - Resposta do nó: {type(result)} -> {result}") 
-
                 if not result:
                     continue
                 posts_list = []
@@ -630,7 +623,6 @@ def new_post():
             conn = get_db()
             cur = conn.cursor()
 
-            # Insere imediatamente no banco (resposta instantânea ao cliente)
             cur.execute(
                 "INSERT INTO posts(username, text_post, datetime, media, media_type, width, heigth) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (username, text_post, datetime_post, main_media, media_type, str(width or ""), str(heigth or ""))
@@ -664,7 +656,6 @@ def new_post():
             conn.commit()
             conn.close()
 
-            # Dispara a busca de resolução em segundo plano se faltar largura/altura
             if (main_media and (not width or not heigth)) or background_media_items:
                 bg_executor.submit(
                     process_dimensions_in_background,
@@ -735,6 +726,11 @@ def feed():
     posts = cur.fetchall()
 
     lista_posts = []
+    
+    # Lista para acumular updates que precisam ser persistidos no SQLite
+    pending_updates_posts = []
+    pending_updates_media = []
+
     for post in posts:
         post_id = post["id"]
         text_content = post["text_post"] or ""
@@ -743,20 +739,43 @@ def feed():
         media_url = match.group(1).strip() if match else post["media"]
         media_type = "image" if match else post["media_type"]
 
-        cur.execute("SELECT media_url, media_type, width, heigth FROM post_media WHERE post_id = ?", (post_id,))
+        main_width = post["width"] or ""
+        main_heigth = post["heigth"] or ""
+
+        # SE TIVER IMAGEM E NÃO TIVER AS MEDIDAS, BUSCA NA HORA E MARCA PRA SALVAR NO DB
+        if media_url and (not main_width or not main_heigth):
+            auto_w, auto_h = get_image_dimensions(media_url)
+            if auto_w and auto_h:
+                main_width = auto_w
+                main_heigth = auto_h
+                pending_updates_posts.append((main_width, main_heigth, post_id))
+
+        cur.execute("SELECT id, media_url, media_type, width, heigth FROM post_media WHERE post_id = ?", (post_id,))
         media_rows = cur.fetchall()
 
         media_list = []
         if media_rows:
             for row in media_rows:
+                m_id = row["id"]
+                m_url = row["media_url"]
+                m_w = row["width"] or ""
+                m_h = row["heigth"] or ""
+
+                if m_url and (not m_w or not m_h):
+                    auto_w, auto_h = get_image_dimensions(m_url)
+                    if auto_w and auto_h:
+                        m_w = auto_w
+                        m_h = auto_h
+                        pending_updates_media.append((m_w, m_h, m_id))
+
                 media_list.append({
-                    "media_url": row["media_url"],
+                    "media_url": m_url,
                     "media_type": row["media_type"] or "image",
-                    "width": row["width"] or "",
-                    "heigth": row["heigth"] or ""
+                    "width": m_w,
+                    "heigth": m_h
                 })
         else:
-            media_list = parse_media_list(media_url, media_type, post["width"], post["heigth"])
+            media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
 
         lista_posts.append({
             "id": post["id"],
@@ -768,14 +787,23 @@ def feed():
             "media": {
                 "media_url": media_url or "",
                 "media_type": media_type or "image",
-                "width": post["width"] or "",
-                "heigth": post["heigth"] or ""
+                "width": main_width,
+                "heigth": main_heigth
             },
             "media_list": media_list,
             "media_attachments": media_list,
             "platform": "linka",
             "origin_server": root_flags.get("url-server", "")
         })
+
+    # GRAVA TUDO DE UMA VEZ NO BANCO DE DADOS
+    if pending_updates_posts:
+        cur.executemany("UPDATE posts SET width = ?, heigth = ? WHERE id = ?", pending_updates_posts)
+    if pending_updates_media:
+        cur.executemany("UPDATE post_media SET width = ?, heigth = ? WHERE id = ?", pending_updates_media)
+
+    if pending_updates_posts or pending_updates_media:
+        conn.commit()
 
     conn.close()
     return jsonify(lista_posts), 200
