@@ -71,6 +71,16 @@ def create_db():
         )
     """)
     cur.execute("""
+        CREATE TABLE IF NOT EXISTS post_media(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER,
+            media_url TEXT,
+            media_type TEXT,
+            width TEXT,
+            heigth TEXT
+        )
+    """)
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS stars(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             post_id INTEGER,
@@ -145,6 +155,54 @@ def get_relative_time(post_date):
     
     years = days // 365
     return f"{years} year ago" if years == 1 else f"{years} years ago"
+
+
+def parse_media_list(media_raw, media_type_raw, width_raw, height_raw):
+    media_items = []
+    if not media_raw:
+        return media_items
+
+    if isinstance(media_raw, str) and media_raw.strip().startsWith("["):
+        try:
+            parsed = json.loads(media_raw)
+            if isinstance(parsed, list):
+                for item in parsed:
+                    if isinstance(item, dict):
+                        media_items.append({
+                            "media_url": item.get("media_url", item.get("url", "")),
+                            "media_type": item.get("media_type", "image"),
+                            "width": str(item.get("width", "")),
+                            "heigth": str(item.get("heigth", item.get("height", "")))
+                        })
+                    elif isinstance(item, str):
+                        media_items.append({
+                            "media_url": item,
+                            "media_type": "image",
+                            "width": "",
+                            "heigth": ""
+                        })
+                return media_items
+        except Exception:
+            pass
+
+    if isinstance(media_raw, str) and "," in media_raw:
+        urls = [u.strip() for u in media_raw.split(",") if u.strip()]
+        for u in urls:
+            media_items.append({
+                "media_url": u,
+                "media_type": media_type_raw or "image",
+                "width": str(width_raw or ""),
+                "heigth": str(height_raw or "")
+            })
+        return media_items
+
+    media_items.append({
+        "media_url": media_raw,
+        "media_type": media_type_raw or "image",
+        "width": str(width_raw or ""),
+        "heigth": str(height_raw or "")
+    })
+    return media_items
 
 
 @post_bp.route("/view-profile-posts", methods=["POST"])
@@ -242,6 +300,7 @@ def delete_post():
         conn = get_db()
         cur = conn.cursor()
         cur.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+        cur.execute("DELETE FROM post_media WHERE post_id = ?", (post_id,))
         conn.commit()
         conn.close()
         return jsonify({"status": "the post has deleted"}), 200
@@ -472,6 +531,8 @@ def new_post():
             width = data.get("width")
             heigth = data.get("heigth")
 
+            media_list_input = data.get("media_list") or data.get("media_attachments")
+
             match = re.search(r'\[IMAGE\]\s*(.*)', text_post)
             if match:
                 media = match.group(1).strip()
@@ -480,7 +541,7 @@ def new_post():
             if not username:
                 return jsonify({"status": "username not send"}), 400
 
-            if not text_post and not media:
+            if not text_post and not media and not media_list_input:
                 return jsonify({"status": "its not possible create a post with no cotent"}), 400
 
             if "@" in text_post:
@@ -493,10 +554,41 @@ def new_post():
             conn = get_db()
             cur = conn.cursor()
 
+            main_media = media
+            if not main_media and media_list_input and len(media_list_input) > 0:
+                first_item = media_list_input[0]
+                if isinstance(first_item, dict):
+                    main_media = first_item.get("media_url")
+                    media_type = first_item.get("media_type", "image")
+                    width = first_item.get("width")
+                    heigth = first_item.get("heigth") or first_item.get("height")
+                elif isinstance(first_item, str):
+                    main_media = first_item
+
             cur.execute(
                 "INSERT INTO posts(username, text_post, datetime, media, media_type, width, heigth) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (username, text_post, datetime_post, media, media_type, width, heigth)
+                (username, text_post, datetime_post, main_media, media_type, width, heigth)
             )
+            post_id = cur.lastrowid
+
+            if media_list_input and isinstance(media_list_input, list):
+                for item in media_list_input:
+                    if isinstance(item, dict):
+                        m_url = item.get("media_url") or item.get("url")
+                        m_type = item.get("media_type", "image")
+                        m_w = str(item.get("width", ""))
+                        m_h = str(item.get("heigth", item.get("height", "")))
+                    else:
+                        m_url = str(item)
+                        m_type = "image"
+                        m_w = ""
+                        m_h = ""
+
+                    if m_url:
+                        cur.execute(
+                            "INSERT INTO post_media(post_id, media_url, media_type, width, heigth) VALUES (?, ?, ?, ?, ?)",
+                            (post_id, m_url, m_type, m_w, m_h)
+                        )
 
             conn.commit()
             conn.close()
@@ -560,15 +652,30 @@ def feed():
         ORDER BY p.id DESC
     """)
     posts = cur.fetchall()
-    conn.close()
 
     lista_posts = []
     for post in posts:
+        post_id = post["id"]
         text_content = post["text_post"] or ""
         match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
         
         media_url = match.group(1).strip() if match else post["media"]
         media_type = "image" if match else post["media_type"]
+
+        cur.execute("SELECT media_url, media_type, width, heigth FROM post_media WHERE post_id = ?", (post_id,))
+        media_rows = cur.fetchall()
+
+        media_list = []
+        if media_rows:
+            for row in media_rows:
+                media_list.append({
+                    "media_url": row["media_url"],
+                    "media_type": row["media_type"] or "image",
+                    "width": row["width"] or "",
+                    "heigth": row["heigth"] or ""
+                })
+        else:
+            media_list = parse_media_list(media_url, media_type, post["width"], post["heigth"])
 
         lista_posts.append({
             "id": post["id"],
@@ -578,15 +685,18 @@ def feed():
             "relative_datetime": get_relative_time(post["datetime"]),
             "comment_count": post["comment_count"],
             "media": {
-                "media_url": media_url,
-                "media_type": media_type,
-                "width": post["width"],
-                "heigth": post["heigth"]
+                "media_url": media_url or "",
+                "media_type": media_type or "image",
+                "width": post["width"] or "",
+                "heigth": post["heigth"] or ""
             },
+            "media_list": media_list,
+            "media_attachments": media_list,
             "platform": "linka",
-            "origin_server": root_flags["url-server"]
+            "origin_server": root_flags.get("url-server", "")
         })
 
+    conn.close()
     return jsonify(lista_posts), 200
 
 

@@ -9,7 +9,6 @@
     android:paddingBottom="6dip"
     android:background="@android:color/transparent">
 
-    <!-- Card com fundo todo branco -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -61,7 +60,6 @@
 
         </RelativeLayout>
 
-        <!-- Corpo do texto: fundo cinza um pouco mais escuro, mas ainda claro (#EEEEEE) -->
         <TextView
             android:id="@+id/postText"
             android:layout_width="fill_parent"
@@ -81,15 +79,15 @@
             android:visibility="gone"
             android:layout_marginBottom="8dip" />
 
-        <Gallery
-            android:id="@+id/galleryImages"
+        <LinearLayout
+            android:id="@+id/layoutMultiImages"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
             android:visibility="gone"
-            android:background="#ffff"
             android:layout_marginBottom="8dip" />
 
-        <!-- Rodapé do Card (botões de comentário/interação) -->
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

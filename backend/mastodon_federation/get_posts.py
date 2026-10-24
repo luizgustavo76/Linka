@@ -149,6 +149,7 @@ def formate(posts, instance="mastodon.social"):
         height = None
 
         images_for_v2 = []
+        media_list = []
         
         for media in target_post.get("media_attachments", []):
             if isinstance(media, dict) and media.get("type") == "image":
@@ -156,15 +157,22 @@ def formate(posts, instance="mastodon.social"):
                 if img_url:
                     images_for_v2.append(img_url)
                     
+                    meta_original = media.get("meta", {}).get("original", {})
+                    m_w = str(meta_original.get("width", "")) if meta_original.get("width") else ""
+                    m_h = str(meta_original.get("height", "")) if meta_original.get("height") else ""
+
+                    media_list.append({
+                        "media_url": img_url,
+                        "media_type": "image",
+                        "width": m_w,
+                        "heigth": m_h
+                    })
+
                     if not media_url:
                         media_url = img_url
                         media_type = "image"
-                        
-                        meta_original = media.get("meta", {}).get("original", {})
-                        if meta_original.get("width"):
-                            width = str(meta_original.get("width"))
-                        if meta_original.get("height"):
-                            height = str(meta_original.get("height"))
+                        width = m_w
+                        height = m_h
 
         avatar_url = (
             account_info.get("avatar_static") 
@@ -173,8 +181,8 @@ def formate(posts, instance="mastodon.social"):
         )
 
         if images_for_v2:
-            links_formatados = "".join(f"[IMAGE]{url}\n" for url in images_for_v2)
-            text_final = f"{text_post}\n{links_formatados}".strip()
+            links_formatados = "".join(f"\n[IMAGE]{url}" for url in images_for_v2)
+            text_final = f"{text_post}{links_formatados}".strip()
         else:
             text_final = text_post
 
@@ -206,6 +214,8 @@ def formate(posts, instance="mastodon.social"):
                         "width": width,
                         "heigth": height
                     },
+                    "media_list": media_list,
+                    "media_attachments": media_list,
                     "origin_server": "https://linkaProject.pythonanywhere.com/feed/mastodon",
                     "platform": "mastodon",
                     "unique_id": str(target_post.get("id")),

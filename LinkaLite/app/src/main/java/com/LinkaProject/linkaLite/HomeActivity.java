@@ -424,10 +424,6 @@ public class HomeActivity extends ActivityGroup {
         private ArrayList<JSONObject> list;
         private String tabType;
         private ImageLoader imageLoader;
-        private String mediaUrl = "";
-        private String mediaType = "";
-        private String width = "";
-        private String height = "";
 
         public PostAdapter(Context context, ArrayList<JSONObject> list, String tabType) {
             this.context = context;
@@ -494,17 +490,17 @@ public class HomeActivity extends ActivityGroup {
                 final String postUniqueId = post.optString("unique_id", "");
                 final String relative_datetime = post.optString("relative_datetime", "");
                 
+                String width = "";
+                String height = "";
+                String mediaType = "image";
+                String mediaUrl = "";
+
                 JSONObject media = post.optJSONObject("media");
                 if (media != null) {
                     width = media.optString("width", "");
                     height = media.optString("heigth", "");
                     mediaType = media.optString("media_type", "image");
                     mediaUrl = media.optString("media_url", "");
-                } else {
-                    width = "";
-                    height = "";
-                    mediaType = "image";
-                    mediaUrl = "";
                 }
 
                 final String id = post.optString("id", "");

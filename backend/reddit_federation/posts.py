@@ -122,51 +122,60 @@ def fetch_reddit_posts(subreddit="LinkaProject", limit=100):
                         pass
 
                 body = ""
-                image_url = ""
+                found_images = []
                 width = None
                 height = None
 
                 if content_elem is not None and content_elem.text:
                     content_html = unescape(content_elem.text)
-                    img_match = re.search(
+                    
+                    img_matches = re.findall(
                         r'src=["\'](https://(?:i|preview|external-preview)\.redd\.it/[^"\']+|https://i\.imgur\.com/[^"\']+)["\']',
                         content_html, re.IGNORECASE
                     )
-                    if img_match:
-                        image_url = img_match.group(1)
+                    if img_matches:
+                        for img in img_matches:
+                            clean_img = sanitizar_url_reddit(img)
+                            if clean_img and clean_img not in found_images:
+                                found_images.append(clean_img)
                     else:
-                        link_match = re.search(
+                        link_matches = re.findall(
                             r'href=["\'](https://i\.redd\.it/[^"\']+\.(?:jpg|jpeg|png|gif))["\']',
                             content_html, re.IGNORECASE
                         )
-                        if link_match:
-                            image_url = link_match.group(1)
+                        if link_matches:
+                            for lk in link_matches:
+                                clean_lk = sanitizar_url_reddit(lk)
+                                if clean_lk and clean_lk not in found_images:
+                                    found_images.append(clean_lk)
 
                     text_match = re.search(r'<div class="md">(.*?)</div>', content_html, re.DOTALL)
                     if text_match:
                         body = re.sub(r"<[^>]+>", "", text_match.group(1)).strip()
                     body = re.sub(r"\[link\]|\[comments\]", "", body, flags=re.IGNORECASE).strip()
 
-                if not image_url:
+                if not found_images:
                     media_elem = entry.find("thumbnail")
                     if media_elem is not None and "url" in media_elem.attrib:
                         thumb = media_elem.attrib["url"]
                         if thumb.startswith("http"):
-                            image_url = thumb
+                            clean_thumb = sanitizar_url_reddit(thumb)
+                            if clean_thumb:
+                                found_images.append(clean_thumb)
                             if "width" in media_elem.attrib:
                                 width = media_elem.attrib["width"]
                             if "height" in media_elem.attrib:
                                 height = media_elem.attrib["height"]
 
-                if image_url:
-                    w_match = re.search(r'width=(\d+)', image_url)
-                    h_match = re.search(r'height=(\d+)', image_url)
-                    if w_match and not width:
+                if found_images and not width:
+                    w_match = re.search(r'width=(\d+)', found_images[0])
+                    h_match = re.search(r'height=(\d+)', found_images[0])
+                    if w_match:
                         width = w_match.group(1)
-                    if h_match and not height:
+                    if h_match:
                         height = h_match.group(1)
 
-                if not title and not body and not image_url:
+                if not title and not body and not found_images:
                     continue
 
                 components = []
@@ -177,12 +186,20 @@ def fetch_reddit_posts(subreddit="LinkaProject", limit=100):
 
                 media_url = None
                 media_type = None
+                media_list = []
 
-                if image_url:
-                    clean_img_url = sanitizar_url_reddit(image_url)
-                    components.append(f"[IMAGE]{clean_img_url}")
-                    media_url = clean_img_url
+                if found_images:
+                    media_url = found_images[0]
                     media_type = "image"
+
+                    for img_item in found_images:
+                        components.append(f"[IMAGE]{img_item}")
+                        media_list.append({
+                            "media_url": img_item,
+                            "media_type": "image",
+                            "width": width or "",
+                            "heigth": height or ""
+                        })
 
                 text_final = "\n".join(components).strip()
 
@@ -199,6 +216,8 @@ def fetch_reddit_posts(subreddit="LinkaProject", limit=100):
                         "width": width,
                         "heigth": height
                     },
+                    "media_list": media_list,
+                    "media_attachments": media_list,
                     "platform": "reddit",
                     "origin_server": "https://linkaProject.pythonanywhere.com/feed/reddit"
                 })

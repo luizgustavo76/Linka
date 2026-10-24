@@ -113,6 +113,8 @@ def formate_bluesky(posts):
         height = None
 
         images_for_v2 = []
+        media_list = []
+
         embed = post.get("embed") or {}
         record_embed = record.get("embed") or {}
 
@@ -138,15 +140,22 @@ def formate_bluesky(posts):
                 if img_url:
                     images_for_v2.append(img_url)
 
+                    aspect_ratio = img.get("aspectRatio") or img.get("image", {}).get("aspectRatio") or {}
+                    m_w = str(aspect_ratio.get("width", "")) if aspect_ratio.get("width") else ""
+                    m_h = str(aspect_ratio.get("height", "")) if aspect_ratio.get("height") else ""
+
+                    media_list.append({
+                        "media_url": img_url,
+                        "media_type": "image",
+                        "width": m_w,
+                        "heigth": m_h
+                    })
+
                     if not media_url:
                         media_url = img_url
                         media_type = "image"
-                        
-                        aspect_ratio = img.get("aspectRatio") or img.get("image", {}).get("aspectRatio") or {}
-                        if aspect_ratio.get("width"):
-                            width = str(aspect_ratio.get("width"))
-                        if aspect_ratio.get("height"):
-                            height = str(aspect_ratio.get("height"))
+                        width = m_w
+                        height = m_h
 
         if not text_post and not images_for_v2:
             continue
@@ -180,6 +189,8 @@ def formate_bluesky(posts):
                     "width": width,
                     "heigth": height
                 },
+                "media_list": media_list,
+                "media_attachments": media_list,
                 "platform": "bluesky",
                 "origin_server": "https://linkaProject.pythonanywhere.com/feed/bluesky"
             }
