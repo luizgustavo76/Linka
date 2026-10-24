@@ -11,13 +11,51 @@ BSKY_HANDLE = os.getenv("BSKY_HANDLE")
 BSKY_APP_PASSWORD = os.getenv("BSKY_APP_PASSWORD")
 
 
+def get_relative_time(post_date):
+    if not post_date:
+        return ""
+    if isinstance(post_date, str):
+        try:
+            post_date = datetime.strptime(post_date, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            try:
+                post_date = datetime.fromisoformat(post_date.replace("Z", "+00:00"))
+            except ValueError:
+                return post_date
+
+    now = datetime.now()
+    diff = now - post_date
+    seconds = int(diff.total_seconds())
+
+    if seconds < 60:
+        return "just now"
+    
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes}m ago"
+    
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours}h ago"
+    
+    days = hours // 24
+    if days < 30:
+        return f"{days}d ago"
+    
+    months = days // 30
+    if months < 12:
+        return f"{months} mo ago" if months == 1 else f"{months} mos ago"
+    
+    years = days // 365
+    return f"{years} yr ago" if years == 1 else f"{years} yrs ago"
+
+
 def get_bluesky_token():
     url = "https://bsky.social/xrpc/com.atproto.server.createSession"
     payload = {
         "identifier": BSKY_HANDLE,
         "password": BSKY_APP_PASSWORD,
     }
-    # Removido o User-Agent sintético de browser para evitar block no Cloudflare
     headers = {"Content-Type": "application/json"}
     try:
         response = requests.post(
@@ -25,9 +63,7 @@ def get_bluesky_token():
         )
         if response.status_code == 200:
             return response.json().get("accessJwt")
-        print(
-            f"[BLUESKY AUTH ERROR] Status: {response.status_code} - {response.text}"
-        )
+        print(f"[BLUESKY AUTH ERROR] Status: {response.status_code} {response.text}")
         return None
     except Exception as e:
         print(f"[BLUESKY AUTH EXCEPTION] {e}")
@@ -48,14 +84,12 @@ def formate_bluesky(posts):
             or "anonimo"
         )
 
-        # O 'record' contem os dados puros gravados na rede AT Protocol
         record = post.get("record") or {}
 
-        # Busca texto no record ou direto na view (fallback)
         text_post = record.get("text") or post.get("text") or ""
         text_post = unicodedata.normalize("NFKC", text_post)
         text_post = "\n".join(
-            line.strip() for line in text_post.splitlines()
+            line.strip() for line in text_post.splitlines() if line.strip()
         ).strip()
 
         raw_created_at = (
@@ -73,11 +107,15 @@ def formate_bluesky(posts):
             except Exception:
                 datetime_formatado = str(raw_created_at)
 
-        images = []
+        media_url = None
+        media_type = None
+        width = None
+        height = None
+
+        images_for_v2 = []
         embed = post.get("embed") or {}
         record_embed = record.get("embed") or {}
 
-        # Mapeamento estendido de imagens no Bluesky ATProto
         imgs = (
             embed.get("images")
             or record_embed.get("images")
@@ -93,23 +131,37 @@ def formate_bluesky(posts):
                     or img.get("image", {}).get("ref", {}).get("$link")
                 )
 
-                # Se for apenas a referencia CID/Link da imagem no Did
                 if img_url and not img_url.startswith("http"):
                     did = author_info.get("did")
                     img_url = f"https://cdn.bsky.app/img/feed_fullsize/plain/{did}/{img_url}@jpeg"
 
                 if img_url:
-                    images.append(img_url)
+                    images_for_v2.append(img_url)
 
-        # Se não tiver texto nem imagem, pula
-        if not text_post and not images:
+                    if not media_url:
+                        media_url = img_url
+                        media_type = "image"
+                        
+                        aspect_ratio = img.get("aspectRatio") or img.get("image", {}).get("aspectRatio") or {}
+                        if aspect_ratio.get("width"):
+                            width = str(aspect_ratio.get("width"))
+                        if aspect_ratio.get("height"):
+                            height = str(aspect_ratio.get("height"))
+
+        if not text_post and not images_for_v2:
             continue
 
-        if images:
-            links_formatados = "".join(f"\n[IMAGE]{url}" for url in images)
+        if images_for_v2:
+            links_formatados = "".join(f"\n[IMAGE]{url}" for url in images_for_v2)
             text_final = f"{text_post}{links_formatados}".strip()
         else:
             text_final = text_post
+
+        raw_replies = post.get("replyCount")
+        try:
+            comments_count = int(raw_replies) if raw_replies is not None else 0
+        except (ValueError, TypeError):
+            comments_count = 0
 
         posts_formatados.append(
             {
@@ -120,6 +172,16 @@ def formate_bluesky(posts):
                 ),
                 "text_post": text_final,
                 "datetime": datetime_formatado,
+                "relative_datetime": get_relative_time(datetime_formatado),
+                "comment_count": comments_count,
+                "media": {
+                    "media_url": media_url,
+                    "media_type": media_type,
+                    "width": width,
+                    "heigth": height
+                },
+                "platform": "bluesky",
+                "origin_server": "https://linkaProject.pythonanywhere.com/feed/bluesky"
             }
         )
 
@@ -142,9 +204,7 @@ def fetch_bluesky_posts(query="retrocomputing", limit=40):
             url, headers=headers, params=params, timeout=10
         )
         if response.status_code != 200:
-            print(
-                f"[BLUESKY SEARCH ERROR] Status: {response.status_code} - {response.text}"
-            )
+            print(f"[BLUESKY SEARCH ERROR] Status: {response.status_code} {response.text}")
             return []
 
         data = response.json()
@@ -152,4 +212,3 @@ def fetch_bluesky_posts(query="retrocomputing", limit=40):
     except Exception as e:
         print(f"[BLUESKY EXCEPTION] {e}")
         return []
-

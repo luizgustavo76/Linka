@@ -16,6 +16,45 @@ dotenv.load_dotenv(dotenv_path=env_path)
 MASTODON_KEY = os.getenv("MASTODON_KEY", "").strip()
 
 
+def get_relative_time(post_date):
+    if not post_date:
+        return ""
+    if isinstance(post_date, str):
+        try:
+            post_date = datetime.strptime(post_date, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            try:
+                post_date = datetime.fromisoformat(post_date.replace("Z", "+00:00"))
+            except ValueError:
+                return post_date
+
+    now = datetime.now()
+    diff = now - post_date
+    seconds = int(diff.total_seconds())
+
+    if seconds < 60:
+        return "just now"
+    
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes}m ago"
+    
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours}h ago"
+    
+    days = hours // 24
+    if days < 30:
+        return f"{days}d ago"
+    
+    months = days // 30
+    if months < 12:
+        return f"{months} mo ago" if months == 1 else f"{months} mos ago"
+    
+    years = days // 365
+    return f"{years} yr ago" if years == 1 else f"{years} yrs ago"
+
+
 def fetch_mastodon_user_avatar(username, instance="mastodon.social"):
     clean_username = username.lstrip("@")
     if "@" in clean_username:
@@ -86,7 +125,6 @@ def formate(posts, instance="mastodon.social"):
 
         html_content = target_post.get("content", "")
         
-        # Trata quebras de linha no HTML
         html_content = (
             html_content.replace("<br />", "\n")
             .replace("<br>", "\n")
@@ -95,7 +133,6 @@ def formate(posts, instance="mastodon.social"):
 
         soup = BeautifulSoup(html_content, "html.parser")
 
-        # Remove elementos de hashtags (links com a classe 'hashtag')
         for hashtag_element in soup.find_all("a", class_="hashtag"):
             hashtag_element.decompose()
 
@@ -106,19 +143,37 @@ def formate(posts, instance="mastodon.social"):
             line.strip() for line in text_post.splitlines() if line.strip()
         ).strip()
 
-        images = []
+        media_url = None
+        media_type = None
+        width = None
+        height = None
+
+        images_for_v2 = []
+        
         for media in target_post.get("media_attachments", []):
             if isinstance(media, dict) and media.get("type") == "image":
                 img_url = media.get("url") or media.get("preview_url")
                 if img_url:
-                    images.append(img_url)
+                    images_for_v2.append(img_url)
+                    
+                    if not media_url:
+                        media_url = img_url
+                        media_type = "image"
+                        
+                        meta_original = media.get("meta", {}).get("original", {})
+                        if meta_original.get("width"):
+                            width = str(meta_original.get("width"))
+                        if meta_original.get("height"):
+                            height = str(meta_original.get("height"))
+
         avatar_url = (
             account_info.get("avatar_static") 
             or account_info.get("avatar") 
             or ""
         )
-        if images:
-            links_formatados = "".join(f"[IMAGE]{url}\n" for url in images)
+
+        if images_for_v2:
+            links_formatados = "".join(f"[IMAGE]{url}\n" for url in images_for_v2)
             text_final = f"{text_post}\n{links_formatados}".strip()
         else:
             text_final = text_post
@@ -129,10 +184,9 @@ def formate(posts, instance="mastodon.social"):
         except (ValueError, TypeError):
             comments_count = 0
 
-        # Tenta pegar a URL original do post para rastrear a instância de origem
         original_url = target_post.get("url", "")
 
-        if text_final or images:
+        if text_final or media_url:
             posts_formatados.append(
                 {
                     "username": (
@@ -142,9 +196,16 @@ def formate(posts, instance="mastodon.social"):
                     ),
                     "account_id": account_id,
                     "text_post": text_final,
+                    "datetime": datetime_formatado,
+                    "relative_datetime": get_relative_time(datetime_formatado),
                     "comment_count": comments_count,
                     "avatar_url": avatar_url,
-                    "datetime": datetime_formatado,
+                    "media": {
+                        "media_url": media_url,
+                        "media_type": media_type,
+                        "width": width,
+                        "heigth": height
+                    },
                     "origin_server": "https://linkaProject.pythonanywhere.com/feed/mastodon",
                     "platform": "mastodon",
                     "unique_id": str(target_post.get("id")),
@@ -206,12 +267,10 @@ def fetch_mastodon_comments(original_post_id, instance="mastodon.social", origin
     clean_id = str(original_post_id).strip().replace('"', '')
     target_instance = instance
 
-    # Se receber a URL original do post, descobre a instância real de origem
     if original_url:
         parsed_url = urlparse(original_url)
         if parsed_url.netloc:
             target_instance = parsed_url.netloc
-            # Extrai o ID nativo da instância de origem a partir da URL se necessário
             url_id = parsed_url.path.split("/")[-1]
             if url_id.isdigit():
                 clean_id = url_id
@@ -225,7 +284,6 @@ def fetch_mastodon_comments(original_post_id, instance="mastodon.social", origin
     try:
         response = requests.get(url, headers=headers, timeout=10)
 
-        # Se falhar na instância remota, faz fallback para a instância padrão
         if response.status_code != 200 and target_instance != instance:
             print(f"[MASTODON COMMENTS FALLBACK] Falhou em {target_instance}. Tentando {instance}...")
             url = f"https://{instance}/api/v1/statuses/{original_post_id}/context"
@@ -250,7 +308,6 @@ def fetch_mastodon_comments(original_post_id, instance="mastodon.social", origin
             html_content = html_content.replace("<br />", "\n").replace("<br>", "\n").replace("</p>", "\n")
             soup = BeautifulSoup(html_content, "html.parser")
 
-            # Remove tags dentro dos comentários também
             for hashtag_element in soup.find_all("a", class_="hashtag"):
                 hashtag_element.decompose()
 

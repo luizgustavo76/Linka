@@ -3,12 +3,53 @@ import time
 import urllib.parse
 import xml.etree.ElementTree as ET
 from html import unescape
+from datetime import datetime
 from flask import Blueprint, jsonify, request
 import requests
 
 post_bp = Blueprint("reddit_post_bp", __name__)
 
 CLOUDFLARE_WORKER_URL = "https://fancy-fire-49d2.luizsgustavo76.workers.dev"
+
+
+def get_relative_time(post_date):
+    if not post_date:
+        return ""
+    if isinstance(post_date, str):
+        try:
+            post_date = datetime.strptime(post_date, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            try:
+                post_date = datetime.fromisoformat(post_date.replace("Z", "+00:00"))
+            except ValueError:
+                return post_date
+
+    now = datetime.now()
+    diff = now - post_date
+    seconds = int(diff.total_seconds())
+
+    if seconds < 60:
+        return "just now"
+    
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes}m ago"
+    
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours}h ago"
+    
+    days = hours // 24
+    if days < 30:
+        return f"{days}d ago"
+    
+    months = days // 30
+    if months < 12:
+        return f"{months} mo ago" if months == 1 else f"{months} mos ago"
+    
+    years = days // 365
+    return f"{years} yr ago" if years == 1 else f"{years} yrs ago"
+
 
 def sanitizar_url_reddit(url):
     if not url:
@@ -23,8 +64,8 @@ def sanitizar_url_reddit(url):
     clean = re.sub(r"&&+", "&", clean)
     return clean.strip("&?")
 
+
 def fetch_reddit_posts(subreddit="LinkaProject", limit=100):
-    """Busca posts do Reddit e retorna uma lista Python pura (para o federador interno)."""
     clear_sub = subreddit.strip("/") if subreddit else "LinkaProject"
     if clear_sub.endswith("/feed"):
         clear_sub = clear_sub[:-5]
@@ -38,10 +79,8 @@ def fetch_reddit_posts(subreddit="LinkaProject", limit=100):
 
     posts = []
     try:
-        # Tenta via Proxy Worker
         res = requests.get(proxy_url, headers=headers, timeout=6)
         
-        # Se o worker falhar, tenta requisição direta no RSS do Reddit
         if res.status_code != 200:
             res = requests.get(target_rss, headers=headers, timeout=6)
 
@@ -55,6 +94,8 @@ def fetch_reddit_posts(subreddit="LinkaProject", limit=100):
             for entry in entries:
                 title_elem = entry.find("title")
                 content_elem = entry.find("content")
+                published_elem = entry.find("published") or entry.find("updated")
+                
                 title = title_elem.text.strip() if title_elem is not None and title_elem.text else ""
 
                 author = "entity404"
@@ -72,8 +113,18 @@ def fetch_reddit_posts(subreddit="LinkaProject", limit=100):
                 if not author or author in ["[deleted]", "AutoModerator"]:
                     continue
 
+                datetime_formatado = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                if published_elem is not None and published_elem.text:
+                    try:
+                        dt = datetime.fromisoformat(published_elem.text.replace("Z", "+00:00"))
+                        datetime_formatado = dt.strftime("%Y-%m-%d %H:%M:%S")
+                    except Exception:
+                        pass
+
                 body = ""
                 image_url = ""
+                width = None
+                height = None
 
                 if content_elem is not None and content_elem.text:
                     content_html = unescape(content_elem.text)
@@ -102,6 +153,18 @@ def fetch_reddit_posts(subreddit="LinkaProject", limit=100):
                         thumb = media_elem.attrib["url"]
                         if thumb.startswith("http"):
                             image_url = thumb
+                            if "width" in media_elem.attrib:
+                                width = media_elem.attrib["width"]
+                            if "height" in media_elem.attrib:
+                                height = media_elem.attrib["height"]
+
+                if image_url:
+                    w_match = re.search(r'width=(\d+)', image_url)
+                    h_match = re.search(r'height=(\d+)', image_url)
+                    if w_match and not width:
+                        width = w_match.group(1)
+                    if h_match and not height:
+                        height = h_match.group(1)
 
                 if not title and not body and not image_url:
                     continue
@@ -111,15 +174,33 @@ def fetch_reddit_posts(subreddit="LinkaProject", limit=100):
                     components.append(title)
                 if body:
                     components.append(body)
+
+                media_url = None
+                media_type = None
+
                 if image_url:
                     clean_img_url = sanitizar_url_reddit(image_url)
                     components.append(f"[IMAGE]{clean_img_url}")
+                    media_url = clean_img_url
+                    media_type = "image"
+
+                text_final = "\n".join(components).strip()
 
                 posts.append({
                     "id": len(posts) + 1,
-                    "text_post": "\n".join(components),
                     "username": f"@{author}" if not author.startswith("@") else author,
-                    "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    "text_post": text_final,
+                    "datetime": datetime_formatado,
+                    "relative_datetime": get_relative_time(datetime_formatado),
+                    "comment_count": 0,
+                    "media": {
+                        "media_url": media_url,
+                        "media_type": media_type,
+                        "width": width,
+                        "heigth": height
+                    },
+                    "platform": "reddit",
+                    "origin_server": "https://linkaProject.pythonanywhere.com/feed/reddit"
                 })
                 if len(posts) >= limit:
                     break
@@ -127,6 +208,7 @@ def fetch_reddit_posts(subreddit="LinkaProject", limit=100):
         print(f"[REDDIT EXCEPTION] {e}")
 
     return posts
+
 
 @post_bp.route("/feed/reddit/<path:subreddit>", methods=["GET"], strict_slashes=False)
 def subreddit_posts(subreddit=None):
