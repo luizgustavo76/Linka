@@ -33,14 +33,17 @@ if root_flags.get("mastodon-federation"):
 
 post_bp = Blueprint("post", __name__)
 
+# Executor de threads para background tasks
+bg_executor = ThreadPoolExecutor(max_workers=5)
+
 if not os.path.exists(db_dir):
     os.makedirs(db_dir)
 
 
 def get_image_dimensions(url):
     """
-    Faz o download do cabeçalho da imagem (Stream) e extrai 
-    a largura e a altura sem carregar a imagem inteira na RAM.
+    Faz o download rápido do cabeçalho da imagem (Stream)
+    e extrai largura e altura sem carregar a imagem inteira na RAM.
     """
     if not url or not isinstance(url, str) or not url.startswith(("http://", "https://")):
         return "", ""
@@ -58,6 +61,44 @@ def get_image_dimensions(url):
     except Exception as e:
         print(f"[DEBUG MEDIA DIMENSIONS ERROR] {url}: {e}")
     return "", ""
+
+
+def process_dimensions_in_background(post_id, main_media, media_items):
+    """
+    Task de fundo que roda de forma assíncrona, extrai a resolução
+    das imagens e atualiza o banco de dados sem travar a API.
+    """
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+
+        # 1. Processa a mídia principal
+        if main_media:
+            w, h = get_image_dimensions(main_media)
+            if w and h:
+                cur.execute(
+                    "UPDATE posts SET width = ?, heigth = ? WHERE id = ?",
+                    (w, h, post_id)
+                )
+
+        # 2. Processa cada item do carrossel/post_media
+        if media_items and isinstance(media_items, list):
+            for item in media_items:
+                media_url = item.get("media_url")
+                item_id = item.get("id")
+                if media_url and item_id:
+                    w, h = get_image_dimensions(media_url)
+                    if w and h:
+                        cur.execute(
+                            "UPDATE post_media SET width = ?, heigth = ? WHERE id = ?",
+                            (w, h, item_id)
+                        )
+
+        conn.commit()
+        conn.close()
+        print(f"[BACKGROUND TASK] Dimensões do post #{post_id} atualizadas com sucesso!")
+    except Exception as e:
+        print(f"[BACKGROUND TASK ERROR] Falha ao processar post #{post_id}: {e}")
 
 
 def get_db():
@@ -192,24 +233,18 @@ def parse_media_list(media_raw, media_type_raw, width_raw, height_raw):
             if isinstance(parsed, list):
                 for item in parsed:
                     if isinstance(item, dict):
-                        m_url = item.get("media_url", item.get("url", ""))
-                        m_w = str(item.get("width", ""))
-                        m_h = str(item.get("heigth", item.get("height", "")))
-                        if not m_w or not m_h:
-                            m_w, m_h = get_image_dimensions(m_url)
                         media_items.append({
-                            "media_url": m_url,
+                            "media_url": item.get("media_url", item.get("url", "")),
                             "media_type": item.get("media_type", "image"),
-                            "width": m_w,
-                            "heigth": m_h
+                            "width": str(item.get("width", "")),
+                            "heigth": str(item.get("heigth", item.get("height", "")))
                         })
                     elif isinstance(item, str):
-                        m_w, m_h = get_image_dimensions(item)
                         media_items.append({
                             "media_url": item,
                             "media_type": "image",
-                            "width": m_w,
-                            "heigth": m_h
+                            "width": "",
+                            "heigth": ""
                         })
                 return media_items
         except Exception:
@@ -218,28 +253,19 @@ def parse_media_list(media_raw, media_type_raw, width_raw, height_raw):
     if isinstance(media_raw, str) and "," in media_raw:
         urls = [u.strip() for u in media_raw.split(",") if u.strip()]
         for u in urls:
-            m_w = str(width_raw or "")
-            m_h = str(height_raw or "")
-            if not m_w or not m_h:
-                m_w, m_h = get_image_dimensions(u)
             media_items.append({
                 "media_url": u,
                 "media_type": media_type_raw or "image",
-                "width": m_w,
-                "heigth": m_h
+                "width": str(width_raw or ""),
+                "heigth": str(height_raw or "")
             })
         return media_items
-
-    m_w = str(width_raw or "")
-    m_h = str(height_raw or "")
-    if not m_w or not m_h:
-        m_w, m_h = get_image_dimensions(media_raw)
 
     media_items.append({
         "media_url": media_raw,
         "media_type": media_type_raw or "image",
-        "width": m_w,
-        "heigth": m_h
+        "width": str(width_raw or ""),
+        "heigth": str(height_raw or "")
     })
     return media_items
 
@@ -567,8 +593,8 @@ def new_post():
             media_type = data.get("media_type")
             datetime_post = data.get("datetime") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
-            width = data.get("width")
-            heigth = data.get("heigth")
+            width = data.get("width", "")
+            heigth = data.get("heigth", "")
 
             media_list_input = data.get("media_list") or data.get("media_attachments")
 
@@ -590,31 +616,28 @@ def new_post():
                     notificationsModule.CreateNotification(username, user, date, "mention", f"{username} mentioned you in a post")
                     mentions_module.createMention(username, user, text_post, None, None, "post")
 
-            conn = get_db()
-            cur = conn.cursor()
-
             main_media = media
             if not main_media and media_list_input and len(media_list_input) > 0:
                 first_item = media_list_input[0]
                 if isinstance(first_item, dict):
                     main_media = first_item.get("media_url")
                     media_type = first_item.get("media_type", "image")
-                    width = first_item.get("width")
-                    heigth = first_item.get("heigth") or first_item.get("height")
+                    width = first_item.get("width", "")
+                    heigth = first_item.get("heigth") or first_item.get("height", "")
                 elif isinstance(first_item, str):
                     main_media = first_item
 
-            # Preenche width e height automaticamente caso estejam vazios
-            if main_media and (not width or not heigth):
-                auto_w, auto_h = get_image_dimensions(main_media)
-                width = width or auto_w
-                heigth = heigth or auto_h
+            conn = get_db()
+            cur = conn.cursor()
 
+            # Insere imediatamente no banco (resposta instantânea ao cliente)
             cur.execute(
                 "INSERT INTO posts(username, text_post, datetime, media, media_type, width, heigth) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (username, text_post, datetime_post, main_media, media_type, width, heigth)
+                (username, text_post, datetime_post, main_media, media_type, str(width or ""), str(heigth or ""))
             )
             post_id = cur.lastrowid
+
+            background_media_items = []
 
             if media_list_input and isinstance(media_list_input, list):
                 for item in media_list_input:
@@ -629,17 +652,27 @@ def new_post():
                         m_w = ""
                         m_h = ""
 
-                    if m_url and (not m_w or not m_h):
-                        m_w, m_h = get_image_dimensions(m_url)
-
                     if m_url:
                         cur.execute(
                             "INSERT INTO post_media(post_id, media_url, media_type, width, heigth) VALUES (?, ?, ?, ?, ?)",
                             (post_id, m_url, m_type, m_w, m_h)
                         )
+                        item_id = cur.lastrowid
+                        if not m_w or not m_h:
+                            background_media_items.append({"id": item_id, "media_url": m_url})
 
             conn.commit()
             conn.close()
+
+            # Dispara a busca de resolução em segundo plano se faltar largura/altura
+            if (main_media and (not width or not heigth)) or background_media_items:
+                bg_executor.submit(
+                    process_dimensions_in_background,
+                    post_id,
+                    main_media if (not width or not heigth) else None,
+                    background_media_items
+                )
+
             linkosModule.add_linkos(username, "5")
             return jsonify({"status": "post created with sucess"}), 200
         else:
@@ -716,24 +749,14 @@ def feed():
         media_list = []
         if media_rows:
             for row in media_rows:
-                m_w = row["width"] or ""
-                m_h = row["heigth"] or ""
-                if row["media_url"] and (not m_w or not m_h):
-                    m_w, m_h = get_image_dimensions(row["media_url"])
-
                 media_list.append({
                     "media_url": row["media_url"],
                     "media_type": row["media_type"] or "image",
-                    "width": m_w,
-                    "heigth": m_h
+                    "width": row["width"] or "",
+                    "heigth": row["heigth"] or ""
                 })
         else:
             media_list = parse_media_list(media_url, media_type, post["width"], post["heigth"])
-
-        main_width = post["width"] or ""
-        main_heigth = post["heigth"] or ""
-        if media_url and (not main_width or not main_heigth):
-            main_width, main_heigth = get_image_dimensions(media_url)
 
         lista_posts.append({
             "id": post["id"],
@@ -745,8 +768,8 @@ def feed():
             "media": {
                 "media_url": media_url or "",
                 "media_type": media_type or "image",
-                "width": main_width,
-                "heigth": main_heigth
+                "width": post["width"] or "",
+                "heigth": post["heigth"] or ""
             },
             "media_list": media_list,
             "media_attachments": media_list,
