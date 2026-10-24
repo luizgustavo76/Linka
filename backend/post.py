@@ -93,6 +93,45 @@ def create_db():
 create_db()
 
 
+def get_relative_time(post_date):
+    if not post_date:
+        return ""
+    if isinstance(post_date, str):
+        try:
+            post_date = datetime.strptime(post_date, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            try:
+                post_date = datetime.fromisoformat(post_date)
+            except ValueError:
+                return post_date
+
+    now = datetime.now()
+    diff = now - post_date
+    seconds = int(diff.total_seconds())
+
+    if seconds < 60:
+        return "just now"
+    
+    minutes = seconds // 60
+    if minutes < 60:
+        return f"{minutes} minutes ago"
+    
+    hours = minutes // 60
+    if hours < 24:
+        return f"{hours} hours ago"
+    
+    days = hours // 24
+    if days < 30:
+        return f"{days} days ago"
+    
+    months = days // 30
+    if months < 12:
+        return f"{months} month ago" if months == 1 else f"{months} months ago"
+    
+    years = days // 365
+    return f"{years} year ago" if years == 1 else f"{years} years ago"
+
+
 @post_bp.route("/view-profile-posts", methods=["POST"])
 def view_profile_posts():
     data = request.get_json(silent=True) or {}
@@ -110,10 +149,11 @@ def view_profile_posts():
     posts = []
     for single_posts in result:
         posts.append({
-            "id": single_posts[0],
-            "username": single_posts[1],
-            "text_post": single_posts[2],
-            "datetime": single_posts[3]
+            "id": single_posts["id"],
+            "username": single_posts["username"],
+            "text_post": single_posts["text_post"],
+            "datetime": single_posts["datetime"],
+            "relative_datetime": get_relative_time(single_posts["datetime"])
         })
     return jsonify(posts)
 
@@ -152,7 +192,7 @@ def new_comment():
         conn.close()
 
         linkosModule.add_linkos(username, 2)
-        post_owner = op[0] if op else None        
+        post_owner = op["username"] if op else None        
         date = datetime.now()
         if post_owner:
             notificationsModule.CreateNotification(username, post_owner, date, "comment", text_comment)
@@ -160,35 +200,40 @@ def new_comment():
     else:
         return jsonify({"status": "forbidden"}), 403
 
+
 @post_bp.route("/edit-post", methods=["POST"])
 def edit_post():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
-    if username == g.username:
+    if username == getattr(g, "username", None):
         text_post = data.get("text_post")
         post_id = data.get("post_id")
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("UPDATE posts SET text_post = ? WHERE id = ?",(text_post, post_id))
+        cur.execute("UPDATE posts SET text_post = ? WHERE id = ?", (text_post, post_id))
         conn.commit()
         conn.close()
-        return jsonify({"status":"the post has edited"}),200
+        return jsonify({"status": "the post has edited"}), 200
     else:
-        return jsonify({"status":"forbidden"}),403
+        return jsonify({"status": "forbidden"}), 403
+
+
 @post_bp.route("/delete-post", methods=["POST"])
 def delete_post():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
-    if username == g.username:
+    if username == getattr(g, "username", None):
         post_id = data.get("post_id")
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("DELETE FROM posts WHERE id = ?",(post_id,))
+        cur.execute("DELETE FROM posts WHERE id = ?", (post_id,))
         conn.commit()
         conn.close()
-        return jsonify({"status":"the post has deleted"}),200
+        return jsonify({"status": "the post has deleted"}), 200
     else:
-        return jsonify({"status":"forbidden"}),403
+        return jsonify({"status": "forbidden"}), 403
+
+
 @post_bp.route("/view-comments", methods=["POST"])
 def view_comments():
     data = request.get_json(force=True) or {}
@@ -220,10 +265,10 @@ def get_internal_feed_posts():
     lista_posts = []
     for post in posts:
         lista_posts.append({
-            "id": post[0],
-            "username": post[1],
-            "text_post": post[2],
-            "datetime": post[3]
+            "id": post["id"],
+            "username": post["username"],
+            "text_post": post["text_post"],
+            "datetime": post["datetime"]
         })
     return lista_posts
 
@@ -282,13 +327,13 @@ def fetch_single_federation(node_url):
 
     return None
 
+
 def parse_datetime_flexible(dt_str):
     if not dt_str:
         return datetime.min
-    if isinstance(dt_str, (int, float)): # Se for timestamp UNIX
+    if isinstance(dt_str, (int, float)):
         return datetime.fromtimestamp(dt_str)
     
-    # Substitui 'T' e 'Z' se vier de APIs tipo Mastodon/Bluesky ISO8601
     dt_clean = str(dt_str).replace('T', ' ').replace('Z', '')
     
     formats = [
@@ -302,6 +347,7 @@ def parse_datetime_flexible(dt_str):
         except ValueError:
             pass
     return datetime.min
+
 
 def sort_and_interleave_posts(all_posts):
     for post in all_posts:
@@ -333,6 +379,8 @@ def sort_and_interleave_posts(all_posts):
             last_platform = current_platform
 
     return final_feed
+
+
 @post_bp.route("/view-external-posts", methods=["POST"])
 def view_external_posts():
     data = request.get_json(silent=True) or {}
@@ -401,22 +449,23 @@ def new_post():
         username = data.get("username")
         current_user = getattr(g, "username", None)
         if username == current_user:
-            text_post = data.get("text_post")
+            text_post = data.get("text_post", "")
             media = data.get("media")
             media_type = data.get("media_type")
-            datetime_post = data.get("datetime")
+            datetime_post = data.get("datetime") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            width = data.get("width")
+            heigth = data.get("heigth")
+
             match = re.search(r'\[IMAGE\]\s*(.*)', text_post)
-            old_media = match.replace("[IMAGE]", "")
-            if media:
-                width = data.get("width")
-                heigth = data.get("heigth")
-            if old_media:
-                media = old_media
+            if match:
+                media = match.group(1).strip()
                 media_type = "image"
+
             if not username:
                 return jsonify({"status": "username not send"}), 400
 
-            if None in (text_post, media):
+            if not text_post and not media:
                 return jsonify({"status": "its not possible create a post with no cotent"}), 400
 
             if "@" in text_post:
@@ -430,7 +479,7 @@ def new_post():
             cur = conn.cursor()
 
             cur.execute(
-                "INSERT INTO posts(username, text_post, datetime, media, media_type, width, heigth) VALUES (?, ?, ?)",
+                "INSERT INTO posts(username, text_post, datetime, media, media_type, width, heigth) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 (username, text_post, datetime_post, media, media_type, width, heigth)
             )
 
@@ -451,22 +500,25 @@ def trending_feed():
     posts = []
     conn = get_db()
     cur = conn.cursor()    
-    cur.execute("""SELECT post_id, COUNT(id) as total_stars 
-FROM stars 
-GROUP BY post_id 
-ORDER BY total_stars DESC;""")
+    cur.execute("""
+        SELECT post_id, COUNT(id) as total_stars 
+        FROM stars 
+        GROUP BY post_id 
+        ORDER BY total_stars DESC;
+    """)
     result = cur.fetchall()
     for row in result:
-        posts_id.append(row[0])
+        posts_id.append(row["post_id"])
     for i in posts_id:
         cur.execute("SELECT * FROM posts WHERE id = ?", (i,))
         result = cur.fetchall()
         for row in result:
             posts.append({
-                "id": row[0],
-                "username": row[1],
-                "text_post": row[2],
-                "datetime": row[3]
+                "id": row["id"],
+                "username": row["username"],
+                "text_post": row["text_post"],
+                "datetime": row["datetime"],
+                "relative_datetime": get_relative_time(row["datetime"])
             })
     conn.close()    
     return jsonify(posts)
@@ -489,7 +541,7 @@ def feed():
             COUNT(c.id) AS comment_count
         FROM posts p
         LEFT JOIN comments c ON c.post_id = p.id
-        GROUP BY p.id, p.username, p.text_post, p.datetime
+        GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth
         ORDER BY p.id DESC
     """)
     posts = cur.fetchall()
@@ -497,18 +549,27 @@ def feed():
 
     lista_posts = []
     for post in posts:
+        text_content = post["text_post"] or ""
+        match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
+        
+        media_url = match.group(1).strip() if match else post["media"]
+        media_type = "image" if match else post["media_type"]
+
         lista_posts.append({
-            "id": post[0],
-            "username": post[1],
-            "text_post": post[2],
-            "datetime": post[3],
-            "comment_count": post[4],
-            "media":{
-                "media_url":post[5],
-                "media_type":post[6]
+            "id": post["id"],
+            "username": post["username"],
+            "text_post": text_content,
+            "datetime": post["datetime"],
+            "relative_datetime": get_relative_time(post["datetime"]),
+            "comment_count": post["comment_count"],
+            "media": {
+                "media_url": media_url,
+                "media_type": media_type,
+                "width": post["width"],
+                "heigth": post["heigth"]
             },
-            "platform":"linka",
-            "origin_server":root_flags["url-server"]
+            "platform": "linka",
+            "origin_server": root_flags["url-server"]
         })
 
     return jsonify(lista_posts), 200
@@ -553,7 +614,7 @@ def star():
         
         cur.execute("SELECT username FROM posts WHERE id = ?", (post_id,))
         op = cur.fetchone()
-        post_owner = op[0] if op else None
+        post_owner = op["username"] if op else None
         
         if post_owner:
             linkosModule.add_linkos(post_owner, "3")
