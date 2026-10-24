@@ -492,10 +492,7 @@ public class HomeActivity extends ActivityGroup {
                 final String postUniqueId = post.optString("unique_id", "");
                 final String id = post.optString("id", "");
                 final String originalUrl = post.optString("original_url", "");
-                String avatarUrl = "";
-                if (actualTab.equals("timeline")){
-                    avatarUrl = post.optString("avatar_url", "");                    
-                }
+
                 btnComments.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -504,7 +501,7 @@ public class HomeActivity extends ActivityGroup {
                             intent.putExtra("isExternal", true);
                             intent.putExtra("externalUrl", origin_server);
                             intent.putExtra("uniqueId", postUniqueId);
-                            intent.putExtra("originalUrl", originalUrl); // <--- ENVIADO AQUI
+                            intent.putExtra("originalUrl", originalUrl);
                         } else {
                             intent.putExtra("isExternal", false);
                         }
@@ -517,56 +514,81 @@ public class HomeActivity extends ActivityGroup {
                 txtCommentCount.setText(commentsCount);
                 tvUsername.setText(username.startsWith("@") ? username : "@" + username);
                 tvDate.setText(datetime);
-                if (actualTab.equals("timeline")){
-                    String avatar = "http://wsrv.nl/?url=" + avatarUrl;
-                    imageLoader.LoadImageUrl(avatar, avatarPost);
-                }else{
+
+                // --- CARREGAMENTO DO AVATAR ---
+                if ("timeline".equals(actualTab)) {
+                    String avatarUrl = post.optString("avatar_url", "");
+                    if (avatarUrl.startsWith("http")) {
+                        // Dimensiona no wsrv.nl para 48x48 JPG (economiza muita RAM)
+                        String avatarOtimizado = "http://wsrv.nl/?url=" + avatarUrl + "&w=48&h=48&fit=cover&output=jpg";
+                        imageLoader.LoadImageUrl(avatarOtimizado, avatarPost);
+                    } else {
+                        imageLoader.LoadImageUrl(avatarUrl, avatarPost);
+                    }
+                } else {
                     imageLoader.viewProfilePicture(context, username, avatarPost);
                 }
-                if (textPost.contains("[IMAGE]")) {
-                    final List<String> photos = new ArrayList<String>();
+
+                // --- EXTRAÇÃO E CARREGAMENTO DE MÍDIA/FOTO DO POST ---
+                String imgToLoad = "";
+                JSONArray mediaArray = post.optJSONArray("media");
+
+                if (mediaArray != null && mediaArray.length() > 0) {
+                    try {
+                        JSONObject firstMedia = mediaArray.getJSONObject(0);
+                        imgToLoad = firstMedia.optString("url", "");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else if (textPost.contains("[IMAGE]")) {
                     String[] lines = textPost.split("\n");
                     for (String line : lines) {
                         if (line.contains("[IMAGE]")) {
-                            String newUrl = line.replace("[IMAGE]", "").trim();
-                            if (newUrl.length() > 0) {
-                                photos.add(newUrl);
-                            }
+                            imgToLoad = line.replace("[IMAGE]", "").trim();
                             textPost = textPost.replace(line, "").trim();
+                            break;
                         }
+                    }
+                }
+
+                if (imgToLoad.length() > 0) {
+                    imgPost.setVisibility(View.VISIBLE);
+                    imgPost.setAdjustViewBounds(true);
+                    imgPost.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+                    final String finalProxyUrl;
+                    if ("local".equals(actualTab)) {
+                        // Mantém o teu servidor sem alterações
+                        finalProxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + imgToLoad;
+                    } else if ("timeline".equals(actualTab)) {
+                        // Força no wsrv.nl largura máx de 320px com 60% de qualidade
+                        finalProxyUrl = "http://wsrv.nl/?url=" + imgToLoad + "&w=320&q=60&output=jpg";
+                    } else {
+                        finalProxyUrl = imgToLoad;
                     }
 
-                    if (photos.size() > 0) {
-                        final String rawUrl = photos.get(0);
-                        imgPost.setVisibility(View.VISIBLE);
-                        imgPost.setAdjustViewBounds(true);
-                        imgPost.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        String computedUrl = "";
-                        if (actualTab.equals("local")) {
-                            computedUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + rawUrl;
-                        } else if (actualTab.equals("timeline")) {
-                            computedUrl = "http://wsrv.nl/?url=" + rawUrl + "&output=jpg";
-                        } else {
-                            computedUrl = rawUrl;
+                    imgPost.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
+                            intent.putExtra("type", "Image");
+                            intent.putExtra("url", finalProxyUrl);
+                            startActivity(intent);
                         }
-                        final String finalProxyUrl = computedUrl;
-                        imgPost.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
-                                intent.putExtra("type", "Image");
-                                intent.putExtra("url", finalProxyUrl);
-                                startActivity(intent);
-                            }
-                        });
-                        imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
-                    }
+                    });
+
+                    imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
                 }
-                if (textPost.equals("")){
+
+                // --- CONTROLE DE VISIBILIDADE DO TEXTO ---
+                String cleanText = textPost.trim();
+                if (cleanText.length() == 0) {
                     tvText.setVisibility(View.GONE);
-                }else{
-                    tvText.setText(textPost);
+                } else {
+                    tvText.setVisibility(View.VISIBLE);
+                    tvText.setText(cleanText);
                 }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
