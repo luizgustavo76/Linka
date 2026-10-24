@@ -62,6 +62,10 @@ def create_db():
         CREATE TABLE IF NOT EXISTS posts(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT,
+            media TEXT,
+            media_type TEXT,
+            width TEXT,
+            heigth TEXT,
             text_post TEXT,
             datetime TEXT
         )
@@ -392,19 +396,27 @@ def new_post():
         data = request.get_json(silent=True)
 
         if data is None:
-            return jsonify({"status": "JSON inválido ou vazio"}), 400
+            return jsonify({"status": "Invalid json"}), 400
 
         username = data.get("username")
         current_user = getattr(g, "username", None)
-
         if username == current_user:
             text_post = data.get("text_post")
+            media = data.get("media")
+            media_type = data.get("media_type")
             datetime_post = data.get("datetime")
-
+            match = re.search(r'\[IMAGE\]\s*(.*)', text_post)
+            old_media = match.replace("[IMAGE]", "")
+            if media:
+                width = data.get("width")
+                heigth = data.get("heigth")
+            if old_media:
+                media = old_media
+                media_type = "image"
             if not username:
                 return jsonify({"status": "username not send"}), 400
 
-            if not text_post:
+            if None in (text_post, media):
                 return jsonify({"status": "its not possible create a post with no cotent"}), 400
 
             if "@" in text_post:
@@ -418,8 +430,8 @@ def new_post():
             cur = conn.cursor()
 
             cur.execute(
-                "INSERT INTO posts(username, text_post, datetime) VALUES (?, ?, ?)",
-                (username, text_post, datetime_post)
+                "INSERT INTO posts(username, text_post, datetime, media, media_type, width, heigth) VALUES (?, ?, ?)",
+                (username, text_post, datetime_post, media, media_type, width, heigth)
             )
 
             conn.commit()
@@ -430,7 +442,7 @@ def new_post():
             return jsonify({"status": "forbidden"}), 403
     except Exception as e:
         print("ERROR", e)
-        return jsonify({"status": "error", "message": "Erro interno no servidor"}), 500
+        return jsonify({"status": "error", "message": "internal server error"}), 500
 
 
 @post_bp.route("/trending-feed", methods=["GET"])
