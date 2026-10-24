@@ -98,7 +98,6 @@
             android:text="Local Feed ▶" />
     </RelativeLayout>
 
-    <!-- 3. Área de Conteúdo Pagina/Deslizável na Horizontal -->
     <HorizontalScrollView
         android:id="@+id/scrollViewPages"
         android:layout_width="fill_parent"

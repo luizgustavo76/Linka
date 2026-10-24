@@ -44,7 +44,6 @@ public class HomeActivity extends ActivityGroup {
     private ImageButton btnProfile;
     private Button btnClose;
     private Button btnLogin;
-
     private HorizontalScrollView scrollViewPages;
     private TextView tabPrev, tabCurrent, tabNext;
     private int screenWidth;
@@ -53,7 +52,6 @@ public class HomeActivity extends ActivityGroup {
     private String url = "";
     private ListView listViewTimeline;
     private ListView listViewLocal;
-    
     private PostAdapter adapterTimeline;
     private PostAdapter adapterLocal;
     private ArrayList<JSONObject> postsTimeline = new ArrayList<JSONObject>();
@@ -426,6 +424,10 @@ public class HomeActivity extends ActivityGroup {
         private ArrayList<JSONObject> list;
         private String tabType;
         private ImageLoader imageLoader;
+        private String mediaUrl = "";
+        private String mediaType = "";
+        private String width = "";
+        private String height = "";
 
         public PostAdapter(Context context, ArrayList<JSONObject> list, String tabType) {
             this.context = context;
@@ -492,6 +494,19 @@ public class HomeActivity extends ActivityGroup {
                 final String postUniqueId = post.optString("unique_id", "");
                 final String relative_datetime = post.optString("relative_datetime", "");
                 
+                JSONObject media = post.optJSONObject("media");
+                if (media != null) {
+                    width = media.optString("width", "");
+                    height = media.optString("heigth", "");
+                    mediaType = media.optString("media_type", "image");
+                    mediaUrl = media.optString("media_url", "");
+                } else {
+                    width = "";
+                    height = "";
+                    mediaType = "image";
+                    mediaUrl = "";
+                }
+
                 final String id = post.optString("id", "");
                 final String originalUrl = post.optString("original_url", "");
 
@@ -517,11 +532,9 @@ public class HomeActivity extends ActivityGroup {
                 tvUsername.setText(username.startsWith("@") ? username : "@" + username);
                 tvDate.setText(relative_datetime +"(" + datetime + ")");
 
-                // --- CARREGAMENTO DO AVATAR ---
                 if ("timeline".equals(actualTab)) {
                     String avatarUrl = post.optString("avatar_url", "");
                     if (avatarUrl.startsWith("http")) {
-                        // Dimensiona no wsrv.nl para 48x48 JPG (economiza muita RAM)
                         String avatarOtimizado = "http://wsrv.nl/?url=" + avatarUrl + "&w=48&h=48&fit=cover&output=jpg";
                         imageLoader.LoadImageUrl(avatarOtimizado, avatarPost);
                     } else {
@@ -531,59 +544,59 @@ public class HomeActivity extends ActivityGroup {
                     imageLoader.viewProfilePicture(context, username, avatarPost);
                 }
 
-                // --- EXTRAÇÃO E CARREGAMENTO DE MÍDIA/FOTO DO POST ---
-                String imgToLoad = "";
-                JSONArray mediaArray = post.optJSONArray("media");
-
-                if (mediaArray != null && mediaArray.length() > 0) {
-                    try {
-                        JSONObject firstMedia = mediaArray.getJSONObject(0);
-                        imgToLoad = firstMedia.optString("url", "");
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                } else if (textPost.contains("[IMAGE]")) {
-                    String[] lines = textPost.split("\n");
-                    for (String line : lines) {
-                        if (line.contains("[IMAGE]")) {
-                            imgToLoad = line.replace("[IMAGE]", "").trim();
-                            textPost = textPost.replace(line, "").trim();
-                            break;
+                if (mediaType.equals("image")) {
+                    String imgToLoad = mediaUrl;
+                    if (imgToLoad.length() > 0) {
+                        ViewGroup.LayoutParams params = imgPost.getLayoutParams();
+                        
+                        params.width = screenWidth; 
+                        
+                        try {
+                            if (width.length() > 0 && height.length() > 0 && !width.equals("null") && !height.equals("null")) {
+                                int origW = Integer.parseInt(width);
+                                int origH = Integer.parseInt(height);
+                                
+                                if (origW > 0) {
+                                    params.height = (screenWidth * origH) / origW;
+                                } else {
+                                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                                }
+                            } else {
+                                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                            }
+                        } catch (Exception e) {
+                            params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
                         }
+
+                        imgPost.setLayoutParams(params);
+                        imgPost.setVisibility(View.VISIBLE);
+                        imgPost.setAdjustViewBounds(true);
+                        imgPost.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+                        final String finalProxyUrl;
+                        if ("local".equals(actualTab)) {
+                            finalProxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + imgToLoad;
+                        } else if ("timeline".equals(actualTab)) {
+                            finalProxyUrl = "http://wsrv.nl/?url=" + imgToLoad + "&w=640&q=80&output=jpg";
+                        } else {
+                            finalProxyUrl = imgToLoad;
+                        }
+
+                        imgPost.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
+                                intent.putExtra("type", "Image");
+                                intent.putExtra("url", finalProxyUrl);
+                                startActivity(intent);
+                            }
+                        });
+
+                        imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
                     }
                 }
 
-                if (imgToLoad.length() > 0) {
-                    imgPost.setVisibility(View.VISIBLE);
-                    imgPost.setAdjustViewBounds(true);
-                    imgPost.setScaleType(ImageView.ScaleType.FIT_CENTER);
-
-                    final String finalProxyUrl;
-                    if ("local".equals(actualTab)) {
-                        // Mantém o teu servidor sem alterações
-                        finalProxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + imgToLoad;
-                    } else if ("timeline".equals(actualTab)) {
-                        // Força no wsrv.nl largura máx de 320px com 60% de qualidade
-                        finalProxyUrl = "http://wsrv.nl/?url=" + imgToLoad + "&w=320&q=60&output=jpg";
-                    } else {
-                        finalProxyUrl = imgToLoad;
-                    }
-
-                    imgPost.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
-                            intent.putExtra("type", "Image");
-                            intent.putExtra("url", finalProxyUrl);
-                            startActivity(intent);
-                        }
-                    });
-
-                    imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
-                }
-
-                // --- CONTROLE DE VISIBILIDADE DO TEXTO ---
-                String cleanText = textPost.trim();
+                String cleanText = textPost.replace("[IMAGE]", "");
                 if (cleanText.length() == 0) {
                     tvText.setVisibility(View.GONE);
                 } else {
