@@ -562,7 +562,11 @@ public class HomeActivity extends ActivityGroup {
                         imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
                     }
                 }
-                tvText.setText(textPost);
+                if (textPost.equals("")){
+                    tvText.setVisibility(View.GONE);
+                }else{
+                    tvText.setText(textPost);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

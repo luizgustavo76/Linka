@@ -31,6 +31,12 @@ def create_db():
         url TEXT
         )
     """)
+    cur.execute("""CREATE TABLE IF NOT EXISTS nicknames (
+    definer_username TEXT NOT NULL,
+    target_username TEXT NOT NULL, 
+    nickname TEXT NOT NULL,
+    PRIMARY KEY (definer_username, target_username)
+)""")
     cur.execute("CREATE TABLE IF NOT EXISTS inbox (receiver TEXT, remittee TEXT, message TEXT)")
     conn.commit()
     conn.close()
@@ -42,6 +48,40 @@ def create_notification(text, type, receiver, from_user):
     cur.execute("INSERT INTO notifications (receiver, type, content, from_user, datetime) VALUES(?, ?, ?, ?, ?)",(receiver, type, text, from_user, date))
     conn.commit()
     conn.close()
+@friends_bp.route("/set-nickname", methods=["POST"])
+def set_nickname():
+    data = request.get_json() or {}
+    username = data.get("username")
+    
+    if username != g.username:
+        return jsonify({"status": "forbidden"}), 403
+
+    receiver = data.get("receiver")
+    nickname = data.get("nickname", "").strip()
+    to_me = data.get("toMe", False) 
+    if not receiver:
+        return jsonify({"status":"receiver is missing"}), 400
+
+    target_user = username if to_me else receiver
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO nicknames (definer_username, target_username, nickname)
+        VALUES (?, ?, ?)
+        ON CONFLICT(definer_username, target_username) 
+        DO UPDATE SET nickname = excluded.nickname
+    """, (username, target_user, nickname))
+    
+    conn.commit()
+    
+    return jsonify({
+        "status": "success",
+        "message": "nickname updated",
+        "target": target_user,
+        "nickname": nickname
+    }), 200
 @friends_bp.route("/friends", methods=["POST"])
 def friends():
     data = request.get_json()
