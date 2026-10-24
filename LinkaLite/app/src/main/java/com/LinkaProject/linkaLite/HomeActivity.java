@@ -19,6 +19,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,7 +28,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -455,7 +455,12 @@ public class HomeActivity extends ActivityGroup {
             }
 
             ImageView avatarPost = (ImageView) convertView.findViewById(R.id.postAvatar);
-            ImageView imgPost = (ImageView) convertView.findViewById(R.id.imgPost);
+            RelativeLayout containerMedia = (RelativeLayout) convertView.findViewById(R.id.containerMedia);
+            final ImageView imgPost = (ImageView) convertView.findViewById(R.id.imgPost);
+            final TextView txtMediaCount = (TextView) convertView.findViewById(R.id.txtMediaCount);
+            final Button btnPrevImage = (Button) convertView.findViewById(R.id.btnPrevImage);
+            final Button btnNextImage = (Button) convertView.findViewById(R.id.btnNextImage);
+
             TextView tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
             TextView tvText = (TextView) convertView.findViewById(R.id.postText);
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
@@ -467,7 +472,10 @@ public class HomeActivity extends ActivityGroup {
 
             imgPost.setTag(null);
             imgPost.setImageBitmap(null);
-            imgPost.setVisibility(View.GONE);
+            containerMedia.setVisibility(View.GONE);
+            txtMediaCount.setVisibility(View.GONE);
+            btnPrevImage.setVisibility(View.GONE);
+            btnNextImage.setVisibility(View.GONE);
 
             tvUsername.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -481,7 +489,7 @@ public class HomeActivity extends ActivityGroup {
             });
 
             try {
-                JSONObject post = list.get(position);
+                final JSONObject post = list.get(position);
                 String username = post.optString("username", post.optString("user", "entity404"));
                 String textPost = post.optString("text_post", post.optString("text", ""));
                 final String origin_server = post.optString("origin_server", "");
@@ -489,19 +497,6 @@ public class HomeActivity extends ActivityGroup {
                 String commentsCount = post.optString("comments_count", post.optString("comment_count", "0"));
                 final String postUniqueId = post.optString("unique_id", "");
                 final String relative_datetime = post.optString("relative_datetime", "");
-                
-                String width = "";
-                String height = "";
-                String mediaType = "image";
-                String mediaUrl = "";
-
-                JSONObject media = post.optJSONObject("media");
-                if (media != null) {
-                    width = media.optString("width", "");
-                    height = media.optString("heigth", "");
-                    mediaType = media.optString("media_type", "image");
-                    mediaUrl = media.optString("media_url", "");
-                }
 
                 final String id = post.optString("id", "");
                 final String originalUrl = post.optString("original_url", "");
@@ -526,7 +521,7 @@ public class HomeActivity extends ActivityGroup {
 
                 txtCommentCount.setText(commentsCount);
                 tvUsername.setText(username.startsWith("@") ? username : "@" + username);
-                tvDate.setText(relative_datetime +"(" + datetime + ")");
+                tvDate.setText(relative_datetime + "(" + datetime + ")");
 
                 if ("timeline".equals(actualTab)) {
                     String avatarUrl = post.optString("avatar_url", "");
@@ -540,55 +535,56 @@ public class HomeActivity extends ActivityGroup {
                     imageLoader.viewProfilePicture(context, username, avatarPost);
                 }
 
-                if (mediaType.equals("image")) {
-                    String imgToLoad = mediaUrl;
-                    if (imgToLoad.length() > 0) {
-                        ViewGroup.LayoutParams params = imgPost.getLayoutParams();
-                        
-                        params.width = screenWidth; 
-                        
-                        try {
-                            if (width.length() > 0 && height.length() > 0 && !width.equals("null") && !height.equals("null")) {
-                                int origW = Integer.parseInt(width);
-                                int origH = Integer.parseInt(height);
-                                
-                                if (origW > 0) {
-                                    params.height = (screenWidth * origH) / origW;
-                                } else {
-                                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                                }
-                            } else {
-                                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                            }
-                        } catch (Exception e) {
-                            params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
-                        }
+                // --- MONTAGEM DA LISTA DE MÍDIAS (1 OU MAIS IMAGENS) ---
+                final ArrayList<JSONObject> mediaItems = new ArrayList<JSONObject>();
+                JSONArray mediaList = post.optJSONArray("media_list");
+                if (mediaList == null) {
+                    mediaList = post.optJSONArray("media_attachments");
+                }
 
-                        imgPost.setLayoutParams(params);
-                        imgPost.setVisibility(View.VISIBLE);
-                        imgPost.setAdjustViewBounds(true);
-                        imgPost.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                if (mediaList != null && mediaList.length() > 0) {
+                    for (int i = 0; i < mediaList.length(); i++) {
+                        mediaItems.add(mediaList.getJSONObject(i));
+                    }
+                } else {
+                    JSONObject singleMedia = post.optJSONObject("media");
+                    if (singleMedia != null && singleMedia.optString("media_url", "").length() > 0) {
+                        mediaItems.add(singleMedia);
+                    }
+                }
 
-                        final String finalProxyUrl;
-                        if ("local".equals(actualTab)) {
-                            finalProxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + imgToLoad;
-                        } else if ("timeline".equals(actualTab)) {
-                            finalProxyUrl = "http://wsrv.nl/?url=" + imgToLoad + "&w=640&q=80&output=jpg";
-                        } else {
-                            finalProxyUrl = imgToLoad;
-                        }
+                if (mediaItems.size() > 0) {
+                    containerMedia.setVisibility(View.VISIBLE);
+                    int initialIndex = 0;
+                    renderMediaItem(imgPost, mediaItems, initialIndex, txtMediaCount, btnPrevImage, btnNextImage);
 
-                        imgPost.setOnClickListener(new View.OnClickListener() {
+                    if (mediaItems.size() > 1) {
+                        txtMediaCount.setVisibility(View.VISIBLE);
+                        updateCarouselControls(initialIndex, mediaItems.size(), txtMediaCount, btnPrevImage, btnNextImage);
+
+                        btnPrevImage.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
-                                intent.putExtra("type", "Image");
-                                intent.putExtra("url", finalProxyUrl);
-                                startActivity(intent);
+                                Integer currIdx = (Integer) imgPost.getTag(R.id.imgPost);
+                                if (currIdx == null) currIdx = 0;
+                                if (currIdx > 0) {
+                                    currIdx--;
+                                    renderMediaItem(imgPost, mediaItems, currIdx, txtMediaCount, btnPrevImage, btnNextImage);
+                                }
                             }
                         });
 
-                        imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
+                        btnNextImage.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Integer currIdx = (Integer) imgPost.getTag(R.id.imgPost);
+                                if (currIdx == null) currIdx = 0;
+                                if (currIdx < mediaItems.size() - 1) {
+                                    currIdx++;
+                                    renderMediaItem(imgPost, mediaItems, currIdx, txtMediaCount, btnPrevImage, btnNextImage);
+                                }
+                            }
+                        });
                     }
                 }
 
@@ -605,6 +601,71 @@ public class HomeActivity extends ActivityGroup {
             }
 
             return convertView;
+        }
+
+        private void renderMediaItem(ImageView imgPost, ArrayList<JSONObject> mediaItems, int index,
+                                     TextView txtMediaCount, Button btnPrev, Button btnNext) {
+            JSONObject mediaObj = mediaItems.get(index);
+            String rawUrl = mediaObj.optString("media_url", "");
+            String width = mediaObj.optString("width", "");
+            String height = mediaObj.optString("heigth", "");
+
+            imgPost.setTag(R.id.imgPost, index);
+
+            ViewGroup.LayoutParams params = imgPost.getLayoutParams();
+            params.width = screenWidth;
+
+            try {
+                if (width.length() > 0 && height.length() > 0 && !width.equals("null") && !height.equals("null")) {
+                    int origW = Integer.parseInt(width);
+                    int origH = Integer.parseInt(height);
+                    if (origW > 0) {
+                        params.height = (screenWidth * origH) / origW;
+                    } else {
+                        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    }
+                } else {
+                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                }
+            } catch (Exception e) {
+                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            }
+
+            imgPost.setLayoutParams(params);
+
+            final String finalProxyUrl;
+            if ("local".equals(actualTab)) {
+                finalProxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + rawUrl;
+            } else if ("timeline".equals(actualTab)) {
+                finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=640&q=80&output=jpg";
+            } else {
+                finalProxyUrl = rawUrl;
+            }
+
+            imgPost.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
+                    intent.putExtra("type", "Image");
+                    intent.putExtra("url", finalProxyUrl);
+                    startActivity(intent);
+                }
+            });
+
+            imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
+            updateCarouselControls(index, mediaItems.size(), txtMediaCount, btnPrev, btnNext);
+        }
+
+        private void updateCarouselControls(int index, int total, TextView txtCount, Button btnPrev, Button btnNext) {
+            if (total > 1) {
+                txtCount.setText((index + 1) + "/" + total);
+                btnPrev.setVisibility(index > 0 ? View.VISIBLE : View.GONE);
+                btnNext.setVisibility(index < total - 1 ? View.VISIBLE : View.GONE);
+            } else {
+                txtCount.setVisibility(View.GONE);
+                btnPrev.setVisibility(View.GONE);
+                btnNext.setVisibility(View.GONE);
+            }
         }
     }
 
