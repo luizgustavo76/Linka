@@ -162,7 +162,7 @@ def parse_media_list(media_raw, media_type_raw, width_raw, height_raw):
     if not media_raw:
         return media_items
 
-    if isinstance(media_raw, str) and media_raw.strip().startsWith("["):
+    if isinstance(media_raw, str) and media_raw.strip().startswith("["):
         try:
             parsed = json.loads(media_raw)
             if isinstance(parsed, list):

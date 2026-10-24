@@ -22,18 +22,60 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.graphics.Color;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class HomeActivity extends ActivityGroup {
+    private void highlightMentions(final Context context, TextView textView, String text) {
+        SpannableString spannableString = new SpannableString(text);
+        Pattern pattern = Pattern.compile("@([a-zA-Z0-9_]+(@[a-zA-Z0-9_.-]+)?)");
+        Matcher matcher = pattern.matcher(text);
 
+        while (matcher.find()) {
+            final String mention = matcher.group();
+            int start = matcher.start();
+            int end = matcher.end();
+
+            ClickableSpan clickableSpan = new ClickableSpan() {
+                @Override
+                public void onClick(View widget) {
+                    Intent intent = new Intent(context, ViewProfile.class);
+                    intent.putExtra("usernameProfile", mention);
+                    context.startActivity(intent);
+                }
+
+                @Override
+                public void updateDrawState(TextPaint ds) {
+                    super.updateDrawState(ds);
+                    ds.setColor(Color.parseColor("#1E88E5"));
+                    ds.setUnderlineText(false);
+                }
+            };
+
+            spannableString.setSpan(
+                clickableSpan, 
+                start, 
+                end, 
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            );
+        }
+
+        textView.setText(spannableString);
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
+    }
     public void personalizeTimeline(View view){
         Intent intent = new Intent(HomeActivity.this, MainEditTimeline.class);
         startActivity(intent);
@@ -594,6 +636,7 @@ public class HomeActivity extends ActivityGroup {
                 } else {
                     tvText.setVisibility(View.VISIBLE);
                     tvText.setText(cleanText);
+                    highlightMentions(context, tvText, cleanText);
                 }
 
             } catch (Exception e) {
