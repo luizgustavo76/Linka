@@ -490,6 +490,8 @@ public class HomeActivity extends ActivityGroup {
                 String datetime = post.optString("datetime", post.optString("date", ""));
                 String commentsCount = post.optString("comments_count", post.optString("comment_count", "0"));
                 final String postUniqueId = post.optString("unique_id", "");
+                final String relative_datetime = post.optString("relative_datetime", "");
+                
                 final String id = post.optString("id", "");
                 final String originalUrl = post.optString("original_url", "");
 
@@ -513,7 +515,7 @@ public class HomeActivity extends ActivityGroup {
 
                 txtCommentCount.setText(commentsCount);
                 tvUsername.setText(username.startsWith("@") ? username : "@" + username);
-                tvDate.setText(datetime);
+                tvDate.setText(relative_datetime +"(" + datetime + ")");
 
                 // --- CARREGAMENTO DO AVATAR ---
                 if ("timeline".equals(actualTab)) {
