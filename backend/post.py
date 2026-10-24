@@ -86,6 +86,21 @@ def create_db():
             username TEXT
         )
     """)
+
+    cur.execute("PRAGMA table_info(posts);")
+    columns = [column[1] for column in cur.fetchall()]
+
+    required_columns = {
+        "media": "TEXT",
+        "media_type": "TEXT",
+        "width": "TEXT",
+        "heigth": "TEXT"
+    }
+
+    for col_name, col_type in required_columns.items():
+        if col_name not in columns:
+            cur.execute(f"ALTER TABLE posts ADD COLUMN {col_name} {col_type};")
+
     conn.commit()
     conn.close()
 
