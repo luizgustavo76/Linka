@@ -46,32 +46,26 @@
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
                     android:textSize="13sp"
-                    android:textColor="#262626"
-                    android:text="@username" />
+                    android:textColor="#333333" />
 
                 <TextView
                     android:id="@+id/postDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="10sp"
-                    android:textColor="#888888"
-                    android:text="2026-10-16 21:26:28" />
+                    android:textColor="#888888" />
             </LinearLayout>
-
         </RelativeLayout>
 
         <TextView
             android:id="@+id/postText"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textSize="13sp"
-            android:textColor="#333333"
-            android:autoLink="web"
-            android:textColorLink="#3f85c3"
-            android:background="#ffff"
-            android:padding="8dip"
+            android:textSize="14sp"
+            android:textColor="#222222"
             android:layout_marginBottom="8dip" />
 
+        <!-- CONTAINER DE MÍDIA COM SUPORTE A GIF E CARROSSEL -->
         <RelativeLayout
             android:id="@+id/containerMedia"
             android:layout_width="fill_parent"
@@ -79,93 +73,73 @@
             android:layout_marginBottom="8dip"
             android:visibility="gone">
 
-            <ImageView
+            <com.LinkaProject.linkaLite.GifImageView
                 android:id="@+id/imgPost"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                android:scaleType="fitCenter" />
+                android:scaleType="centerCrop" />
 
-            <!-- Indicador de quantidade (Ex: 1/3) -->
             <TextView
                 android:id="@+id/txtMediaCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentTop="true"
-                android:layout_margin="8dip"
-                android:background="#AA000000"
-                android:paddingLeft="8dip"
-                android:paddingRight="8dip"
-                android:paddingTop="3dip"
-                android:paddingBottom="3dip"
-                android:text="1/1"
+                android:layout_alignRight="@id/imgPost"
+                android:layout_alignTop="@id/imgPost"
+                android:layout_marginRight="6dip"
+                android:layout_marginTop="6dip"
+                android:background="#88000000"
                 android:textColor="#FFFFFF"
                 android:textSize="11sp"
-                android:textStyle="bold"
+                android:paddingLeft="6dip"
+                android:paddingRight="6dip"
+                android:paddingTop="2dip"
+                android:paddingBottom="2dip"
                 android:visibility="gone" />
 
-            <!-- Seta Esquerda -->
             <Button
                 android:id="@+id/btnPrevImage"
-                android:layout_width="36dip"
-                android:layout_height="36dip"
-                android:layout_alignParentLeft="true"
+                android:layout_width="32dip"
+                android:layout_height="32dip"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="6dip"
-                android:background="#AA000000"
+                android:layout_alignLeft="@id/imgPost"
+                android:layout_marginLeft="4dip"
                 android:text="◀"
-                android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:visibility="gone" />
 
             <Button
                 android:id="@+id/btnNextImage"
-                android:layout_width="36dip"
-                android:layout_height="36dip"
-                android:layout_alignParentRight="true"
+                android:layout_width="32dip"
+                android:layout_height="32dip"
                 android:layout_centerVertical="true"
-                android:layout_marginRight="6dip"
-                android:background="#AA000000"
+                android:layout_alignRight="@id/imgPost"
+                android:layout_marginRight="4dip"
                 android:text="▶"
-                android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:visibility="gone" />
-
         </RelativeLayout>
 
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="6dip">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-            <LinearLayout
+            <ImageButton
+                android:id="@+id/btnComments"
+                android:layout_width="24dip"
+                android:layout_height="24dip"
+                android:background="@null"
+                android:src="@android:drawable/ic_menu_send" />
+
+            <TextView
+                android:id="@+id/txtCommentCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageButton
-                    android:id="@+id/btnComments"
-                    android:layout_width="28dip"
-                    android:layout_height="28dip"
-                    android:background="@android:color/transparent"
-                    android:scaleType="centerInside"
-                    android:src="@android:drawable/ic_menu_send" />
-
-                <TextView
-                    android:id="@+id/txtCommentCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="11sp"
-                    android:textColor="#666666"
-                    android:layout_marginLeft="4dip"
-                    android:text="0" />
-            </LinearLayout>
-
-        </RelativeLayout>
+                android:layout_marginLeft="4dip"
+                android:textSize="12sp"
+                android:textColor="#666666" />
+        </LinearLayout>
 
     </LinearLayout>
-
-</LinearLayout>
+</LinearLayout> 

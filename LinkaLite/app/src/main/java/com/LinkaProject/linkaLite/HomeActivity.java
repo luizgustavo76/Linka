@@ -39,6 +39,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class HomeActivity extends ActivityGroup {
+
     private void highlightMentions(final Context context, TextView textView, String text) {
         SpannableString spannableString = new SpannableString(text);
         Pattern pattern = Pattern.compile("@([a-zA-Z0-9_]+(@[a-zA-Z0-9_.-]+)?)");
@@ -76,6 +77,7 @@ public class HomeActivity extends ActivityGroup {
         textView.setText(spannableString);
         textView.setMovementMethod(LinkMovementMethod.getInstance());
     }
+
     public void personalizeTimeline(View view){
         Intent intent = new Intent(HomeActivity.this, MainEditTimeline.class);
         startActivity(intent);
@@ -498,7 +500,7 @@ public class HomeActivity extends ActivityGroup {
 
             ImageView avatarPost = (ImageView) convertView.findViewById(R.id.postAvatar);
             RelativeLayout containerMedia = (RelativeLayout) convertView.findViewById(R.id.containerMedia);
-            final ImageView imgPost = (ImageView) convertView.findViewById(R.id.imgPost);
+            final GifImageView imgPost = (GifImageView) convertView.findViewById(R.id.imgPost);
             final TextView txtMediaCount = (TextView) convertView.findViewById(R.id.txtMediaCount);
             final Button btnPrevImage = (Button) convertView.findViewById(R.id.btnPrevImage);
             final Button btnNextImage = (Button) convertView.findViewById(R.id.btnNextImage);
@@ -514,6 +516,8 @@ public class HomeActivity extends ActivityGroup {
 
             imgPost.setTag(null);
             imgPost.setImageBitmap(null);
+            imgPost.setMovie(null); // Reseta o estado do GifImageView nos cards reciclados
+
             containerMedia.setVisibility(View.GONE);
             txtMediaCount.setVisibility(View.GONE);
             btnPrevImage.setVisibility(View.GONE);
@@ -577,7 +581,7 @@ public class HomeActivity extends ActivityGroup {
                     imageLoader.viewProfilePicture(context, username, avatarPost);
                 }
 
-                // --- MONTAGEM DA LISTA DE MÍDIAS (1 OU MAIS IMAGENS) ---
+                // --- MONTAGEM DA LISTA DE MÍDIAS (IMAGENS E GIFS) ---
                 final ArrayList<JSONObject> mediaItems = new ArrayList<JSONObject>();
                 JSONArray mediaList = post.optJSONArray("media_list");
                 if (mediaList == null) {
@@ -629,6 +633,7 @@ public class HomeActivity extends ActivityGroup {
                         });
                     }
                 }
+
                 String cleanText = textPost.replaceAll("\\[IMAGE\\].*", "").trim();
                 if (cleanText.length() == 0) {
                     tvText.setVisibility(View.GONE);
@@ -645,10 +650,11 @@ public class HomeActivity extends ActivityGroup {
             return convertView;
         }
 
-        private void renderMediaItem(ImageView imgPost, ArrayList<JSONObject> mediaItems, int index,
+        private void renderMediaItem(GifImageView imgPost, ArrayList<JSONObject> mediaItems, int index,
                                      TextView txtMediaCount, Button btnPrev, Button btnNext) {
             JSONObject mediaObj = mediaItems.get(index);
             String rawUrl = mediaObj.optString("media_url", "");
+            String mediaType = mediaObj.optString("media_type", "").toLowerCase();
             String width = mediaObj.optString("width", "");
             String height = mediaObj.optString("heigth", "");
 
@@ -675,13 +681,26 @@ public class HomeActivity extends ActivityGroup {
 
             imgPost.setLayoutParams(params);
 
+            // Detecção se a mídia é um GIF (por tipo no JSON ou extensão do arquivo)
+            boolean isGifMedia = "gif".equals(mediaType) || rawUrl.toLowerCase().endsWith(".gif");
+
             final String finalProxyUrl;
-            if ("local".equals(actualTab)) {
-                finalProxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + rawUrl;
-            } else if ("timeline".equals(actualTab)) {
-                finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=640&q=80&output=jpg";
+            if (isGifMedia) {
+                // GIFs sempre preservam a URL ou passam pelo proxy HTTP do backend sem conversão para JPG
+                if ("local".equals(actualTab)) {
+                    finalProxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + rawUrl;
+                } else {
+                    finalProxyUrl = rawUrl;
+                }
             } else {
-                finalProxyUrl = rawUrl;
+                // Imagens estáticas (JPEG/PNG)
+                if ("local".equals(actualTab)) {
+                    finalProxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + rawUrl;
+                } else if ("timeline".equals(actualTab)) {
+                    finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=640&q=80&output=jpg";
+                } else {
+                    finalProxyUrl = rawUrl;
+                }
             }
 
             imgPost.setOnClickListener(new View.OnClickListener() {
@@ -694,6 +713,7 @@ public class HomeActivity extends ActivityGroup {
                 }
             });
 
+            // Dispara o ImageLoader (o ImageLoader detecta a assinatura mágica/Movie e decide entre Bitmap ou GIF)
             imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
             updateCarouselControls(index, mediaItems.size(), txtMediaCount, btnPrev, btnNext);
         }

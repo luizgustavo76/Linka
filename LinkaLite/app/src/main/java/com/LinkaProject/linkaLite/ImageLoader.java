@@ -3,13 +3,16 @@ package com.LinkaProject.linkaLite;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Movie;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.widget.ImageView;
-
+import com.LinkaProject.linkaLite.GifImageView;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,6 +34,17 @@ public class ImageLoader {
             int targetHeight = metrics.heightPixels;
             return new int[]{targetWidth, targetHeight};
         }
+    }
+
+    private boolean isGif(String url, byte[] data) {
+        if (url != null && url.toLowerCase().endsWith(".gif")) {
+            return true;
+        }
+        if (data != null && data.length >= 6) {
+            // Verifica a assinatura mágica do cabeçalho GIF (GIF87a ou GIF89a)
+            return data[0] == 'G' && data[1] == 'I' && data[2] == 'F';
+        }
+        return false;
     }
 
     private Bitmap decodeSampledBitmapFromByteArray(byte[] data, int reqWidth, int reqHeight) {
@@ -73,6 +87,10 @@ public class ImageLoader {
         return inSampleSize;
     }
 
+    /**
+     * Carrega imagem ou GIF de uma URL. Se for HTTP/HTTPS externo,
+     * passa pelo endpoint de proxy `/lite-render` do servidor.
+     */
     public void LoadImageUrl(final String imageUrl, final ImageView targetView) {
         if (targetView == null || imageUrl == null || imageUrl.trim().length() == 0 || imageUrl.equals("null")) {
             return;
@@ -86,24 +104,63 @@ public class ImageLoader {
             public void run() {
                 if (!imageUrl.equals(targetView.getTag())) return;
 
-                int[] dims = getDensityBasedDimensions(appContext, false);
-                byte[] rawBytes = request.requestBytes(imageUrl, "GET", appContext);
+                try {
+                    config configInstance = new config();
+                    String rawConfig = configInstance.loadCfgAsJson(appContext, "config.cfg");
+                    JSONObject jsonConfig = new JSONObject(rawConfig);
+                    JSONObject serverConfig = jsonConfig.getJSONObject("SERVER");
 
-                if (rawBytes != null && rawBytes.length > 0) {
-                    if (!imageUrl.equals(targetView.getTag())) return;
-
-                    final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
-
-                    if (decodedBitmap != null) {
-                        mainHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (imageUrl.equals(targetView.getTag())) {
-                                    targetView.setImageBitmap(decodedBitmap);
-                                }
-                            }
-                        });
+                    String baseUrl = serverConfig.getString("url");
+                    if (baseUrl.endsWith("/")) {
+                        baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                     }
+
+                    // Se a URL for externa ou usar HTTPS não suportado no Android 2.0, passa pelo proxy HTTP do backend
+                    String fetchUrl = imageUrl;
+                    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+                        fetchUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(imageUrl, "UTF-8");
+                    }
+
+                    int[] dims = getDensityBasedDimensions(appContext, false);
+                    byte[] rawBytes = request.requestBytes(fetchUrl, "GET", appContext);
+
+                    if (rawBytes != null && rawBytes.length > 0) {
+                        if (!imageUrl.equals(targetView.getTag())) return;
+
+                        // SE FOR GIF: Renderiza usando o Movie (C++ Skia nativo do Android 2.0)
+                        if (isGif(imageUrl, rawBytes) && targetView instanceof GifImageView) {
+                            final GifImageView gifTarget = (GifImageView) targetView;
+                            InputStream is = new ByteArrayInputStream(rawBytes);
+                            final Movie gifMovie = Movie.decodeStream(is);
+
+                            if (gifMovie != null) {
+                                mainHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (imageUrl.equals(targetView.getTag())) {
+                                            gifTarget.setMovie(gifMovie);
+                                        }
+                                    }
+                                });
+                                return;
+                            }
+                        }
+
+                        // SE FOR IMAGEM ESTÁTICA (PNG/JPEG)
+                        final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
+
+                        if (decodedBitmap != null) {
+                            mainHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (imageUrl.equals(targetView.getTag())) {
+                                        targetView.setImageBitmap(decodedBitmap);
+                                    }
+                                };
+                            });
+                        }
+                    }
+                } catch (Exception ignored) {
                 }
             }
         });
@@ -156,8 +213,8 @@ public class ImageLoader {
 
                                 if (rawBytes != null && rawBytes.length > 0) {
                                     final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
-                                    final Bitmap circularBitmap = profile.getCircularBitmap(decodedBitmap);
                                     if (decodedBitmap != null) {
+                                        final Bitmap circularBitmap = profile.getCircularBitmap(decodedBitmap);
                                         mainHandler.post(new Runnable() {
                                             @Override
                                             public void run() {
