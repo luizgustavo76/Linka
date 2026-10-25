@@ -107,11 +107,14 @@ public class HomeActivity extends ActivityGroup {
     private boolean isGuest = false;
     private ScheduledExecutorService scheduler;
     private ScheduledExecutorService schedulerNotifications;
+    private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
+        dbHelper = new DatabaseHelper(this);
 
         Display display = getWindowManager().getDefaultDisplay();
         screenWidth = display.getWidth();
@@ -392,7 +395,23 @@ public class HomeActivity extends ActivityGroup {
 
         } else if ("Local Feed".equals(tabName)) {
             actualTab = "local";
-            new FetchFeedTask("local", baseUrl + "/feed", "GET", null).execute();
+            
+            // OTIMIZAÇÃO: Delta Update usando last_id
+            int lastId = dbHelper.getLastPostId();
+            
+            if (lastId == 0) {
+                // Primeiro carregamento: baixa o feed completo
+                new FetchFeedTask("local", baseUrl + "/feed", "GET", null).execute();
+            } else {
+                // Atualizações incrementais: pede apenas os posts inéditos
+                JSONObject body = new JSONObject();
+                try {
+                    body.put("last_id", lastId);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                new FetchFeedTask("local", baseUrl + "/new-feed", "POST", body).execute();
+            }
 
         } else if ("Chat".equals(tabName)) {
             FrameLayout pageChat = (FrameLayout) findViewById(R.id.pageChat);
@@ -435,11 +454,8 @@ public class HomeActivity extends ActivityGroup {
                 return;
             }
 
-            targetList.clear();
-
             if (result == null || result.trim().length() == 0) {
                 targetAdapter.notifyDataSetChanged();
-                Toast.makeText(HomeActivity.this, "Error loading feed", Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -447,8 +463,26 @@ public class HomeActivity extends ActivityGroup {
                 String trimmed = result.trim();
                 if (trimmed.startsWith("[")) {
                     JSONArray jsonArray = new JSONArray(trimmed);
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        targetList.add(jsonArray.getJSONObject(i));
+                    
+                    if ("local".equals(tabType)) {
+                        // Persiste os posts novos no SQLite e adiciona no topo
+                        for (int i = jsonArray.length() - 1; i >= 0; i--) {
+                            JSONObject obj = jsonArray.getJSONObject(i);
+                            int pId = obj.optInt("id", 0);
+                            String uName = obj.optString("username", "");
+                            String txt = obj.optString("text_post", "");
+                            String dt = obj.optString("datetime", "");
+                            
+                            if (pId > 0) {
+                                dbHelper.insertPost(pId, uName, txt, dt);
+                                targetList.add(0, obj);
+                            }
+                        }
+                    } else {
+                        targetList.clear();
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            targetList.add(jsonArray.getJSONObject(i));
+                        }
                     }
                 } else if (trimmed.startsWith("{")) {
                     JSONObject errObj = new JSONObject(trimmed);
@@ -456,7 +490,7 @@ public class HomeActivity extends ActivityGroup {
                     Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
                 }
             } catch (Exception e) {
-                Toast.makeText(HomeActivity.this, "Error parsing posts", Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
             }
 
             targetAdapter.notifyDataSetChanged();
@@ -581,7 +615,6 @@ public class HomeActivity extends ActivityGroup {
                     imageLoader.viewProfilePicture(context, username, avatarPost);
                 }
 
-                // --- MONTAGEM DA LISTA DE MÍDIAS (IMAGENS E GIFS) ---
                 final ArrayList<JSONObject> mediaItems = new ArrayList<JSONObject>();
                 JSONArray mediaList = post.optJSONArray("media_list");
                 if (mediaList == null) {

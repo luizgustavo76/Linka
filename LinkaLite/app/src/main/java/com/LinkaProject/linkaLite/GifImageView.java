@@ -12,21 +12,23 @@ public class GifImageView extends ImageView {
     private Movie mMovie;
     private long mMovieStart;
 
+    // 1. Construtor para criação programática em código Java
     public GifImageView(Context context) {
         super(context);
     }
 
+    // 2. CONSTRUTOR OBRIGATÓRIO PARA O INFLATER DO XML (Resolve o crash do InflateException)
     public GifImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public GifImageView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
+    // 3. Construtor para suporte a estilos customizados no XML
+    public GifImageView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
     }
 
     public void setMovie(Movie movie) {
         this.mMovie = movie;
-        this.mMovieStart = 0;
         requestLayout();
         invalidate();
     }
@@ -38,15 +40,12 @@ public class GifImageView extends ImageView {
             if (mMovieStart == 0) {
                 mMovieStart = now;
             }
-
-            int duration = mMovie.duration();
-            if (duration == 0) {
-                duration = 1000;
+            int dur = mMovie.duration();
+            if (dur == 0) {
+                dur = 1000;
             }
-
-            int relTime = (int) ((now - mMovieStart) % duration);
+            int relTime = (int) ((now - mMovieStart) % dur);
             mMovie.setTime(relTime);
-
             mMovie.draw(canvas, 0, 0);
             invalidate();
         } else {

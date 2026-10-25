@@ -46,26 +46,32 @@
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
                     android:textSize="13sp"
-                    android:textColor="#333333" />
+                    android:textColor="#262626"
+                    android:text="@username" />
 
                 <TextView
                     android:id="@+id/postDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textSize="10sp"
-                    android:textColor="#888888" />
+                    android:textColor="#888888"
+                    android:text="2026-10-16 21:26:28" />
             </LinearLayout>
+
         </RelativeLayout>
 
         <TextView
             android:id="@+id/postText"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="#222222"
+            android:textSize="13sp"
+            android:textColor="#333333"
+            android:autoLink="web"
+            android:textColorLink="#3f85c3"
+            android:background="#ffff"
+            android:padding="8dip"
             android:layout_marginBottom="8dip" />
 
-        <!-- CONTAINER DE MÍDIA COM SUPORTE A GIF E CARROSSEL -->
         <RelativeLayout
             android:id="@+id/containerMedia"
             android:layout_width="fill_parent"
@@ -77,69 +83,94 @@
                 android:id="@+id/imgPost"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:scaleType="centerCrop" />
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter" />
 
+            <!-- Indicador de quantidade (Ex: 1/3) -->
             <TextView
                 android:id="@+id/txtMediaCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignRight="@id/imgPost"
-                android:layout_alignTop="@id/imgPost"
-                android:layout_marginRight="6dip"
-                android:layout_marginTop="6dip"
-                android:background="#88000000"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="8dip"
+                android:background="#AA000000"
+                android:paddingLeft="8dip"
+                android:paddingRight="8dip"
+                android:paddingTop="3dip"
+                android:paddingBottom="3dip"
+                android:text="1/1"
                 android:textColor="#FFFFFF"
                 android:textSize="11sp"
-                android:paddingLeft="6dip"
-                android:paddingRight="6dip"
-                android:paddingTop="2dip"
-                android:paddingBottom="2dip"
+                android:textStyle="bold"
                 android:visibility="gone" />
 
+            <!-- Seta Esquerda -->
             <Button
                 android:id="@+id/btnPrevImage"
-                android:layout_width="32dip"
-                android:layout_height="32dip"
+                android:layout_width="36dip"
+                android:layout_height="36dip"
+                android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
-                android:layout_alignLeft="@id/imgPost"
-                android:layout_marginLeft="4dip"
+                android:layout_marginLeft="6dip"
+                android:background="#AA000000"
                 android:text="◀"
+                android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:visibility="gone" />
 
             <Button
                 android:id="@+id/btnNextImage"
-                android:layout_width="32dip"
-                android:layout_height="32dip"
+                android:layout_width="36dip"
+                android:layout_height="36dip"
+                android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
-                android:layout_alignRight="@id/imgPost"
-                android:layout_marginRight="4dip"
+                android:layout_marginRight="6dip"
+                android:background="#AA000000"
                 android:text="▶"
+                android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:visibility="gone" />
+
         </RelativeLayout>
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:paddingTop="6dip">
 
-            <ImageButton
-                android:id="@+id/btnComments"
-                android:layout_width="24dip"
-                android:layout_height="24dip"
-                android:background="@null"
-                android:src="@android:drawable/ic_menu_send" />
-
-            <TextView
-                android:id="@+id/txtCommentCount"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="4dip"
-                android:textSize="12sp"
-                android:textColor="#666666" />
-        </LinearLayout>
+                android:layout_alignParentRight="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <View
+                    android:layout_width="0dip"
+                    android:layout_height="0dip"
+                    android:layout_weight="1" />
+
+                <ImageButton
+                    android:id="@+id/btnComments"
+                    android:layout_width="28dip"
+                    android:layout_height="28dip"
+                    android:background="@android:color/transparent"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/icon_comments" />
+
+                <TextView
+                    android:id="@+id/txtCommentCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="#666666"
+                    android:layout_marginLeft="4dip"
+                    android:text="0" />
+            </LinearLayout>
+
+        </RelativeLayout>
 
     </LinearLayout>
-</LinearLayout> 
+
+</LinearLayout>

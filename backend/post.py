@@ -879,7 +879,13 @@ def return_stars(post_id):
 
     return str(qtd), 200
 
-
+@post_bp.route("/new-feed", methods=["POST"])
+def new_feed():
+    data = request.get_json()
+    last_id = data.get("last_id")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM posts WHERE id = ?",(last_id,))
 @post_bp.route("/has-star", methods=["POST"])
 def has_star():
     data = request.get_json(force=True) or {}
