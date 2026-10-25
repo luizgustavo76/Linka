@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="280dp"
+    android:layout_height="fill_parent"
+    android:layout_gravity="start"
+    android:background="#1B1B1B"
+    android:clickable="true"
+    android:orientation="vertical">
+
+    <!-- Profile Header -->
+    <LinearLayout
+        android:id="@+id/drawerHeader"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="#141414"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <ImageView
+            android:id="@+id/imgProfile"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/icon" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txtDisplayName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Linka User"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtUsername"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@username"
+                android:textColor="#888888"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Divider Line -->
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="#2C2C2C" />
+
+    <!-- Navigation Options List -->
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <Button
+                android:id="@+id/btnDrawerFeed"
+                android:layout_width="fill_parent"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@android:drawable/ic_menu_agenda"
+                android:drawablePadding="16dp"
+                android:gravity="left|center_vertical"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:text="Feed"
+                android:textColor="#E0E0E0"
+                android:textSize="15sp" />
+
+            <Button
+                android:id="@+id/btnDrawerChat"
+                android:layout_width="fill_parent"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@android:drawable/ic_menu_send"
+                android:drawablePadding="16dp"
+                android:gravity="left|center_vertical"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:text="Chat"
+                android:textColor="#E0E0E0"
+                android:textSize="15sp" />
+
+            <Button
+                android:id="@+id/btnDrawerInbox"
+                android:layout_width="fill_parent"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@android:drawable/ic_dialog_email"
+                android:drawablePadding="16dp"
+                android:gravity="left|center_vertical"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:text="Inbox"
+                android:textColor="#E0E0E0"
+                android:textSize="15sp" />
+
+            <Button
+                android:id="@+id/btnDrawerProfile"
+                android:layout_width="fill_parent"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@android:drawable/ic_menu_myplaces"
+                android:drawablePadding="16dp"
+                android:gravity="left|center_vertical"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:text="Account"
+                android:textColor="#E0E0E0"
+                android:textSize="15sp" />
+
+            <Button
+                android:id="@+id/btnDrawerFavorites"
+                android:layout_width="fill_parent"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@android:drawable/btn_star"
+                android:drawablePadding="16dp"
+                android:gravity="left|center_vertical"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:text="Bookmarks"
+                android:textColor="#E0E0E0"
+                android:textSize="15sp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Footer Divider Line -->
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="#2C2C2C" />
+
+    <!-- Logout Button -->
+    <Button
+        android:id="@+id/btnDrawerLogout"
+        android:layout_width="fill_parent"
+        android:layout_height="52dp"
+        android:background="@android:color/transparent"
+        android:drawableLeft="@android:drawable/ic_lock_power_off"
+        android:drawablePadding="16dp"
+        android:gravity="left|center_vertical"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:text="Log Out"
+        android:textColor="#FF5252"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

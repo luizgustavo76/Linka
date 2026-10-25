@@ -5,7 +5,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 
-    <!-- 1. CONTEÚDO PRINCIPAL DO APP (Seu LinearLayout Original) -->
+    <!-- 1. CONTEÚDO PRINCIPAL DO APP -->
     <LinearLayout 
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -235,52 +235,7 @@
 
     </LinearLayout>
 
-    <!-- 2. GAVETA LATERAL DO MENU HAMBÚRGUER -->
-    <LinearLayout
-        android:id="@+id/leftDrawer"
-        android:layout_width="260dip"
-        android:layout_height="fill_parent"
-        android:layout_gravity="left"
-        android:background="#FFFFFF"
-        android:orientation="vertical">
-
-        <!-- Banner do Usuário Estilo Google+ -->
-        <RelativeLayout
-            android:layout_width="fill_parent"
-            android:layout_height="120dip"
-            android:background="#1C1C1C"
-            android:padding="12dip">
-
-            <ImageView
-                android:id="@+id/drawerAvatar"
-                android:layout_width="48dip"
-                android:layout_height="48dip"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentTop="true"
-                android:src="@android:drawable/ic_menu_myplaces" />
-
-            <TextView
-                android:id="@+id/drawerUsername"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/drawerAvatar"
-                android:layout_marginTop="12dip"
-                android:text="Linka User"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-        </RelativeLayout>
-
-        <!-- Lista de Atalhos -->
-        <ListView
-            android:id="@+id/drawerList"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:choiceMode="singleChoice"
-            android:divider="#E0E0E0"
-            android:dividerHeight="1dip" />
-
-    </LinearLayout>
+    <!-- 2. INCLUSÃO DO MENU LATERAL BONITO (drawer_home.xml) -->
+    <include layout="@layout/drawer_home" />
 
 </android.support.v4.widget.DrawerLayout>

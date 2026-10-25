@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -83,6 +85,7 @@ public class HomeActivity extends ActivityGroup {
         startActivity(intent);
     }
 
+    private ImageButton btnHamburger;
     private ImageButton newPost;
     private ImageButton btnInbox;
     private ImageButton btnProfile;
@@ -108,6 +111,7 @@ public class HomeActivity extends ActivityGroup {
     private ScheduledExecutorService scheduler;
     private ScheduledExecutorService schedulerNotifications;
     private DatabaseHelper dbHelper;
+    private DrawerLayout drawerLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,6 +132,21 @@ public class HomeActivity extends ActivityGroup {
         setPageWidth(R.id.pageLocal);
         setPageWidth(R.id.pageChat);
         setPageWidth(R.id.pageOptions);
+
+        drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
+        setupDrawerMenu();
+
+        btnHamburger = (ImageButton) findViewById(R.id.btnHamburger);
+        if (btnHamburger != null) {
+            btnHamburger.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout != null) {
+                        drawerLayout.openDrawer(GravityCompat.START);
+                    }
+                }
+            });
+        }
 
         tabPrev.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -290,6 +309,118 @@ public class HomeActivity extends ActivityGroup {
                 }
             }
         }, 0, 2, TimeUnit.MINUTES);
+    }
+
+    private void setupDrawerMenu() {
+        LinearLayout drawerHeader = (LinearLayout) findViewById(R.id.drawerHeader);
+        ImageView imgProfile = (ImageView) findViewById(R.id.imgProfile);
+        TextView txtDisplayName = (TextView) findViewById(R.id.txtDisplayName);
+        TextView txtUsername = (TextView) findViewById(R.id.txtUsername);
+
+        Button btnDrawerFeed = (Button) findViewById(R.id.btnDrawerFeed);
+        Button btnDrawerChat = (Button) findViewById(R.id.btnDrawerChat);
+        Button btnDrawerInbox = (Button) findViewById(R.id.btnDrawerInbox);
+        Button btnDrawerProfile = (Button) findViewById(R.id.btnDrawerProfile);
+        Button btnDrawerFavorites = (Button) findViewById(R.id.btnDrawerFavorites);
+        Button btnDrawerLogout = (Button) findViewById(R.id.btnDrawerLogout);
+
+        String currentUsername = "user";
+
+        try {
+            config cfg = new config();
+            String rawCfg = cfg.loadCfgAsJson(HomeActivity.this, "config.cfg");
+            if (rawCfg != null && rawCfg.length() > 0) {
+                JSONObject jsonCfg = new JSONObject(rawCfg);
+                JSONObject userObj = jsonCfg.optJSONObject("FAST_LOGIN");
+                if (userObj != null) {
+                    currentUsername = userObj.optString("username", "user");
+                    if (txtUsername != null) txtUsername.setText("@" + currentUsername);
+                    if (txtDisplayName != null) txtDisplayName.setText(currentUsername);
+                    if (imgProfile != null) {
+                        ImageLoader loader = new ImageLoader();
+                        loader.viewProfilePicture(HomeActivity.this, currentUsername, imgProfile);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        final String finalUsername = currentUsername;
+        if (drawerHeader != null) {
+            drawerHeader.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout != null) drawerLayout.closeDrawers();
+                    Intent intent = new Intent(HomeActivity.this, ViewProfile.class);
+                    intent.putExtra("usernameProfile", finalUsername);
+                    startActivity(intent);
+                }
+            });
+        }
+
+        if (btnDrawerFeed != null) {
+            btnDrawerFeed.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout != null) drawerLayout.closeDrawers();
+                    scrollToPage(1);
+                }
+            });
+        }
+
+        if (btnDrawerChat != null) {
+            btnDrawerChat.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout != null) drawerLayout.closeDrawers();
+                    scrollToPage(2);
+                }
+            });
+        }
+
+        if (btnDrawerInbox != null) {
+            btnDrawerInbox.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout != null) drawerLayout.closeDrawers();
+                    startActivity(new Intent(HomeActivity.this, InboxActivity.class));
+                }
+            });
+        }
+
+        if (btnDrawerProfile != null) {
+            btnDrawerProfile.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout != null) drawerLayout.closeDrawers();
+                    startActivity(new Intent(HomeActivity.this, profile.class));
+                }
+            });
+        }
+
+        if (btnDrawerFavorites != null) {
+            btnDrawerFavorites.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout != null) drawerLayout.closeDrawers();
+                    startActivity(new Intent(HomeActivity.this, feedFinder.class));
+                }
+            });
+        }
+
+        if (btnDrawerLogout != null) {
+            btnDrawerLogout.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout != null) drawerLayout.closeDrawers();
+                    Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                }
+            });
+        }
     }
 
     private void setPageWidth(int pageResId) {
@@ -747,7 +878,6 @@ public class HomeActivity extends ActivityGroup {
                 }
             });
 
-            // Associação correta da URL e chamada ao ImageLoader
             imgPost.setTag(finalProxyUrl);
             imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
             
