@@ -347,6 +347,18 @@ public class HomeActivity extends ActivityGroup {
         }
     }
 
+    private void loadCachedPostsLocal() {
+        if (dbHelper != null && postsLocal != null) {
+            ArrayList<JSONObject> cached = dbHelper.getAllCachedPosts();
+            if (cached.size() > 0 && postsLocal.size() == 0) {
+                postsLocal.addAll(cached);
+                if (adapterLocal != null) {
+                    adapterLocal.notifyDataSetChanged();
+                }
+            }
+        }
+    }
+
     private void loadFeedForTab(String tabName) {
         String baseUrl = "http://linkaProject.pythonanywhere.com";
         JSONArray urlsArray = new JSONArray();
@@ -396,14 +408,13 @@ public class HomeActivity extends ActivityGroup {
         } else if ("Local Feed".equals(tabName)) {
             actualTab = "local";
             
-            // OTIMIZAÇÃO: Delta Update usando last_id
+            loadCachedPostsLocal();
+            
             int lastId = dbHelper.getLastPostId();
             
             if (lastId == 0) {
-                // Primeiro carregamento: baixa o feed completo
                 new FetchFeedTask("local", baseUrl + "/feed", "GET", null).execute();
             } else {
-                // Atualizações incrementais: pede apenas os posts inéditos
                 JSONObject body = new JSONObject();
                 try {
                     body.put("last_id", lastId);
@@ -465,7 +476,6 @@ public class HomeActivity extends ActivityGroup {
                     JSONArray jsonArray = new JSONArray(trimmed);
                     
                     if ("local".equals(tabType)) {
-                        // Persiste os posts novos no SQLite e adiciona no topo
                         for (int i = jsonArray.length() - 1; i >= 0; i--) {
                             JSONObject obj = jsonArray.getJSONObject(i);
                             int pId = obj.optInt("id", 0);
@@ -473,8 +483,29 @@ public class HomeActivity extends ActivityGroup {
                             String txt = obj.optString("text_post", "");
                             String dt = obj.optString("datetime", "");
                             
+                            String mUrl = "";
+                            String w = "";
+                            String h = "";
+
+                            JSONArray mediaList = obj.optJSONArray("media_list");
+                            if (mediaList != null && mediaList.length() > 0) {
+                                JSONObject mObj = mediaList.optJSONObject(0);
+                                if (mObj != null) {
+                                    mUrl = mObj.optString("media_url", "");
+                                    w = mObj.optString("width", "");
+                                    h = mObj.optString("heigth", "");
+                                }
+                            } else {
+                                JSONObject singleMedia = obj.optJSONObject("media");
+                                if (singleMedia != null) {
+                                    mUrl = singleMedia.optString("media_url", "");
+                                    w = singleMedia.optString("width", "");
+                                    h = singleMedia.optString("heigth", "");
+                                }
+                            }
+
                             if (pId > 0) {
-                                dbHelper.insertPost(pId, uName, txt, dt);
+                                dbHelper.insertPost(pId, uName, txt, dt, mUrl, w, h);
                                 targetList.add(0, obj);
                             }
                         }
@@ -601,7 +632,7 @@ public class HomeActivity extends ActivityGroup {
 
                 txtCommentCount.setText(commentsCount);
                 tvUsername.setText(username.startsWith("@") ? username : "@" + username);
-                tvDate.setText(relative_datetime + "(" + datetime + ")");
+                tvDate.setText(relative_datetime.length() > 0 ? relative_datetime + " (" + datetime + ")" : datetime);
 
                 if ("timeline".equals(actualTab)) {
                     String avatarUrl = post.optString("avatar_url", "");
@@ -722,8 +753,8 @@ public class HomeActivity extends ActivityGroup {
             } else if (isGifMedia) {
                 finalProxyUrl = rawUrl;
             } else {
-                if ("timeline".equals(actualTab) && rawUrl.startsWith("http")) {
-                    finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=640&q=80&output=jpg";
+                if (rawUrl.startsWith("http")) {
+                    finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=480&q=70&output=jpg";
                 } else {
                     finalProxyUrl = rawUrl;
                 }
@@ -734,7 +765,7 @@ public class HomeActivity extends ActivityGroup {
                 public void onClick(View v) {
                     Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
                     intent.putExtra("type", "Image");
-                    intent.putExtra("url", finalProxyUrl);
+                    intent.putExtra("url", rawUrl);
                     startActivity(intent);
                 }
             });
