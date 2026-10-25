@@ -516,7 +516,7 @@ public class HomeActivity extends ActivityGroup {
 
             imgPost.setTag(null);
             imgPost.setImageBitmap(null);
-            imgPost.setMovie(null); // Reseta o estado do GifImageView nos cards reciclados
+            imgPost.setMovie(null);
 
             containerMedia.setVisibility(View.GONE);
             txtMediaCount.setVisibility(View.GONE);
@@ -681,22 +681,15 @@ public class HomeActivity extends ActivityGroup {
 
             imgPost.setLayoutParams(params);
 
-            // Detecção se a mídia é um GIF (por tipo no JSON ou extensão do arquivo)
             boolean isGifMedia = "gif".equals(mediaType) || rawUrl.toLowerCase().endsWith(".gif");
 
             final String finalProxyUrl;
-            if (isGifMedia) {
-                // GIFs sempre preservam a URL ou passam pelo proxy HTTP do backend sem conversão para JPG
-                if ("local".equals(actualTab)) {
-                    finalProxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + rawUrl;
-                } else {
-                    finalProxyUrl = rawUrl;
-                }
+            if (rawUrl.contains("/midia/") || rawUrl.startsWith("http://linkaProject.pythonanywhere.com") || rawUrl.startsWith("https://linkaProject.pythonanywhere.com")) {
+                finalProxyUrl = rawUrl;
+            } else if (isGifMedia) {
+                finalProxyUrl = rawUrl;
             } else {
-                // Imagens estáticas (JPEG/PNG)
-                if ("local".equals(actualTab)) {
-                    finalProxyUrl = "http://linkaProject.pythonanywhere.com/lite-render?url=" + rawUrl;
-                } else if ("timeline".equals(actualTab)) {
+                if ("timeline".equals(actualTab) && rawUrl.startsWith("http")) {
                     finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=640&q=80&output=jpg";
                 } else {
                     finalProxyUrl = rawUrl;
@@ -713,7 +706,6 @@ public class HomeActivity extends ActivityGroup {
                 }
             });
 
-            // Dispara o ImageLoader (o ImageLoader detecta a assinatura mágica/Movie e decide entre Bitmap ou GIF)
             imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
             updateCarouselControls(index, mediaItems.size(), txtMediaCount, btnPrev, btnNext);
         }

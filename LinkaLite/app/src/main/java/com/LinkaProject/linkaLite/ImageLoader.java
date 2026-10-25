@@ -88,8 +88,8 @@ public class ImageLoader {
     }
 
     /**
-     * Carrega imagem ou GIF de uma URL. Se for HTTP/HTTPS externo,
-     * passa pelo endpoint de proxy `/lite-render` do servidor.
+     * Carrega imagem ou GIF de uma URL. Se for mídias internas (/midia/),
+     * faz a requisição direta. Se for externa, passa pelo /lite-render.
      */
     public void LoadImageUrl(final String imageUrl, final ImageView targetView) {
         if (targetView == null || imageUrl == null || imageUrl.trim().length() == 0 || imageUrl.equals("null")) {
@@ -115,9 +115,9 @@ public class ImageLoader {
                         baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                     }
 
-                    // Se a URL for externa ou usar HTTPS não suportado no Android 2.0, passa pelo proxy HTTP do backend
+                    // Se a URL já for do próprio servidor/proxy (/midia/), baixa direto sem passar por lite-render
                     String fetchUrl = imageUrl;
-                    if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+                    if (!imageUrl.contains("/midia/") && (imageUrl.startsWith("http://") || imageUrl.startsWith("https://"))) {
                         fetchUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(imageUrl, "UTF-8");
                     }
 
@@ -156,7 +156,7 @@ public class ImageLoader {
                                     if (imageUrl.equals(targetView.getTag())) {
                                         targetView.setImageBitmap(decodedBitmap);
                                     }
-                                };
+                                }
                             });
                         }
                     }
@@ -204,10 +204,15 @@ public class ImageLoader {
                             String avatarUrl = responseData.optString("profile-picture", "");
 
                             if (avatarUrl.length() > 0 && !avatarUrl.equals("null")) {
-                                String proxyUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(avatarUrl, "UTF-8");
+
+                                // Se já for da rota /midia/, busca direto
+                                String fetchUrl = avatarUrl;
+                                if (!avatarUrl.contains("/midia/")) {
+                                    fetchUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(avatarUrl, "UTF-8");
+                                }
 
                                 int[] dims = getDensityBasedDimensions(context, true);
-                                byte[] rawBytes = request.requestBytes(proxyUrl, "GET", context);
+                                byte[] rawBytes = request.requestBytes(fetchUrl, "GET", context);
 
                                 if (!tagKey.equals(targetImageView.getTag())) return;
 

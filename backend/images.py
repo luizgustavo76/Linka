@@ -101,9 +101,14 @@ def lite_render():
 
     target_url = normalize_url(target_url)
     target_url = clean_reddit_url(target_url)
-    domain = get_domain(target_url)
 
-    allowed_domains = ["backblazeb2.com", "i.redd.it", "preview.redd.it", "redd.it"]
+    # Se a URL for do proprio proxy (/midia/), serve os bytes direto sem redirecionar
+    if "/midia/" in target_url:
+        filename = target_url.split("/midia/")[-1]
+        return proxy_midia(filename)
+
+    domain = get_domain(target_url)
+    allowed_domains = ["backblazeb2.com", "pythonanywhere.com", "i.redd.it", "preview.redd.it", "redd.it"]
     is_allowed = any(domain.endswith(d) or domain == d for d in allowed_domains)
 
     if not is_allowed:
