@@ -1,17 +1,58 @@
 import os
 import urllib.parse
 import uuid
+import boto3
+from botocore.config import Config
 import dotenv
-import requests
 from flask import Blueprint, Response, jsonify, redirect, request
-from supabase import Client, create_client
 
 dotenv.load_dotenv("backend.env")
-supabase: Client = create_client(
-    os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY")
+
+B2_KEY_ID = os.getenv("B2_KEY_ID")
+B2_APPLICATION_KEY = os.getenv("B2_APPLICATION_KEY")
+B2_ENDPOINT = os.getenv("B2_ENDPOINT", "https://s3.us-east-005.backblazeb2.com").rstrip("/")
+BUCKET_NAME = os.getenv("B2_BUCKET", "linka-media")
+MY_DOMINIO_PROXY = os.getenv("MY_DOMINIO_PROXY", "https://linkaProject.pythonanywhere.com")
+
+b2_config = Config(
+    signature_version='s3v4',
+    s3={
+        'addressing_style': 'path',
+        'payload_signing_enabled': False
+    },
+    retries={'max_attempts': 3, 'mode': 'standard'}
+)
+
+s3_client = boto3.client(
+    "s3",
+    endpoint_url=B2_ENDPOINT,
+    aws_access_key_id=B2_KEY_ID,
+    aws_secret_access_key=B2_APPLICATION_KEY,
+    config=b2_config
 )
 
 image_bp = Blueprint("image_bp", __name__)
+
+
+def get_proxy_url(filename):
+    return f"{MY_DOMINIO_PROXY}/midia/{filename}"
+
+
+@image_bp.route("/midia/<filename>", methods=["GET"])
+def proxy_midia(filename):
+    try:
+        s3_file = s3_client.get_object(Bucket=BUCKET_NAME, Key=filename)
+        content_type = s3_file.get("ContentType", "image/jpeg")
+
+        resp = Response(
+            s3_file["Body"].read(),
+            status=200,
+            mimetype=content_type,
+        )
+        resp.headers["Cache-Control"] = "public, max-age=31536000"
+        return resp
+    except Exception as e:
+        return jsonify({"error": "Media not found", "details": str(e)}), 404
 
 
 def clean_reddit_url(url_str):
@@ -54,47 +95,13 @@ def lite_render():
     target_url = clean_reddit_url(target_url)
     domain = get_domain(target_url)
 
-    allowed_domains = ["supabase.co", "i.redd.it", "preview.redd.it", "redd.it"]
+    allowed_domains = ["backblazeb2.com", "i.redd.it", "preview.redd.it", "redd.it"]
     is_allowed = any(domain.endswith(d) or domain == d for d in allowed_domains)
 
     if not is_allowed:
         return redirect(target_url, code=302)
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36",
-        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
-    }
-
-    try:
-        response = requests.get(target_url, headers=headers, timeout=12)
-
-        if response.status_code != 200 or not response.content:
-            return jsonify({
-                "error": "Failed to fetch image directly", 
-                "status_code": response.status_code
-            }), 502
-
-        content_type = response.headers.get("Content-Type", "").lower()
-
-        if not content_type.startswith("image/"):
-            return jsonify({
-                "error": "Target URL is not a valid image",
-                "received_content_type": content_type
-            }), 502
-
-        resp = Response(
-            response.content,
-            status=200,
-            mimetype=content_type,
-        )
-        resp.headers["Cache-Control"] = "public, max-age=86400"
-        resp.headers["Content-Type"] = content_type
-
-        return resp
-
-    except Exception as e:
-        print(f"[DEBUG] Exception na rota lite-render: {e}", flush=True)
-        return jsonify({"error": "Direct image fetch failed", "details": str(e)}), 502
+    return redirect(target_url, code=302)
 
 
 @image_bp.route("/upload-image", methods=["POST"])
@@ -110,7 +117,6 @@ def upload_image():
     filename = (file.filename or "image.jpg").lower()
     file_ext = os.path.splitext(filename)[1]
 
-    # Detecção robusta do formato (extensão, Content-Type ou Magic Bytes)
     mime_types = {
         ".jpg": "image/jpeg",
         ".jpeg": "image/jpeg",
@@ -119,7 +125,7 @@ def upload_image():
     }
 
     content_type = file.content_type or ""
-    
+
     if file_ext in mime_types:
         ct = mime_types[file_ext]
         ext = ".jpg" if file_ext == ".jpeg" else file_ext
@@ -130,7 +136,6 @@ def upload_image():
     elif "jpeg" in content_type or "jpg" in content_type:
         ct, ext = "image/jpeg", ".jpg"
     else:
-        # Fallback por assinatura binária dos primeiros bytes
         if raw_bytes.startswith(b"\xff\xd8\xff"):
             ct, ext = "image/jpeg", ".jpg"
         elif raw_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
@@ -142,14 +147,15 @@ def upload_image():
 
     try:
         file_name = f"post_{uuid.uuid4().hex}{ext}"
-        bucket = "linka-media"
 
-        supabase.storage.from_(bucket).upload(
-            path=file_name,
-            file=raw_bytes,
-            file_options={"content-type": ct, "upsert": "true"},
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=file_name,
+            Body=raw_bytes,
+            ContentType=ct,
         )
-        public_url = supabase.storage.from_(bucket).get_public_url(file_name)
+
+        public_url = get_proxy_url(file_name)
 
         return jsonify({"status": "success", "image_url": public_url}), 200
     except Exception as e:
