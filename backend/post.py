@@ -881,11 +881,116 @@ def return_stars(post_id):
 
 @post_bp.route("/new-feed", methods=["POST"])
 def new_feed():
-    data = request.get_json()
-    last_id = data.get("last_id")
+    data = request.get_json(silent=True) or {}
+    last_id = data.get("last_id", 0)
+
+    try:
+        last_id = int(last_id)
+    except (ValueError, TypeError):
+        last_id = 0
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM posts WHERE id = ?",(last_id,))
+
+    # Busca apenas os posts mais recentes que o last_id enviado pelo Android
+    cur.execute("""
+        SELECT 
+            p.id, 
+            p.username, 
+            p.text_post, 
+            p.datetime, 
+            p.media,
+            p.media_type,
+            p.width,
+            p.heigth,
+            COUNT(c.id) AS comment_count
+        FROM posts p
+        LEFT JOIN comments c ON c.post_id = p.id
+        WHERE p.id > ?
+        GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth
+        ORDER BY p.id ASC
+    """, (last_id,))
+
+    posts = cur.fetchall()
+
+    lista_posts = []
+    pending_updates_posts = []
+    pending_updates_media = []
+
+    for post in posts:
+        post_id = post["id"]
+        text_content = post["text_post"] or ""
+        match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
+        
+        media_url = match.group(1).strip() if match else post["media"]
+        media_type = "image" if match else post["media_type"]
+
+        main_width = post["width"] or ""
+        main_heigth = post["heigth"] or ""
+
+        if media_url and (not main_width or not main_heigth):
+            auto_w, auto_h = get_image_dimensions(media_url)
+            if auto_w and auto_h:
+                main_width = auto_w
+                main_heigth = auto_h
+                pending_updates_posts.append((main_width, main_heigth, post_id))
+
+        cur.execute("SELECT id, media_url, media_type, width, heigth FROM post_media WHERE post_id = ?", (post_id,))
+        media_rows = cur.fetchall()
+
+        media_list = []
+        if media_rows:
+            for row in media_rows:
+                m_id = row["id"]
+                m_url = row["media_url"]
+                m_w = row["width"] or ""
+                m_h = row["heigth"] or ""
+
+                if m_url and (not m_w or not m_h):
+                    auto_w, auto_h = get_image_dimensions(m_url)
+                    if auto_w and auto_h:
+                        m_w = auto_w
+                        m_h = auto_h
+                        pending_updates_media.append((m_w, m_h, m_id))
+
+                media_list.append({
+                    "media_url": m_url,
+                    "media_type": row["media_type"] or "image",
+                    "width": m_w,
+                    "heigth": m_h
+                })
+        else:
+            media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
+
+        lista_posts.append({
+            "id": post["id"],
+            "username": post["username"],
+            "text_post": text_content,
+            "datetime": post["datetime"],
+            "relative_datetime": get_relative_time(post["datetime"]),
+            "comment_count": post["comment_count"],
+            "media": {
+                "media_url": media_url or "",
+                "media_type": media_type or "image",
+                "width": main_width,
+                "heigth": main_heigth
+            },
+            "media_list": media_list,
+            "media_attachments": media_list,
+            "platform": "linka",
+            "origin_server": root_flags.get("url-server", "")
+        })
+
+    if pending_updates_posts:
+        cur.executemany("UPDATE posts SET width = ?, heigth = ? WHERE id = ?", pending_updates_posts)
+    if pending_updates_media:
+        cur.executemany("UPDATE post_media SET width = ?, heigth = ? WHERE id = ?", pending_updates_media)
+
+    if pending_updates_posts or pending_updates_media:
+        conn.commit()
+
+    conn.close()
+    return jsonify(lista_posts), 200
 @post_bp.route("/has-star", methods=["POST"])
 def has_star():
     data = request.get_json(force=True) or {}
