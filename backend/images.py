@@ -4,9 +4,11 @@ import uuid
 import boto3
 from botocore.config import Config
 import dotenv
-from flask import Blueprint, jsonify, redirect, request
+from flask import Blueprint, Response, jsonify, redirect, request
 
-dotenv.load_dotenv("backend.env")
+# Carrega as variáveis garantindo o caminho absoluto da pasta
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+dotenv.load_dotenv(os.path.join(BASE_DIR, "backend.env"))
 
 B2_KEY_ID = os.getenv("B2_KEY_ID")
 B2_APPLICATION_KEY = os.getenv("B2_APPLICATION_KEY")
@@ -41,15 +43,22 @@ def get_proxy_url(filename):
 @image_bp.route("/midia/<filename>", methods=["GET"])
 def proxy_midia(filename):
     try:
-        # Gera uma URL assinada válida por 3600 segundos (1 hora)
-        # O processamento leva menos de 2 milissegundos no Flask
-        presigned_url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': BUCKET_NAME, 'Key': filename},
-            ExpiresIn=3600
+        # Busca o objeto direto no B2
+        s3_file = s3_client.get_object(Bucket=BUCKET_NAME, Key=filename)
+        content_type = s3_file.get("ContentType", "image/jpeg")
+
+        # Função geradora para transmitir por chunks em vez de ler tudo na RAM
+        def generate():
+            for chunk in s3_file["Body"].iter_chunks(chunk_size=8192):
+                yield chunk
+
+        resp = Response(
+            generate(),
+            status=200,
+            mimetype=content_type,
         )
-        # Redireciona o navegador do cliente direto pro Backblaze B2
-        return redirect(presigned_url, code=302)
+        resp.headers["Cache-Control"] = "public, max-age=31536000"
+        return resp
     except Exception as e:
         return jsonify({"error": "Media not found", "details": str(e)}), 404
 
