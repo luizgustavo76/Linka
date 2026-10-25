@@ -7,6 +7,7 @@ import android.graphics.Movie;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
+import android.util.LruCache;
 import android.widget.ImageView;
 import com.LinkaProject.linkaLite.GifImageView;
 import org.json.JSONObject;
@@ -14,6 +15,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,6 +23,22 @@ public class ImageLoader {
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final ExecutorService executor = Executors.newFixedThreadPool(4);
+
+    private static LruCache<String, Bitmap> memoryCache;
+    private static ConcurrentHashMap<String, byte[]> gifCache = new ConcurrentHashMap<String, byte[]>();
+
+    public ImageLoader() {
+        if (memoryCache == null) {
+            int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+            int cacheSize = maxMemory / 8;
+            memoryCache = new LruCache<String, Bitmap>(cacheSize > 0 ? cacheSize : 4096) {
+                @Override
+                protected int sizeOf(String key, Bitmap bitmap) {
+                    return bitmap.getByteCount() / 1024;
+                }
+            };
+        }
+    }
 
     private int[] getDensityBasedDimensions(Context context, boolean isAvatar) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
@@ -41,7 +59,6 @@ public class ImageLoader {
             return true;
         }
         if (data != null && data.length >= 6) {
-            // Verifica a assinatura mágica do cabeçalho GIF (GIF87a ou GIF89a)
             return data[0] == 'G' && data[1] == 'I' && data[2] == 'F';
         }
         return false;
@@ -87,16 +104,31 @@ public class ImageLoader {
         return inSampleSize;
     }
 
-    /**
-     * Carrega imagem ou GIF de uma URL. Se for mídias internas (/midia/),
-     * faz a requisição direta. Se for externa, passa pelo /lite-render.
-     */
     public void LoadImageUrl(final String imageUrl, final ImageView targetView) {
         if (targetView == null || imageUrl == null || imageUrl.trim().length() == 0 || imageUrl.equals("null")) {
             return;
         }
 
         targetView.setTag(imageUrl);
+
+        Bitmap cachedBitmap = memoryCache.get(imageUrl);
+        if (cachedBitmap != null) {
+            targetView.setImageBitmap(cachedBitmap);
+            return;
+        }
+
+        if (targetView instanceof GifImageView && gifCache.containsKey(imageUrl)) {
+            byte[] rawBytes = gifCache.get(imageUrl);
+            InputStream is = new ByteArrayInputStream(rawBytes);
+            Movie gifMovie = Movie.decodeStream(is);
+            if (gifMovie != null) {
+                ((GifImageView) targetView).setMovie(gifMovie);
+                return;
+            }
+        }
+
+        targetView.setImageResource(android.R.color.transparent);
+
         final Context appContext = targetView.getContext();
 
         executor.submit(new Runnable() {
@@ -115,7 +147,6 @@ public class ImageLoader {
                         baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                     }
 
-                    // Se a URL já for do próprio servidor/proxy (/midia/), baixa direto sem passar por lite-render
                     String fetchUrl = imageUrl;
                     if (!imageUrl.contains("/midia/") && (imageUrl.startsWith("http://") || imageUrl.startsWith("https://"))) {
                         fetchUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(imageUrl, "UTF-8");
@@ -127,8 +158,8 @@ public class ImageLoader {
                     if (rawBytes != null && rawBytes.length > 0) {
                         if (!imageUrl.equals(targetView.getTag())) return;
 
-                        // SE FOR GIF: Renderiza usando o Movie (C++ Skia nativo do Android 2.0)
                         if (isGif(imageUrl, rawBytes) && targetView instanceof GifImageView) {
+                            gifCache.put(imageUrl, rawBytes);
                             final GifImageView gifTarget = (GifImageView) targetView;
                             InputStream is = new ByteArrayInputStream(rawBytes);
                             final Movie gifMovie = Movie.decodeStream(is);
@@ -146,10 +177,10 @@ public class ImageLoader {
                             }
                         }
 
-                        // SE FOR IMAGEM ESTÁTICA (PNG/JPEG)
                         final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
 
                         if (decodedBitmap != null) {
+                            memoryCache.put(imageUrl, decodedBitmap);
                             mainHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -173,6 +204,14 @@ public class ImageLoader {
 
         final String tagKey = "avatar_" + username;
         targetImageView.setTag(tagKey);
+
+        Bitmap cachedAvatar = memoryCache.get(tagKey);
+        if (cachedAvatar != null) {
+            targetImageView.setImageBitmap(cachedAvatar);
+            return;
+        }
+
+        targetImageView.setImageResource(android.R.color.transparent);
 
         executor.submit(new Runnable() {
             @Override
@@ -205,7 +244,6 @@ public class ImageLoader {
 
                             if (avatarUrl.length() > 0 && !avatarUrl.equals("null")) {
 
-                                // Se já for da rota /midia/, busca direto
                                 String fetchUrl = avatarUrl;
                                 if (!avatarUrl.contains("/midia/")) {
                                     fetchUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(avatarUrl, "UTF-8");
@@ -220,6 +258,7 @@ public class ImageLoader {
                                     final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
                                     if (decodedBitmap != null) {
                                         final Bitmap circularBitmap = profile.getCircularBitmap(decodedBitmap);
+                                        memoryCache.put(tagKey, circularBitmap);
                                         mainHandler.post(new Runnable() {
                                             @Override
                                             public void run() {

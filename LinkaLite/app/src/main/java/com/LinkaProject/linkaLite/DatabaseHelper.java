@@ -59,23 +59,61 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             hasPosts = cursor.getInt(0) > 0;
         }
         cursor.close();
-        db.close();
         return hasPosts;
     }
 
-    public void insertPost(int id, String username, String textPost, String datetime, String mediaUrl, String width, String height) {
+    // Inserção em massa usando Transaction para evitar lentidão
+    public void insertPostsBatch(JSONArray postsArray) {
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_ID, id);
-        values.put(COLUMN_USERNAME, username);
-        values.put(COLUMN_TEXT, textPost);
-        values.put(COLUMN_DATETIME, datetime);
-        values.put(COLUMN_MEDIA_URL, mediaUrl);
-        values.put(COLUMN_WIDTH, width);
-        values.put(COLUMN_HEIGHT, height);
+        db.beginTransaction();
+        try {
+            for (int i = 0; i < postsArray.length(); i++) {
+                JSONObject obj = postsArray.getJSONObject(i);
+                int pId = obj.optInt("id", 0);
+                if (pId <= 0) continue;
 
-        db.insertWithOnConflict(TABLE_POSTS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
-        db.close();
+                String uName = obj.optString("username", "");
+                String txt = obj.optString("text_post", "");
+                String dt = obj.optString("datetime", "");
+                
+                String mUrl = "";
+                String w = "";
+                String h = "";
+
+                JSONArray mediaList = obj.optJSONArray("media_list");
+                if (mediaList != null && mediaList.length() > 0) {
+                    JSONObject mObj = mediaList.optJSONObject(0);
+                    if (mObj != null) {
+                        mUrl = mObj.optString("media_url", "");
+                        w = mObj.optString("width", "");
+                        h = mObj.optString("heigth", "");
+                    }
+                } else {
+                    JSONObject singleMedia = obj.optJSONObject("media");
+                    if (singleMedia != null) {
+                        mUrl = singleMedia.optString("media_url", "");
+                        w = singleMedia.optString("width", "");
+                        h = singleMedia.optString("heigth", "");
+                    }
+                }
+
+                ContentValues values = new ContentValues();
+                values.put(COLUMN_ID, pId);
+                values.put(COLUMN_USERNAME, uName);
+                values.put(COLUMN_TEXT, txt);
+                values.put(COLUMN_DATETIME, dt);
+                values.put(COLUMN_MEDIA_URL, mUrl);
+                values.put(COLUMN_WIDTH, w);
+                values.put(COLUMN_HEIGHT, h);
+
+                db.insertWithOnConflict(TABLE_POSTS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
+            }
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            db.endTransaction();
+        }
     }
 
     public int getLastPostId() {
@@ -86,7 +124,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             lastId = cursor.getInt(0);
         }
         cursor.close();
-        db.close();
         return lastId;
     }
 
@@ -131,7 +168,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
 
         cursor.close();
-        db.close();
         return list;
     }
 }

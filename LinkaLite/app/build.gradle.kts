@@ -101,3 +101,8 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 }
+
+// Dependências ficam FORA do bloco android { ... }
+dependencies {
+    implementation("com.android.support:support-v4:23.4.0")
+}

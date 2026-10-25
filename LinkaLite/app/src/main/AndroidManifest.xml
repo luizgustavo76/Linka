@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.LinkaProject.linkaLite">
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-sdk tools:overrideLibrary="android.support.v4, android.support.compat, android.support.coreutils, android.support.coreui, android.support.fragment, android.support.v4.media, android.support.mediacompat" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Resto do seu manifesto permanece exatamente igual... -->
     <application 
         android:label="Linka"
         android:icon="@drawable/icon"

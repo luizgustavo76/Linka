@@ -350,7 +350,8 @@ public class HomeActivity extends ActivityGroup {
     private void loadCachedPostsLocal() {
         if (dbHelper != null && postsLocal != null) {
             ArrayList<JSONObject> cached = dbHelper.getAllCachedPosts();
-            if (cached.size() > 0 && postsLocal.size() == 0) {
+            if (cached.size() > 0) {
+                postsLocal.clear();
                 postsLocal.addAll(cached);
                 if (adapterLocal != null) {
                     adapterLocal.notifyDataSetChanged();
@@ -476,38 +477,11 @@ public class HomeActivity extends ActivityGroup {
                     JSONArray jsonArray = new JSONArray(trimmed);
                     
                     if ("local".equals(tabType)) {
-                        for (int i = jsonArray.length() - 1; i >= 0; i--) {
-                            JSONObject obj = jsonArray.getJSONObject(i);
-                            int pId = obj.optInt("id", 0);
-                            String uName = obj.optString("username", "");
-                            String txt = obj.optString("text_post", "");
-                            String dt = obj.optString("datetime", "");
-                            
-                            String mUrl = "";
-                            String w = "";
-                            String h = "";
-
-                            JSONArray mediaList = obj.optJSONArray("media_list");
-                            if (mediaList != null && mediaList.length() > 0) {
-                                JSONObject mObj = mediaList.optJSONObject(0);
-                                if (mObj != null) {
-                                    mUrl = mObj.optString("media_url", "");
-                                    w = mObj.optString("width", "");
-                                    h = mObj.optString("heigth", "");
-                                }
-                            } else {
-                                JSONObject singleMedia = obj.optJSONObject("media");
-                                if (singleMedia != null) {
-                                    mUrl = singleMedia.optString("media_url", "");
-                                    w = singleMedia.optString("width", "");
-                                    h = singleMedia.optString("heigth", "");
-                                }
-                            }
-
-                            if (pId > 0) {
-                                dbHelper.insertPost(pId, uName, txt, dt, mUrl, w, h);
-                                targetList.add(0, obj);
-                            }
+                        if (jsonArray.length() > 0) {
+                            dbHelper.insertPostsBatch(jsonArray);
+                            ArrayList<JSONObject> updatedFromDb = dbHelper.getAllCachedPosts();
+                            postsLocal.clear();
+                            postsLocal.addAll(updatedFromDb);
                         }
                     } else {
                         targetList.clear();
@@ -577,10 +551,10 @@ public class HomeActivity extends ActivityGroup {
             TextView txtCommentCount = (TextView) convertView.findViewById(R.id.txtCommentCount);
 
             avatarPost.setTag(null);
-            avatarPost.setImageBitmap(null);
+            avatarPost.setImageDrawable(null);
 
-            imgPost.setTag(null);
-            imgPost.setImageBitmap(null);
+            imgPost.setTag(R.id.imgPost, null);
+            imgPost.setImageDrawable(null);
             imgPost.setMovie(null);
 
             containerMedia.setVisibility(View.GONE);
@@ -638,11 +612,14 @@ public class HomeActivity extends ActivityGroup {
                     String avatarUrl = post.optString("avatar_url", "");
                     if (avatarUrl.startsWith("http")) {
                         String avatarOtimizado = "http://wsrv.nl/?url=" + avatarUrl + "&w=48&h=48&fit=cover&output=jpg";
+                        avatarPost.setTag(avatarOtimizado);
                         imageLoader.LoadImageUrl(avatarOtimizado, avatarPost);
                     } else {
+                        avatarPost.setTag(avatarUrl);
                         imageLoader.LoadImageUrl(avatarUrl, avatarPost);
                     }
                 } else {
+                    avatarPost.setTag("avatar_" + username);
                     imageLoader.viewProfilePicture(context, username, avatarPost);
                 }
 
@@ -770,7 +747,10 @@ public class HomeActivity extends ActivityGroup {
                 }
             });
 
+            // Associação correta da URL e chamada ao ImageLoader
+            imgPost.setTag(finalProxyUrl);
             imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
+            
             updateCarouselControls(index, mediaItems.size(), txtMediaCount, btnPrev, btnNext);
         }
 
