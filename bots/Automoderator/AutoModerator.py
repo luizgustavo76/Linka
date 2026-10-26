@@ -102,7 +102,6 @@ def main():
                         continue
 
                     if pt_regex.search(text_post) and post_id not in WARNED_POSTS:
-                        bot.comment(response_for_pt, post_id)
                         WARNED_POSTS.add(post_id)
                         print(f"[AutoMod] Aviso de idioma enviado para o post #{post_id}.")
 
