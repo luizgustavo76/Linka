@@ -17,12 +17,13 @@ def create_db():
         is_public INTEGER,
         is_external INTEGER,
         source_url TEXT,
+        original_id TEXT,
         platfrom TEXT
         """)
     conn.commit()
     conn.close()
 create_db()
-@bookmarks.route("/view-bookmarks", methods=["POST"])
+@bookmarks_bp.route("/view-bookmarks", methods=["POST"])
 def view_bookmarks():
     data = request.get_json()
     username = data.get("username")
@@ -46,3 +47,31 @@ def view_bookmarks():
             return jsonify(result),200
     else:
         return jsonify("status":"forbidden"),403
+@bookmarks_bp.route("/toggle-bookmark",methods=["POST"])
+def toggle_bookmark():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        post_id = data.get("post_id")
+        is_public = data.get("is_public")
+        original_id = data.get("original_id")
+        is_external = data.get("is_external")
+        source_url = data.get("source_url")
+        platform = data.get("platform")
+        if None in (is_public, is_external, platform):
+            return jsonify({"status":"missing data"}),400
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT post_id FROM bookmarks WHERE post_id or original_id = ?",(post_id,))
+        result = cur.fetchone()
+        if result:
+            cur.execute("DELETE FROM bookmarks WHERE post_id or original_id = ?",(post_id,))
+            return jsonify({"status":"bookmark removed"}),200
+        else:
+            cur.execute("INSERT INTO bookmarks (username, post_id, is_public, is_external, source_url, platform, original_id) VALUES(?,?,?,?,?,?)",(username, post_id, is_public, is_external, source_url, platform, original_id))
+            return jsonify("status":"bookmarked inserted"),200
+        conn.commit()
+        conn.close()
+    else:
+        return jsonify({"status":"forbidden"}),403
+            
