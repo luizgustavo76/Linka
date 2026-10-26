@@ -12,13 +12,16 @@ import java.util.ArrayList;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "linkalite_cache.db";
-    private static final int DATABASE_VERSION = 2;
+    // Aumentamos a versão para forçar a atualização da estrutura
+    private static final int DATABASE_VERSION = 3;
 
     public static final String TABLE_POSTS = "posts";
     public static final String COLUMN_ID = "id";
     public static final String COLUMN_USERNAME = "username";
     public static final String COLUMN_TEXT = "text_post";
     public static final String COLUMN_DATETIME = "datetime";
+    public static final String COLUMN_RELATIVE_DATETIME = "relative_datetime";
+    public static final String COLUMN_COMMENT_COUNT = "comment_count";
     public static final String COLUMN_MEDIA_URL = "media_url";
     public static final String COLUMN_WIDTH = "width";
     public static final String COLUMN_HEIGHT = "height";
@@ -34,6 +37,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COLUMN_USERNAME + " TEXT, "
                 + COLUMN_TEXT + " TEXT, "
                 + COLUMN_DATETIME + " TEXT, "
+                + COLUMN_RELATIVE_DATETIME + " TEXT, "
+                + COLUMN_COMMENT_COUNT + " INTEGER DEFAULT 0, "
                 + COLUMN_MEDIA_URL + " TEXT, "
                 + COLUMN_WIDTH + " TEXT, "
                 + COLUMN_HEIGHT + " TEXT)";
@@ -42,6 +47,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Se a versão mudou, recria a tabela com as novas colunas
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_POSTS);
         onCreate(db);
     }
@@ -62,7 +68,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return hasPosts;
     }
 
-    // Inserção em massa usando Transaction para evitar lentidão
+    // Insere ou Atualiza posts existente mantendo os contadores em dia
     public void insertPostsBatch(JSONArray postsArray) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.beginTransaction();
@@ -75,6 +81,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 String uName = obj.optString("username", "");
                 String txt = obj.optString("text_post", "");
                 String dt = obj.optString("datetime", "");
+                String relDt = obj.optString("relative_datetime", "");
+                int comments = obj.optInt("comment_count", obj.optInt("comments_count", 0));
                 
                 String mUrl = "";
                 String w = "";
@@ -102,10 +110,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 values.put(COLUMN_USERNAME, uName);
                 values.put(COLUMN_TEXT, txt);
                 values.put(COLUMN_DATETIME, dt);
+                values.put(COLUMN_RELATIVE_DATETIME, relDt);
+                values.put(COLUMN_COMMENT_COUNT, comments);
                 values.put(COLUMN_MEDIA_URL, mUrl);
                 values.put(COLUMN_WIDTH, w);
                 values.put(COLUMN_HEIGHT, h);
 
+                // CONFLICT_REPLACE garante que, se o ID já existir no SQLite,
+                // ele atualiza o comentário e os dados sem duplicar nem dar erro!
                 db.insertWithOnConflict(TABLE_POSTS, null, values, SQLiteDatabase.CONFLICT_REPLACE);
             }
             db.setTransactionSuccessful();
@@ -140,6 +152,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     post.put("username", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_USERNAME)));
                     post.put("text_post", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TEXT)));
                     post.put("datetime", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DATETIME)));
+                    post.put("relative_datetime", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_RELATIVE_DATETIME)));
+                    post.put("comment_count", cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_COMMENT_COUNT)));
 
                     String mUrl = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MEDIA_URL));
                     String w = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_WIDTH));

@@ -615,9 +615,9 @@ public class HomeActivity extends ActivityGroup {
                             postsLocal.addAll(updatedFromDb);
                         }
                     } else {
-                        targetList.clear();
+                        postsTimeline.clear();
                         for (int i = 0; i < jsonArray.length(); i++) {
-                            targetList.add(jsonArray.getJSONObject(i));
+                            postsTimeline.add(jsonArray.getJSONObject(i));
                         }
                     }
                 } else if (trimmed.startsWith("{")) {
@@ -632,7 +632,6 @@ public class HomeActivity extends ActivityGroup {
             targetAdapter.notifyDataSetChanged();
         }
     }
-
     private class PostAdapter extends BaseAdapter {
         private Context context;
         private ArrayList<JSONObject> list;
