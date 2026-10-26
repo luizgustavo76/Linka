@@ -64,7 +64,7 @@ def get_image_dimensions(url):
 
 def process_dimensions_in_background(post_id, main_media, media_items):
     """
-    Task de fundo que roda de forma assíncrona para não travar conexões.
+    Task de fundo que roda de forma assíncrona ao criar novos posts.
     """
     try:
         conn = get_db()
@@ -94,6 +94,60 @@ def process_dimensions_in_background(post_id, main_media, media_items):
         conn.close()
     except Exception as e:
         print(f"[BACKGROUND TASK ERROR] Falha ao processar post #{post_id}: {e}")
+
+
+def check_and_update_missing_dimensions():
+    """
+    Roda em background na inicialização do servidor.
+    Calcula e guarda no DB as dimensões das imagens antigas que não possuem largura/altura.
+    """
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT id, media 
+            FROM posts 
+            WHERE media IS NOT NULL 
+              AND media != '' 
+              AND (width IS NULL OR width = '' OR heigth IS NULL OR heigth = '')
+        """)
+        missing_posts = cur.fetchall()
+
+        for post in missing_posts:
+            post_id = post["id"]
+            media_url = post["media"]
+            w, h = get_image_dimensions(media_url)
+            if w and h:
+                cur.execute(
+                    "UPDATE posts SET width = ?, heigth = ? WHERE id = ?",
+                    (w, h, post_id)
+                )
+
+        cur.execute("""
+            SELECT id, media_url 
+            FROM post_media 
+            WHERE media_url IS NOT NULL 
+              AND media_url != '' 
+              AND (width IS NULL OR width = '' OR heigth IS NULL OR heigth = '')
+        """)
+        missing_media = cur.fetchall()
+
+        for media in missing_media:
+            media_id = media["id"]
+            media_url = media["media_url"]
+            w, h = get_image_dimensions(media_url)
+            if w and h:
+                cur.execute(
+                    "UPDATE post_media SET width = ?, heigth = ? WHERE id = ?",
+                    (w, h, media_id)
+                )
+
+        conn.commit()
+        conn.close()
+        print("[INIT TASK] Dimensões das imagens antigas verificadas e atualizadas no banco com sucesso!")
+    except Exception as e:
+        print(f"[INIT TASK ERROR] Erro na verificação inicial de dimensões: {e}")
 
 
 def get_db():
@@ -176,6 +230,9 @@ def create_db():
 
 
 create_db()
+
+# Dispara a verificação assíncrona assim que a aplicação sobe
+bg_executor.submit(check_and_update_missing_dimensions)
 
 
 def get_relative_time(post_date):
@@ -726,10 +783,6 @@ def feed():
     posts = cur.fetchall()
 
     lista_posts = []
-    
-    # Lista para acumular updates que precisam ser persistidos no SQLite
-    pending_updates_posts = []
-    pending_updates_media = []
 
     for post in posts:
         post_id = post["id"]
@@ -742,37 +795,17 @@ def feed():
         main_width = post["width"] or ""
         main_heigth = post["heigth"] or ""
 
-        # SE TIVER IMAGEM E NÃO TIVER AS MEDIDAS, BUSCA NA HORA E MARCA PRA SALVAR NO DB
-        if media_url and (not main_width or not main_heigth):
-            auto_w, auto_h = get_image_dimensions(media_url)
-            if auto_w and auto_h:
-                main_width = auto_w
-                main_heigth = auto_h
-                pending_updates_posts.append((main_width, main_heigth, post_id))
-
         cur.execute("SELECT id, media_url, media_type, width, heigth FROM post_media WHERE post_id = ?", (post_id,))
         media_rows = cur.fetchall()
 
         media_list = []
         if media_rows:
             for row in media_rows:
-                m_id = row["id"]
-                m_url = row["media_url"]
-                m_w = row["width"] or ""
-                m_h = row["heigth"] or ""
-
-                if m_url and (not m_w or not m_h):
-                    auto_w, auto_h = get_image_dimensions(m_url)
-                    if auto_w and auto_h:
-                        m_w = auto_w
-                        m_h = auto_h
-                        pending_updates_media.append((m_w, m_h, m_id))
-
                 media_list.append({
-                    "media_url": m_url,
+                    "media_url": row["media_url"],
                     "media_type": row["media_type"] or "image",
-                    "width": m_w,
-                    "heigth": m_h
+                    "width": row["width"] or "",
+                    "heigth": row["heigth"] or ""
                 })
         else:
             media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
@@ -795,15 +828,6 @@ def feed():
             "platform": "linka",
             "origin_server": root_flags.get("url-server", "")
         })
-
-    # GRAVA TUDO DE UMA VEZ NO BANCO DE DADOS
-    if pending_updates_posts:
-        cur.executemany("UPDATE posts SET width = ?, heigth = ? WHERE id = ?", pending_updates_posts)
-    if pending_updates_media:
-        cur.executemany("UPDATE post_media SET width = ?, heigth = ? WHERE id = ?", pending_updates_media)
-
-    if pending_updates_posts or pending_updates_media:
-        conn.commit()
 
     conn.close()
     return jsonify(lista_posts), 200
@@ -879,6 +903,7 @@ def return_stars(post_id):
 
     return str(qtd), 200
 
+
 @post_bp.route("/new-feed", methods=["POST"])
 def new_feed():
     data = request.get_json(silent=True) or {}
@@ -892,7 +917,6 @@ def new_feed():
     conn = get_db()
     cur = conn.cursor()
 
-    # Busca apenas os posts mais recentes que o last_id enviado pelo Android
     cur.execute("""
         SELECT 
             p.id, 
@@ -914,8 +938,6 @@ def new_feed():
     posts = cur.fetchall()
 
     lista_posts = []
-    pending_updates_posts = []
-    pending_updates_media = []
 
     for post in posts:
         post_id = post["id"]
@@ -928,36 +950,17 @@ def new_feed():
         main_width = post["width"] or ""
         main_heigth = post["heigth"] or ""
 
-        if media_url and (not main_width or not main_heigth):
-            auto_w, auto_h = get_image_dimensions(media_url)
-            if auto_w and auto_h:
-                main_width = auto_w
-                main_heigth = auto_h
-                pending_updates_posts.append((main_width, main_heigth, post_id))
-
         cur.execute("SELECT id, media_url, media_type, width, heigth FROM post_media WHERE post_id = ?", (post_id,))
         media_rows = cur.fetchall()
 
         media_list = []
         if media_rows:
             for row in media_rows:
-                m_id = row["id"]
-                m_url = row["media_url"]
-                m_w = row["width"] or ""
-                m_h = row["heigth"] or ""
-
-                if m_url and (not m_w or not m_h):
-                    auto_w, auto_h = get_image_dimensions(m_url)
-                    if auto_w and auto_h:
-                        m_w = auto_w
-                        m_h = auto_h
-                        pending_updates_media.append((m_w, m_h, m_id))
-
                 media_list.append({
-                    "media_url": m_url,
+                    "media_url": row["media_url"],
                     "media_type": row["media_type"] or "image",
-                    "width": m_w,
-                    "heigth": m_h
+                    "width": row["width"] or "",
+                    "heigth": row["heigth"] or ""
                 })
         else:
             media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
@@ -981,16 +984,10 @@ def new_feed():
             "origin_server": root_flags.get("url-server", "")
         })
 
-    if pending_updates_posts:
-        cur.executemany("UPDATE posts SET width = ?, heigth = ? WHERE id = ?", pending_updates_posts)
-    if pending_updates_media:
-        cur.executemany("UPDATE post_media SET width = ?, heigth = ? WHERE id = ?", pending_updates_media)
-
-    if pending_updates_posts or pending_updates_media:
-        conn.commit()
-
     conn.close()
     return jsonify(lista_posts), 200
+
+
 @post_bp.route("/has-star", methods=["POST"])
 def has_star():
     data = request.get_json(force=True) or {}
