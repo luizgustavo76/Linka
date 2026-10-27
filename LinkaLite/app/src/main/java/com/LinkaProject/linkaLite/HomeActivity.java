@@ -42,10 +42,11 @@ import java.util.concurrent.TimeUnit;
 
 public class HomeActivity extends ActivityGroup {
 
+    private static final Pattern MENTION_PATTERN = Pattern.compile("@([a-zA-Z0-9_]+(@[a-zA-Z0-9_.-]+)?)");
+
     private void highlightMentions(final Context context, TextView textView, String text) {
         SpannableString spannableString = new SpannableString(text);
-        Pattern pattern = Pattern.compile("@([a-zA-Z0-9_]+(@[a-zA-Z0-9_.-]+)?)");
-        Matcher matcher = pattern.matcher(text);
+        Matcher matcher = MENTION_PATTERN.matcher(text);
 
         while (matcher.find()) {
             final String mention = matcher.group();
@@ -63,53 +64,40 @@ public class HomeActivity extends ActivityGroup {
                 @Override
                 public void updateDrawState(TextPaint ds) {
                     super.updateDrawState(ds);
-                    ds.setColor(Color.parseColor("#1E88E5"));
+                    ds.setColor(Color.parseColor("#0066CC"));
                     ds.setUnderlineText(false);
                 }
             };
 
-            spannableString.setSpan(
-                clickableSpan, 
-                start, 
-                end, 
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            );
+            spannableString.setSpan(clickableSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
         textView.setText(spannableString);
         textView.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
-    public void personalizeTimeline(View view){
+    public void personalizeTimeline(View view) {
         Intent intent = new Intent(HomeActivity.this, MainEditTimeline.class);
         startActivity(intent);
     }
 
-    private ImageButton btnHamburger;
-    private ImageButton newPost;
-    private ImageButton btnInbox;
-    private ImageButton btnProfile;
-    private Button btnClose;
-    private Button btnLogin;
+    private ImageButton btnHamburger, newPost, btnInbox, btnProfile;
+    private Button btnClose, btnLogin;
     private HorizontalScrollView scrollViewPages;
     private TextView tabPrev, tabCurrent, tabNext;
     private int screenWidth;
     private int currentPage = 0;
     private String[] pageTitles = new String[]{"Timeline", "Local Feed", "Chat", "Options"};
     private String url = "";
-    private ListView listViewTimeline;
-    private ListView listViewLocal;
-    private PostAdapter adapterTimeline;
-    private PostAdapter adapterLocal;
+    private ListView listViewTimeline, listViewLocal;
+    private PostAdapter adapterTimeline, adapterLocal;
     private ArrayList<JSONObject> postsTimeline = new ArrayList<JSONObject>();
     private ArrayList<JSONObject> postsLocal = new ArrayList<JSONObject>();
     private String actualTab = "";
-    private View footerTimeline;
-    private View footerLocal;
+    private View footerTimeline, footerLocal;
     private JSONArray tags = new JSONArray();
     private boolean isGuest = false;
-    private ScheduledExecutorService scheduler;
-    private ScheduledExecutorService schedulerNotifications;
+    private ScheduledExecutorService scheduler, schedulerNotifications;
     private DatabaseHelper dbHelper;
     private DrawerLayout drawerLayout;
 
@@ -141,9 +129,7 @@ public class HomeActivity extends ActivityGroup {
             btnHamburger.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (drawerLayout != null) {
-                        drawerLayout.openDrawer(GravityCompat.START);
-                    }
+                    if (drawerLayout != null) drawerLayout.openDrawer(GravityCompat.START);
                 }
             });
         }
@@ -249,8 +235,7 @@ public class HomeActivity extends ActivityGroup {
             btnLogin.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
-                    startActivity(intent);
+                    startActivity(new Intent(HomeActivity.this, LoginActivity.class));
                 }
             });
         }
@@ -266,6 +251,16 @@ public class HomeActivity extends ActivityGroup {
 
         listViewTimeline = (ListView) findViewById(R.id.listViewTimeline);
         listViewLocal = (ListView) findViewById(R.id.listViewLocal);
+
+        if (listViewTimeline != null) {
+            listViewTimeline.setScrollingCacheEnabled(false);
+            listViewTimeline.setAnimationCacheEnabled(false);
+        }
+
+        if (listViewLocal != null) {
+            listViewLocal.setScrollingCacheEnabled(false);
+            listViewLocal.setAnimationCacheEnabled(false);
+        }
 
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         footerTimeline = inflater.inflate(R.layout.footer_federations, null);
@@ -539,9 +534,7 @@ public class HomeActivity extends ActivityGroup {
 
         } else if ("Local Feed".equals(tabName)) {
             actualTab = "local";
-            
             loadCachedPostsLocal();
-            
             int lastId = dbHelper.getLastPostId();
             
             if (lastId == 0) {
@@ -593,9 +586,7 @@ public class HomeActivity extends ActivityGroup {
             ArrayList<JSONObject> targetList = "timeline".equals(tabType) ? postsTimeline : postsLocal;
             PostAdapter targetAdapter = "timeline".equals(tabType) ? adapterTimeline : adapterLocal;
 
-            if (targetList == null || targetAdapter == null) {
-                return;
-            }
+            if (targetList == null || targetAdapter == null) return;
 
             if (result == null || result.trim().length() == 0) {
                 targetAdapter.notifyDataSetChanged();
@@ -606,7 +597,6 @@ public class HomeActivity extends ActivityGroup {
                 String trimmed = result.trim();
                 if (trimmed.startsWith("[")) {
                     JSONArray jsonArray = new JSONArray(trimmed);
-                    
                     if ("local".equals(tabType)) {
                         if (jsonArray.length() > 0) {
                             dbHelper.insertPostsBatch(jsonArray);
@@ -632,6 +622,22 @@ public class HomeActivity extends ActivityGroup {
             targetAdapter.notifyDataSetChanged();
         }
     }
+
+    static class ViewHolder {
+        ImageView avatarPost;
+        RelativeLayout containerMedia;
+        GifImageView imgPost;
+        TextView txtMediaCount;
+        Button btnPrevImage;
+        Button btnNextImage;
+        TextView tvUsername;
+        TextView tvText;
+        TextView tvDate;
+        ImageButton btnComments;
+        TextView txtCommentCount;
+        ImageButton btnBookmarks;
+    }
+
     private class PostAdapter extends BaseAdapter {
         private Context context;
         private ArrayList<JSONObject> list;
@@ -662,53 +668,47 @@ public class HomeActivity extends ActivityGroup {
 
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
+            ViewHolder holder;
+
             if (convertView == null) {
                 LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                convertView = inflater.inflate(R.layout.item_post, null);
+                convertView = inflater.inflate(R.layout.item_post, parent, false);
+
+                holder = new ViewHolder();
+                holder.avatarPost = (ImageView) convertView.findViewById(R.id.postAvatar);
+                holder.containerMedia = (RelativeLayout) convertView.findViewById(R.id.containerMedia);
+                holder.imgPost = (GifImageView) convertView.findViewById(R.id.imgPost);
+                holder.txtMediaCount = (TextView) convertView.findViewById(R.id.txtMediaCount);
+                holder.btnPrevImage = (Button) convertView.findViewById(R.id.btnPrevImage);
+                holder.btnNextImage = (Button) convertView.findViewById(R.id.btnNextImage);
+                holder.tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
+                holder.tvText = (TextView) convertView.findViewById(R.id.postText);
+                holder.tvDate = (TextView) convertView.findViewById(R.id.postDate);
+                holder.btnComments = (ImageButton) convertView.findViewById(R.id.btnComments);
+                holder.txtCommentCount = (TextView) convertView.findViewById(R.id.txtCommentCount);
+                holder.btnBookmarks = (ImageButton) convertView.findViewById(R.id.btnBookmarks);
+
+                convertView.setTag(holder);
+            } else {
+                holder = (ViewHolder) convertView.getTag();
             }
-            ImageView avatarPost = (ImageView) convertView.findViewById(R.id.postAvatar);
-            RelativeLayout containerMedia = (RelativeLayout) convertView.findViewById(R.id.containerMedia);
-            final GifImageView imgPost = (GifImageView) convertView.findViewById(R.id.imgPost);
-            final TextView txtMediaCount = (TextView) convertView.findViewById(R.id.txtMediaCount);
-            final Button btnPrevImage = (Button) convertView.findViewById(R.id.btnPrevImage);
-            final Button btnNextImage = (Button) convertView.findViewById(R.id.btnNextImage);
 
-            TextView tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
-            TextView tvText = (TextView) convertView.findViewById(R.id.postText);
-            TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
-            ImageButton btnComments = (ImageButton) convertView.findViewById(R.id.btnComments);
-            TextView txtCommentCount = (TextView) convertView.findViewById(R.id.txtCommentCount);
-            ImageButton btnBookmarks = (ImageButton) convertView.findViewById(R.id.btnBookmarks);
+            holder.btnBookmarks.setSelected(false);
+            holder.avatarPost.setTag(null);
+            holder.avatarPost.setImageDrawable(null);
+            holder.imgPost.setTag(R.id.imgPost, null);
+            holder.imgPost.setImageDrawable(null);
+            holder.imgPost.setMovie(null);
 
-            btnBookmarks.setSelected(false);
+            holder.containerMedia.setVisibility(View.GONE);
+            holder.txtMediaCount.setVisibility(View.GONE);
+            holder.btnPrevImage.setVisibility(View.GONE);
+            holder.btnNextImage.setVisibility(View.GONE);
 
-            btnBookmarks.setOnClickListener(new View.OnClickListener() {
+            holder.btnBookmarks.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    boolean novoEstado = !v.isSelected();
-                    v.setSelected(novoEstado); // Alterna entre cinza e vermelho dinamicamente
-                }
-            });
-            avatarPost.setTag(null);
-            avatarPost.setImageDrawable(null);
-
-            imgPost.setTag(R.id.imgPost, null);
-            imgPost.setImageDrawable(null);
-            imgPost.setMovie(null);
-
-            containerMedia.setVisibility(View.GONE);
-            txtMediaCount.setVisibility(View.GONE);
-            btnPrevImage.setVisibility(View.GONE);
-            btnNextImage.setVisibility(View.GONE);
-
-            tvUsername.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(HomeActivity.this, ViewProfile.class);
-                    JSONObject post = list.get(position);
-                    String usernameProfile = post.optString("username", post.optString("user", "entity404"));
-                    intent.putExtra("usernameProfile", usernameProfile);
-                    startActivity(intent);
+                    v.setSelected(!v.isSelected());
                 }
             });
 
@@ -721,11 +721,19 @@ public class HomeActivity extends ActivityGroup {
                 String commentsCount = post.optString("comments_count", post.optString("comment_count", "0"));
                 final String postUniqueId = post.optString("unique_id", "");
                 final String relative_datetime = post.optString("relative_datetime", "");
-
                 final String id = post.optString("id", "");
                 final String originalUrl = post.optString("original_url", "");
 
-                btnComments.setOnClickListener(new View.OnClickListener() {
+                holder.tvUsername.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(HomeActivity.this, ViewProfile.class);
+                        intent.putExtra("usernameProfile", username);
+                        startActivity(intent);
+                    }
+                });
+
+                holder.btnComments.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Intent intent = new Intent(HomeActivity.this, comments_activity.class);
@@ -743,30 +751,28 @@ public class HomeActivity extends ActivityGroup {
                     }
                 });
 
-                txtCommentCount.setText(commentsCount);
-                tvUsername.setText(username.startsWith("@") ? username : "@" + username);
-                tvDate.setText(relative_datetime.length() > 0 ? relative_datetime + " (" + datetime + ")" : datetime);
+                holder.txtCommentCount.setText(commentsCount);
+                holder.tvUsername.setText(username.startsWith("@") ? username : "@" + username);
+                holder.tvDate.setText(relative_datetime.length() > 0 ? relative_datetime : datetime);
 
                 if ("timeline".equals(actualTab)) {
                     String avatarUrl = post.optString("avatar_url", "");
                     if (avatarUrl.startsWith("http")) {
                         String avatarOtimizado = "http://wsrv.nl/?url=" + avatarUrl + "&w=48&h=48&fit=cover&output=jpg";
-                        avatarPost.setTag(avatarOtimizado);
-                        imageLoader.LoadImageUrl(avatarOtimizado, avatarPost);
+                        holder.avatarPost.setTag(avatarOtimizado);
+                        imageLoader.LoadImageUrl(avatarOtimizado, holder.avatarPost);
                     } else {
-                        avatarPost.setTag(avatarUrl);
-                        imageLoader.LoadImageUrl(avatarUrl, avatarPost);
+                        holder.avatarPost.setTag(avatarUrl);
+                        imageLoader.LoadImageUrl(avatarUrl, holder.avatarPost);
                     }
                 } else {
-                    avatarPost.setTag("avatar_" + username);
-                    imageLoader.viewProfilePicture(context, username, avatarPost);
+                    holder.avatarPost.setTag("avatar_" + username);
+                    imageLoader.viewProfilePicture(context, username, holder.avatarPost);
                 }
 
                 final ArrayList<JSONObject> mediaItems = new ArrayList<JSONObject>();
                 JSONArray mediaList = post.optJSONArray("media_list");
-                if (mediaList == null) {
-                    mediaList = post.optJSONArray("media_attachments");
-                }
+                if (mediaList == null) mediaList = post.optJSONArray("media_attachments");
 
                 if (mediaList != null && mediaList.length() > 0) {
                     for (int i = 0; i < mediaList.length(); i++) {
@@ -780,47 +786,53 @@ public class HomeActivity extends ActivityGroup {
                 }
 
                 if (mediaItems.size() > 0) {
-                    containerMedia.setVisibility(View.VISIBLE);
-                    int initialIndex = 0;
-                    renderMediaItem(imgPost, mediaItems, initialIndex, txtMediaCount, btnPrevImage, btnNextImage);
+                    holder.containerMedia.setVisibility(View.VISIBLE);
+                    renderMediaItem(holder.imgPost, mediaItems, 0, holder.txtMediaCount, holder.btnPrevImage, holder.btnNextImage);
 
                     if (mediaItems.size() > 1) {
-                        txtMediaCount.setVisibility(View.VISIBLE);
-                        updateCarouselControls(initialIndex, mediaItems.size(), txtMediaCount, btnPrevImage, btnNextImage);
+                        holder.txtMediaCount.setVisibility(View.VISIBLE);
+                        updateCarouselControls(0, mediaItems.size(), holder.txtMediaCount, holder.btnPrevImage, holder.btnNextImage);
 
-                        btnPrevImage.setOnClickListener(new View.OnClickListener() {
+                        final ViewHolder finalHolder = holder;
+                        holder.btnPrevImage.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                Integer currIdx = (Integer) imgPost.getTag(R.id.imgPost);
+                                Integer currIdx = (Integer) finalHolder.imgPost.getTag(R.id.imgPost);
                                 if (currIdx == null) currIdx = 0;
                                 if (currIdx > 0) {
                                     currIdx--;
-                                    renderMediaItem(imgPost, mediaItems, currIdx, txtMediaCount, btnPrevImage, btnNextImage);
+                                    renderMediaItem(finalHolder.imgPost, mediaItems, currIdx, finalHolder.txtMediaCount, finalHolder.btnPrevImage, finalHolder.btnNextImage);
                                 }
                             }
                         });
 
-                        btnNextImage.setOnClickListener(new View.OnClickListener() {
+                        holder.btnNextImage.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                Integer currIdx = (Integer) imgPost.getTag(R.id.imgPost);
+                                Integer currIdx = (Integer) finalHolder.imgPost.getTag(R.id.imgPost);
                                 if (currIdx == null) currIdx = 0;
                                 if (currIdx < mediaItems.size() - 1) {
                                     currIdx++;
-                                    renderMediaItem(imgPost, mediaItems, currIdx, txtMediaCount, btnPrevImage, btnNextImage);
+                                    renderMediaItem(finalHolder.imgPost, mediaItems, currIdx, finalHolder.txtMediaCount, finalHolder.btnPrevImage, finalHolder.btnNextImage);
                                 }
                             }
                         });
                     }
                 }
 
-                String cleanText = textPost.replaceAll("\\[IMAGE\\].*", "").trim();
-                if (cleanText.length() == 0) {
-                    tvText.setVisibility(View.GONE);
+                String cleanText = textPost;
+                int imgTagIdx = cleanText.indexOf("[IMAGE]");
+                if (imgTagIdx != -1) {
+                    cleanText = cleanText.substring(0, imgTagIdx).trim();
                 } else {
-                    tvText.setVisibility(View.VISIBLE);
-                    tvText.setText(cleanText);
-                    highlightMentions(context, tvText, cleanText);
+                    cleanText = cleanText.trim();
+                }
+
+                if (cleanText.length() == 0) {
+                    holder.tvText.setVisibility(View.GONE);
+                } else {
+                    holder.tvText.setVisibility(View.VISIBLE);
+                    highlightMentions(context, holder.tvText, cleanText);
                 }
 
             } catch (Exception e) {

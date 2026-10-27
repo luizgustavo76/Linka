@@ -1,21 +1,45 @@
 package com.LinkaProject.linkaLite;
-import org.json.JSONArray;
+
+import android.content.Context;
 import org.json.JSONException;
 import org.json.JSONObject;
-public class Bookmark{
+
+public class Bookmark {
+
     private String url = "";
     private String username = "";
-    try{
-        config cfg = new config();
-        JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(this, "config.cfg"));
-        JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-        JSONObject server = jsonCfg.getJSONObject("SERVER");
-        url = server.optString("url", "");
-        username = fastLogin.optString("username", "");
-    }catch(JSONException e){
-        e.printStackTrace();
-    }
-    public void toggle(int postId, boolean isPublic, boolean isExternal, String originalId, String platform){
+    private Context context; 
+    public Bookmark(Context context) {
+        this.context = context; 
+        try {
+            config cfg = new config();
+            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(context, "config.cfg"));
+            JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
+            JSONObject server = jsonCfg.optJSONObject("SERVER");
 
+            if (server != null) {
+                url = server.optString("url", "");
+            }
+            if (fastLogin != null) {
+                username = fastLogin.optString("username", "");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void toggle(int postId, boolean isPublic, boolean isExternal, String originalId, String platform) {
+        try {
+            JSONObject jsonToggle = new JSONObject();
+            jsonToggle.put("post_id", postId);
+            jsonToggle.put("is_public", isPublic);
+            jsonToggle.put("is_external", isExternal);
+            jsonToggle.put("original_id", originalId);
+            jsonToggle.put("platform", platform);
+
+            request.requestHTTP(url + "/toggle-bookmark", "post", jsonToggle, context);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }
