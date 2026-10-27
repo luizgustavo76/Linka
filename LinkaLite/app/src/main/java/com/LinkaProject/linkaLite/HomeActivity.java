@@ -135,7 +135,7 @@ public class HomeActivity extends ActivityGroup {
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         setupDrawerMenu();
-
+        
         btnHamburger = (ImageButton) findViewById(R.id.btnHamburger);
         if (btnHamburger != null) {
             btnHamburger.setOnClickListener(new View.OnClickListener() {
@@ -666,7 +666,6 @@ public class HomeActivity extends ActivityGroup {
                 LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(R.layout.item_post, null);
             }
-
             ImageView avatarPost = (ImageView) convertView.findViewById(R.id.postAvatar);
             RelativeLayout containerMedia = (RelativeLayout) convertView.findViewById(R.id.containerMedia);
             final GifImageView imgPost = (GifImageView) convertView.findViewById(R.id.imgPost);
@@ -679,7 +678,17 @@ public class HomeActivity extends ActivityGroup {
             TextView tvDate = (TextView) convertView.findViewById(R.id.postDate);
             ImageButton btnComments = (ImageButton) convertView.findViewById(R.id.btnComments);
             TextView txtCommentCount = (TextView) convertView.findViewById(R.id.txtCommentCount);
+            ImageButton btnBookmarks = (ImageButton) convertView.findViewById(R.id.btnBookmarks);
 
+            btnBookmarks.setSelected(false);
+
+            btnBookmarks.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    boolean novoEstado = !v.isSelected();
+                    v.setSelected(novoEstado); // Alterna entre cinza e vermelho dinamicamente
+                }
+            });
             avatarPost.setTag(null);
             avatarPost.setImageDrawable(null);
 

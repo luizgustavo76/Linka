@@ -146,26 +146,30 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <View
-                    android:layout_width="0dip"
-                    android:layout_height="0dip"
-                    android:layout_weight="1" />
+                <ImageButton
+                    android:id="@+id/btnBookmarks"
+                    android:layout_width="22dip"
+                    android:layout_height="22dip"
+                    android:layout_marginRight="18dip"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_bookmark" />
 
                 <ImageButton
                     android:id="@+id/btnComments"
-                    android:layout_width="28dip"
-                    android:layout_height="28dip"
+                    android:layout_width="22dip"
+                    android:layout_height="22dip"
                     android:background="@android:color/transparent"
-                    android:scaleType="centerInside"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/icon_comments" />
 
                 <TextView
                     android:id="@+id/txtCommentCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="11sp"
+                    android:layout_marginLeft="6dip"
                     android:textColor="#666666"
-                    android:layout_marginLeft="4dip"
+                    android:textSize="11sp"
                     android:text="0" />
             </LinearLayout>
 
