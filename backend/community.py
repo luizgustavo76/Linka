@@ -21,6 +21,7 @@ def create_db():
                 owner TEXT)""")
     cur.execute("""
             CREATE TABLE IF NOT EXISTS posts(
+                community_name TEXT,
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT,
                 media_type TEXT,
@@ -31,6 +32,7 @@ def create_db():
             )
         """)
     cur.execute("""CREATE TABLE IF NOT EXISTS comments(
+                community_name TEXT,
                 username TEXT,
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 media_type TEXT,
