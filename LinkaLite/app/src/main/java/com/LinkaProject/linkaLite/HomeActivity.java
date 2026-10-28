@@ -19,6 +19,8 @@ import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -636,6 +638,10 @@ public class HomeActivity extends ActivityGroup {
         ImageButton btnComments;
         TextView txtCommentCount;
         ImageButton btnBookmarks;
+        LinearLayout containerBookmarkOptions;
+        Button btnPublicBookmarks;
+        Button btnPrivateBookmarks;
+        ImageButton btnCloseBookmarks;
     }
 
     private class PostAdapter extends BaseAdapter {
@@ -668,7 +674,7 @@ public class HomeActivity extends ActivityGroup {
 
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
-            ViewHolder holder;
+            final ViewHolder holder;
 
             if (convertView == null) {
                 LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -687,6 +693,10 @@ public class HomeActivity extends ActivityGroup {
                 holder.btnComments = (ImageButton) convertView.findViewById(R.id.btnComments);
                 holder.txtCommentCount = (TextView) convertView.findViewById(R.id.txtCommentCount);
                 holder.btnBookmarks = (ImageButton) convertView.findViewById(R.id.btnBookmarks);
+                holder.containerBookmarkOptions = (LinearLayout) convertView.findViewById(R.id.containerBookmarkOptions);
+                holder.btnPublicBookmarks = (Button) convertView.findViewById(R.id.btnPublicBookmarks);
+                holder.btnPrivateBookmarks = (Button) convertView.findViewById(R.id.btnPrivateBookmarks);
+                holder.btnCloseBookmarks = (ImageButton) convertView.findViewById(R.id.btnCloseBookmarks);
 
                 convertView.setTag(holder);
             } else {
@@ -694,6 +704,10 @@ public class HomeActivity extends ActivityGroup {
             }
 
             holder.btnBookmarks.setSelected(false);
+            if (holder.containerBookmarkOptions != null) {
+                holder.containerBookmarkOptions.setVisibility(View.GONE);
+            }
+
             holder.avatarPost.setTag(null);
             holder.avatarPost.setImageDrawable(null);
             holder.imgPost.setTag(R.id.imgPost, null);
@@ -709,12 +723,74 @@ public class HomeActivity extends ActivityGroup {
                 @Override
                 public void onClick(View v) {
                     v.setSelected(!v.isSelected());
+                    if (holder.containerBookmarkOptions != null) {
+                        if (holder.containerBookmarkOptions.getVisibility() != View.VISIBLE) {
+                            Animation slideIn = AnimationUtils.loadAnimation(context, R.anim.slide_in_right);
+                            holder.containerBookmarkOptions.setVisibility(View.VISIBLE);
+                            holder.containerBookmarkOptions.startAnimation(slideIn);
+                        } else {
+                            Animation slideOut = AnimationUtils.loadAnimation(context, R.anim.slide_out_right);
+                            slideOut.setAnimationListener(new Animation.AnimationListener() {
+                                @Override
+                                public void onAnimationEnd(Animation animation) {
+                                    holder.containerBookmarkOptions.setVisibility(View.GONE);
+                                }
+                                @Override public void onAnimationStart(Animation animation) {}
+                                @Override public void onAnimationRepeat(Animation animation) {}
+                            });
+                            holder.containerBookmarkOptions.startAnimation(slideOut);
+                        }
+                    }
                 }
             });
 
+            if (holder.btnCloseBookmarks != null) {
+                holder.btnCloseBookmarks.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (holder.containerBookmarkOptions != null && holder.containerBookmarkOptions.getVisibility() == View.VISIBLE) {
+                            Animation slideOut = AnimationUtils.loadAnimation(context, R.anim.slide_out_right);
+                            slideOut.setAnimationListener(new Animation.AnimationListener() {
+                                @Override
+                                public void onAnimationEnd(Animation animation) {
+                                    holder.containerBookmarkOptions.setVisibility(View.GONE);
+                                }
+                                @Override public void onAnimationStart(Animation animation) {}
+                                @Override public void onAnimationRepeat(Animation animation) {}
+                            });
+                            holder.containerBookmarkOptions.startAnimation(slideOut);
+                        }
+                    }
+                });
+            }
+
+            if (holder.btnPublicBookmarks != null) {
+                holder.btnPublicBookmarks.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        holder.btnBookmarks.setSelected(true);
+                        if (holder.containerBookmarkOptions != null) {
+                            holder.containerBookmarkOptions.setVisibility(View.GONE);
+                        }
+                    }
+                });
+            }
+
+            if (holder.btnPrivateBookmarks != null) {
+                holder.btnPrivateBookmarks.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        holder.btnBookmarks.setSelected(true);
+                        if (holder.containerBookmarkOptions != null) {
+                            holder.containerBookmarkOptions.setVisibility(View.GONE);
+                        }
+                    }
+                });
+            }
+
             try {
                 final JSONObject post = list.get(position);
-                String username = post.optString("username", post.optString("user", "entity404"));
+                final String username = post.optString("username", post.optString("user", "entity404"));
                 String textPost = post.optString("text_post", post.optString("text", ""));
                 final String origin_server = post.optString("origin_server", "");
                 String datetime = post.optString("datetime", post.optString("date", ""));
@@ -793,15 +869,14 @@ public class HomeActivity extends ActivityGroup {
                         holder.txtMediaCount.setVisibility(View.VISIBLE);
                         updateCarouselControls(0, mediaItems.size(), holder.txtMediaCount, holder.btnPrevImage, holder.btnNextImage);
 
-                        final ViewHolder finalHolder = holder;
                         holder.btnPrevImage.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                Integer currIdx = (Integer) finalHolder.imgPost.getTag(R.id.imgPost);
+                                Integer currIdx = (Integer) holder.imgPost.getTag(R.id.imgPost);
                                 if (currIdx == null) currIdx = 0;
                                 if (currIdx > 0) {
                                     currIdx--;
-                                    renderMediaItem(finalHolder.imgPost, mediaItems, currIdx, finalHolder.txtMediaCount, finalHolder.btnPrevImage, finalHolder.btnNextImage);
+                                    renderMediaItem(holder.imgPost, mediaItems, currIdx, holder.txtMediaCount, holder.btnPrevImage, holder.btnNextImage);
                                 }
                             }
                         });
@@ -809,11 +884,11 @@ public class HomeActivity extends ActivityGroup {
                         holder.btnNextImage.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                Integer currIdx = (Integer) finalHolder.imgPost.getTag(R.id.imgPost);
+                                Integer currIdx = (Integer) holder.imgPost.getTag(R.id.imgPost);
                                 if (currIdx == null) currIdx = 0;
                                 if (currIdx < mediaItems.size() - 1) {
                                     currIdx++;
-                                    renderMediaItem(finalHolder.imgPost, mediaItems, currIdx, finalHolder.txtMediaCount, finalHolder.btnPrevImage, finalHolder.btnNextImage);
+                                    renderMediaItem(holder.imgPost, mediaItems, currIdx, holder.txtMediaCount, holder.btnPrevImage, holder.btnNextImage);
                                 }
                             }
                         });
@@ -900,7 +975,7 @@ public class HomeActivity extends ActivityGroup {
 
             imgPost.setTag(finalProxyUrl);
             imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
-            
+
             updateCarouselControls(index, mediaItems.size(), txtMediaCount, btnPrev, btnNext);
         }
 

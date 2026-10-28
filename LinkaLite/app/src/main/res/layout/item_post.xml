@@ -3,182 +3,219 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingLeft="10dip"
-    android:paddingRight="10dip"
-    android:paddingTop="8dip"
-    android:paddingBottom="8dip"
-    android:background="@android:color/transparent">
+    android:background="@drawable/card_press_selector"
+    android:clickable="true"
+    android:focusable="true">
 
-    <!-- Card Principal Flat e Respirável (Sem bordas cinzas pesadas) -->
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="#FFFFFF"
-        android:padding="12dip">
+        android:paddingLeft="12dip"
+        android:paddingRight="12dip"
+        android:paddingTop="10dip"
+        android:paddingBottom="8dip">
 
-        <!-- Header do Usuário (Clean & Minimalista) -->
-        <RelativeLayout
-            android:layout_width="fill_parent"
+        <ImageView
+            android:id="@+id/postAvatar"
+            android:layout_width="32dip"
+            android:layout_height="32dip"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:scaleType="centerCrop"
+            android:src="@android:drawable/ic_menu_myplaces" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="10dip">
+            android:layout_toRightOf="@id/postAvatar"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dip"
+            android:orientation="vertical">
 
-            <ImageView
-                android:id="@+id/postAvatar"
-                android:layout_width="32dip"
-                android:layout_height="32dip"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:scaleType="centerCrop"
-                android:src="@android:drawable/ic_menu_myplaces" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_toRightOf="@id/postAvatar"
-                android:layout_centerVertical="true"
-                android:layout_marginLeft="10dip"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/postUsername"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:textSize="13sp"
-                    android:textColor="#111111"
-                    android:text="@username" />
-
-                <TextView
-                    android:id="@+id/postDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="10sp"
-                    android:textColor="#999999"
-                    android:text="2026-10-16 21:26:28" />
-            </LinearLayout>
-
-        </RelativeLayout>
-
-        <!-- Texto do Post (Foco e Destaque Absoluto) -->
-        <TextView
-            android:id="@+id/postText"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="#1A1A1A"
-            android:autoLink="web"
-            android:textColorLink="#0066CC"
-            android:lineSpacingExtra="2dip"
-            android:layout_marginBottom="10dip" />
-
-        <!-- Container de Mídia (Estilo Galeria Flickr) -->
-        <RelativeLayout
-            android:id="@+id/containerMedia"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="10dip"
-            android:visibility="gone">
-
-            <com.LinkaProject.linkaLite.GifImageView
-                android:id="@+id/imgPost"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                android:scaleType="fitCenter"
-                android:background="#F2F2F2" />
-
-            <!-- Indicador de quantidade (Ex: 1/3) -->
             <TextView
-                android:id="@+id/txtMediaCount"
+                android:id="@+id/postUsername"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentTop="true"
-                android:layout_margin="8dip"
-                android:background="#80000000"
-                android:paddingLeft="8dip"
-                android:paddingRight="8dip"
-                android:paddingTop="3dip"
-                android:paddingBottom="3dip"
-                android:text="1/1"
-                android:textColor="#FFFFFF"
-                android:textSize="10sp"
                 android:textStyle="bold"
-                android:visibility="gone" />
+                android:textSize="13sp"
+                android:textColor="#111111" />
 
-            <!-- Seta Esquerda -->
-            <Button
-                android:id="@+id/btnPrevImage"
-                android:layout_width="32dip"
-                android:layout_height="32dip"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:layout_marginLeft="6dip"
-                android:background="#60000000"
-                android:text="◀"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
-                android:visibility="gone" />
+            <TextView
+                android:id="@+id/postDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="10sp"
+                android:textColor="#888888" />
+        </LinearLayout>
+    </RelativeLayout>
 
-            <!-- Seta Direita -->
-            <Button
-                android:id="@+id/btnNextImage"
-                android:layout_width="32dip"
-                android:layout_height="32dip"
-                android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"
-                android:layout_marginRight="6dip"
-                android:background="#60000000"
-                android:text="▶"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp"
-                android:visibility="gone" />
+    <TextView
+        android:id="@+id/postText"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="12dip"
+        android:paddingRight="12dip"
+        android:paddingBottom="8dip"
+        android:textSize="14sp"
+        android:textColor="#222222"
+        android:lineSpacingExtra="2dip" />
 
-        </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/containerMedia"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone">
 
-        <!-- Rodapé de Ações (Bookmarks e Comentários) -->
-        <RelativeLayout
+        <com.LinkaProject.linkaLite.GifImageView
+            android:id="@+id/imgPost"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="4dip">
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:background="#F5F5F5" />
+
+        <TextView
+            android:id="@+id/txtMediaCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_margin="8dip"
+            android:background="#80000000"
+            android:paddingLeft="6dip"
+            android:paddingRight="6dip"
+            android:paddingTop="2dip"
+            android:paddingBottom="2dip"
+            android:textColor="#FFFFFF"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnPrevImage"
+            android:layout_width="32dip"
+            android:layout_height="32dip"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="6dip"
+            android:background="#60000000"
+            android:text="◀"
+            android:textColor="#FFFFFF"
+            android:textSize="10sp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btnNextImage"
+            android:layout_width="32dip"
+            android:layout_height="32dip"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="6dip"
+            android:background="#60000000"
+            android:text="▶"
+            android:textColor="#FFFFFF"
+            android:textSize="10sp"
+            android:visibility="gone" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="12dip"
+        android:paddingRight="12dip"
+        android:paddingTop="8dip"
+        android:paddingBottom="10dip">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <LinearLayout
+                android:id="@+id/containerBookmarkOptions"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
+                android:layout_height="26dip"
+                android:layout_marginRight="8dip"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:background="#F0F0F0"
+                android:paddingLeft="8dip"
+                android:paddingRight="6dip"
+                android:visibility="gone">
 
-                <ImageButton
-                    android:id="@+id/btnBookmarks"
-                    android:layout_width="22dip"
-                    android:layout_height="22dip"
-                    android:layout_marginRight="18dip"
+                <Button
+                    android:id="@+id/btnPublicBookmarks"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
                     android:background="@android:color/transparent"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/ic_bookmark" />
-
-                <ImageButton
-                    android:id="@+id/btnComments"
-                    android:layout_width="22dip"
-                    android:layout_height="22dip"
-                    android:background="@android:color/transparent"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/icon_comments" />
+                    android:text="Public"
+                    android:textColor="#0066CC"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:paddingLeft="4dip"
+                    android:paddingRight="4dip" />
 
                 <TextView
-                    android:id="@+id/txtCommentCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="6dip"
-                    android:textColor="#777777"
+                    android:text="|"
+                    android:textColor="#CCCCCC"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btnPrivateBookmarks"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:background="@android:color/transparent"
+                    android:text="Private"
+                    android:textColor="#666666"
                     android:textSize="11sp"
-                    android:text="0" />
+                    android:paddingLeft="4dip"
+                    android:paddingRight="4dip" />
+
+                <ImageButton
+                    android:id="@+id/btnCloseBookmarks"
+                    android:layout_width="16dip"
+                    android:layout_height="16dip"
+                    android:layout_marginLeft="6dip"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel" />
             </LinearLayout>
 
-        </RelativeLayout>
+            <ImageButton
+                android:id="@+id/btnBookmarks"
+                android:layout_width="24dip"
+                android:layout_height="24dip"
+                android:layout_marginRight="16dip"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_bookmark" />
 
-    </LinearLayout>
+            <ImageButton
+                android:id="@+id/btnComments"
+                android:layout_width="24dip"
+                android:layout_height="24dip"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_comments" />
+
+            <TextView
+                android:id="@+id/txtCommentCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dip"
+                android:textColor="#777777"
+                android:textSize="11sp"
+                android:text="0" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#EAEAEA" />
 
 </LinearLayout>
