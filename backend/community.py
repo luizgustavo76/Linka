@@ -1,4 +1,4 @@
-from flask import Flask, jsonfiy, request, Blueprint, g
+from flask import Flask, jsonify, request, Blueprint, g
 import os
 import sqlite3
 community_bp = Blueprint("community_bp", __name__)
@@ -68,4 +68,24 @@ def new_community():
         return jsonfiy({"status":"community created"}),200
     else:
         return jsonfiy({"status":"forbidden"}),403
+@community_bp.route("/view-communities", methods=["POST"])
+def view_communities():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM community_index")
+    result = cur.fetchall()
+    json_return = []
+    for comm in result:
+        json = {
+            "id":comm[0],
+            "name":comm[1],
+            "description":comm[2],
+            "banner_image":comm[3],
+            "icon_image":comm[4],
+            "owner":comm[5],
+            "members":comm[6],
+            "created_at":comm[7]
+        }
+        json_return.append(json)
+    return jsonfiy(json_return),200
 

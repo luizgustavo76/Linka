@@ -19,6 +19,7 @@
         "mastodon-federation":true,
         "bluesky-federation":true,
         "automoderator":true,
+        "communities":true,
         "url-server":"http://linkaProject.pythonanywhere.com"
 
     }

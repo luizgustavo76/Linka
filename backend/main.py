@@ -6,17 +6,14 @@ import secrets
 from werkzeug.security import check_password_hash
 from flask import Flask, Blueprint, request, jsonify, g
 from flask_cors import CORS
-
 base_dir = os.path.dirname(os.path.abspath(__file__))
 json_path = os.path.join(base_dir, "backend.json")
-
 with open(json_path, "r") as f:
     modules_flags = json.load(f)
-
 root_flags = modules_flags["modules-flags"]
-
 from mentions import mentions_bp
-
+if root_flags["communities"]:
+    from community import community_bp
 if root_flags["reddit-federation"]:
     from reddit_federation.posts import post_bp as reddit_post_bp
 if root_flags["mastodon-federation"]:
@@ -27,43 +24,31 @@ if root_flags["post"]:
     from post import post_bp
 if root_flags["chat"]:
     from chat import chat_bp
-
-# Configuração do AutoModerator & Terms of Service
 tos_content = ""
 if root_flags.get("automoderator"):
     import sys
     import threading
     import time
     from pathlib import Path
-
-    # BASE_DIR aponta para a raiz (/home/LinkaProject/Linka)
     BASE_DIR = Path(__file__).resolve().parent.parent
     AUTOMOD_DIR = BASE_DIR / "bots" / "Automoderator"
     SDK_DIR = BASE_DIR / "SDKs" / "linkaBotsSdk"
-
-    # Adiciona as pastas no início do sys.path do Python
     for path_to_add in [AUTOMOD_DIR, SDK_DIR, BASE_DIR]:
         if path_to_add.exists() and str(path_to_add) not in sys.path:
             sys.path.insert(0, str(path_to_add))
-
     TOS_PATH = AUTOMOD_DIR / "terms_of_service.txt"
     if TOS_PATH.exists():
         with open(TOS_PATH, "r", encoding="utf-8") as f:
             tos_content = f.read()
-
     import AutoModerator
-
     def start_automod_loop():
-        # Aguarda 5 segundos para o uWSGI / Flask liberar a porta/rotas no boot
         time.sleep(5)
         print("[AutoMod] Daemon iniciado no PythonAnywhere. Rodando varredura a cada 2 minutos...")
         try:
             AutoModerator.main()
         except Exception as e:
             print(f"[AutoMod Error] Falha na execução da thread: {e}")
-
     threading.Thread(target=start_automod_loop, daemon=True).start()
-
 if root_flags["friends"]:
     from friends import friends_bp
 from login import login_bp
@@ -90,36 +75,28 @@ if root_flags["sincronizer"]:
 if root_flags["themes"]:
     from themes import theme_bp
 from chat_group import chat_group_bp
-
 db_dir = os.path.join(base_dir, "DB")
 tokens_file = os.path.join(db_dir, "tokens.db")
 login_file = os.path.join(db_dir, "login.db")
 banned_file = os.path.join(db_dir, "banned.db")
-
 app = Flask(__name__)
-
 def get_db():
     conn = sqlite3.connect(tokens_file)
     conn.row_factory = sqlite3.Row
     return conn
-
 def get_db_login():
     conn = sqlite3.connect(login_file)
     conn.row_factory = sqlite3.Row
     return conn
-
 def get_db_banned():
     conn = sqlite3.connect(banned_file)
     conn.row_factory = sqlite3.Row
     return conn
-
 def create_db():
     if not os.path.exists(db_dir):
         os.makedirs(db_dir)
-
     conn = get_db()
     cur = conn.cursor()
-
     cur.execute("""
     CREATE TABLE IF NOT EXISTS tokens(
         username TEXT,
@@ -128,10 +105,8 @@ def create_db():
         expire_date TEXT
     )
     """)
-
     conn.commit()
     conn.close()
-
 def create_db_banned():
     conn = get_db_banned()
     cur = conn.cursor()
@@ -142,16 +117,12 @@ def create_db_banned():
                 reason TEXT)""")
     conn.commit()
     conn.close()
-
 create_db_banned()
 create_db()
-
 def verificar_hash(senha, hash_salvo):
     return check_password_hash(hash_salvo, senha)
-
 def gerar_token():
     return secrets.token_hex(16)
-
 @app.route("/tos")
 def tos_route():
     html = f"""
@@ -163,8 +134,8 @@ def tos_route():
         <title>Linka - Terms of Service</title>
         <style>
             body {{
-                background-color: #121212;
-                color: #e0e0e0;
+                background-color: 
+                color: 
                 font-family: monospace;
                 padding: 20px;
             }}
@@ -180,25 +151,20 @@ def tos_route():
     </html>
     """
     return html
-
 @app.route("/new-session", methods=["POST"])
 def new_session():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
-    
     if None in (username, password):
         return jsonify({"status": "the json is empty or is missing data"}), 401
-        
     conn = get_db_login()
     cur = conn.cursor()
     cur.execute("SELECT password FROM login WHERE username = ?", (username,))
     result = cur.fetchone()
     conn.close()
-    
     if not result:
         return jsonify({"status": "user not found"}), 401
-        
     if verificar_hash(password, result["password"]):
         emission_date = datetime.now()
         expire_date = emission_date + timedelta(hours=2)
@@ -209,9 +175,7 @@ def new_session():
         conn.commit()
         conn.close()
         return jsonify({"status": "the session has created", "token": token}), 200
-        
     return jsonify({"status": "wrong password"}), 401
-
 public_routes = [
     "post.feed",
     "meta.return_version",
@@ -228,12 +192,10 @@ public_routes = [
     "profile.get_profile_pic",
     "post.view_post"
 ]
-
 @app.before_request
 def valide():
     if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post", "/lite-render", "/tos"]:
         return None
-
     if request.method == "GET":
         token = request.headers.get("Authorization")
         if token:
@@ -247,35 +209,26 @@ def valide():
         else:
             g.username = None
         return None
-
     token = request.headers.get("Authorization")
-
     if request.endpoint in public_routes and not token:
         g.username = None
         return None
-
     if token is None:
         return jsonify({"status": "the token is empty"}), 403
-        
     token = token.replace("Bearer ", "").strip()
-
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT username, expire_date, token FROM tokens WHERE token = ?", (token,))
     result = cur.fetchone()
     conn.close()
-
     if not result:
         return jsonify({"status": "invalid token"}), 403
-        
     g.username = result["username"]
-    
     conn = get_db_banned()
     cur = conn.cursor()
     cur.execute("SELECT * FROM banned WHERE username = ?", (g.username,))
     result_user_banned = cur.fetchone()
     conn.close()
-    
     if result_user_banned:
         json_banned = {
             "status": "BANNED",
@@ -283,41 +236,31 @@ def valide():
             "time": result_user_banned[1]
         }
         return jsonify(json_banned), 403
-        
     if result["expire_date"]:
         expire_date = datetime.fromisoformat(result["expire_date"])
         if datetime.now() > expire_date:
             return jsonify({"status": "the token has been expired"}), 403
-            
     return None
-
 @app.route("/valide-session", methods=["POST"])
 def valideManual():
     public_paths = ["/login", "/register", "/new-session", "/create-profile", "/tos"]
-    
     if request.path in public_paths:
         return None  
-
     token = request.headers.get("Authorization")
-    
     if token is None:
         return jsonify({"status": "the token is empty"}), 403
     else:
         token = token.replace("Bearer ", "")
-        
     conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT username, expire_date, token FROM tokens WHERE token = ?", (token,))
     result = cur.fetchone()
-    
     if not result:
         conn.close()
         return jsonify({"status": "invalid token"}), 403
-        
     token_db = result["token"]
     g.username = result["username"]
     expire_date = datetime.fromisoformat(result["expire_date"])
-    
     if token_db == token:
         if datetime.now() > expire_date:
             return jsonify({"status": "the token has been expired"}), 403
@@ -325,9 +268,7 @@ def valideManual():
             return jsonify({"status": "the token is valid"}), 200
     else:
         return jsonify({"status": "the token is invalid"}), 403
-
 CORS(app, resources={r"/*": {"origins": "*"}})
-
 if root_flags["status"]:
     app.register_blueprint(status_bp)
 if root_flags["search"]:
@@ -365,7 +306,8 @@ if root_flags["federations"]:
     app.register_blueprint(federations_bp)
 if root_flags["federation_index"]:
     app.register_blueprint(federation_index_bp)
+if root_flags["communities"]:
+    app.register_blueprint(community_bp)
 app.register_blueprint(mentions_bp)
-
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
