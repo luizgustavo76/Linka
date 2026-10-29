@@ -15,7 +15,6 @@ with open(json_path, "r") as f:
 
 root_flags = modules_flags["modules-flags"]
 
-from jobs import jobs_bp
 from mentions import mentions_bp
 
 if root_flags["reddit-federation"]:
@@ -345,7 +344,6 @@ if root_flags["sincronizer"]:
 if root_flags["friends"]:
     app.register_blueprint(friends_bp)
 app.register_blueprint(meta_bp)
-app.register_blueprint(jobs_bp)
 app.register_blueprint(invites_bp)
 if root_flags["reddit-federation"]:
     app.register_blueprint(reddit_post_bp)
