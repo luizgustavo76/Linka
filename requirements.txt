@@ -6,3 +6,4 @@ dotenv
 supabase
 Mastodon.py
 atproto
+gunicorn>=21.2.0
