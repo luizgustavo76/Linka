@@ -1,10 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-  <path
-      android:fillColor="#E53935"
-      android:pathData="M17,3H7C5.9,3 5,3.9 5,5V21L12,18L19,21V5C19,3.9 18.1,3 17,3Z"/>
-</vector>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true" android:drawable="@drawable/ic_bookmark_red" />
+    <item android:drawable="@drawable/ic_bookmark_gray" />
+</selector>

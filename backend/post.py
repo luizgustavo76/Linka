@@ -790,6 +790,8 @@ def feed():
         match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
         
         media_url = match.group(1).strip() if match else post["media"]
+        if "https" in media_url:
+            media_url.replace("https", "http")
         media_type = "image" if match else post["media_type"]
 
         main_width = post["width"] or ""

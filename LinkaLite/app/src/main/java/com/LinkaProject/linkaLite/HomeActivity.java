@@ -475,16 +475,12 @@ public class HomeActivity extends ActivityGroup {
         }
     }
 
-    private void loadCachedPostsLocal() {
-        if (dbHelper != null && postsLocal != null) {
-            ArrayList<JSONObject> cached = dbHelper.getAllCachedPosts();
-            if (cached.size() > 0) {
-                postsLocal.clear();
-                postsLocal.addAll(cached);
-                if (adapterLocal != null) {
-                    adapterLocal.notifyDataSetChanged();
-                }
-            }
+    private void clearDatabaseCache() {
+        if (postsLocal != null) {
+            postsLocal.clear();
+        }
+        if (adapterLocal != null) {
+            adapterLocal.notifyDataSetChanged();
         }
     }
 
@@ -536,20 +532,8 @@ public class HomeActivity extends ActivityGroup {
 
         } else if ("Local Feed".equals(tabName)) {
             actualTab = "local";
-            loadCachedPostsLocal();
-            int lastId = dbHelper.getLastPostId();
-            
-            if (lastId == 0) {
-                new FetchFeedTask("local", baseUrl + "/feed", "GET", null).execute();
-            } else {
-                JSONObject body = new JSONObject();
-                try {
-                    body.put("last_id", lastId);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                new FetchFeedTask("local", baseUrl + "/new-feed", "POST", body).execute();
-            }
+            clearDatabaseCache();
+            new FetchFeedTask("local", baseUrl + "/feed", "GET", null).execute();
 
         } else if ("Chat".equals(tabName)) {
             FrameLayout pageChat = (FrameLayout) findViewById(R.id.pageChat);
@@ -599,18 +583,9 @@ public class HomeActivity extends ActivityGroup {
                 String trimmed = result.trim();
                 if (trimmed.startsWith("[")) {
                     JSONArray jsonArray = new JSONArray(trimmed);
-                    if ("local".equals(tabType)) {
-                        if (jsonArray.length() > 0) {
-                            dbHelper.insertPostsBatch(jsonArray);
-                            ArrayList<JSONObject> updatedFromDb = dbHelper.getAllCachedPosts();
-                            postsLocal.clear();
-                            postsLocal.addAll(updatedFromDb);
-                        }
-                    } else {
-                        postsTimeline.clear();
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            postsTimeline.add(jsonArray.getJSONObject(i));
-                        }
+                    targetList.clear();
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        targetList.add(jsonArray.getJSONObject(i));
                     }
                 } else if (trimmed.startsWith("{")) {
                     JSONObject errObj = new JSONObject(trimmed);

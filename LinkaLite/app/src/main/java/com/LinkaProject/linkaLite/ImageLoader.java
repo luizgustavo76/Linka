@@ -7,14 +7,15 @@ import android.graphics.Movie;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
-import android.util.LruCache;
 import android.widget.ImageView;
 import com.LinkaProject.linkaLite.GifImageView;
 import org.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.lang.ref.SoftReference;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,20 +25,10 @@ public class ImageLoader {
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final ExecutorService executor = Executors.newFixedThreadPool(4);
 
-    private static LruCache<String, Bitmap> memoryCache;
-    private static ConcurrentHashMap<String, byte[]> gifCache = new ConcurrentHashMap<String, byte[]>();
+    private static final HashMap<String, SoftReference<Bitmap>> memoryCache = new HashMap<String, SoftReference<Bitmap>>();
+    private static final ConcurrentHashMap<String, byte[]> gifCache = new ConcurrentHashMap<String, byte[]>();
 
     public ImageLoader() {
-        if (memoryCache == null) {
-            int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-            int cacheSize = maxMemory / 8;
-            memoryCache = new LruCache<String, Bitmap>(cacheSize > 0 ? cacheSize : 4096) {
-                @Override
-                protected int sizeOf(String key, Bitmap bitmap) {
-                    return bitmap.getByteCount() / 1024;
-                }
-            };
-        }
     }
 
     private int[] getDensityBasedDimensions(Context context, boolean isAvatar) {
@@ -111,10 +102,15 @@ public class ImageLoader {
 
         targetView.setTag(imageUrl);
 
-        Bitmap cachedBitmap = memoryCache.get(imageUrl);
-        if (cachedBitmap != null) {
-            targetView.setImageBitmap(cachedBitmap);
-            return;
+        if (memoryCache.containsKey(imageUrl)) {
+            SoftReference<Bitmap> ref = memoryCache.get(imageUrl);
+            if (ref != null) {
+                Bitmap cachedBitmap = ref.get();
+                if (cachedBitmap != null) {
+                    targetView.setImageBitmap(cachedBitmap);
+                    return;
+                }
+            }
         }
 
         if (targetView instanceof GifImageView && gifCache.containsKey(imageUrl)) {
@@ -180,7 +176,7 @@ public class ImageLoader {
                         final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
 
                         if (decodedBitmap != null) {
-                            memoryCache.put(imageUrl, decodedBitmap);
+                            memoryCache.put(imageUrl, new SoftReference<Bitmap>(decodedBitmap));
                             mainHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -205,10 +201,15 @@ public class ImageLoader {
         final String tagKey = "avatar_" + username;
         targetImageView.setTag(tagKey);
 
-        Bitmap cachedAvatar = memoryCache.get(tagKey);
-        if (cachedAvatar != null) {
-            targetImageView.setImageBitmap(cachedAvatar);
-            return;
+        if (memoryCache.containsKey(tagKey)) {
+            SoftReference<Bitmap> ref = memoryCache.get(tagKey);
+            if (ref != null) {
+                Bitmap cachedAvatar = ref.get();
+                if (cachedAvatar != null) {
+                    targetImageView.setImageBitmap(cachedAvatar);
+                    return;
+                }
+            }
         }
 
         targetImageView.setImageResource(android.R.color.transparent);
@@ -258,7 +259,7 @@ public class ImageLoader {
                                     final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
                                     if (decodedBitmap != null) {
                                         final Bitmap circularBitmap = profile.getCircularBitmap(decodedBitmap);
-                                        memoryCache.put(tagKey, circularBitmap);
+                                        memoryCache.put(tagKey, new SoftReference<Bitmap>(circularBitmap));
                                         mainHandler.post(new Runnable() {
                                             @Override
                                             public void run() {
