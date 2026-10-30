@@ -23,6 +23,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".BookmarksFeed" android:label="bookmarks" />
+        <activity android:name=".CommunityIndex" android:label="community" />
         <activity android:name=".ExternalLogin" android:label="External Login" />
         <activity android:name=".SignupActivity" android:label="Register" />
         <activity android:name=".TimelineFilters" android:label="Filters" />

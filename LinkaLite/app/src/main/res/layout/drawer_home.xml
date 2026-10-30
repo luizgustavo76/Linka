@@ -82,7 +82,19 @@
                 android:text="Feed"
                 android:textColor="#E0E0E0"
                 android:textSize="15sp" />
-
+            <Button
+                android:id="@+id/btnCommunities"
+                android:layout_width="fill_parent"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:drawableLeft="@android:drawable/ic_menu_slideshow"
+                android:drawablePadding="16dp"
+                android:gravity="left|center_vertical"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:text="Communities"
+                android:textColor="#E0E0E0"
+                android:textSize="15sp" />
             <Button
                 android:id="@+id/btnDrawerChat"
                 android:layout_width="fill_parent"

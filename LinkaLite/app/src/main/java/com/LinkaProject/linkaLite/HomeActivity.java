@@ -320,7 +320,7 @@ public class HomeActivity extends ActivityGroup {
         Button btnDrawerProfile = (Button) findViewById(R.id.btnDrawerProfile);
         Button btnDrawerFavorites = (Button) findViewById(R.id.btnDrawerFavorites);
         Button btnDrawerLogout = (Button) findViewById(R.id.btnDrawerLogout);
-
+        Button btnCommunities = (Button) findViewById(R.id.btnCommunities);
         String currentUsername = "user";
 
         try {
@@ -365,7 +365,15 @@ public class HomeActivity extends ActivityGroup {
                 }
             });
         }
-
+        if (btnCommunities != null){
+            btnCommunities.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v){
+                    Intent intent = new Intent(HomeActivity.this, CommunityIndex.class);
+                    startActivity(intent);
+                }
+            });
+        }
         if (btnDrawerChat != null) {
             btnDrawerChat.setOnClickListener(new View.OnClickListener() {
                 @Override
