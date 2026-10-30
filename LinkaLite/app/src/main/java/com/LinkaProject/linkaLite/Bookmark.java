@@ -34,6 +34,7 @@ public class Bookmark {
             jsonToggle.put("post_id", postId);
             jsonToggle.put("is_public", isPublic);
             jsonToggle.put("is_external", isExternal);
+            jsonToggle.put("username", username);
             jsonToggle.put("original_id", originalId);
             jsonToggle.put("platform", platform);
 

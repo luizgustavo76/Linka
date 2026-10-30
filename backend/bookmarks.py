@@ -41,16 +41,54 @@ create_db()
 def view_bookmarks():
     data = request.get_json(silent=True) or {}
     username = data.get("username")
-    receiver = data.get("receiver")
+    receiver = data.get("receiver") or username
     current_user = getattr(g, "username", None)
 
-    if username == current_user:
+    if username and username == current_user:
         conn = get_db()
         cur = conn.cursor()
+        
+        # Junta a tabela bookmarks com a tabela posts para entregar o conteúdo completo do post
         if receiver == username:
-            cur.execute("SELECT * FROM bookmarks WHERE username = ? ORDER BY id DESC", (username,))
+            cur.execute("""
+                SELECT 
+                    b.id AS bookmark_id,
+                    b.username,
+                    b.post_id,
+                    b.is_public,
+                    b.is_external,
+                    b.platform,
+                    p.id,
+                    p.text_post,
+                    p.datetime,
+                    p.media_list,
+                    p.comments_count,
+                    p.avatar_url
+                FROM bookmarks b
+                LEFT JOIN posts p ON b.post_id = p.id
+                WHERE b.username = ?
+                ORDER BY b.id DESC
+            """, (username,))
         else:
-            cur.execute("SELECT * FROM bookmarks WHERE username = ? AND is_public = 1 ORDER BY id DESC", (receiver,))
+            cur.execute("""
+                SELECT 
+                    b.id AS bookmark_id,
+                    b.username,
+                    b.post_id,
+                    b.is_public,
+                    b.is_external,
+                    b.platform,
+                    p.id,
+                    p.text_post,
+                    p.datetime,
+                    p.media_list,
+                    p.comments_count,
+                    p.avatar_url
+                FROM bookmarks b
+                LEFT JOIN posts p ON b.post_id = p.id
+                WHERE b.username = ? AND b.is_public = 1
+                ORDER BY b.id DESC
+            """, (receiver,))
             
         rows = cur.fetchall()
         conn.close()

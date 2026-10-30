@@ -1,4 +1,5 @@
 package com.LinkaProject.linkaLite;
+
 import com.LinkaProject.linkaLite.R;    
 import android.app.Activity;
 import android.content.Context;
@@ -45,12 +46,11 @@ public class BookmarksFeed extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.bookmarks_feed);
 
-        // Obter largura da tela para renderização de mídias
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         screenWidth = metrics.widthPixels;
 
-        listView = (ListView) findViewById(R.id.listViewBookmarks); // Certifique-se de ter essa ID no seu R.layout.bookmark_feed
+        listView = (ListView) findViewById(R.id.listViewBookmarks);
 
         try {
             config cfg = new config();
@@ -70,17 +70,31 @@ public class BookmarksFeed extends Activity {
             jsonBookmark.put("receiver", username);
 
             String responseStr = request.requestHTTP(url + "/view-bookmarks", "post", jsonBookmark, BookmarksFeed.this);
-            JSONObject jsonResult = new JSONObject(responseStr);
-
+            
             ArrayList<JSONObject> postsList = new ArrayList<JSONObject>();
-            JSONArray postsArray = jsonResult.optJSONArray("posts");
-            if (postsArray == null) {
-                postsArray = jsonResult.optJSONArray("bookmarks");
-            }
-
-            if (postsArray != null) {
-                for (int i = 0; i < postsArray.length(); i++) {
-                    postsList.add(postsArray.getJSONObject(i));
+            
+            if (responseStr != null && responseStr.trim().length() > 0) {
+                String trimmed = responseStr.trim();
+                
+                // Trata o caso em que o servidor envia uma JSONArray direta [...]
+                if (trimmed.startsWith("[")) {
+                    JSONArray postsArray = new JSONArray(trimmed);
+                    for (int i = 0; i < postsArray.length(); i++) {
+                        postsList.add(postsArray.getJSONObject(i));
+                    }
+                } 
+                // Trata o caso em que o servidor envia um JSONObject {...}
+                else if (trimmed.startsWith("{")) {
+                    JSONObject jsonResult = new JSONObject(trimmed);
+                    JSONArray postsArray = jsonResult.optJSONArray("posts");
+                    if (postsArray == null) {
+                        postsArray = jsonResult.optJSONArray("bookmarks");
+                    }
+                    if (postsArray != null) {
+                        for (int i = 0; i < postsArray.length(); i++) {
+                            postsList.add(postsArray.getJSONObject(i));
+                        }
+                    }
                 }
             }
 
@@ -213,7 +227,7 @@ public class BookmarksFeed extends Activity {
                 final String originalUrl = post.optString("original_url", "");
                 final boolean isExternal = !origin_server.isEmpty() && !origin_server.equals("linka");
 
-                holder.btnBookmarks.setSelected(false);
+                holder.btnBookmarks.setSelected(true);
                 if (holder.containerBookmarkOptions != null) {
                     holder.containerBookmarkOptions.setVisibility(View.GONE);
                 }
@@ -332,8 +346,8 @@ public class BookmarksFeed extends Activity {
                     holder.avatarPost.setTag(avatarOtimizado);
                     imageLoader.LoadImageUrl(avatarOtimizado, holder.avatarPost);
                 } else {
-                    holder.avatarPost.setTag(avatarUrl);
-                    imageLoader.LoadImageUrl(avatarUrl, holder.avatarPost);
+                    holder.avatarPost.setTag("avatar_" + postUsername);
+                    imageLoader.viewProfilePicture(context, postUsername, holder.avatarPost);
                 }
 
                 final ArrayList<JSONObject> mediaItems = new ArrayList<JSONObject>();
