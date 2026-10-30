@@ -7,6 +7,7 @@ bookmarks_bp = Blueprint("bookmarks_bp", __name__)
 
 db_dir = os.path.join(base_dir, "DB")
 post_db_path = os.path.join(db_dir, "bookmarks.db")
+posts_main_db_path = os.path.join(db_dir, "post.db")
 
 if not os.path.exists(db_dir):
     os.makedirs(db_dir)
@@ -14,6 +15,14 @@ if not os.path.exists(db_dir):
 def get_db():
     conn = sqlite3.connect(post_db_path, timeout=10)
     conn.row_factory = sqlite3.Row
+    
+    # Anexa o posts.db sob o alias 'posts_db'
+    if os.path.exists(posts_main_db_path):
+        try:
+            conn.execute(f"ATTACH DATABASE '{posts_main_db_path}' AS posts_db")
+        except Exception as e:
+            print(f"[Bookmarks] Erro ao anexar posts.db: {e}")
+        
     return conn
 
 def create_db():
@@ -48,51 +57,73 @@ def view_bookmarks():
         conn = get_db()
         cur = conn.cursor()
         
-        # Junta a tabela bookmarks com a tabela posts para entregar o conteúdo completo do post
+        # Faz o LEFT JOIN selecionando APENAS as colunas que existem na sua tabela 'posts'
         if receiver == username:
-            cur.execute("""
+            query = """
                 SELECT 
                     b.id AS bookmark_id,
-                    b.username,
+                    b.username AS bookmark_user,
                     b.post_id,
                     b.is_public,
                     b.is_external,
                     b.platform,
                     p.id,
+                    p.username,
                     p.text_post,
                     p.datetime,
-                    p.media_list,
-                    p.comments_count,
-                    p.avatar_url
+                    p.media,
+                    p.media_type,
+                    p.width,
+                    p.heigth
                 FROM bookmarks b
-                LEFT JOIN posts p ON b.post_id = p.id
+                LEFT JOIN posts_db.posts p ON b.post_id = p.id
                 WHERE b.username = ?
                 ORDER BY b.id DESC
-            """, (username,))
+            """
+            cur.execute(query, (username,))
         else:
-            cur.execute("""
+            query = """
                 SELECT 
                     b.id AS bookmark_id,
-                    b.username,
+                    b.username AS bookmark_user,
                     b.post_id,
                     b.is_public,
                     b.is_external,
                     b.platform,
                     p.id,
+                    p.username,
                     p.text_post,
                     p.datetime,
-                    p.media_list,
-                    p.comments_count,
-                    p.avatar_url
+                    p.media,
+                    p.media_type,
+                    p.width,
+                    p.heigth
                 FROM bookmarks b
-                LEFT JOIN posts p ON b.post_id = p.id
+                LEFT JOIN posts_db.posts p ON b.post_id = p.id
                 WHERE b.username = ? AND b.is_public = 1
                 ORDER BY b.id DESC
-            """, (receiver,))
+            """
+            cur.execute(query, (receiver,))
             
         rows = cur.fetchall()
+        
+        # Converte as linhas do SQLite para uma lista de dicionários ajustando objetos de mídia se existirem
+        result = []
+        for row in rows:
+            post_dict = dict(row)
+            
+            # Se o post tiver uma mídia simples, monta a estrutura tratada que o cliente Android espera
+            if post_dict.get("media"):
+                post_dict["media_list"] = [{
+                    "media_url": post_dict.get("media"),
+                    "media_type": post_dict.get("media_type", "image"),
+                    "width": post_dict.get("width", ""),
+                    "heigth": post_dict.get("heigth", "")
+                }]
+            result.append(post_dict)
+
         conn.close()
-        return jsonify([dict(row) for row in rows]), 200
+        return jsonify(result), 200
     
     return jsonify({"status": "forbidden"}), 403
 
@@ -101,7 +132,7 @@ def toggle_bookmark():
     data = request.get_json(silent=True) or {}
     username = data.get("username")
 
-    if username == g.username:
+    if username == getattr(g, "username", None):
         post_id = data.get("post_id")
         is_public = data.get("is_public")
         original_id = data.get("original_id")
