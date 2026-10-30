@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:background="#d6d6d6">
+
+    <!-- Cabeçalho Superior -->
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="48dip"
+        android:background="#1C1C1C"
+        android:paddingLeft="8dip"
+        android:paddingRight="8dip">
+
+        <!-- Botão Hambúrguer para Abrir o Drawer -->
+        <ImageButton
+            android:id="@+id/btnHamburger"
+            android:layout_width="40dip"
+            android:layout_height="40dip"
+            android:layout_centerVertical="true"
+            android:layout_alignParentLeft="true"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:src="@android:drawable/ic_menu_sort_by_size" />
+
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@id/btnHamburger"
+            android:layout_marginLeft="4dip"
+            android:src="@drawable/linka_app_login_banner" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentRight="true"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageButton
+                android:id="@+id/newPost"
+                android:layout_width="40dip"
+                android:layout_height="40dip"
+                android:background="@android:color/transparent"
+                android:scaleType="centerInside"
+                android:src="@android:drawable/ic_menu_edit" />
+
+            <ImageButton
+                android:id="@+id/btnInbox"
+                android:layout_width="40dip"
+                android:layout_height="40dip"
+                android:background="@android:color/transparent"
+                android:scaleType="centerInside"
+                android:src="@android:drawable/sym_action_chat" />
+
+            <ImageButton
+                android:id="@+id/btnProfile"
+                android:layout_width="40dip"
+                android:layout_height="40dip"
+                android:background="@android:color/transparent"
+                android:scaleType="centerInside"
+                android:src="@android:drawable/ic_menu_myplaces" />
+
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- Linha divisória fina -->
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#AAAAAA" />
+
+    <!-- Feed de Bookmarks/Favoritos -->
+    <ListView
+        android:id="@+id/listViewBookmarks"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:cacheColorHint="#00000000"
+        android:divider="#CCCCCC"
+        android:dividerHeight="1dip"
+        android:fadingEdge="none"
+        android:fastScrollEnabled="true"
+        android:smoothScrollbar="true" />
+
+</LinearLayout>

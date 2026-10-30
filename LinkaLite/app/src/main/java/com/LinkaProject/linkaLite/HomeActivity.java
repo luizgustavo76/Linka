@@ -401,7 +401,7 @@ public class HomeActivity extends ActivityGroup {
                 @Override
                 public void onClick(View v) {
                     if (drawerLayout != null) drawerLayout.closeDrawers();
-                    startActivity(new Intent(HomeActivity.this, feedFinder.class));
+                    startActivity(new Intent(HomeActivity.this, BookmarksFeed.class));
                 }
             });
         }
@@ -678,90 +678,7 @@ public class HomeActivity extends ActivityGroup {
                 holder = (ViewHolder) convertView.getTag();
             }
 
-            holder.btnBookmarks.setSelected(false);
-            if (holder.containerBookmarkOptions != null) {
-                holder.containerBookmarkOptions.setVisibility(View.GONE);
-            }
-
-            holder.avatarPost.setTag(null);
-            holder.avatarPost.setImageDrawable(null);
-            holder.imgPost.setTag(R.id.imgPost, null);
-            holder.imgPost.setImageDrawable(null);
-            holder.imgPost.setMovie(null);
-
-            holder.containerMedia.setVisibility(View.GONE);
-            holder.txtMediaCount.setVisibility(View.GONE);
-            holder.btnPrevImage.setVisibility(View.GONE);
-            holder.btnNextImage.setVisibility(View.GONE);
-
-            holder.btnBookmarks.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    v.setSelected(!v.isSelected());
-                    if (holder.containerBookmarkOptions != null) {
-                        if (holder.containerBookmarkOptions.getVisibility() != View.VISIBLE) {
-                            Animation slideIn = AnimationUtils.loadAnimation(context, R.anim.slide_in_right);
-                            holder.containerBookmarkOptions.setVisibility(View.VISIBLE);
-                            holder.containerBookmarkOptions.startAnimation(slideIn);
-                        } else {
-                            Animation slideOut = AnimationUtils.loadAnimation(context, R.anim.slide_out_right);
-                            slideOut.setAnimationListener(new Animation.AnimationListener() {
-                                @Override
-                                public void onAnimationEnd(Animation animation) {
-                                    holder.containerBookmarkOptions.setVisibility(View.GONE);
-                                }
-                                @Override public void onAnimationStart(Animation animation) {}
-                                @Override public void onAnimationRepeat(Animation animation) {}
-                            });
-                            holder.containerBookmarkOptions.startAnimation(slideOut);
-                        }
-                    }
-                }
-            });
-
-            if (holder.btnCloseBookmarks != null) {
-                holder.btnCloseBookmarks.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (holder.containerBookmarkOptions != null && holder.containerBookmarkOptions.getVisibility() == View.VISIBLE) {
-                            Animation slideOut = AnimationUtils.loadAnimation(context, R.anim.slide_out_right);
-                            slideOut.setAnimationListener(new Animation.AnimationListener() {
-                                @Override
-                                public void onAnimationEnd(Animation animation) {
-                                    holder.containerBookmarkOptions.setVisibility(View.GONE);
-                                }
-                                @Override public void onAnimationStart(Animation animation) {}
-                                @Override public void onAnimationRepeat(Animation animation) {}
-                            });
-                            holder.containerBookmarkOptions.startAnimation(slideOut);
-                        }
-                    }
-                });
-            }
-
-            if (holder.btnPublicBookmarks != null) {
-                holder.btnPublicBookmarks.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        holder.btnBookmarks.setSelected(true);
-                        if (holder.containerBookmarkOptions != null) {
-                            holder.containerBookmarkOptions.setVisibility(View.GONE);
-                        }
-                    }
-                });
-            }
-
-            if (holder.btnPrivateBookmarks != null) {
-                holder.btnPrivateBookmarks.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        holder.btnBookmarks.setSelected(true);
-                        if (holder.containerBookmarkOptions != null) {
-                            holder.containerBookmarkOptions.setVisibility(View.GONE);
-                        }
-                    }
-                });
-            }
+            final Bookmark bookmarkManager = new Bookmark(context);
 
             try {
                 final JSONObject post = list.get(position);
@@ -772,8 +689,96 @@ public class HomeActivity extends ActivityGroup {
                 String commentsCount = post.optString("comments_count", post.optString("comment_count", "0"));
                 final String postUniqueId = post.optString("unique_id", "");
                 final String relative_datetime = post.optString("relative_datetime", "");
-                final String id = post.optString("id", "");
+                final int id = post.optInt("id", -1);
                 final String originalUrl = post.optString("original_url", "");
+                final boolean isExternal = !origin_server.isEmpty() && !origin_server.equals("linka");
+
+                holder.btnBookmarks.setSelected(false);
+                if (holder.containerBookmarkOptions != null) {
+                    holder.containerBookmarkOptions.setVisibility(View.GONE);
+                }
+
+                holder.avatarPost.setTag(null);
+                holder.avatarPost.setImageDrawable(null);
+                holder.imgPost.setTag(R.id.imgPost, null);
+                holder.imgPost.setImageDrawable(null);
+                holder.imgPost.setMovie(null);
+
+                holder.containerMedia.setVisibility(View.GONE);
+                holder.txtMediaCount.setVisibility(View.GONE);
+                holder.btnPrevImage.setVisibility(View.GONE);
+                holder.btnNextImage.setVisibility(View.GONE);
+
+                holder.btnBookmarks.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        v.setSelected(!v.isSelected());
+                        if (holder.containerBookmarkOptions != null) {
+                            if (holder.containerBookmarkOptions.getVisibility() != View.VISIBLE) {
+                                Animation slideIn = AnimationUtils.loadAnimation(context, R.anim.slide_in_right);
+                                holder.containerBookmarkOptions.setVisibility(View.VISIBLE);
+                                holder.containerBookmarkOptions.startAnimation(slideIn);
+                            } else {
+                                Animation slideOut = AnimationUtils.loadAnimation(context, R.anim.slide_out_right);
+                                slideOut.setAnimationListener(new Animation.AnimationListener() {
+                                    @Override
+                                    public void onAnimationEnd(Animation animation) {
+                                        holder.containerBookmarkOptions.setVisibility(View.GONE);
+                                    }
+                                    @Override public void onAnimationStart(Animation animation) {}
+                                    @Override public void onAnimationRepeat(Animation animation) {}
+                                });
+                                holder.containerBookmarkOptions.startAnimation(slideOut);
+                            }
+                        }
+                    }
+                });
+
+                if (holder.btnCloseBookmarks != null) {
+                    holder.btnCloseBookmarks.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            if (holder.containerBookmarkOptions != null && holder.containerBookmarkOptions.getVisibility() == View.VISIBLE) {
+                                Animation slideOut = AnimationUtils.loadAnimation(context, R.anim.slide_out_right);
+                                slideOut.setAnimationListener(new Animation.AnimationListener() {
+                                    @Override
+                                    public void onAnimationEnd(Animation animation) {
+                                        holder.containerBookmarkOptions.setVisibility(View.GONE);
+                                    }
+                                    @Override public void onAnimationStart(Animation animation) {}
+                                    @Override public void onAnimationRepeat(Animation animation) {}
+                                });
+                                holder.containerBookmarkOptions.startAnimation(slideOut);
+                            }
+                        }
+                    });
+                }
+
+                if (holder.btnPublicBookmarks != null) {
+                    holder.btnPublicBookmarks.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            holder.btnBookmarks.setSelected(true);
+                            if (holder.containerBookmarkOptions != null) {
+                                holder.containerBookmarkOptions.setVisibility(View.GONE);
+                            }
+                            bookmarkManager.toggle(id, true, isExternal, postUniqueId, origin_server);
+                        }
+                    });
+                }
+
+                if (holder.btnPrivateBookmarks != null) {
+                    holder.btnPrivateBookmarks.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            holder.btnBookmarks.setSelected(true);
+                            if (holder.containerBookmarkOptions != null) {
+                                holder.containerBookmarkOptions.setVisibility(View.GONE);
+                            }
+                            bookmarkManager.toggle(id, false, isExternal, postUniqueId, origin_server);
+                        }
+                    });
+                }
 
                 holder.tvUsername.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -797,7 +802,7 @@ public class HomeActivity extends ActivityGroup {
                             intent.putExtra("isExternal", false);
                         }
                         intent.putExtra("isGuest", isGuest);
-                        intent.putExtra("post_id", id);
+                        intent.putExtra("post_id", String.valueOf(id));
                         startActivity(intent);
                     }
                 });

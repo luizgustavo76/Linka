@@ -20,6 +20,7 @@
         "bluesky-federation":true,
         "automoderator":true,
         "communities":true,
+        "bookmarks":true,
         "url-server":"http://linkaProject.pythonanywhere.com"
 
     }

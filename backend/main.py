@@ -24,6 +24,8 @@ if root_flags["post"]:
     from post import post_bp
 if root_flags["chat"]:
     from chat import chat_bp
+if root_flags["bookmarks"]:
+    from bookmarks import bookmarks_bp
 tos_content = ""
 if root_flags.get("automoderator"):
     import sys
@@ -308,6 +310,8 @@ if root_flags["federation_index"]:
     app.register_blueprint(federation_index_bp)
 if root_flags["communities"]:
     app.register_blueprint(community_bp)
+if root_flags["bookmarks"]:
+    app.register_blueprint(bookmarks_bp)
 app.register_blueprint(mentions_bp)
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
