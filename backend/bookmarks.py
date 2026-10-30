@@ -62,9 +62,8 @@ def view_bookmarks():
 def toggle_bookmark():
     data = request.get_json(silent=True) or {}
     username = data.get("username")
-    current_user = getattr(g, "username", None)
 
-    if username == current_user:
+    if username == g.username:
         post_id = data.get("post_id")
         is_public = data.get("is_public")
         original_id = data.get("original_id")
