@@ -1,24 +1,32 @@
 package com.LinkaProject.linkaLite;
-
+import android.content.Intent;
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ListView;
 import java.util.ArrayList;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import android.widget.Button;
 public class CommunityIndex extends Activity {
     private ListView listViewCommunities;
     private CommunityAdapter adapter;
     private ArrayList<Community> communityList;
     private String url = "";
-
+    private Button btnNew;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.communities_index);
-
+        btnNew = (Button) findViewById(R.id.btnNew);
+        btnNew.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                Intent intent = new Intent(CommunityIndex.this, NewCommunity.class);
+                startActivity(intent);
+            }
+        });
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(CommunityIndex.this, "conifg.cfg"));

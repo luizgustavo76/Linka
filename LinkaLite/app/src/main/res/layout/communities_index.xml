@@ -87,20 +87,17 @@
             android:inputType="text"
             android:singleLine="true" />
         <Button
-            android:id="@+id/btnNewCommunity"
+            android:id="@+id/btnNew"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             android:layout_marginRight="6dip"
-            android:background="#3e48dc"
             android:paddingLeft="14dip"
             android:paddingRight="14dip"
             android:text="+"
-            android:textColor="#ffffff"
             android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- 3. LISTA DE COMUNIDADES -->
     <ListView
         android:id="@+id/listViewCommunities"
         android:layout_width="fill_parent"
