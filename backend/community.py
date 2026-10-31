@@ -72,7 +72,7 @@ def new_community():
     else:
         return jsonify({"status": "forbidden"}), 403
 
-@community_bp.route("/view-communities", methods=["POST"])
+@community_bp.route("/view-communities", methods=["GET"])
 def view_communities():
     conn = get_db()
     cur = conn.cursor()

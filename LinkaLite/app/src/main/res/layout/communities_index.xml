@@ -102,7 +102,7 @@
 
     <!-- 3. LISTA DE COMUNIDADES -->
     <ListView
-        android:id="@+id/listComm"
+        android:id="@+id/listViewCommunities"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:cacheColorHint="#00000000"
