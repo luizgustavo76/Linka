@@ -7,13 +7,14 @@ import android.graphics.Movie;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.widget.ImageView;
 import com.LinkaProject.linkaLite.GifImageView;
 import org.json.JSONObject;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
@@ -21,13 +22,10 @@ import java.util.concurrent.Executors;
 
 public class ImageLoader {
 
+    private static final String TAG = "ImageLoader";
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
-    // Pool de 1 Thread para evitar sobrecarregar o CPU Single-Core de 832MHz do Galaxy Y
     private static final ExecutorService executor = Executors.newFixedThreadPool(1);
-
     private static final HashMap<String, SoftReference<Bitmap>> memoryCache = new HashMap<String, SoftReference<Bitmap>>();
-    
-    // Cache estático da URL base para evitar ler o ficheiro de disco no loop do ListView
     private static String cachedBaseUrl = null;
 
     public ImageLoader() {
@@ -51,19 +49,62 @@ public class ImageLoader {
         }
     }
 
-    private int[] getDensityBasedDimensions(Context context, boolean isAvatar) {
+    private int getTargetWidth(Context context) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        float density = metrics.density;
+        int width = metrics.widthPixels > 0 ? metrics.widthPixels : 320;
+        int height = metrics.heightPixels > 0 ? metrics.heightPixels : 480;
+        
+        Log.d(TAG, "Resolucao detectada: " + width + "x" + height + " | Densidade (density): " + metrics.density);
+        return width;
+    }
 
-        if (isAvatar) {
-            int sizePx = Math.round(40 * density);
-            return new int[]{sizePx, sizePx};
-        } else {
-            // Limita a imagem ao tamanho real da tela QVGA
-            int targetWidth = metrics.widthPixels > 0 ? metrics.widthPixels : 240;
-            int targetHeight = metrics.heightPixels > 0 ? metrics.heightPixels : 320;
-            return new int[]{targetWidth, targetHeight};
+    /**
+     * Limpa URLs encadeadas/duplicadas do wsrv.nl vindas do backend
+     * e aplica o proxy wsrv.nl com as dimensoes reais e qualidade 85/90.
+     */
+    private String cleanAndPrepareUrl(String rawUrl, int targetWidth, Integer targetHeight, int quality) {
+        if (rawUrl == null || rawUrl.trim().length() == 0) return "";
+        
+        String cleanUrl = rawUrl.trim();
+
+        // Se a URL ja veio envelopada com wsrv.nl, desfaz o encadeamento para pegar a URL original
+        while (cleanUrl.contains("wsrv.nl/?url=")) {
+            try {
+                int urlIndex = cleanUrl.indexOf("url=") + 4;
+                int endParamIndex = cleanUrl.indexOf("&", urlIndex);
+                if (endParamIndex != -1) {
+                    cleanUrl = cleanUrl.substring(urlIndex, endParamIndex);
+                } else {
+                    cleanUrl = cleanUrl.substring(urlIndex);
+                }
+                cleanUrl = URLDecoder.decode(cleanUrl, "UTF-8");
+            } catch (Exception e) {
+                break;
+            }
         }
+
+        // Se for midia local (/midia/), nao usa wsrv.nl
+        if (cleanUrl.contains("/midia/")) {
+            return cleanUrl;
+        }
+
+        // Se for URL externa via HTTP/HTTPS, envelopa no wsrv.nl limpo
+        if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
+            try {
+                StringBuilder builder = new StringBuilder("http://wsrv.nl/?url=");
+                builder.append(URLEncoder.encode(cleanUrl, "UTF-8"));
+                builder.append("&w=").append(targetWidth);
+                if (targetHeight != null && targetHeight > 0) {
+                    builder.append("&h=").append(targetHeight).append("&fit=cover");
+                }
+                builder.append("&q=").append(quality).append("&output=jpg");
+                return builder.toString();
+            } catch (Exception e) {
+                return cleanUrl;
+            }
+        }
+
+        return cleanUrl;
     }
 
     private boolean isGif(String url, byte[] data) {
@@ -76,45 +117,27 @@ public class ImageLoader {
         return false;
     }
 
-    private Bitmap decodeSampledBitmapFromByteArray(byte[] data, int reqWidth, int reqHeight) {
+    private Bitmap decodeByteArrayDirect(byte[] data) {
         if (data == null || data.length == 0) return null;
 
         try {
             final BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;
-            BitmapFactory.decodeByteArray(data, 0, data.length, options);
-
-            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-
-            options.inJustDecodeBounds = false;
-            options.inPreferredConfig = Bitmap.Config.RGB_565; // Usa 16 bits em vez de 32 bits (poupa 50% de RAM)
-            options.inPurgeable = true;                        // Permite que o Android 2.3 liberte os pixels se faltar RAM
+            options.inSampleSize = 1; 
+            options.inPreferredConfig = Bitmap.Config.RGB_565;
+            options.inDither = true;
+            options.inPurgeable = true;
             options.inInputShareable = true;
 
             return BitmapFactory.decodeByteArray(data, 0, data.length, options);
         } catch (OutOfMemoryError e) {
-            memoryCache.clear(); // Limpa o cache se a memória esgotar
+            Log.e(TAG, "OutOfMemoryError ao decodificar imagem! Limpando cache.");
+            memoryCache.clear();
             System.gc();
             return null;
         } catch (Exception e) {
+            Log.e(TAG, "Erro ao decodificar imagem", e);
             return null;
         }
-    }
-
-    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-        return inSampleSize;
     }
 
     public void LoadImageUrl(final String imageUrl, final ImageView targetView) {
@@ -144,12 +167,11 @@ public class ImageLoader {
                 if (!imageUrl.equals(targetView.getTag())) return;
 
                 try {
-                    String fetchUrl = imageUrl;
-                    if (!imageUrl.contains("/midia/") && (imageUrl.startsWith("http://") || imageUrl.startsWith("https://"))) {
-                        fetchUrl = "http://wsrv.nl/?url=" + URLEncoder.encode(imageUrl, "UTF-8") + "&w=240&q=60&output=jpg";
-                    }
+                    int targetWidth = getTargetWidth(appContext);
+                    String fetchUrl = cleanAndPrepareUrl(imageUrl, targetWidth, null, 85);
 
-                    int[] dims = getDensityBasedDimensions(appContext, false);
+                    Log.d(TAG, "Requisitando imagem na URL: " + fetchUrl);
+
                     byte[] rawBytes = request.requestBytes(fetchUrl, "GET", appContext);
 
                     if (rawBytes != null && rawBytes.length > 0) {
@@ -173,9 +195,10 @@ public class ImageLoader {
                             }
                         }
 
-                        final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
+                        final Bitmap decodedBitmap = decodeByteArrayDirect(rawBytes);
 
                         if (decodedBitmap != null) {
+                            Log.d(TAG, "Imagem decodificada com sucesso! Dims reais do Bitmap: " + decodedBitmap.getWidth() + "x" + decodedBitmap.getHeight());
                             memoryCache.put(imageUrl, new SoftReference<Bitmap>(decodedBitmap));
                             mainHandler.post(new Runnable() {
                                 @Override
@@ -187,7 +210,8 @@ public class ImageLoader {
                             });
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    Log.e(TAG, "Excecao no LoadImageUrl", e);
                 }
             }
         });
@@ -237,18 +261,19 @@ public class ImageLoader {
 
                             if (avatarUrl.length() > 0 && !avatarUrl.equals("null")) {
 
-                                String fetchUrl = avatarUrl;
-                                if (!avatarUrl.contains("/midia/")) {
-                                    fetchUrl = "http://wsrv.nl/?url=" + URLEncoder.encode(avatarUrl, "UTF-8") + "&w=40&h=40&fit=cover&output=jpg";
-                                }
+                                DisplayMetrics metrics = appContext.getResources().getDisplayMetrics();
+                                int avatarPx = Math.round(64 * metrics.density);
 
-                                int[] dims = getDensityBasedDimensions(appContext, true);
+                                Log.d(TAG, "Calculando dimensao do Avatar: " + avatarPx + "px");
+
+                                String fetchUrl = cleanAndPrepareUrl(avatarUrl, avatarPx, avatarPx, 90);
+
                                 byte[] rawBytes = request.requestBytes(fetchUrl, "GET", appContext);
 
                                 if (!tagKey.equals(targetImageView.getTag())) return;
 
                                 if (rawBytes != null && rawBytes.length > 0) {
-                                    final Bitmap decodedBitmap = decodeSampledBitmapFromByteArray(rawBytes, dims[0], dims[1]);
+                                    final Bitmap decodedBitmap = decodeByteArrayDirect(rawBytes);
                                     if (decodedBitmap != null) {
                                         final Bitmap circularBitmap = profile.getCircularBitmap(decodedBitmap);
                                         memoryCache.put(tagKey, new SoftReference<Bitmap>(circularBitmap));
@@ -265,7 +290,8 @@ public class ImageLoader {
                             }
                         }
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    Log.e(TAG, "Excecao no viewProfilePicture", e);
                 }
             }
         });
