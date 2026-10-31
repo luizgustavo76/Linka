@@ -144,10 +144,9 @@ public class ImageLoader {
                 if (!imageUrl.equals(targetView.getTag())) return;
 
                 try {
-                    String baseUrl = getBaseUrl(appContext);
                     String fetchUrl = imageUrl;
                     if (!imageUrl.contains("/midia/") && (imageUrl.startsWith("http://") || imageUrl.startsWith("https://"))) {
-                        fetchUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(imageUrl, "UTF-8");
+                        fetchUrl = "http://wsrv.nl/?url=" + URLEncoder.encode(imageUrl, "UTF-8") + "&w=240&q=60&output=jpg";
                     }
 
                     int[] dims = getDensityBasedDimensions(appContext, false);
@@ -240,7 +239,7 @@ public class ImageLoader {
 
                                 String fetchUrl = avatarUrl;
                                 if (!avatarUrl.contains("/midia/")) {
-                                    fetchUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(avatarUrl, "UTF-8");
+                                    fetchUrl = "http://wsrv.nl/?url=" + URLEncoder.encode(avatarUrl, "UTF-8") + "&w=40&h=40&fit=cover&output=jpg";
                                 }
 
                                 int[] dims = getDensityBasedDimensions(appContext, true);
