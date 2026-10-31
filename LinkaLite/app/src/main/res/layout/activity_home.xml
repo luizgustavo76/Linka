@@ -12,7 +12,7 @@
         android:orientation="vertical"
         android:background="#FFFFFF">
 
-        <!-- Top Bar com Botão Hambúrguer e Ações -->
+        <!-- Top Bar com Botão Hambúrguer, Logo Ajustado e Ações -->
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="48dip"
@@ -20,7 +20,7 @@
             android:paddingLeft="8dip"
             android:paddingRight="8dip">
 
-            <!-- Botão Hambúrguer para Abrir o Drawer -->
+            <!-- Botão Hambúrguer -->
             <ImageButton
                 android:id="@+id/btnHamburger"
                 android:layout_width="40dip"
@@ -31,16 +31,9 @@
                 android:scaleType="centerInside"
                 android:src="@android:drawable/ic_menu_sort_by_size" />
 
-            <ImageView
-                android:id="@+id/logo"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_toRightOf="@id/btnHamburger"
-                android:layout_marginLeft="4dip"
-                android:src="@drawable/linka_app_login_banner" />
-
+            <!-- Container de Botões da Direita -->
             <LinearLayout
+                android:id="@+id/rightBarButtons"
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent"
                 android:layout_alignParentRight="true"
@@ -72,6 +65,20 @@
                     android:src="@android:drawable/ic_menu_myplaces" />
 
             </LinearLayout>
+
+            <!-- Logo devidamente delimitado no meio sem invadir os ícones -->
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="0dip"
+                android:layout_height="36dip"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@id/btnHamburger"
+                android:layout_toLeftOf="@id/rightBarButtons"
+                android:layout_marginLeft="4dip"
+                android:layout_marginRight="4dip"
+                android:scaleType="fitCenter"
+                android:src="@drawable/linka_app_login_banner" />
+
         </RelativeLayout>
 
         <!-- Barra do Indicador de Abas -->
@@ -118,7 +125,7 @@
                 android:text="Local Feed ▶" />
         </RelativeLayout>
 
-        <!-- Scroll de Páginas da Feed -->
+        <!-- Scroll de Páginas do Feed -->
         <HorizontalScrollView
             android:id="@+id/scrollViewPages"
             android:layout_width="fill_parent"
@@ -235,7 +242,7 @@
 
     </LinearLayout>
 
-    <!-- 2. INCLUSÃO DO MENU LATERAL BONITO (drawer_home.xml) -->
+    <!-- 2. INCLUSÃO DO MENU LATERAL -->
     <include layout="@layout/drawer_home" />
 
 </android.support.v4.widget.DrawerLayout>

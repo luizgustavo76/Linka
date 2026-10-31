@@ -283,12 +283,13 @@ public class HomeActivity extends ActivityGroup {
         schedulerNotifications = Executors.newSingleThreadScheduledExecutor();
         scheduler = Executors.newSingleThreadScheduledExecutor();
 
+        // Intervalo alterado de 15s para 60s para evitar travar a CPU Single-Core do Galaxy Y
         schedulerNotifications.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 notificationManager.createNotification(HomeActivity.this);
             }
-        }, 0, 15, TimeUnit.SECONDS);
+        }, 0, 60, TimeUnit.SECONDS);
 
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -305,7 +306,7 @@ public class HomeActivity extends ActivityGroup {
                     e.printStackTrace();
                 }
             }
-        }, 0, 2, TimeUnit.MINUTES);
+        }, 0, 3, TimeUnit.MINUTES);
     }
 
     private void setupDrawerMenu() {
@@ -822,7 +823,7 @@ public class HomeActivity extends ActivityGroup {
                 if ("timeline".equals(actualTab)) {
                     String avatarUrl = post.optString("avatar_url", "");
                     if (avatarUrl.startsWith("http")) {
-                        String avatarOtimizado = "http://wsrv.nl/?url=" + avatarUrl + "&w=48&h=48&fit=cover&output=jpg";
+                        String avatarOtimizado = "http://wsrv.nl/?url=" + avatarUrl + "&w=40&h=40&fit=cover&output=jpg";
                         holder.avatarPost.setTag(avatarOtimizado);
                         imageLoader.LoadImageUrl(avatarOtimizado, holder.avatarPost);
                     } else {
@@ -945,7 +946,8 @@ public class HomeActivity extends ActivityGroup {
                 finalProxyUrl = rawUrl;
             } else {
                 if (rawUrl.startsWith("http")) {
-                    finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=480&q=70&output=jpg";
+                    // Pede uma imagem redimensionada para 240px com 60% de qualidade para o Galaxy Y
+                    finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=240&q=60&output=jpg";
                 } else {
                     finalProxyUrl = rawUrl;
                 }

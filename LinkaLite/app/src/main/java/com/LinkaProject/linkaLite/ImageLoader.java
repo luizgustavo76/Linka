@@ -16,19 +16,39 @@ import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ImageLoader {
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private static final ExecutorService executor = Executors.newFixedThreadPool(4);
+    // Pool de 1 Thread para evitar sobrecarregar o CPU Single-Core de 832MHz do Galaxy Y
+    private static final ExecutorService executor = Executors.newFixedThreadPool(1);
 
     private static final HashMap<String, SoftReference<Bitmap>> memoryCache = new HashMap<String, SoftReference<Bitmap>>();
-    private static final ConcurrentHashMap<String, byte[]> gifCache = new ConcurrentHashMap<String, byte[]>();
+    
+    // Cache estático da URL base para evitar ler o ficheiro de disco no loop do ListView
+    private static String cachedBaseUrl = null;
 
     public ImageLoader() {
+    }
+
+    private static synchronized String getBaseUrl(Context appContext) {
+        if (cachedBaseUrl != null) return cachedBaseUrl;
+        try {
+            config configInstance = new config();
+            String rawConfig = configInstance.loadCfgAsJson(appContext, "config.cfg");
+            JSONObject jsonConfig = new JSONObject(rawConfig);
+            JSONObject serverConfig = jsonConfig.getJSONObject("SERVER");
+            String baseUrl = serverConfig.getString("url");
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            cachedBaseUrl = baseUrl;
+            return cachedBaseUrl;
+        } catch (Exception e) {
+            return "http://linkaProject.pythonanywhere.com";
+        }
     }
 
     private int[] getDensityBasedDimensions(Context context, boolean isAvatar) {
@@ -36,11 +56,12 @@ public class ImageLoader {
         float density = metrics.density;
 
         if (isAvatar) {
-            int sizePx = Math.round(56 * density);
+            int sizePx = Math.round(40 * density);
             return new int[]{sizePx, sizePx};
         } else {
-            int targetWidth = metrics.widthPixels;
-            int targetHeight = metrics.heightPixels;
+            // Limita a imagem ao tamanho real da tela QVGA
+            int targetWidth = metrics.widthPixels > 0 ? metrics.widthPixels : 240;
+            int targetHeight = metrics.heightPixels > 0 ? metrics.heightPixels : 320;
             return new int[]{targetWidth, targetHeight};
         }
     }
@@ -66,12 +87,13 @@ public class ImageLoader {
             options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
 
             options.inJustDecodeBounds = false;
-            options.inPreferredConfig = Bitmap.Config.RGB_565;
-            options.inPurgeable = true;
+            options.inPreferredConfig = Bitmap.Config.RGB_565; // Usa 16 bits em vez de 32 bits (poupa 50% de RAM)
+            options.inPurgeable = true;                        // Permite que o Android 2.3 liberte os pixels se faltar RAM
             options.inInputShareable = true;
 
             return BitmapFactory.decodeByteArray(data, 0, data.length, options);
         } catch (OutOfMemoryError e) {
+            memoryCache.clear(); // Limpa o cache se a memória esgotar
             System.gc();
             return null;
         } catch (Exception e) {
@@ -113,19 +135,8 @@ public class ImageLoader {
             }
         }
 
-        if (targetView instanceof GifImageView && gifCache.containsKey(imageUrl)) {
-            byte[] rawBytes = gifCache.get(imageUrl);
-            InputStream is = new ByteArrayInputStream(rawBytes);
-            Movie gifMovie = Movie.decodeStream(is);
-            if (gifMovie != null) {
-                ((GifImageView) targetView).setMovie(gifMovie);
-                return;
-            }
-        }
-
         targetView.setImageResource(android.R.color.transparent);
-
-        final Context appContext = targetView.getContext();
+        final Context appContext = targetView.getContext().getApplicationContext();
 
         executor.submit(new Runnable() {
             @Override
@@ -133,16 +144,7 @@ public class ImageLoader {
                 if (!imageUrl.equals(targetView.getTag())) return;
 
                 try {
-                    config configInstance = new config();
-                    String rawConfig = configInstance.loadCfgAsJson(appContext, "config.cfg");
-                    JSONObject jsonConfig = new JSONObject(rawConfig);
-                    JSONObject serverConfig = jsonConfig.getJSONObject("SERVER");
-
-                    String baseUrl = serverConfig.getString("url");
-                    if (baseUrl.endsWith("/")) {
-                        baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-                    }
-
+                    String baseUrl = getBaseUrl(appContext);
                     String fetchUrl = imageUrl;
                     if (!imageUrl.contains("/midia/") && (imageUrl.startsWith("http://") || imageUrl.startsWith("https://"))) {
                         fetchUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(imageUrl, "UTF-8");
@@ -155,7 +157,6 @@ public class ImageLoader {
                         if (!imageUrl.equals(targetView.getTag())) return;
 
                         if (isGif(imageUrl, rawBytes) && targetView instanceof GifImageView) {
-                            gifCache.put(imageUrl, rawBytes);
                             final GifImageView gifTarget = (GifImageView) targetView;
                             InputStream is = new ByteArrayInputStream(rawBytes);
                             final Movie gifMovie = Movie.decodeStream(is);
@@ -213,6 +214,7 @@ public class ImageLoader {
         }
 
         targetImageView.setImageResource(android.R.color.transparent);
+        final Context appContext = context.getApplicationContext();
 
         executor.submit(new Runnable() {
             @Override
@@ -220,20 +222,11 @@ public class ImageLoader {
                 try {
                     if (!tagKey.equals(targetImageView.getTag())) return;
 
-                    config configInstance = new config();
-                    String rawConfig = configInstance.loadCfgAsJson(context, "config.cfg");
-                    JSONObject jsonConfig = new JSONObject(rawConfig);
-                    JSONObject serverConfig = jsonConfig.getJSONObject("SERVER");
-
-                    String baseUrl = serverConfig.getString("url");
-                    if (baseUrl.endsWith("/")) {
-                        baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
-                    }
-
+                    String baseUrl = getBaseUrl(appContext);
                     JSONObject requestBody = new JSONObject();
                     requestBody.put("username", username);
 
-                    String jsonResponse = request.requestHTTP(baseUrl + "/view-profile-picture", "POST", requestBody, context);
+                    String jsonResponse = request.requestHTTP(baseUrl + "/view-profile-picture", "POST", requestBody, appContext);
 
                     if (!tagKey.equals(targetImageView.getTag())) return;
 
@@ -250,8 +243,8 @@ public class ImageLoader {
                                     fetchUrl = baseUrl + "/lite-render?url=" + URLEncoder.encode(avatarUrl, "UTF-8");
                                 }
 
-                                int[] dims = getDensityBasedDimensions(context, true);
-                                byte[] rawBytes = request.requestBytes(fetchUrl, "GET", context);
+                                int[] dims = getDensityBasedDimensions(appContext, true);
+                                byte[] rawBytes = request.requestBytes(fetchUrl, "GET", appContext);
 
                                 if (!tagKey.equals(targetImageView.getTag())) return;
 
