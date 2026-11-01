@@ -74,7 +74,28 @@
                 android:lines="4"
                 android:gravity="top"
                 android:layout_marginBottom="24dip" />
-
+            <EditText
+                android:id="@+id/edtIconUrl"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="icon url"
+                android:textColor="#282828"
+                android:textColorHint="#555555"
+                android:textSize="14sp"
+                android:lines="4"
+                android:gravity="top"
+                android:layout_marginBottom="24dip" />
+            <EditText
+                android:id="@+id/edtBannerUrl"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="Banner url"
+                android:textColor="#282828"
+                android:textColorHint="#555555"
+                android:textSize="14sp"
+                android:lines="4"
+                android:gravity="top"
+                android:layout_marginBottom="24dip" />
             <Button
                 android:id="@+id/btnCreateCommunity"
                 android:layout_width="fill_parent"
