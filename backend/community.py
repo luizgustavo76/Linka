@@ -30,11 +30,16 @@ def create_db():
             members INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )""")
+    cur.execute(""" CREATE TABLE IF NOT EXISTS members(
+            username TEXT,
+            community_id INTEGER,
+            datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
     cur.execute("""CREATE TABLE IF NOT EXISTS posts(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             community_id INTEGER NOT NULL,
             username TEXT NOT NULL,
             media_attachments TEXT,
+            media_type TEXT,
             text_post TEXT,
             datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )""")
@@ -43,15 +48,89 @@ def create_db():
             post_id INTEGER NOT NULL,
             username TEXT NOT NULL,
             media_attachments TEXT,
+            media_type TEXT,
             text_comment TEXT,
             datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             comments_level INTEGER DEFAULT 0,
             parent_comment INTEGER)""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS chat(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT,
+                text_message TEXT,
+                media_attachments TEXT,
+                media_type TEXT,
+                datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                community_id INTEGER)""")
     conn.commit()
     conn.close()
 
 create_db()
+@community_bp.route("/new-message-community", methods=["POST"])
+def new_message():
+    data = request.get_json() or {}
+    username = data.get("username")
+    
+    if username == g.username:
+        text_message = data.get("text_message")
+        community_id = data.get("community_id")
+        media_attachment = data.get("media_attachment")
+        media_type = data.get("media_type")
+        
+        if not community_id:
+            return jsonify({"status": "missing group_id"}), 400
 
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT 1 FROM members WHERE username = ? AND community_id = ?",
+            (username, community_id)
+        )
+        if not cur.fetchone():
+            conn.close()
+            return jsonify({"status": "not a community member"}), 403
+        cur.execute("""
+            INSERT INTO chat 
+            (username, text_message, media_attachments, media_type, community_id) 
+            VALUES (?, ?, ?, ?, ?)
+        """, (username, text_message, media_attachment, media_type, community_id))
+
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"status": "message was sent"}), 200
+    else:
+        return jsonify({"status": "forbidden"}), 403
+@community_bp.route("/view-chat-community",methods=["POST"])
+def view_chat():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        community_id = data.get("community_id")
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""SELECT 
+                c.id,
+                c.username,
+                c.text_message,
+                c.media_attachments,
+                c.media_type
+            FROM chat c
+            INNER JOIN members m 
+                ON c.username = m.username 
+            AND c.community_id = m.community_id
+            WHERE c.community_id = ?""",(community_id,))
+        result = cur.fetchall()
+        json_return = []
+        for items in result:
+            json_return.append({
+                "id":items[0],
+                "username":items[1],
+                "text_message":items[2],
+                "media_attachment":items[3],
+                "media_type":items[4]
+            })
+        return jsonify(json_return),200   
 @community_bp.route("/new-community", methods=["POST"])
 def new_community():
     data = request.get_json() or {}
@@ -131,8 +210,9 @@ def view_posts():
             "community_id": post[1],
             "username": post[2],
             "media_attachments": json.loads(post[3]) if post[3] else [],
-            "text_post": post[4],
-            "datetime": post[5]
+            "media_type":json.loads(post[4]) if post[4] else [],
+            "text_post": post[5],
+            "datetime": post[6]
         })
     return jsonify(json_return), 200
 
