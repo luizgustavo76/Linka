@@ -1,42 +1,71 @@
-from flask import Flask, Blueprint, request, jsonify, g
-import sqlite3
 import os
-from datetime import datetime
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from flask import Blueprint, request, jsonify, g
+
 reports_bp = Blueprint("reports_bp", __name__)
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = (base_dir + "/DB")
-reports_dir = (db_dir + "/reports.db")
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 def get_db():
-    conn = sqlite3.connect(reports_dir)
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+
 def create_db():
+    if not DATABASE_URL:
+        return
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""CREATE TABLE IF NOT EXISTS reports(
-                username TEXT,
-                content TEXT,
-                id TEXT,
-                sender TEXT,
-                timestamp TEXT)""")
-    conn.commit()
-    conn.close()
-create_db()
-@reports_bp.route("/send-report")
+    try:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS reports (
+                id SERIAL PRIMARY KEY,
+                username TEXT NOT NULL,
+                sender TEXT NOT NULL,
+                content TEXT NOT NULL,
+                target_id TEXT,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERRO create_db reports]: {e}")
+    finally:
+        cur.close()
+        conn.close()
+
+@reports_bp.route("/send-report", methods=["POST"])
 def send_report():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
     sender = data.get("sender")
-    if username == g.username:
-        content = data.get("content")
-        id = data.get("id")
-        timestamp = datetime.now()
-        if None in [content, id, sender]:
-            return jsonify({"status":"incomplete report request"}),400
-        else:
-            conn = get_db()
-            cur = conn.cursor()
-            cur.execute("INSERT INTO reports (username, content, id, sender, timestamp) VALUES(?, ?, ?, ?, ?)",(username, content, id, sender, timestamp))
+    content = data.get("content")
+    target_id = data.get("id")
+
+    current_user = getattr(g, "username", None)
+
+    if username == current_user or sender == current_user:
+        if None in [content, target_id, sender]:
+            return jsonify({"status": "incomplete report request"}), 400
+
+        conn = get_db()
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                """
+                INSERT INTO reports (username, content, target_id, sender) 
+                VALUES (%s, %s, %s, %s)
+                """,
+                (username, content, str(target_id), sender)
+            )
             conn.commit()
-            conn.cursor()
+            return jsonify({"status": "report sent with success!"}), 200
+        except Exception as e:
+            conn.rollback()
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cur.close()
+            conn.close()
     else:
-        return jsonify({"status":"forbidden"}),403
+        return jsonify({"status": "forbidden"}), 403

@@ -1,82 +1,70 @@
-from flask import Blueprint, request, jsonify
 import os
-import sqlite3
-
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(base_dir, "DB")
-
-profile_db = os.path.join(db_dir, "profile.db")
-post_db = os.path.join(db_dir, "post.db")
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from flask import Blueprint, request, jsonify
 
 search_bp = Blueprint("search", __name__)
 
-def get_db_profile():
-    conn = sqlite3.connect(profile_db)
-    cursor = conn.cursor()
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    conn.execute("PRAGMA cache_size=-10000;")
-    return conn
-def get_db_post():
-    conn = sqlite3.connect(post_db)
-    cursor = conn.cursor()
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    conn.execute("PRAGMA cache_size=-10000;")
-    return conn
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+def get_db():
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 @search_bp.route("/search", methods=["POST"])
 def search():
-    data = request.get_json(silent=True)
-    
-    if not data or "content" not in data:
-        return jsonify({"error": "content vazio"}), 400
-
-    content = data["content"]
+    data = request.get_json(silent=True) or {}
+    content = data.get("content")
 
     if not content:
         return jsonify({"error": "content vazio"}), 400
 
-    content = content.strip()
+    content = str(content).strip()
+    if not content:
+        return jsonify({"error": "content vazio"}), 400
 
     result = {
         "usernames": [],
         "posts": []
     }
 
-    # ===== BUSCA USERNAME =====
-    conn = get_db_profile()
-    cursor = conn.cursor()
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        search_pattern = f"%{content}%"
 
-    conn.execute("""
-        SELECT username
-        FROM profile
-        WHERE username LIKE ?
-        LIMIT 20
-    """, (f"%{content}%",))
+        # 1. Busca por nomes de usuários no perfil
+        cur.execute(
+            """
+            SELECT username
+            FROM profile
+            WHERE username ILIKE %s
+            LIMIT 20
+            """,
+            (search_pattern,)
+        )
+        usernames = cur.fetchall()
+        for u in usernames:
+            result["usernames"].append(u["username"])
 
-    usernames = conn.fetchall()
+        # 2. Busca por conteúdo das postagens
+        cur.execute(
+            """
+            SELECT text_post
+            FROM posts
+            WHERE text_post ILIKE %s
+            LIMIT 20
+            """,
+            (search_pattern,)
+        )
+        posts = cur.fetchall()
+        for p in posts:
+            if p["text_post"]:
+                result["posts"].append(p["text_post"])
 
-    for u in usernames:
-        result["usernames"].append(u[0])
+        return jsonify(result), 200
 
-    conn.close()
-
-    conn = get_db_post()
-    cursor = conn.cursor()
-
-    conn.execute("""
-        SELECT text_post
-        FROM posts
-        WHERE text_post LIKE ?
-        LIMIT 20
-    """, (f"%{content}%",))
-
-    posts = conn.fetchall()
-
-    for p in posts:
-        result["posts"].append(p[0])
-
-    conn.close()
-
-    return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": "server error", "details": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()

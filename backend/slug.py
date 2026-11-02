@@ -1,62 +1,96 @@
-from flask import Flask, Blueprint, request, jsonify
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from flask import Blueprint, request, jsonify
+
 slug_bp = Blueprint("slug", __name__)
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(base_dir, "DB")
-if not os.path.exists(db_dir):
-    os.makedirs(db_dir)
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 def get_db():
-    conn = sqlite3.connect(db_dir + "/slug.db")
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+
 def create_db():
+    if not DATABASE_URL:
+        return
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""CREATE TABLE IF NOT EXISTS slug (
-                name_server TEXT,
-                url TEXT,
+    try:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS slug (
+                id SERIAL PRIMARY KEY,
+                name_server TEXT UNIQUE NOT NULL,
+                url TEXT NOT NULL,
                 owner TEXT,
                 profile_linka TEXT,
-                email TEXT,
-                id TEXT)""")
-    conn.commit()
-    conn.close()
-create_db()
-@slug_bp.route("/consult", methods=["post"])
+                email TEXT
+            )
+        """)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERRO create_db slug]: {e}")
+    finally:
+        cur.close()
+        conn.close()
+
+@slug_bp.route("/consult", methods=["POST"])
 def consult():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     name_server = data.get("name_server")
-    if name_server == "":
-        return jsonify({"status":"name_server is empty"}),400
+    
+    if not name_server:
+        return jsonify({"status": "name_server is empty"}), 400
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM slug WHERE name_server = ?",(name_server,))
-    result = cur.fetchone()
-    if result == None:
-        return jsonify({"status":"this instance not exists"}),400
-    row = {
-        "name_server":result[0],
-        "url":result[1],
-        "owner":result[2],
-        "id":result[3]
-    }
-    if result == None:
-        return jsonify({"status":"server not exists"}),400
-    return jsonify(row)
+    try:
+        cur.execute("SELECT name_server, url, owner, profile_linka, email, id FROM slug WHERE name_server = %s", (name_server,))
+        result = cur.fetchone()
+
+        if not result:
+            return jsonify({"status": "this instance not exists"}), 400
+
+        row = {
+            "name_server": result["name_server"],
+            "url": result["url"],
+            "owner": result["owner"],
+            "profile_linka": result["profile_linka"],
+            "email": result["email"],
+            "id": result["id"]
+        }
+        return jsonify(row), 200
+    finally:
+        cur.close()
+        conn.close()
+
 @slug_bp.route("/register-instance", methods=["POST"])
 def register_instance():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
+    name_server = data.get("name_server")
+    url = data.get("url")
+    owner = data.get("owner")
+    profile_linka = data.get("profile_linka")
+    email = data.get("email")
+
+    if not name_server or not url:
+        return jsonify({"status": "name_server or url is missing"}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
     try:
-        name_server = data.get("name_server")
-        url = data.get("url")
-        owner = data.get("owner")
-        profile_linka = data.get("profile_linka")
-        email = data.get("email")
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("INSERT INTO slug (name_server, url, owner, profile_linka, email) VALUES(?, ?, ?, ?, ?)",(name_server, url, owner, profile_linka, email))
+        cur.execute(
+            """
+            INSERT INTO slug (name_server, url, owner, profile_linka, email) 
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            (name_server, url, owner, profile_linka, email)
+        )
         conn.commit()
-        conn.close()
-        return jsonify({"status":"instance register is sucessful"}),200
+        return jsonify({"status": "instance register is sucessful"}), 200
     except Exception as e:
-        return jsonify({f"status":"a error as ocurred", "error":e}),400
+        conn.rollback()
+        return jsonify({"status": "an error has occurred", "error": str(e)}), 400
+    finally:
+        cur.close()
+        conn.close()

@@ -1,75 +1,91 @@
-from flask import Flask, Blueprint, request, jsonify
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from flask import Blueprint, request, jsonify
 import notificationsModule
+
 chat_global_bp = Blueprint("chat_global", __name__)
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(base_dir, "DB")
-db_file = db_dir + "/chat_global.db"
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 def get_db():
-    conn = sqlite3.connect(db_file)
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    conn.execute("PRAGMA cache_size=-10000;")
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+
 def create_db():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""CREATE TABLE IF NOT EXISTS chat_global(
-                sender TEXT,
-                message TEXT,
-                id INTEGER PRIMARY KEY AUTOINCREMENT)""")
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS chat_global (
+            id SERIAL PRIMARY KEY,
+            sender TEXT,
+            message TEXT
+        )
+    """)
     conn.commit()
+    cur.close()
     conn.close()
-create_db()
+
 @chat_global_bp.route("/send-global-message", methods=["POST"])
 def send_global_message():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     sender = data.get("sender")
     message = data.get("message")
-    if sender == None or message == None:
-        return jsonify({"status":"data is missing"}),401
+
+    if sender is None or message is None:
+        return jsonify({"status": "data is missing"}), 401
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("INSERT INTO chat_global (sender, message) VALUES (?, ?)",(sender, message))
-    conn.commit()
-    conn.close()
+    try:
+        cur.execute(
+            "INSERT INTO chat_global (sender, message) VALUES (%s, %s)",
+            (sender, message)
+        )
+        conn.commit()
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+
     notificationsModule.CreateNotificationForEveryone(sender, "0000", "chat", message)
-    return jsonify({"status":"the message has been sent"}),200
+    return jsonify({"status": "the message has been sent"}), 200
+
 @chat_global_bp.route("/view-global-message", methods=["POST"])
 def view_global_message():
-    data = request.get_json()
-    last_id = data.get("id", 0)
+    data = request.get_json(silent=True) or {}
+    raw_id = data.get("id", 0)
+
+    try:
+        last_id = int(raw_id)
+    except (ValueError, TypeError):
+        last_id = 0
 
     conn = get_db()
     cur = conn.cursor()
 
-    if int(last_id) == 0:
+    if last_id == 0:
         cur.execute("""
             SELECT sender, message, id FROM (
                 SELECT sender, message, id
                 FROM chat_global
                 ORDER BY id DESC
                 LIMIT 20
-            ) ORDER BY id ASC
+            ) AS subquery
+            ORDER BY id ASC
         """)
-        rows = cur.fetchall()
     else:
         cur.execute("""
             SELECT sender, message, id
             FROM chat_global
-            WHERE id > ?
+            WHERE id > %s
             ORDER BY id ASC
         """, (last_id,))
-        rows = cur.fetchall()
 
-    messages = []
-    for row in rows:
-        messages.append({
-            "sender": row[0],
-            "message": row[1],
-            "id": row[2]
-        })
+    rows = cur.fetchall()
+    
+    messages = [dict(row) for row in rows]
 
+    cur.close()
     conn.close()
-    return jsonify(messages)
+    return jsonify(messages), 200

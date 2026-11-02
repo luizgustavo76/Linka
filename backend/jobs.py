@@ -1,78 +1,58 @@
 import os
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from flask import Blueprint
 
 jobs_bp = Blueprint("jobs_bp", __name__)
 
-# Pega o diretório exato onde o arquivo jobs.py está (ex: /home/LinkaProject/Linka/backend)
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Aponta direto para a pasta DB dentro de backend
-LOGIN_DB = os.path.join(CURRENT_DIR, "DB", "login.db")
-PROFILE_DB = os.path.join(CURRENT_DIR, "DB", "profile.db")
-
-def fix_login_ids():
-    if not os.path.exists(LOGIN_DB):
-        print(f"[ERRO] Banco não encontrado em: {LOGIN_DB}")
-        return
-        
-    conn = sqlite3.connect(LOGIN_DB)
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT username FROM login WHERE id IS NULL OR id = ''")
-    null_users = cursor.fetchall()
-    
-    if null_users:
-        cursor.execute("SELECT MAX(CAST(id AS INTEGER)) FROM login WHERE id IS NOT NULL AND id != ''")
-        row = cursor.fetchone()
-        max_id = row[0] if row and row[0] is not None else 0
-        current_id = max_id + 1
-        
-        for user in null_users:
-            cursor.execute("UPDATE login SET id = ? WHERE username = ?", (current_id, user[0]))
-            current_id += 1
-        conn.commit()
-        print(f"[OK] {len(null_users)} IDs corrigidos no login.db!")
-    else:
-        print("[INFO] Todos os logins já possuem ID.")
-        
-    conn.close()
+def get_db():
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def sync_profiles():
-    if not os.path.exists(LOGIN_DB) or not os.path.exists(PROFILE_DB):
-        print(f"[ERRO] Verifique os caminhos: \nLOGIN: {LOGIN_DB}\nPROFILE: {PROFILE_DB}")
+    """ 
+    Sincroniza a tabela 'profile' criando um registro para todo usuário 
+    da tabela 'login' que ainda não possua um perfil criado.
+    Substitui os dois cursores do SQLite por uma query nativa no PostgreSQL.
+    """
+    if not DATABASE_URL:
+        print("[ERRO] DATABASE_URL não foi configurada nas variáveis de ambiente.")
         return
 
-    conn_login = sqlite3.connect(LOGIN_DB)
-    cursor_login = conn_login.cursor()
-    cursor_login.execute("SELECT username FROM login")
-    logins = [row[0] for row in cursor_login.fetchall() if row[0]]
-    conn_login.close()
-
-    conn_profile = sqlite3.connect(PROFILE_DB)
-    cursor_profile = conn_profile.cursor()
+    conn = get_db()
+    cur = conn.cursor()
     
-    # Busca perfis que já existem no profile.db para evitar duplicatas manuais
-    cursor_profile.execute("SELECT username FROM profile")
-    existing_profiles = {row[0] for row in cursor_profile.fetchall() if row[0]}
-
-    inserted_count = 0
-    for username in logins:
-        if username not in existing_profiles:
-            cursor_profile.execute(
-                "INSERT INTO profile (username, bio, actual_badge, ProfilePicture, followers, following) VALUES (?, ?, NULL, NULL, 0, 0)",
-                (username, f"Hi! my name is {username}")
-            )
-            inserted_count += 1
-            
-    conn_profile.commit()
-    conn_profile.close()
-    print(f"[OK] {inserted_count} novos perfis sincronizados no profile.db!")
+    try:
+        # Insere em 'profile' selecionando os usuários de 'login' que não existem em 'profile'
+        query = """
+            INSERT INTO profile (username, bio, actual_badge, "ProfilePicture", followers, following)
+            SELECT 
+                l.username, 
+                CONCAT('Hi! my name is ', l.username), 
+                NULL, 
+                NULL, 
+                0, 
+                0
+            FROM login l
+            LEFT JOIN profile p ON l.username = p.username
+            WHERE p.username IS NULL AND l.username IS NOT NULL AND l.username != '';
+        """
+        cur.execute(query)
+        inserted_count = cur.rowcount  # Retorna exatamente quantas linhas foram inseridas
+        conn.commit()
+        print(f"[OK] {inserted_count} novos perfis sincronizados no PostgreSQL!")
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERRO] Falha ao sincronizar perfis: {e}")
+    finally:
+        cur.close()
+        conn.close()
 
 def run_jobs():
-    print("--- INICIANDO SYNC DE BANCOS ---")
-    fix_login_ids()
+    print("--- INICIANDO SYNC DE BANCOS NO NEON.TECH ---")
     sync_profiles()
     print("--- CONCLUÍDO ---")
+
 if __name__ == "__main__":
     run_jobs()

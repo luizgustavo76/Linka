@@ -1,105 +1,107 @@
 import os
-import sqlite3
-import re
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-POST_DB = os.path.join(BASE_DIR, "DB", "post.db")
-PROFILE_DB = os.path.join(BASE_DIR, "DB", "profile.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+# Puxa a URL pública do Render; se não houver, usa fallback
+PROXY_DOMAIN = os.getenv("MY_DOMINIO_PROXY", "https://seu-app-linka.onrender.com").rstrip("/") + "/midia/"
 
-PROXY_DOMAIN = "https://linkaProject.pythonanywhere.com/midia/"
+def get_db():
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
-# Regex para capturar qualquer URL antiga do Supabase
-SUPABASE_URL_PATTERN = re.compile(
-    r"https?://[a-zA-Z0-9\.-]+\.supabase\.co/storage/v1/object/public/[^/\s\)]+/([a-zA-Z0-9_\.-]+\.(?:jpg|jpeg|png|webp))"
-)
-
-
-def replace_supabase_url(text):
-    if not text or not isinstance(text, str):
-        return text, False
-
-    def _replacer(match):
-        filename = match.group(1)
-        return f"{PROXY_DOMAIN}{filename}"
-
-    new_text, count = SUPABASE_URL_PATTERN.subn(_replacer, text)
-    return new_text, count > 0
-
-
-def migrate_post_db():
-    if not os.path.exists(POST_DB):
-        print(f"[!] Banco {POST_DB} não encontrado.")
+def migrate_post_urls():
+    if not DATABASE_URL:
+        print("[!] DATABASE_URL não foi configurada nas variáveis de ambiente.")
         return
 
-    conn = sqlite3.connect(POST_DB)
+    conn = get_db()
     cur = conn.cursor()
+    
+    # Regex SQL para capturar URLs do Supabase e extrair o nome do arquivo no grupo \1
+    pattern = r"https?://[a-zA-Z0-9\.-]+\.supabase\.co/storage/v1/object/public/[^/\s\)]+/([a-zA-Z0-9_\.-]+\.(?:jpg|jpeg|png|webp))"
+    replacement = f"{PROXY_DOMAIN}\\1"
 
-    # 1. Atualiza a coluna text_post (onde o [IMAGE] url fica guardado)
-    cur.execute("SELECT id, text_post FROM posts WHERE text_post LIKE '%.supabase.co%'")
-    rows_text = cur.fetchall()
-    updated_texts = 0
+    try:
+        # 1. Atualiza text_post na tabela posts
+        cur.execute(
+            """
+            UPDATE posts 
+            SET text_post = REGEXP_REPLACE(text_post, %s, %s, 'g')
+            WHERE text_post LIKE '%%.supabase.co%%';
+            """,
+            (pattern, replacement)
+        )
+        updated_texts = cur.rowcount
 
-    for post_id, text_content in rows_text:
-        new_text, changed = replace_supabase_url(text_content)
-        if changed:
-            cur.execute("UPDATE posts SET text_post = ? WHERE id = ?", (new_text, post_id))
-            updated_texts += 1
+        # 2. Atualiza a coluna media na tabela posts
+        cur.execute(
+            """
+            UPDATE posts 
+            SET media = REGEXP_REPLACE(media, %s, %s, 'g')
+            WHERE media LIKE '%%.supabase.co%%';
+            """,
+            (pattern, replacement)
+        )
+        updated_media = cur.rowcount
 
-    # 2. Atualiza a coluna media (se houver)
-    cur.execute("SELECT id, media FROM posts WHERE media LIKE '%.supabase.co%'")
-    rows_media = cur.fetchall()
-    updated_posts_media = 0
+        # 3. Atualiza media_url na tabela post_media (se a tabela existir no seu schema)
+        cur.execute(
+            """
+            UPDATE post_media 
+            SET media_url = REGEXP_REPLACE(media_url, %s, %s, 'g')
+            WHERE media_url LIKE '%%.supabase.co%%';
+            """,
+            (pattern, replacement)
+        )
+        updated_post_media = cur.rowcount
 
-    for post_id, media_url in rows_media:
-        new_media, changed = replace_supabase_url(media_url)
-        if changed:
-            cur.execute("UPDATE posts SET media = ? WHERE id = ?", (new_media, post_id))
-            updated_posts_media += 1
+        conn.commit()
+        print(f"✅ Tabela 'posts' e 'post_media' atualizadas no PostgreSQL:")
+        print(f"   - {updated_texts} textos com [IMAGE] corrigidos.")
+        print(f"   - {updated_media} colunas 'media' corrigidas.")
+        print(f"   - {updated_post_media} registros na tabela 'post_media' corrigidos.")
 
-    # 3. Atualiza a tabela post_media
-    cur.execute("SELECT id, media_url FROM post_media WHERE media_url LIKE '%.supabase.co%'")
-    media_rows = cur.fetchall()
-    updated_post_media_table = 0
-
-    for m_id, media_url in media_rows:
-        new_media, changed = replace_supabase_url(media_url)
-        if changed:
-            cur.execute("UPDATE post_media SET media_url = ? WHERE id = ?", (new_media, m_id))
-            updated_post_media_table += 1
-
-    conn.commit()
-    conn.close()
-    print(f"✅ post.db atualizado:")
-    print(f"   - {updated_texts} textos com [IMAGE] corrigidos.")
-    print(f"   - {updated_posts_media} colunas 'media' corrigidas.")
-    print(f"   - {updated_post_media_table} mídias na tabela 'post_media' corrigidas.")
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERRO ao migrar posts]: {e}")
+    finally:
+        cur.close()
+        conn.close()
 
 
-def migrate_profile_db():
-    if not os.path.exists(PROFILE_DB):
-        print(f"[!] Banco {PROFILE_DB} não encontrado.")
+def migrate_profile_urls():
+    if not DATABASE_URL:
         return
 
-    conn = sqlite3.connect(PROFILE_DB)
+    conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("SELECT username, ProfilePicture FROM profile WHERE ProfilePicture LIKE '%.supabase.co%'")
-    rows = cur.fetchall()
-    updated_profiles = 0
+    pattern = r"https?://[a-zA-Z0-9\.-]+\.supabase\.co/storage/v1/object/public/[^/\s\)]+/([a-zA-Z0-9_\.-]+\.(?:jpg|jpeg|png|webp))"
+    replacement = f"{PROXY_DOMAIN}\\1"
 
-    for username, pic_url in rows:
-        new_url, changed = replace_supabase_url(pic_url)
-        if changed:
-            cur.execute("UPDATE profile SET ProfilePicture = ? WHERE username = ?", (new_url, username))
-            updated_profiles += 1
+    try:
+        cur.execute(
+            """
+            UPDATE profile 
+            SET "ProfilePicture" = REGEXP_REPLACE("ProfilePicture", %s, %s, 'g')
+            WHERE "ProfilePicture" LIKE '%%.supabase.co%%';
+            """,
+            (pattern, replacement)
+        )
+        updated_profiles = cur.rowcount
+        conn.commit()
+        print(f"✅ Tabela 'profile' atualizada: {updated_profiles} fotos de perfil corrigidas.")
 
-    conn.commit()
-    conn.close()
-    print(f"✅ profile.db atualizado: {updated_profiles} fotos de perfil corrigidas.")
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERRO ao migrar profile]: {e}")
+    finally:
+        cur.close()
+        conn.close()
 
 
 if __name__ == "__main__":
-    print("Iniciando migração Regex no SQLite...")
-    migrate_post_db()
-    migrate_profile_db()
-    print("🚀 Migração concluída com sucesso!")
+    print("Iniciando migração de URLs via PostgreSQL REGEXP_REPLACE no Neon.tech...")
+    migrate_post_urls()
+    migrate_profile_urls()
+    print("🚀 Migração do banco concluída com sucesso!")

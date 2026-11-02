@@ -11,11 +11,16 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PRIVATE_KEY_PATH = os.path.join(BASE_DIR, "private_key.pem")
 PUBLIC_KEY_PATH = os.path.join(BASE_DIR, "public_key.pem")
 
-# Cache em memória de chaves públicas de servidores parceiros
 PUBLIC_KEYS_CACHE = {}
-PROCESSED_NONCES = set()
+# Armazena tuplas: (nonce, timestamp_de_insercao)
+PROCESSED_NONCES = {}
 
 def ensure_keys_exist():
+    # 1. Se existir no ambiente (Render/Nuvem), ignora geração local
+    if os.getenv("FEDERATION_PRIVATE_KEY"):
+        return
+
+    # 2. Fallback para desenvolvimento local
     if not os.path.exists(PRIVATE_KEY_PATH) or not os.path.exists(PUBLIC_KEY_PATH):
         private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
@@ -35,12 +40,27 @@ def ensure_keys_exist():
 ensure_keys_exist()
 
 def get_my_private_key():
+    env_key = os.getenv("FEDERATION_PRIVATE_KEY")
+    if env_key:
+        # Garante que os quebras de linha sejam interpretados corretamente
+        return serialization.load_pem_private_key(env_key.encode('utf-8'), password=None)
+    
     with open(PRIVATE_KEY_PATH, "rb") as f:
         return serialization.load_pem_private_key(f.read(), password=None)
 
 def get_my_public_key_pem():
+    env_key = os.getenv("FEDERATION_PUBLIC_KEY")
+    if env_key:
+        return env_key
+
     with open(PUBLIC_KEY_PATH, "r") as f:
         return f.read()
+
+def cleanup_old_nonces(now):
+    """ Remove nonces mais antigos que 60 segundos da RAM pra não estourar a memória """
+    expired = [n for n, ts in PROCESSED_NONCES.items() if now - ts > 60]
+    for n in expired:
+        del PROCESSED_NONCES[n]
 
 def sign_payload(origin_url, payload):
     timestamp = str(int(time.time()))
@@ -73,16 +93,25 @@ def verify_incoming_request(request):
     if not all([origin, timestamp, nonce, signature_b64]):
         return False, "Cabeçalhos de autenticação federada ausentes", 401
 
-    # Proteção contra Replay Attack (Anti-Bot)
+    try:
+        req_timestamp = int(timestamp)
+    except ValueError:
+        return False, "Timestamp inválido", 400
+
+    # Proteção contra Replay Attack
     now = int(time.time())
-    if abs(now - int(timestamp)) > 30:
+    if abs(now - req_timestamp) > 30:
         return False, "Requisição expirada (Janela > 30s)", 403
+
+    # Limpeza preventiva de nonces antigos da memória
+    cleanup_old_nonces(now)
 
     if nonce in PROCESSED_NONCES:
         return False, "Requisição duplicada detectada (Anti-Bot)", 403
-    PROCESSED_NONCES.add(nonce)
+    
+    PROCESSED_NONCES[nonce] = now
 
-    # Obter Chave Pública do Servidor de Origem (Confirma se o servidor realmente existe)
+    # Obter Chave Pública do Servidor de Origem
     public_key_pem = PUBLIC_KEYS_CACHE.get(origin)
     if not public_key_pem:
         try:

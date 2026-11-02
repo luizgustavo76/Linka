@@ -1,9 +1,8 @@
 flask
 requests
 flask_cors
-pyjwt
 dotenv
-supabase
+psycopg2-binary
 Mastodon.py
 atproto
 gunicorn>=21.2.0

@@ -6,15 +6,19 @@ from botocore.config import Config
 import dotenv
 from flask import Blueprint, Response, jsonify, redirect, request
 
-# Carrega as variáveis garantindo o caminho absoluto da pasta
+# Tenta carregar o arquivo .env local se existir
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-dotenv.load_dotenv(os.path.join(BASE_DIR, "backend.env"))
+env_path = os.path.join(BASE_DIR, "backend.env")
+if os.path.exists(env_path):
+    dotenv.load_dotenv(env_path)
 
 B2_KEY_ID = os.getenv("B2_KEY_ID")
 B2_APPLICATION_KEY = os.getenv("B2_APPLICATION_KEY")
 B2_ENDPOINT = os.getenv("B2_ENDPOINT", "https://s3.us-east-005.backblazeb2.com").rstrip("/")
 BUCKET_NAME = os.getenv("B2_BUCKET", "linka-media")
-MY_DOMINIO_PROXY = os.getenv("MY_DOMINIO_PROXY", "https://linkaProject.pythonanywhere.com")
+
+# Define a URL do proxy baseando-se no ambiente (Render ou local)
+MY_DOMINIO_PROXY = os.getenv("MY_DOMINIO_PROXY", "http://127.0.0.1:5000").rstrip("/")
 
 b2_config = Config(
     signature_version='s3v4',
@@ -47,7 +51,7 @@ def proxy_midia(filename):
         s3_file = s3_client.get_object(Bucket=BUCKET_NAME, Key=filename)
         content_type = s3_file.get("ContentType", "image/jpeg")
 
-        # Função geradora para transmitir por chunks em vez de ler tudo na RAM
+        # Função geradora para transmitir por chunks em vez de carregar tudo na RAM
         def generate():
             for chunk in s3_file["Body"].iter_chunks(chunk_size=8192):
                 yield chunk
@@ -102,13 +106,13 @@ def lite_render():
     target_url = normalize_url(target_url)
     target_url = clean_reddit_url(target_url)
 
-    # Se a URL for do proprio proxy (/midia/), serve os bytes direto sem redirecionar
+    # Se a URL for do próprio proxy (/midia/), serve os bytes direto
     if "/midia/" in target_url:
         filename = target_url.split("/midia/")[-1]
         return proxy_midia(filename)
 
     domain = get_domain(target_url)
-    allowed_domains = ["backblazeb2.com", "pythonanywhere.com", "i.redd.it", "preview.redd.it", "redd.it"]
+    allowed_domains = ["backblazeb2.com", "onrender.com", "pythonanywhere.com", "i.redd.it", "preview.redd.it", "redd.it"]
     is_allowed = any(domain.endswith(d) or domain == d for d in allowed_domains)
 
     if not is_allowed:

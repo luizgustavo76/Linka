@@ -1,22 +1,11 @@
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(base_dir, "DB")
-os.makedirs(db_dir, exist_ok=True)
-
-notifications_dir = os.path.join(db_dir, "notifications.db")
-login_dir = os.path.join(db_dir, "login.db")
-
-def get_db_login():
-    conn = sqlite3.connect(login_dir)
-    conn.row_factory = sqlite3.Row 
-    return conn
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_db():
-    conn = sqlite3.connect(notifications_dir)
-    conn.row_factory = sqlite3.Row 
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def CreateNotification(from_user, receiver, datetime_val, notif_type, content):
     if hasattr(from_user, '__getitem__') and not isinstance(from_user, (str, int)):
@@ -37,17 +26,24 @@ def CreateNotification(from_user, receiver, datetime_val, notif_type, content):
     if not receiver or receiver.lower() in ("none", "null", ""):
         return
 
+    conn = get_db()
+    cur = conn.cursor()
     try:
-        conn = get_db()
-        cur = conn.cursor()
         cur.execute(
-            "INSERT INTO notifications (receiver, from_user, datetime, type, content) VALUES (?,?,?,?,?)",
+            """
+            INSERT INTO notifications (receiver, from_user, datetime, type, content, read) 
+            VALUES (%s, %s, %s, %s, %s, FALSE)
+            """,
             (receiver, from_user, str(datetime_val), str(notif_type), str(content))
         )
         conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERRO CreateNotification]: {e}")
+    finally:
+        cur.close()
         conn.close()
-    except Exception:
-        pass
+
 
 def CreateNotificationForEveryone(from_user, datetime_val, notif_type, content):
     if hasattr(from_user, '__getitem__') and not isinstance(from_user, (str, int)):
@@ -58,33 +54,21 @@ def CreateNotificationForEveryone(from_user, datetime_val, notif_type, content):
 
     from_user = str(from_user).strip() if from_user is not None else ""
 
+    conn = get_db()
+    cur = conn.cursor()
     try:
-        # Busca todos os usuários cadastrados na tabela users do login.db
-        conn_login = get_db_login()
-        cur_login = conn_login.cursor()
-        cur_login.execute("SELECT username FROM users WHERE username != ?", (from_user,))
-        users = cur_login.fetchall()
-        conn_login.close()
-
-        if not users:
-            return
-
-        records = [
-            (str(user[0]), from_user, str(datetime_val), str(notif_type), str(content))
-            for user in users if user[0]
-        ]
-
-        if not records:
-            return
-
-        # Insere em lote em uma única transação no notifications.db
-        conn = get_db()
-        cur = conn.cursor()
-        cur.executemany(
-            "INSERT INTO notifications (receiver, from_user, datetime, type, content) VALUES (?,?,?,?,?)",
-            records
-        )
+        # Insere notificações diretamente no Postgres para todos os usuários cadastrados na tabela 'login'
+        query = """
+            INSERT INTO notifications (receiver, from_user, datetime, type, content, read)
+            SELECT username, %s, %s, %s, %s, FALSE
+            FROM login
+            WHERE username != %s AND username IS NOT NULL AND username != '';
+        """
+        cur.execute(query, (from_user, str(datetime_val), str(notif_type), str(content), from_user))
         conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERRO CreateNotificationForEveryone]: {e}")
+    finally:
+        cur.close()
         conn.close()
-    except Exception:
-        pass

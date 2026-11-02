@@ -1,75 +1,124 @@
-from flask import Flask, request, jsonify, Blueprint, g
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from flask import Blueprint, request, jsonify, g
 from datetime import datetime
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(base_dir, "DB")
-status_db = os.path.join(db_dir, "status.db")
+
 status_bp = Blueprint("status", __name__)
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 def get_db():
-    conn = sqlite3.connect(status_db)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    conn.execute("PRAGMA cache_size=-10000;")
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+
 def create_db():
+    if not DATABASE_URL:
+        return
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""CREATE TABLE IF NOT EXISTS status(
-                username TEXT UNIQUE,
-                timestamp TEXT,
+    try:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS status (
+                id SERIAL PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 status TEXT,
-                action TEXT)""")
-    conn.commit()
-    conn.cursor()
-@status_bp.route("/send-status",methods=["POST"])
+                action TEXT
+            )
+        """)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERRO create_db status]: {e}")
+    finally:
+        cur.close()
+        conn.close()
+
+@status_bp.route("/send-status", methods=["POST"])
 def send_status():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
-    if username == g.username:
-        status = data.get("status")
-        action = data.get("action")
-        timestamp = datetime.now()
+
+    current_user = getattr(g, "username", None)
+    if username == current_user:
+        status_val = data.get("status")
+        action_val = data.get("action")
+        timestamp_val = datetime.now()
+
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT username FROM status WHERE username = ?",(username,))
-        result_status = cur.fetchall()
-        if result_status:
-            cur.execute("DELETE * FROM status WHERE username = ?",(username,))
+        try:
+            # UPSERT: Insere se não existir; atualiza status, action e timestamp se o username já constar
+            cur.execute(
+                """
+                INSERT INTO status (username, status, timestamp, action)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (username) DO UPDATE
+                SET status = EXCLUDED.status,
+                    timestamp = EXCLUDED.timestamp,
+                    action = EXCLUDED.action;
+                """,
+                (username, status_val, timestamp_val, action_val)
+            )
             conn.commit()
-            cur.execute("INSERT INTO status (username, status, timestamp) VALUES (?, ?, ?, ?)",(username, status, timestamp, action))
-        else:
-            cur.execute("INSERT INTO status (username, status, timestamp) VALUES (?, ?, ?, ?)",(username, status, timestamp, action))
-        conn.commit()
+            return jsonify({"status": "status updated successfully"}), 200
+        except Exception as e:
+            conn.rollback()
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cur.close()
+            conn.close()
     else:
-        return jsonify({"status":"forbidden"}),403
+        return jsonify({"status": "forbidden"}), 403
+
 @status_bp.route("/view-status", methods=["POST"])
 def view_status():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username_target = data.get("username_target")
+
+    if not username_target:
+        return jsonify({"status": "username_target is required"}), 400
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM status WHERE username = ?",(username_target))
-    result = cur.fetchone()
-    return jsonify(result)
-@status_bp.route("/view-online",methods=["POST"])
+    try:
+        cur.execute("SELECT username, status, action, timestamp FROM status WHERE username = %s", (username_target,))
+        result = cur.fetchone()
+
+        if result:
+            result["timestamp"] = str(result["timestamp"]) if result["timestamp"] else None
+            return jsonify(dict(result)), 200
+
+        return jsonify({"status": "status not found"}), 404
+    finally:
+        cur.close()
+        conn.close()
+
+@status_bp.route("/view-online", methods=["POST"])
 def view_online():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     target = data.get("target")
     target_user = data.get("target_user")
-    if target == "global":
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT username FROM status WHERE status = ?",("online"))
-        result = cur.fetchone()
+
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        if target == "global":
+            cur.execute("SELECT username FROM status WHERE status = %s", ("online",))
+            results = cur.fetchall()
+            online_users = [row["username"] for row in results]
+            return jsonify({"online_users": online_users}), 200
+
+        if target == "dm":
+            if target_user is not None:
+                cur.execute("SELECT username, status, action FROM status WHERE status = %s AND username = %s", ("online", target_user))
+                result = cur.fetchone()
+                return jsonify({"is_online": result is not None, "data": result}), 200
+
+            return jsonify({"status": "target_user parameter missing"}), 400
+
+        return jsonify({"status": "invalid target mode"}), 400
+    finally:
+        cur.close()
         conn.close()
-        return jsonify(result)
-    if target == "dm":
-        if target_user != None:
-            conn = get_db()
-            cur = conn.cursor()
-            cur.execute("SELECT username FROM status WHERE status = ? AND username = ?",("online", target_user))
-            result = cur.fetchone()
-            conn.close()
-            return jsonify(result)

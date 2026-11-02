@@ -1,17 +1,19 @@
-from flask import Blueprint, request, jsonify, g
-import sqlite3
 import os
-from datetime import datetime
-import notificationsModule
 import re
-from urllib.parse import urlparse
-import random
-import linkosModule
-import mentions_module
 import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import random
 import requests
 from PIL import ImageFile
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from datetime import datetime
+from urllib.parse import urlparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from flask import Blueprint, request, jsonify, g
+from dotenv import load_dotenv
+import notificationsModule
+import linkosModule
+import mentions_module
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 json_path = os.path.join(base_dir, "backend.json")
@@ -20,9 +22,6 @@ with open(json_path, "r") as f:
     modules_flags = json.load(f)
 
 root_flags = modules_flags["modules-flags"]
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(base_dir, "DB")
-post_dir = os.path.join(db_dir, "post.db")
 
 if root_flags.get("bluesky-federation"):
     import bluesky_federation.posts as bluesky
@@ -32,12 +31,16 @@ if root_flags.get("mastodon-federation"):
     import mastodon_federation.posts as mastodon
 
 post_bp = Blueprint("post", __name__)
-
+load_dotenv("backend.env")
+DATABASE_URL = os.getenv("DATABASE_URL")
 bg_executor = ThreadPoolExecutor(max_workers=5)
 
-if not os.path.exists(db_dir):
-    os.makedirs(db_dir)
 
+def get_db():
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        raise ValueError("[ERRO CRÍTICO] DATABASE_URL não está definida nas variáveis de ambiente!")
+    return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
 
 def get_image_dimensions(url):
     """
@@ -66,15 +69,16 @@ def process_dimensions_in_background(post_id, main_media, media_items):
     """
     Task de fundo que roda de forma assíncrona ao criar novos posts.
     """
+    if not DATABASE_URL:
+        return
+    conn = get_db()
+    cur = conn.cursor()
     try:
-        conn = get_db()
-        cur = conn.cursor()
-
         if main_media:
             w, h = get_image_dimensions(main_media)
             if w and h:
                 cur.execute(
-                    "UPDATE posts SET width = ?, heigth = ? WHERE id = ?",
+                    "UPDATE posts SET width = %s, heigth = %s WHERE id = %s",
                     (w, h, post_id)
                 )
 
@@ -86,14 +90,17 @@ def process_dimensions_in_background(post_id, main_media, media_items):
                     w, h = get_image_dimensions(media_url)
                     if w and h:
                         cur.execute(
-                            "UPDATE post_media SET width = ?, heigth = ? WHERE id = ?",
+                            "UPDATE post_media SET width = %s, heigth = %s WHERE id = %s",
                             (w, h, item_id)
                         )
 
         conn.commit()
-        conn.close()
     except Exception as e:
+        conn.rollback()
         print(f"[BACKGROUND TASK ERROR] Falha ao processar post #{post_id}: {e}")
+    finally:
+        cur.close()
+        conn.close()
 
 
 def check_and_update_missing_dimensions():
@@ -101,10 +108,11 @@ def check_and_update_missing_dimensions():
     Roda em background na inicialização do servidor.
     Calcula e guarda no DB as dimensões das imagens antigas que não possuem largura/altura.
     """
+    if not DATABASE_URL:
+        return
+    conn = get_db()
+    cur = conn.cursor()
     try:
-        conn = get_db()
-        cur = conn.cursor()
-
         cur.execute("""
             SELECT id, media 
             FROM posts 
@@ -120,7 +128,7 @@ def check_and_update_missing_dimensions():
             w, h = get_image_dimensions(media_url)
             if w and h:
                 cur.execute(
-                    "UPDATE posts SET width = ?, heigth = ? WHERE id = ?",
+                    "UPDATE posts SET width = %s, heigth = %s WHERE id = %s",
                     (w, h, post_id)
                 )
 
@@ -139,97 +147,83 @@ def check_and_update_missing_dimensions():
             w, h = get_image_dimensions(media_url)
             if w and h:
                 cur.execute(
-                    "UPDATE post_media SET width = ?, heigth = ? WHERE id = ?",
+                    "UPDATE post_media SET width = %s, heigth = %s WHERE id = %s",
                     (w, h, media_id)
                 )
 
         conn.commit()
-        conn.close()
         print("[INIT TASK] Dimensões das imagens antigas verificadas e atualizadas no banco com sucesso!")
     except Exception as e:
+        conn.rollback()
         print(f"[INIT TASK ERROR] Erro na verificação inicial de dimensões: {e}")
-
-
-def get_db():
-    conn = sqlite3.connect(post_dir, timeout=10)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    conn.execute("PRAGMA cache_size=-10000;")
-    return conn
+    finally:
+        cur.close()
+        conn.close()
 
 
 def create_db():
+    if not DATABASE_URL:
+        return
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS federated_posts(
-            federation_name TEXT,
-            text_post TEXT,
-            username TEXT,
-            post_id TEXT,
-            created_at TEXT,
-            platform TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS posts(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
-            media TEXT,
-            media_type TEXT,
-            width TEXT,
-            heigth TEXT,
-            text_post TEXT,
-            datetime TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS post_media(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            post_id INTEGER,
-            media_url TEXT,
-            media_type TEXT,
-            width TEXT,
-            heigth TEXT
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS stars(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            post_id INTEGER,
-            username TEXT,
-            UNIQUE(post_id, username)
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS comments(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            text_comment TEXT,
-            post_id INTEGER,
-            username TEXT
-        )
-    """)
+    try:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS federated_posts(
+                id SERIAL PRIMARY KEY,
+                federation_name TEXT,
+                text_post TEXT,
+                username TEXT,
+                post_id TEXT,
+                created_at TEXT,
+                platform TEXT
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS posts(
+                id SERIAL PRIMARY KEY,
+                username TEXT,
+                media TEXT,
+                media_type TEXT,
+                width TEXT,
+                heigth TEXT,
+                text_post TEXT,
+                datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS post_media(
+                id SERIAL PRIMARY KEY,
+                post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
+                media_url TEXT,
+                media_type TEXT,
+                width TEXT,
+                heigth TEXT
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS stars(
+                id SERIAL PRIMARY KEY,
+                post_id INTEGER,
+                username TEXT,
+                UNIQUE(post_id, username)
+            )
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS comments(
+                id SERIAL PRIMARY KEY,
+                text_comment TEXT,
+                post_id INTEGER,
+                username TEXT
+            )
+        """)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERRO create_db posts]: {e}")
+    finally:
+        cur.close()
+        conn.close()
 
-    cur.execute("PRAGMA table_info(posts);")
-    columns = [column[1] for column in cur.fetchall()]
-
-    required_columns = {
-        "media": "TEXT",
-        "media_type": "TEXT",
-        "width": "TEXT",
-        "heigth": "TEXT"
-    }
-
-    for col_name, col_type in required_columns.items():
-        if col_name not in columns:
-            cur.execute(f"ALTER TABLE posts ADD COLUMN {col_name} {col_type};")
-
-    conn.commit()
-    conn.close()
-
-
-create_db()
 
 # Dispara a verificação assíncrona assim que a aplicação sobe
 bg_executor.submit(check_and_update_missing_dimensions)
@@ -332,20 +326,24 @@ def view_profile_posts():
     
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM posts WHERE username = ? ORDER by datetime DESC", (username,))
-    result = cur.fetchall()
-    conn.close()
+    try:
+        cur.execute("SELECT id, username, text_post, datetime FROM posts WHERE username = %s ORDER BY datetime DESC", (username,))
+        result = cur.fetchall()
 
-    posts = []
-    for single_posts in result:
-        posts.append({
-            "id": single_posts["id"],
-            "username": single_posts["username"],
-            "text_post": single_posts["text_post"],
-            "datetime": single_posts["datetime"],
-            "relative_datetime": get_relative_time(single_posts["datetime"])
-        })
-    return jsonify(posts)
+        posts = []
+        for single_posts in result:
+            dt_val = str(single_posts["datetime"]) if single_posts["datetime"] else ""
+            posts.append({
+                "id": single_posts["id"],
+                "username": single_posts["username"],
+                "text_post": single_posts["text_post"],
+                "datetime": dt_val,
+                "relative_datetime": get_relative_time(single_posts["datetime"])
+            })
+        return jsonify(posts), 200
+    finally:
+        cur.close()
+        conn.close()
 
 
 @post_bp.route("/view-post", methods=["POST"])
@@ -354,15 +352,26 @@ def view_post():
     post_id = data.get("post_id")
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM posts WHERE id = ?", (post_id,))
-    posts = cur.fetchall()
-    conn.close()
-    return jsonify([dict(row) for row in posts])
+    try:
+        cur.execute("SELECT * FROM posts WHERE id = %s", (post_id,))
+        posts = cur.fetchall()
+        
+        result = []
+        for row in posts:
+            r = dict(row)
+            if r.get("datetime"):
+                r["datetime"] = str(r["datetime"])
+            result.append(r)
+            
+        return jsonify(result), 200
+    finally:
+        cur.close()
+        conn.close()
 
 
 @post_bp.route("/comments", methods=["POST"])
 def new_comment():
-    data = request.get_json(force=True) or {}
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
     current_user = getattr(g, "username", None)
 
@@ -375,18 +384,27 @@ def new_comment():
 
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("INSERT INTO comments (text_comment, username, post_id) VALUES(?,?,?)", (text_comment, username, post_id))
-        cur.execute("SELECT username FROM posts WHERE id = ?", (post_id,))
-        op = cur.fetchone()
-        conn.commit()
-        conn.close()
+        try:
+            cur.execute(
+                "INSERT INTO comments (text_comment, username, post_id) VALUES (%s, %s, %s)", 
+                (text_comment, username, post_id)
+            )
+            cur.execute("SELECT username FROM posts WHERE id = %s", (post_id,))
+            op = cur.fetchone()
+            conn.commit()
 
-        linkosModule.add_linkos(username, 2)
-        post_owner = op["username"] if op else None        
-        date = datetime.now()
-        if post_owner:
-            notificationsModule.CreateNotification(username, post_owner, date, "comment", text_comment)
-        return jsonify({"status": "the comment has been created with sucess!"}), 200
+            linkosModule.add_linkos(username, 2)
+            post_owner = op["username"] if op else None        
+            date = datetime.now()
+            if post_owner:
+                notificationsModule.CreateNotification(username, post_owner, date, "comment", text_comment)
+            return jsonify({"status": "the comment has been created with sucess!"}), 200
+        except Exception as e:
+            conn.rollback()
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cur.close()
+            conn.close()
     else:
         return jsonify({"status": "forbidden"}), 403
 
@@ -400,10 +418,16 @@ def edit_post():
         post_id = data.get("post_id")
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("UPDATE posts SET text_post = ? WHERE id = ?", (text_post, post_id))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "the post has edited"}), 200
+        try:
+            cur.execute("UPDATE posts SET text_post = %s WHERE id = %s", (text_post, post_id))
+            conn.commit()
+            return jsonify({"status": "the post has edited"}), 200
+        except Exception as e:
+            conn.rollback()
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cur.close()
+            conn.close()
     else:
         return jsonify({"status": "forbidden"}), 403
 
@@ -416,52 +440,64 @@ def delete_post():
         post_id = data.get("post_id")
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("DELETE FROM posts WHERE id = ?", (post_id,))
-        cur.execute("DELETE FROM post_media WHERE post_id = ?", (post_id,))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "the post has deleted"}), 200
+        try:
+            cur.execute("DELETE FROM posts WHERE id = %s", (post_id,))
+            cur.execute("DELETE FROM post_media WHERE post_id = %s", (post_id,))
+            conn.commit()
+            return jsonify({"status": "the post has deleted"}), 200
+        except Exception as e:
+            conn.rollback()
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cur.close()
+            conn.close()
     else:
         return jsonify({"status": "forbidden"}), 403
 
 
 @post_bp.route("/view-comments", methods=["POST"])
 def view_comments():
-    data = request.get_json(force=True) or {}
+    data = request.get_json(silent=True) or {}
     post_id = data.get("post_id")
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM comments WHERE post_id = ?", (post_id,))      
-    rows = cur.fetchall()
-    conn.close()
+    try:
+        cur.execute("SELECT id, username, text_comment, post_id FROM comments WHERE post_id = %s", (post_id,))      
+        rows = cur.fetchall()
 
-    comments = []
-    for row in rows:
-        comments.append({
-            "username": row["username"],
-            "text_comment": row["text_comment"],
-            "post_id": row["post_id"],
-            "comment_id": row["id"]
-        })
-    return jsonify({"comments": comments})
+        comments = []
+        for row in rows:
+            comments.append({
+                "username": row["username"],
+                "text_comment": row["text_comment"],
+                "post_id": row["post_id"],
+                "comment_id": row["id"]
+            })
+        return jsonify({"comments": comments}), 200
+    finally:
+        cur.close()
+        conn.close()
 
 
 def get_internal_feed_posts():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT id, username, text_post, datetime FROM posts ORDER BY id DESC")
-    posts = cur.fetchall()
-    conn.close()
+    try:
+        cur.execute("SELECT id, username, text_post, datetime FROM posts ORDER BY id DESC")
+        posts = cur.fetchall()
 
-    lista_posts = []
-    for post in posts:
-        lista_posts.append({
-            "id": post["id"],
-            "username": post["username"],
-            "text_post": post["text_post"],
-            "datetime": post["datetime"]
-        })
-    return lista_posts
+        lista_posts = []
+        for post in posts:
+            lista_posts.append({
+                "id": post["id"],
+                "username": post["username"],
+                "text_post": post["text_post"],
+                "datetime": str(post["datetime"]) if post["datetime"] else ""
+            })
+        return lista_posts
+    finally:
+        cur.close()
+        conn.close()
 
 
 def fetch_single_federation(node_url):
@@ -630,10 +666,7 @@ def view_external_posts():
 @post_bp.route("/new", methods=["POST"])
 def new_post():
     try:
-        data = request.get_json(silent=True)
-
-        if data is None:
-            return jsonify({"status": "Invalid json"}), 400
+        data = request.get_json(silent=True) or {}
 
         username = data.get("username")
         current_user = getattr(g, "username", None)
@@ -679,39 +712,52 @@ def new_post():
 
             conn = get_db()
             cur = conn.cursor()
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO posts(username, text_post, datetime, media, media_type, width, heigth) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s) 
+                    RETURNING id
+                    """,
+                    (username, text_post, datetime_post, main_media, media_type, str(width or ""), str(heigth or ""))
+                )
+                post_id = cur.fetchone()["id"]
 
-            cur.execute(
-                "INSERT INTO posts(username, text_post, datetime, media, media_type, width, heigth) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (username, text_post, datetime_post, main_media, media_type, str(width or ""), str(heigth or ""))
-            )
-            post_id = cur.lastrowid
+                background_media_items = []
 
-            background_media_items = []
+                if media_list_input and isinstance(media_list_input, list):
+                    for item in media_list_input:
+                        if isinstance(item, dict):
+                            m_url = item.get("media_url") or item.get("url")
+                            m_type = item.get("media_type", "image")
+                            m_w = str(item.get("width", ""))
+                            m_h = str(item.get("heigth", item.get("height", "")))
+                        else:
+                            m_url = str(item)
+                            m_type = "image"
+                            m_w = ""
+                            m_h = ""
 
-            if media_list_input and isinstance(media_list_input, list):
-                for item in media_list_input:
-                    if isinstance(item, dict):
-                        m_url = item.get("media_url") or item.get("url")
-                        m_type = item.get("media_type", "image")
-                        m_w = str(item.get("width", ""))
-                        m_h = str(item.get("heigth", item.get("height", "")))
-                    else:
-                        m_url = str(item)
-                        m_type = "image"
-                        m_w = ""
-                        m_h = ""
+                        if m_url:
+                            cur.execute(
+                                """
+                                INSERT INTO post_media(post_id, media_url, media_type, width, heigth) 
+                                VALUES (%s, %s, %s, %s, %s) 
+                                RETURNING id
+                                """,
+                                (post_id, m_url, m_type, m_w, m_h)
+                            )
+                            item_id = cur.fetchone()["id"]
+                            if not m_w or not m_h:
+                                background_media_items.append({"id": item_id, "media_url": m_url})
 
-                    if m_url:
-                        cur.execute(
-                            "INSERT INTO post_media(post_id, media_url, media_type, width, heigth) VALUES (?, ?, ?, ?, ?)",
-                            (post_id, m_url, m_type, m_w, m_h)
-                        )
-                        item_id = cur.lastrowid
-                        if not m_w or not m_h:
-                            background_media_items.append({"id": item_id, "media_url": m_url})
-
-            conn.commit()
-            conn.close()
+                conn.commit()
+            except Exception as e:
+                conn.rollback()
+                return jsonify({"status": "error", "message": str(e)}), 500
+            finally:
+                cur.close()
+                conn.close()
 
             if (main_media and (not width or not heigth)) or background_media_items:
                 bg_executor.submit(
@@ -735,110 +781,116 @@ def trending_feed():
     posts_id = []
     posts = []
     conn = get_db()
-    cur = conn.cursor()    
-    cur.execute("""
-        SELECT post_id, COUNT(id) as total_stars 
-        FROM stars 
-        GROUP BY post_id 
-        ORDER BY total_stars DESC;
-    """)
-    result = cur.fetchall()
-    for row in result:
-        posts_id.append(row["post_id"])
-    for i in posts_id:
-        cur.execute("SELECT * FROM posts WHERE id = ?", (i,))
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT post_id, COUNT(id) as total_stars 
+            FROM stars 
+            GROUP BY post_id 
+            ORDER BY total_stars DESC;
+        """)
         result = cur.fetchall()
         for row in result:
-            posts.append({
-                "id": row["id"],
-                "username": row["username"],
-                "text_post": row["text_post"],
-                "datetime": row["datetime"],
-                "relative_datetime": get_relative_time(row["datetime"])
-            })
-    conn.close()    
-    return jsonify(posts)
+            posts_id.append(row["post_id"])
+            
+        for i in posts_id:
+            cur.execute("SELECT * FROM posts WHERE id = %s", (i,))
+            result = cur.fetchall()
+            for row in result:
+                posts.append({
+                    "id": row["id"],
+                    "username": row["username"],
+                    "text_post": row["text_post"],
+                    "datetime": str(row["datetime"]) if row["datetime"] else "",
+                    "relative_datetime": get_relative_time(row["datetime"])
+                })
+        return jsonify(posts), 200
+    finally:
+        cur.close()
+        conn.close()
 
 
 @post_bp.route("/feed", methods=["GET"])
 def feed():
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT 
-            p.id, 
-            p.username, 
-            p.text_post, 
-            p.datetime, 
-            p.media,
-            p.media_type,
-            p.width,
-            p.heigth,
-            COUNT(c.id) AS comment_count
-        FROM posts p
-        LEFT JOIN comments c ON c.post_id = p.id
-        GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth
-        ORDER BY p.id DESC
-    """)
-    posts = cur.fetchall()
+    try:
+        cur.execute("""
+            SELECT 
+                p.id, 
+                p.username, 
+                p.text_post, 
+                p.datetime, 
+                p.media,
+                p.media_type,
+                p.width,
+                p.heigth,
+                COUNT(c.id) AS comment_count
+            FROM posts p
+            LEFT JOIN comments c ON c.post_id = p.id
+            GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth
+            ORDER BY p.id DESC
+        """)
+        posts = cur.fetchall()
 
-    lista_posts = []
+        lista_posts = []
 
-    for post in posts:
-        post_id = post["id"]
-        text_content = post["text_post"] or ""
-        match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
-        
-        media_url = match.group(1).strip() if match else post["media"]
-        if media_url:
-            if "https" in media_url:
-                media_url.replace("https", "http")
-        media_type = "image" if match else post["media_type"]
+        for post in posts:
+            post_id = post["id"]
+            text_content = post["text_post"] or ""
+            match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
+            
+            media_url = match.group(1).strip() if match else post["media"]
+            media_type = "image" if match else post["media_type"]
 
-        main_width = post["width"] or ""
-        main_heigth = post["heigth"] or ""
+            main_width = post["width"] or ""
+            main_heigth = post["heigth"] or ""
 
-        cur.execute("SELECT id, media_url, media_type, width, heigth FROM post_media WHERE post_id = ?", (post_id,))
-        media_rows = cur.fetchall()
+            cur.execute("SELECT id, media_url, media_type, width, heigth FROM post_media WHERE post_id = %s", (post_id,))
+            media_rows = cur.fetchall()
 
-        media_list = []
-        if media_rows:
-            for row in media_rows:
-                media_list.append({
-                    "media_url": row["media_url"],
-                    "media_type": row["media_type"] or "image",
-                    "width": row["width"] or "",
-                    "heigth": row["heigth"] or ""
-                })
-        else:
-            media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
+            media_list = []
+            if media_rows:
+                for row in media_rows:
+                    media_list.append({
+                        "media_url": row["media_url"],
+                        "media_type": row["media_type"] or "image",
+                        "width": row["width"] or "",
+                        "heigth": row["heigth"] or ""
+                    })
+            else:
+                media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
 
-        lista_posts.append({
-            "id": post["id"],
-            "username": post["username"],
-            "text_post": text_content,
-            "datetime": post["datetime"],
-            "relative_datetime": get_relative_time(post["datetime"]),
-            "comment_count": post["comment_count"],
-            "media": {
-                "media_url": media_url or "",
-                "media_type": media_type or "image",
-                "width": main_width,
-                "heigth": main_heigth
-            },
-            "media_list": media_list,
-            "media_attachments": media_list,
-            "platform": "linka",
-            "origin_server": root_flags.get("url-server", "")
-        })
+            dt_val = str(post["datetime"]) if post["datetime"] else ""
 
-    conn.close()
-    return jsonify(lista_posts), 200
+            lista_posts.append({
+                "id": post["id"],
+                "username": post["username"],
+                "text_post": text_content,
+                "datetime": dt_val,
+                "relative_datetime": get_relative_time(post["datetime"]),
+                "comment_count": post["comment_count"],
+                "media": {
+                    "media_url": media_url or "",
+                    "media_type": media_type or "image",
+                    "width": main_width,
+                    "heigth": main_heigth
+                },
+                "media_list": media_list,
+                "media_attachments": media_list,
+                "platform": "linka",
+                "origin_server": root_flags.get("url-server", "")
+            })
+
+        return jsonify(lista_posts), 200
+    finally:
+        cur.close()
+        conn.close()
 
 
 @post_bp.route("/star", methods=["POST"])
 def star():
-    data = request.get_json(force=True) or {}
+    data = request.get_json(silent=True) or {}
 
     post_id = data.get("post_id")
     username = getattr(g, "username", None)
@@ -851,60 +903,64 @@ def star():
 
     conn = get_db()
     cur = conn.cursor()
-
-    cur.execute(
-        "SELECT id FROM stars WHERE post_id = ? AND username = ?",
-        (post_id, username)
-    )
-    existing = cur.fetchone()
-
-    if existing:
+    try:
         cur.execute(
-            "DELETE FROM stars WHERE post_id = ? AND username = ?",
+            "SELECT id FROM stars WHERE post_id = %s AND username = %s",
             (post_id, username)
         )
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "removed"}), 200
+        existing = cur.fetchone()
 
-    else:
-        cur.execute(
-            "INSERT INTO stars(post_id, username) VALUES (?, ?)",
-            (post_id, username)
-        )
-        
-        cur.execute("SELECT username FROM posts WHERE id = ?", (post_id,))
-        op = cur.fetchone()
-        post_owner = op["username"] if op else None
-        
-        if post_owner:
-            linkosModule.add_linkos(post_owner, "3")
-            date = datetime.now()
-            notificationsModule.CreateNotification(
-                username, 
-                post_owner, 
-                date, 
-                "star", 
-                f"{username} starred your post!"
+        if existing:
+            cur.execute(
+                "DELETE FROM stars WHERE post_id = %s AND username = %s",
+                (post_id, username)
             )
-        
-        conn.commit()
+            conn.commit()
+            return jsonify({"status": "removed"}), 200
+
+        else:
+            cur.execute(
+                "INSERT INTO stars(post_id, username) VALUES (%s, %s)",
+                (post_id, username)
+            )
+            
+            cur.execute("SELECT username FROM posts WHERE id = %s", (post_id,))
+            op = cur.fetchone()
+            post_owner = op["username"] if op else None
+            
+            if post_owner:
+                linkosModule.add_linkos(post_owner, "3")
+                date = datetime.now()
+                notificationsModule.CreateNotification(
+                    username, 
+                    post_owner, 
+                    date, 
+                    "star", 
+                    f"{username} starred your post!"
+                )
+            
+            conn.commit()
+            return jsonify({"status": "added"}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        cur.close()
         conn.close()
-        return jsonify({"status": "added"}), 200
 
 
 @post_bp.route("/return-stars/<int:post_id>", methods=["GET"])
 def return_stars(post_id):
     conn = get_db()
     cur = conn.cursor()
-
-    cur.execute("SELECT COUNT(*) FROM stars WHERE post_id = ?", (post_id,))
-    row = cur.fetchone()
-    qtd = row[0] if row else 0
-
-    conn.close()
-
-    return str(qtd), 200
+    try:
+        cur.execute("SELECT COUNT(*) as count FROM stars WHERE post_id = %s", (post_id,))
+        row = cur.fetchone()
+        qtd = row["count"] if row else 0
+        return str(qtd), 200
+    finally:
+        cur.close()
+        conn.close()
 
 
 @post_bp.route("/new-feed", methods=["POST"])
@@ -919,81 +975,85 @@ def new_feed():
 
     conn = get_db()
     cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT 
+                p.id, 
+                p.username, 
+                p.text_post, 
+                p.datetime, 
+                p.media,
+                p.media_type,
+                p.width,
+                p.heigth,
+                COUNT(c.id) AS comment_count
+            FROM posts p
+            LEFT JOIN comments c ON c.post_id = p.id
+            WHERE p.id > %s
+            GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth
+            ORDER BY p.id ASC
+        """, (last_id,))
 
-    cur.execute("""
-        SELECT 
-            p.id, 
-            p.username, 
-            p.text_post, 
-            p.datetime, 
-            p.media,
-            p.media_type,
-            p.width,
-            p.heigth,
-            COUNT(c.id) AS comment_count
-        FROM posts p
-        LEFT JOIN comments c ON c.post_id = p.id
-        WHERE p.id > ?
-        GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth
-        ORDER BY p.id ASC
-    """, (last_id,))
+        posts = cur.fetchall()
 
-    posts = cur.fetchall()
+        lista_posts = []
 
-    lista_posts = []
+        for post in posts:
+            post_id = post["id"]
+            text_content = post["text_post"] or ""
+            match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
+            
+            media_url = match.group(1).strip() if match else post["media"]
+            media_type = "image" if match else post["media_type"]
 
-    for post in posts:
-        post_id = post["id"]
-        text_content = post["text_post"] or ""
-        match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
-        
-        media_url = match.group(1).strip() if match else post["media"]
-        media_type = "image" if match else post["media_type"]
+            main_width = post["width"] or ""
+            main_heigth = post["heigth"] or ""
 
-        main_width = post["width"] or ""
-        main_heigth = post["heigth"] or ""
+            cur.execute("SELECT id, media_url, media_type, width, heigth FROM post_media WHERE post_id = %s", (post_id,))
+            media_rows = cur.fetchall()
 
-        cur.execute("SELECT id, media_url, media_type, width, heigth FROM post_media WHERE post_id = ?", (post_id,))
-        media_rows = cur.fetchall()
+            media_list = []
+            if media_rows:
+                for row in media_rows:
+                    media_list.append({
+                        "media_url": row["media_url"],
+                        "media_type": row["media_type"] or "image",
+                        "width": row["width"] or "",
+                        "heigth": row["heigth"] or ""
+                    })
+            else:
+                media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
 
-        media_list = []
-        if media_rows:
-            for row in media_rows:
-                media_list.append({
-                    "media_url": row["media_url"],
-                    "media_type": row["media_type"] or "image",
-                    "width": row["width"] or "",
-                    "heigth": row["heigth"] or ""
-                })
-        else:
-            media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
+            dt_val = str(post["datetime"]) if post["datetime"] else ""
 
-        lista_posts.append({
-            "id": post["id"],
-            "username": post["username"],
-            "text_post": text_content,
-            "datetime": post["datetime"],
-            "relative_datetime": get_relative_time(post["datetime"]),
-            "comment_count": post["comment_count"],
-            "media": {
-                "media_url": media_url or "",
-                "media_type": media_type or "image",
-                "width": main_width,
-                "heigth": main_heigth
-            },
-            "media_list": media_list,
-            "media_attachments": media_list,
-            "platform": "linka",
-            "origin_server": root_flags.get("url-server", "")
-        })
+            lista_posts.append({
+                "id": post["id"],
+                "username": post["username"],
+                "text_post": text_content,
+                "datetime": dt_val,
+                "relative_datetime": get_relative_time(post["datetime"]),
+                "comment_count": post["comment_count"],
+                "media": {
+                    "media_url": media_url or "",
+                    "media_type": media_type or "image",
+                    "width": main_width,
+                    "heigth": main_heigth
+                },
+                "media_list": media_list,
+                "media_attachments": media_list,
+                "platform": "linka",
+                "origin_server": root_flags.get("url-server", "")
+            })
 
-    conn.close()
-    return jsonify(lista_posts), 200
+        return jsonify(lista_posts), 200
+    finally:
+        cur.close()
+        conn.close()
 
 
 @post_bp.route("/has-star", methods=["POST"])
 def has_star():
-    data = request.get_json(force=True) or {}
+    data = request.get_json(silent=True) or {}
 
     post_id = data.get("post_id")
     username = getattr(g, "username", None)
@@ -1003,13 +1063,13 @@ def has_star():
 
     conn = get_db()
     cur = conn.cursor()
-
-    cur.execute(
-        "SELECT 1 FROM stars WHERE post_id = ? AND username = ?",
-        (post_id, username)
-    )
-    exists = cur.fetchone()
-
-    conn.close()
-
-    return jsonify({"starred": exists is not None}), 200
+    try:
+        cur.execute(
+            "SELECT 1 FROM stars WHERE post_id = %s AND username = %s",
+            (post_id, username)
+        )
+        exists = cur.fetchone()
+        return jsonify({"starred": exists is not None}), 200
+    finally:
+        cur.close()
+        conn.close()

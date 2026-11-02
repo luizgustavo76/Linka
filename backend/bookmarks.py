@@ -1,36 +1,21 @@
-from flask import Flask, jsonify, request, g, Blueprint
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from flask import jsonify, request, g, Blueprint
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
 bookmarks_bp = Blueprint("bookmarks_bp", __name__)
 
-db_dir = os.path.join(base_dir, "DB")
-post_db_path = os.path.join(db_dir, "bookmarks.db")
-posts_main_db_path = os.path.join(db_dir, "post.db")
-
-if not os.path.exists(db_dir):
-    os.makedirs(db_dir)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_db():
-    conn = sqlite3.connect(post_db_path, timeout=10)
-    conn.row_factory = sqlite3.Row
-    
-    # Anexa o posts.db sob o alias 'posts_db'
-    if os.path.exists(posts_main_db_path):
-        try:
-            conn.execute(f"ATTACH DATABASE '{posts_main_db_path}' AS posts_db")
-        except Exception as e:
-            print(f"[Bookmarks] Erro ao anexar posts.db: {e}")
-        
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def create_db():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS bookmarks(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT NOT NULL,
             post_id TEXT NOT NULL,
             is_public INTEGER DEFAULT 1,
@@ -42,9 +27,8 @@ def create_db():
         )
     """)
     conn.commit()
+    cur.close()
     conn.close()
-
-create_db()
 
 @bookmarks_bp.route("/view-bookmarks", methods=["POST"])
 def view_bookmarks():
@@ -57,7 +41,7 @@ def view_bookmarks():
         conn = get_db()
         cur = conn.cursor()
         
-        # Faz o LEFT JOIN selecionando APENAS as colunas que existem na sua tabela 'posts'
+        # O cast 'p.id::text' resolve a conversão entre TEXT e INTEGER no PostgreSQL
         if receiver == username:
             query = """
                 SELECT 
@@ -76,8 +60,8 @@ def view_bookmarks():
                     p.width,
                     p.heigth
                 FROM bookmarks b
-                LEFT JOIN posts_db.posts p ON b.post_id = p.id
-                WHERE b.username = ?
+                LEFT JOIN posts p ON b.post_id = p.id::text
+                WHERE b.username = %s
                 ORDER BY b.id DESC
             """
             cur.execute(query, (username,))
@@ -99,20 +83,17 @@ def view_bookmarks():
                     p.width,
                     p.heigth
                 FROM bookmarks b
-                LEFT JOIN posts_db.posts p ON b.post_id = p.id
-                WHERE b.username = ? AND b.is_public = 1
+                LEFT JOIN posts p ON b.post_id = p.id::text
+                WHERE b.username = %s AND b.is_public = 1
                 ORDER BY b.id DESC
             """
             cur.execute(query, (receiver,))
             
         rows = cur.fetchall()
         
-        # Converte as linhas do SQLite para uma lista de dicionários ajustando objetos de mídia se existirem
         result = []
         for row in rows:
             post_dict = dict(row)
-            
-            # Se o post tiver uma mídia simples, monta a estrutura tratada que o cliente Android espera
             if post_dict.get("media"):
                 post_dict["media_list"] = [{
                     "media_url": post_dict.get("media"),
@@ -122,6 +103,7 @@ def view_bookmarks():
                 }]
             result.append(post_dict)
 
+        cur.close()
         conn.close()
         return jsonify(result), 200
     
@@ -146,23 +128,30 @@ def toggle_bookmark():
         conn = get_db()
         cur = conn.cursor()
         try:
-            cur.execute("SELECT id FROM bookmarks WHERE username = ? AND (post_id = ? OR original_id = ?)", (username, post_id, original_id))
+            cur.execute(
+                "SELECT id FROM bookmarks WHERE username = %s AND (post_id = %s OR original_id = %s)", 
+                (username, post_id, original_id)
+            )
             result = cur.fetchone()
 
             if result:
-                cur.execute("DELETE FROM bookmarks WHERE username = ? AND (post_id = ? OR original_id = ?)", (username, post_id, original_id))
+                cur.execute(
+                    "DELETE FROM bookmarks WHERE username = %s AND (post_id = %s OR original_id = %s)", 
+                    (username, post_id, original_id)
+                )
                 conn.commit()
                 return jsonify({"status": "bookmark removed"}), 200
             else:
                 cur.execute("""
                     INSERT INTO bookmarks (username, post_id, is_public, is_external, source_url, platform, original_id)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """, (username, post_id, is_public, is_external, source_url, platform, original_id))
                 conn.commit()
                 return jsonify({"status": "bookmark inserted"}), 200
         except Exception as e:
             return jsonify({"status": "error", "message": str(e)}), 500
         finally:
+            cur.close()
             conn.close()
             
     return jsonify({"status": "forbidden"}), 403

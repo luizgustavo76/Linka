@@ -1,47 +1,43 @@
 import os
-import sqlite3
-from flask import Blueprint, jsonify, request
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from flask import Blueprint, request, jsonify
 
 notifications_blueprint = Blueprint("notifications", __name__)
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(base_dir, "DB")
-os.makedirs(db_dir, exist_ok=True)
-notifications_dir = os.path.join(db_dir, "notifications.db")
-
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_db():
-    conn = sqlite3.connect(notifications_dir)
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    conn.execute("PRAGMA cache_size=-10000;")
-    return conn
-
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def create_db():
+    if not DATABASE_URL:
+        return
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS notifications(
-            receiver TEXT, 
-            from_user TEXT, 
-            datetime TEXT, 
-            type TEXT, 
-            content TEXT, 
-            read BOOLEAN DEFAULT FALSE, 
-            id INTEGER PRIMARY KEY AUTOINCREMENT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-
-create_db()
-
+    try:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS notifications (
+                id SERIAL PRIMARY KEY,
+                receiver TEXT NOT NULL, 
+                from_user TEXT, 
+                datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+                type TEXT, 
+                content TEXT, 
+                read BOOLEAN DEFAULT FALSE
+            )
+        """)
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERRO create_db notifications]: {e}")
+    finally:
+        cur.close()
+        conn.close()
 
 @notifications_blueprint.route("/notifications", methods=["POST"])
 def notifications():
-    data = request.get_json(force=True) or {}
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
 
     if not username:
@@ -51,35 +47,41 @@ def notifications():
 
     conn = get_db()
     cur = conn.cursor()
+    try:
+        # Busca notificações pendentes de leitura para o usuário
+        cur.execute(
+            """
+            SELECT id, receiver, from_user, datetime, type, content, read 
+            FROM notifications 
+            WHERE receiver = %s AND (read = FALSE OR read IS NULL)
+            ORDER BY id DESC
+            """,
+            (username,)
+        )
+        result = cur.fetchall()
 
-    # Busca registros correspondentes ao usuário e pendentes de leitura
-    cur.execute(
-        "SELECT receiver, from_user, datetime, type, content, read, id FROM"
-        " notifications WHERE receiver = ? AND (read = 0 OR read IS NULL OR"
-        " read = FALSE)",
-        (username,),
-    )
-    result = cur.fetchall()
-    conn.close()
+        notifications_list = []
+        for row in result:
+            notifications_list.append({
+                "id": row["id"],
+                "receiver": row["receiver"],
+                "from_user": row["from_user"],
+                "datetime": str(row["datetime"]) if row["datetime"] else None,
+                "type": row["type"],
+                "content": row["content"],
+                "read": bool(row["read"])
+            })
 
-    notifications_list = []
-    for items in result:
-        notifications_list.append({
-            "receiver": items[0],
-            "from_user": items[1],
-            "datetime": items[2],
-            "type": items[3],
-            "content": items[4],
-            "read": bool(items[5]),
-            "id": items[6],
-        })
-
-    return jsonify(notifications_list), 200
-
+        return jsonify(notifications_list), 200
+    except Exception as e:
+        return jsonify({"error": "Server error", "details": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
 
 @notifications_blueprint.route("/set-read-notification", methods=["POST"])
 def set_read():
-    data = request.get_json(force=True) or {}
+    data = request.get_json(silent=True) or {}
     id_notif = data.get("id")
 
     if id_notif is None:
@@ -87,12 +89,18 @@ def set_read():
 
     try:
         id_notif = int(id_notif)
-    except ValueError:
+    except (ValueError, TypeError):
         return jsonify({"error": "Invalid ID format"}), 400
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("UPDATE notifications SET read = 1 WHERE id = ?", (id_notif,))
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "success"}), 200
+    try:
+        cur.execute("UPDATE notifications SET read = TRUE WHERE id = %s", (id_notif,))
+        conn.commit()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": "Server error", "details": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()

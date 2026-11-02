@@ -1,47 +1,39 @@
-from flask import Flask, request, Blueprint, jsonify, g
-import sqlite3
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from flask import Blueprint, request, jsonify, g
 from datetime import datetime
 import notificationsModule
+
 chat_bp = Blueprint("chat", __name__)
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(base_dir, "DB")
-
-if not os.path.exists(db_dir):
-    os.makedirs(db_dir)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_db():
-    conn = sqlite3.connect(os.path.join(db_dir, "chat.db"))
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    conn.execute("PRAGMA cache_size=-10000;")
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def create_db():
     conn = get_db()
     cur = conn.cursor()
-
     cur.execute("""
         CREATE TABLE IF NOT EXISTS chat (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             sender TEXT NOT NULL,
             receiver TEXT NOT NULL,
             message TEXT NOT NULL,
-            date DATETIME DEFAULT CURRENT_TIMESTAMP
+            date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-
     conn.commit()
+    cur.close()
     conn.close()
 
-create_db()
 @chat_bp.route("/send-message", methods=["POST"])
 def send():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     sender = data.get("sender")
-    if sender == g.username:
+    if sender == getattr(g, "username", None):
         receiver = data.get("receiver")
         message = data.get("message")
 
@@ -56,28 +48,33 @@ def send():
 
         conn = get_db()
         cur = conn.cursor()
-    
-        cur.execute("""
-            INSERT INTO chat (sender, receiver, message)
-            VALUES (?, ?, ?)
-        """, (sender, receiver, message))
+        try:
+            cur.execute("""
+                INSERT INTO chat (sender, receiver, message)
+                VALUES (%s, %s, %s)
+            """, (sender, receiver, message))
+            conn.commit()
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cur.close()
+            conn.close()
 
-        conn.commit()
-        conn.close()
         date = datetime.now()
         notificationsModule.CreateNotification(sender, receiver, date, "chat", message)    
         return jsonify({"status": "message sent"}), 200
-    else:
-        return jsonify({"status":"forbidden"}),403
-
+    
+    return jsonify({"status": "forbidden"}), 403
 
 @chat_bp.route("/view", methods=["POST"])
 def view():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     user1 = data.get("user1")
     user2 = data.get("user2")
-    if user1 == g.username or user2 == g.username:
+    current_user = getattr(g, "username", None)
+
+    if user1 == current_user or user2 == current_user:
         if not user1:
             return jsonify({"status": "user1 cannot be null"}), 400
 
@@ -86,29 +83,29 @@ def view():
 
         conn = get_db()
         cur = conn.cursor()
+        try:
+            cur.execute("""
+                SELECT sender, receiver, message, date
+                FROM chat
+                WHERE (sender = %s AND receiver = %s)
+                   OR (sender = %s AND receiver = %s)
+                ORDER BY date ASC
+            """, (user1, user2, user2, user1))
 
-        cur.execute("""
-            SELECT sender, receiver, message, date
-            FROM chat
-            WHERE (sender = ? AND receiver = ?)
-            OR (sender = ? AND receiver = ?)
-            ORDER BY date ASC
-        """, (user1, user2, user2, user1))
-
-        resultado = cur.fetchall()
-        conn.close()
+            resultado = cur.fetchall()
+        finally:
+            cur.close()
+            conn.close()
 
         mensagens = []
         for row in resultado:
             mensagens.append({
-                "sender": row[0],
-                "receiver": row[1],
-                "message": row[2],
-                "date": row[3]
+                "sender": row["sender"],
+                "receiver": row["receiver"],
+                "message": row["message"],
+                "date": str(row["date"]) if row["date"] else None
             })
 
         return jsonify({"messages": mensagens}), 200
-    else:
-        return jsonify({"status":"forbidden"}),403
 
-
+    return jsonify({"status": "forbidden"}), 403
