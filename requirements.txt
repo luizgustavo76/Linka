@@ -8,3 +8,4 @@ atproto
 gunicorn>=21.2.0
 bs4
 pillow
+boto3
