@@ -1,16 +1,30 @@
 import json
 import os
-import sqlite3
-from datetime import datetime, timedelta
 import secrets
+from datetime import datetime, timedelta
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from werkzeug.security import check_password_hash
 from flask import Flask, Blueprint, request, jsonify, g
 from flask_cors import CORS
+import dotenv
+
 base_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Carrega backend.env localmente se existir
+env_path = os.path.join(base_dir, "backend.env")
+if os.path.exists(env_path):
+    dotenv.load_dotenv(env_path)
+else:
+    dotenv.load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 json_path = os.path.join(base_dir, "backend.json")
 with open(json_path, "r") as f:
     modules_flags = json.load(f)
 root_flags = modules_flags["modules-flags"]
+
 from mentions import mentions_bp
 if root_flags["communities"]:
     from community import community_bp
@@ -26,6 +40,7 @@ if root_flags["chat"]:
     from chat import chat_bp
 if root_flags["bookmarks"]:
     from bookmarks import bookmarks_bp
+
 tos_content = ""
 if root_flags.get("automoderator"):
     import sys
@@ -45,12 +60,13 @@ if root_flags.get("automoderator"):
     import AutoModerator
     def start_automod_loop():
         time.sleep(5)
-        print("[AutoMod] Daemon iniciado no PythonAnywhere. Rodando varredura a cada 2 minutos...")
+        print("[AutoMod] Daemon iniciado. Rodando varredura a cada 2 minutos...")
         try:
             AutoModerator.main()
         except Exception as e:
             print(f"[AutoMod Error] Falha na execução da thread: {e}")
     threading.Thread(target=start_automod_loop, daemon=True).start()
+
 if root_flags["friends"]:
     from friends import friends_bp
 from login import login_bp
@@ -77,54 +93,45 @@ if root_flags["sincronizer"]:
 if root_flags["themes"]:
     from themes import theme_bp
 from chat_group import chat_group_bp
-db_dir = os.path.join(base_dir, "DB")
-tokens_file = os.path.join(db_dir, "tokens.db")
-login_file = os.path.join(db_dir, "login.db")
-banned_file = os.path.join(db_dir, "banned.db")
+
 app = Flask(__name__)
+
+# Conexão remota centralizada no PostgreSQL (Neon.tech)
 def get_db():
-    conn = sqlite3.connect(tokens_file)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
-def get_db_login():
-    conn = sqlite3.connect(login_file)
-    conn.row_factory = sqlite3.Row
-    return conn
-def get_db_banned():
-    conn = sqlite3.connect(banned_file)
-    conn.row_factory = sqlite3.Row
-    return conn
-def create_db():
-    if not os.path.exists(db_dir):
-        os.makedirs(db_dir)
+
+def init_tables():
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS tokens(
-        username TEXT,
-        token TEXT,
-        emission_date TEXT,
-        expire_date TEXT
-    )
+        CREATE TABLE IF NOT EXISTS tokens (
+            username TEXT,
+            token TEXT,
+            emission_date TEXT,
+            expire_date TEXT
+        );
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS banned (
+            username TEXT,
+            time TEXT,
+            reason TEXT
+        );
     """)
     conn.commit()
+    cur.close()
     conn.close()
-def create_db_banned():
-    conn = get_db_banned()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS banned(
-                username TEXT,
-                time TEXT,
-                reason TEXT)""")
-    conn.commit()
-    conn.close()
-create_db_banned()
-create_db()
+
+# Garante que as tabelas essenciais de tokens/bans existam no Postgres
+init_tables()
+
 def verificar_hash(senha, hash_salvo):
     return check_password_hash(hash_salvo, senha)
+
 def gerar_token():
     return secrets.token_hex(16)
+
 @app.route("/tos")
 def tos_route():
     html = f"""
@@ -136,8 +143,8 @@ def tos_route():
         <title>Linka - Terms of Service</title>
         <style>
             body {{
-                background-color: 
-                color: 
+                background-color: #121212;
+                color: #e0e0e0;
                 font-family: monospace;
                 padding: 20px;
             }}
@@ -153,6 +160,7 @@ def tos_route():
     </html>
     """
     return html
+
 @app.route("/new-session", methods=["POST"])
 def new_session():
     data = request.get_json()
@@ -160,24 +168,30 @@ def new_session():
     password = data.get("password")
     if None in (username, password):
         return jsonify({"status": "the json is empty or is missing data"}), 401
-    conn = get_db_login()
+    
+    conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT password FROM login WHERE username = ?", (username,))
+    cur.execute("SELECT password FROM login WHERE username = %s", (username,))
     result = cur.fetchone()
-    conn.close()
+    
     if not result:
+        conn.close()
         return jsonify({"status": "user not found"}), 401
+    
     if verificar_hash(password, result["password"]):
-        emission_date = datetime.now()
-        expire_date = emission_date + timedelta(hours=2)
+        emission_date = datetime.now().isoformat()
+        expire_date = (datetime.now() + timedelta(hours=2)).isoformat()
         token = gerar_token()
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("INSERT INTO tokens(username, token, emission_date, expire_date) VALUES(?, ?, ?, ?)", (username, token, emission_date, expire_date))
+        
+        cur.execute("INSERT INTO tokens(username, token, emission_date, expire_date) VALUES(%s, %s, %s, %s)", 
+                    (username, token, emission_date, expire_date))
         conn.commit()
         conn.close()
         return jsonify({"status": "the session has created", "token": token}), 200
+    
+    conn.close()
     return jsonify({"status": "wrong password"}), 401
+
 public_routes = [
     "post.feed",
     "meta.return_version",
@@ -194,55 +208,64 @@ public_routes = [
     "profile.get_profile_pic",
     "post.view_post"
 ]
+
 @app.before_request
 def valide():
     if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post", "/lite-render", "/tos"]:
         return None
+    
     if request.method == "GET":
         token = request.headers.get("Authorization")
         if token:
             token = token.replace("Bearer ", "").strip()
             conn = get_db()
             cur = conn.cursor()
-            cur.execute("SELECT username FROM tokens WHERE token = ?", (token,))
+            cur.execute("SELECT username FROM tokens WHERE token = %s", (token,))
             result = cur.fetchone()
             conn.close()
             g.username = result["username"] if result else None
         else:
             g.username = None
         return None
+
     token = request.headers.get("Authorization")
     if request.endpoint in public_routes and not token:
         g.username = None
         return None
+        
     if token is None:
         return jsonify({"status": "the token is empty"}), 403
+        
     token = token.replace("Bearer ", "").strip()
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT username, expire_date, token FROM tokens WHERE token = ?", (token,))
+    cur.execute("SELECT username, expire_date, token FROM tokens WHERE token = %s", (token,))
     result = cur.fetchone()
-    conn.close()
+    
     if not result:
+        conn.close()
         return jsonify({"status": "invalid token"}), 403
+        
     g.username = result["username"]
-    conn = get_db_banned()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM banned WHERE username = ?", (g.username,))
+    
+    cur.execute("SELECT * FROM banned WHERE username = %s", (g.username,))
     result_user_banned = cur.fetchone()
     conn.close()
+    
     if result_user_banned:
         json_banned = {
             "status": "BANNED",
-            "reason": result_user_banned[2],
-            "time": result_user_banned[1]
+            "reason": result_user_banned["reason"],
+            "time": result_user_banned["time"]
         }
         return jsonify(json_banned), 403
+        
     if result["expire_date"]:
         expire_date = datetime.fromisoformat(result["expire_date"])
         if datetime.now() > expire_date:
             return jsonify({"status": "the token has been expired"}), 403
     return None
+
 @app.route("/valide-session", methods=["POST"])
 def valideManual():
     public_paths = ["/login", "/register", "/new-session", "/create-profile", "/tos"]
@@ -252,17 +275,21 @@ def valideManual():
     if token is None:
         return jsonify({"status": "the token is empty"}), 403
     else:
-        token = token.replace("Bearer ", "")
+        token = token.replace("Bearer ", "").strip()
+        
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT username, expire_date, token FROM tokens WHERE token = ?", (token,))
+    cur.execute("SELECT username, expire_date, token FROM tokens WHERE token = %s", (token,))
     result = cur.fetchone()
+    conn.close()
+    
     if not result:
-        conn.close()
         return jsonify({"status": "invalid token"}), 403
+        
     token_db = result["token"]
     g.username = result["username"]
     expire_date = datetime.fromisoformat(result["expire_date"])
+    
     if token_db == token:
         if datetime.now() > expire_date:
             return jsonify({"status": "the token has been expired"}), 403
@@ -270,7 +297,9 @@ def valideManual():
             return jsonify({"status": "the token is valid"}), 200
     else:
         return jsonify({"status": "the token is invalid"}), 403
+
 CORS(app, resources={r"/*": {"origins": "*"}})
+
 if root_flags["status"]:
     app.register_blueprint(status_bp)
 if root_flags["search"]:
@@ -313,5 +342,6 @@ if root_flags["communities"]:
 if root_flags["bookmarks"]:
     app.register_blueprint(bookmarks_bp)
 app.register_blueprint(mentions_bp)
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
