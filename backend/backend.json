@@ -18,7 +18,7 @@
         "reddit-federation":true,
         "mastodon-federation":true,
         "bluesky-federation":true,
-        "automoderator":true,
+        "automoderator":false,
         "communities":true,
         "bookmarks":true,
         "url-server":"http://linkaProject.pythonanywhere.com"
