@@ -59,6 +59,18 @@ android {
         targetSdk = 9
         versionCode = 2
         versionName = "2.2"
+
+        // Configuração da ABI para o Galaxy Y (ARMv6 / armeabi)
+        ndk {
+            abiFilters.clear()
+        }
+    }
+
+    sourceSets {
+        getByName("main") {
+            // Garante o carregamento dos arquivos nativos (.so) em src/main/jniLibs
+            jniLibs.srcDirs("src/main/jniLibs")
+        }
     }
 
     androidResources {

@@ -4,6 +4,7 @@ import com.LinkaProject.linkaLite.R;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -11,82 +12,39 @@ import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONObject;
 import org.json.JSONException;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 public class SignupActivity extends Activity {
+    private static final String TAG = "LinkaSignup";
+
     private EditText edtUsername;
     private EditText edtPassword;
     private EditText edtRetypePassword;
     private EditText edtEmail;
     private TextView txtGoToSignin;
     private Button btnRegister;
-    private EditText edtInvite;
-    private String url = "";
-
-    public String requestHTTP(String urlParam, String method, JSONObject json_body) {
-        HttpURLConnection connection = null;
-        try {
-            URL url = new URL(urlParam);
-            connection = (HttpURLConnection) url.openConnection();
-            
-            method = method.toLowerCase();
-            if (method.equals("post")) {
-                connection.setRequestMethod("POST");
-            } else if (method.equals("get")) {
-                connection.setRequestMethod("GET");
-            }
-            
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setDoOutput(true);
-
-            OutputStream os = connection.getOutputStream();
-            os.write(json_body.toString().getBytes("UTF-8"));
-            os.flush();
-            os.close();
-
-            int responseCode = connection.getResponseCode();
-            
-            // CORREÇÃO: Aceita status 200 (OK) e 201 (Created)
-            if (responseCode >= 200 && responseCode < 300) {
-                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                StringBuilder response = new StringBuilder();
-                String line;
-                while ((line = in.readLine()) != null) {
-                    response.append(line);
-                }
-                in.close();
-                return response.toString();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-        return ""; 
-    }
+    private String serverUrl = "https://linka-ztg3.onrender.com";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Carrega a URL do servidor configurada no config.cfg
         try {
             config cfg = new config();
-            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(SignupActivity.this, "config.cfg"));
-            JSONObject server = jsonCfg.getJSONObject("SERVER");
-            url = server.optString("url", "");
+            if (config.configFileExists(SignupActivity.this, "config.cfg")) {
+                String rawCfg = cfg.loadCfgAsJson(SignupActivity.this, "config.cfg");
+                JSONObject jsonCfg = new JSONObject(rawCfg);
+                JSONObject server = jsonCfg.optJSONObject("SERVER");
+                if (server != null) {
+                    String cfgUrl = server.optString("url", "").trim();
+                    if (cfgUrl.length() > 0) {
+                        serverUrl = cfgUrl;
+                    }
+                }
+            }
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Erro ao carregar URL do servidor no SignupActivity", e);
         }
-
-        config cfg = new config();
-        final String baseUrl = url;
-        cfg.deleteFileLinka(SignupActivity.this, "config.cfg");
-        cfg.createDefaultConfig(SignupActivity.this, "config.cfg");
 
         setContentView(R.layout.activity_register);
 
@@ -97,44 +55,96 @@ public class SignupActivity extends Activity {
         txtGoToSignin = (TextView) findViewById(R.id.txtGoToSignin);
         btnRegister = (Button) findViewById(R.id.btnRegister);
 
+        txtGoToSignin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String username = edtUsername.getText().toString().trim();
-                String password = edtPassword.getText().toString().trim();
-                String email = edtEmail.getText().toString().trim();
+                final String username = edtUsername.getText().toString().trim();
+                final String password = edtPassword.getText().toString().trim();
+                final String email = edtEmail.getText().toString().trim();
                 String passwordRetyped = edtRetypePassword.getText().toString().trim();
 
-                try {
-                    JSONObject json_register = new JSONObject();
-                    json_register.put("username", username);
-                    json_register.put("senha", password); // Envia como 'senha' para casar com o Flask
-                    json_register.put("password", password); // Envia 'password' por garantia
-                    json_register.put("email", email);
-
-                    if (password.equals(passwordRetyped)) {
-                        String response = requestHTTP(baseUrl + "/register", "post", json_register);
-                        
-                        if (response.length() != 0) {
-                            config cfg = new config();
-                            cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "username", username);
-                            cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "password", password);
-                            
-                            String newToken = tokenManager.newSession(SignupActivity.this);
-                            cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
-
-                            Intent intent = new Intent(SignupActivity.this, HomeActivity.class);
-                            startActivity(intent);
-                            finish(); 
-                        } else {
-                            Toast.makeText(SignupActivity.this, "Connection with server has failed", Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        Toast.makeText(SignupActivity.this, "Passwords don't match!", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if (username.length() == 0 || password.length() == 0 || email.length() == 0) {
+                    Toast.makeText(SignupActivity.this, "Fill all fields!", Toast.LENGTH_SHORT).show();
+                    return;
                 }
+
+                if (!password.equals(passwordRetyped)) {
+                    Toast.makeText(SignupActivity.this, "Passwords don't match!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Desabilita o botão temporariamente para evitar cliques duplos
+                btnRegister.setEnabled(false);
+
+                // Executa a requisição HTTP em background para não travar a UI
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            JSONObject jsonRegister = new JSONObject();
+                            jsonRegister.put("username", username);
+                            jsonRegister.put("senha", password);    // Envia 'senha' para casar com o backend Flask
+                            jsonRegister.put("password", password); // Envia 'password' por compatibilidade
+                            jsonRegister.put("email", email);
+
+                            String baseUrl = serverUrl.trim();
+                            while (baseUrl.endsWith("/")) {
+                                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+                            }
+                            String targetUrl = baseUrl + "/register";
+
+                            Log.d(TAG, "Enviando requisição de cadastro via request.java para: " + targetUrl);
+
+                            // Utiliza o motor centralizado com suporte a Conscrypt, Follow Redirects e SSL Fallback
+                            final String response = request.requestHTTP(targetUrl, "POST", jsonRegister, 0, SignupActivity.this);
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    btnRegister.setEnabled(true);
+
+                                    if (response != null && response.length() > 0) {
+                                        Log.d(TAG, "Resposta do registro: " + response);
+                                        
+                                        config cfg = new config();
+                                        cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "username", username);
+                                        cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "password", password);
+                                        
+                                        String newToken = tokenManager.newSession(SignupActivity.this);
+                                        cfg.updateCfg(SignupActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
+
+                                        Toast.makeText(SignupActivity.this, "Account created successfully!", Toast.LENGTH_SHORT).show();
+                                        Intent intent = new Intent(SignupActivity.this, HomeActivity.class);
+                                        startActivity(intent);
+                                        finish(); 
+                                    } else {
+                                        Log.e(TAG, "Falha no registro. Resposta vazia do servidor.");
+                                        Toast.makeText(SignupActivity.this, "Connection with server has failed", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            });
+
+                        } catch (Exception e) {
+                            Log.e(TAG, "Exceção durante o cadastro: ", e);
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    btnRegister.setEnabled(true);
+                                    Toast.makeText(SignupActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    }
+                }).start();
             }
         });
     }

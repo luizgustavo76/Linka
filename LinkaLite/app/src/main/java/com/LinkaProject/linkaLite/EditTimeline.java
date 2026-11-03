@@ -161,7 +161,7 @@ public class EditTimeline extends Activity {
                     "", 
                     "Local server", 
                     "Linka-local", 
-                    "http://linkaProject.pythonanywhere.com"
+                    "http://anywhere.com"
                 ));
 
                 if (response != null && response.trim().length() > 0) {

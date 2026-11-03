@@ -13,12 +13,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 public class LoginActivity extends Activity {
     private static final String TAG = "LinkaLogin";
@@ -28,9 +22,11 @@ public class LoginActivity extends Activity {
     private Button btnServer;
     private Button btnLogin;
     private TextView txtGoToSignup;
-    private String serverUrl = "http://192.168.240.1:5000"; 
-    private LoginTask currentLoginTask;
     private TextView txtGuest;
+    
+    private String serverUrl = "http://patient-hall-2915.luizsgustavo76.workers.dev/"; 
+    private LoginTask currentLoginTask;
+
     private void executeLogin(String username, String password) {
         if (currentLoginTask != null && currentLoginTask.getStatus() == AsyncTask.Status.RUNNING) {
             Log.d(TAG, "Cancelando LoginTask anterior em execução.");
@@ -45,12 +41,11 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        System.setProperty("http.keepAlive", "false");
-
         btnServer = (Button) findViewById(R.id.btnServer);
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
         txtGuest = (TextView) findViewById(R.id.txtGuest);
+        
         txtGuest.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -59,6 +54,7 @@ public class LoginActivity extends Activity {
                 startActivity(intent);
             }
         });
+        
         btnLogin = (Button) findViewById(R.id.btnLogin);
         txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
 
@@ -67,7 +63,7 @@ public class LoginActivity extends Activity {
             public void run() {
                 config cfg = new config();
                 if (!config.configFileExists(LoginActivity.this, "config.cfg")) {
-                    Log.d(TAG, "Arquivo config.cfg não existe. Criando padrão...");
+                    Log.d(TAG, "[CONFIG] config.cfg não existe. Criando arquivo padrão...");
                     cfg.createDefaultConfig(LoginActivity.this, "config.cfg");
                 }
 
@@ -76,13 +72,16 @@ public class LoginActivity extends Activity {
 
                 try {
                     String jsonString = cfg.loadCfgAsJson(LoginActivity.this, "config.cfg");
-                    Log.d(TAG, "Conteúdo do config.cfg: " + jsonString);
+                    Log.d(TAG, "[CONFIG] Conteúdo atual do config.cfg: " + jsonString);
                     
                     JSONObject jsonCfg = new JSONObject(jsonString);
                     JSONObject server = jsonCfg.optJSONObject("SERVER");
                     if (server != null) {
-                        serverUrl = server.optString("url", serverUrl);
-                        Log.d(TAG, "URL do servidor carregada da config: " + serverUrl);
+                        String cfgUrl = server.optString("url", "").trim();
+                        if (cfgUrl.length() > 0) {
+                            serverUrl = cfgUrl;
+                        }
+                        Log.d(TAG, "[CONFIG] URL ativa do servidor: " + serverUrl);
                     }
                     JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
                     if (fastLogin != null) {
@@ -90,7 +89,7 @@ public class LoginActivity extends Activity {
                         fastPassword = fastLogin.optString("password", "");
                     }
                 } catch (JSONException e) {
-                    Log.e(TAG, "Erro ao processar JSON da configuração:", e);
+                    Log.e(TAG, "[CONFIG ERRO] Erro ao processar JSON da configuração:", e);
                 }
 
                 final String finalUser = fastUsername;
@@ -100,7 +99,7 @@ public class LoginActivity extends Activity {
                     @Override
                     public void run() {
                         if (!isFinishing() && finalUser.length() > 0 && finalPass.length() > 0) {
-                            Log.d(TAG, "Executando Fast Login para: " + finalUser);
+                            Log.d(TAG, "[FAST LOGIN] Executando auto-login para usuário: " + finalUser);
                             executeLogin(finalUser, finalPass);
                         }
                     }
@@ -157,7 +156,7 @@ public class LoginActivity extends Activity {
             if (!LoginActivity.this.isFinishing()) {
                 progressDialog = new ProgressDialog(LoginActivity.this);
                 progressDialog.setTitle("Wait");
-                progressDialog.setMessage("Login...");
+                progressDialog.setMessage("Connecting to server...");
                 progressDialog.setCancelable(false);
                 progressDialog.show();
             }
@@ -169,72 +168,30 @@ public class LoginActivity extends Activity {
 
             attemptedUsername = params[0];
             attemptedPassword = params[1];
-            HttpURLConnection connection = null;
 
             try {
                 String baseUrl = serverUrl.trim();
-                if (baseUrl.endsWith("/")) {
+                while (baseUrl.endsWith("/")) {
                     baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                 }
                 
                 String targetUrl = baseUrl + "/login";
-                Log.d(TAG, "Iniciando conexão HTTP POST para: " + targetUrl);
-
-                URL url = new URL(targetUrl);
-                connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-
-                connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-                connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("Connection", "close");
-                connection.setConnectTimeout(10000);
-                connection.setReadTimeout(10000);
-                connection.setDoOutput(true);
+                Log.d(TAG, "[HTTP] Enviando POST via request.java para: " + targetUrl);
 
                 JSONObject jsonParam = new JSONObject();
                 jsonParam.put("username", attemptedUsername);
                 jsonParam.put("password", attemptedPassword);
 
-                byte[] postData = jsonParam.toString().getBytes("UTF-8");
-                connection.setRequestProperty("Content-Length", String.valueOf(postData.length));
-
-                Log.d(TAG, "Enviando Payload JSON: " + jsonParam.toString());
-
-                OutputStream os = connection.getOutputStream();
-                os.write(postData);
-                os.flush();
-                os.close();
-
-                int responseCode = connection.getResponseCode();
-                Log.d(TAG, "Código de Resposta HTTP recebido: " + responseCode);
-
-                InputStream stream = (responseCode >= 200 && responseCode < 300) 
-                        ? connection.getInputStream() 
-                        : connection.getErrorStream();
-
-                if (stream != null) {
-                    BufferedReader in = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-                    while ((line = in.readLine()) != null) {
-                        if (isCancelled()) break;
-                        response.append(line);
-                    }
-                    in.close();
-                    Log.d(TAG, "Resposta bruta do servidor: " + response.toString());
-                    return response.toString();
-                } else {
-                    Log.e(TAG, "InputStream e ErrorStream vieram nulos do servidor.");
-                }
+                // Executa a requisição delegando para a classe request.java que usa o WolfSSLAdapter
+                String response = request.requestHTTP(targetUrl, "POST", jsonParam, 0, LoginActivity.this);
+                
+                Log.d(TAG, "[HTTP] Resposta bruta recebida via request.java: " + response);
+                return response;
 
             } catch (Exception e) {
-                Log.e(TAG, "EXCEÇÃO DURANTE O REQUEST HTTP: ", e);
+                Log.e(TAG, "[HTTP EXCEÇÃO] Erro ao preparar requisição de login: ", e);
                 return null;
-            } finally {
-                if (connection != null) connection.disconnect();
             }
-            return null;
         }
 
         @Override
@@ -242,13 +199,13 @@ public class LoginActivity extends Activity {
             dismissDialogSafely();
             if (isCancelled() || LoginActivity.this.isFinishing()) return;
 
-            Log.d(TAG, "onPostExecute chamado com resultado: " + result);
+            Log.d(TAG, "[POST EXECUTE] Resultado recebido: " + result);
 
-            if (result != null) {
+            if (result != null && result.length() > 0) {
                 try {
                     JSONObject responseJson = new JSONObject(result);
                     String status = responseJson.optString("status", "");
-                    Log.d(TAG, "Status extraído do JSON: " + status);
+                    Log.d(TAG, "[POST EXECUTE] Status retornado do JSON: " + status);
 
                     if (status.equalsIgnoreCase("login is sucessful") || status.equalsIgnoreCase("login is successful") || status.equalsIgnoreCase("success")) {
                         
@@ -256,8 +213,7 @@ public class LoginActivity extends Activity {
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "username", attemptedUsername);
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "password", attemptedPassword);
                         
-                        // Garante o log ao tentar criar o token
-                        Log.d(TAG, "Gerando nova sessão no TokenManager...");
+                        Log.d(TAG, "[TOKEN] Solicitando token de sessão...");
                         String newToken = tokenManager.newSession(LoginActivity.this);
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
                 
@@ -266,16 +222,16 @@ public class LoginActivity extends Activity {
                         startActivity(intent);
                         finish();
                     } else {
-                        Log.w(TAG, "Login recusado pelo backend. Status: " + status);
+                        Log.w(TAG, "[LOGIN RECUSADO] Status incorreto: " + status);
                         Toast.makeText(LoginActivity.this, "Username or password incorrect!", Toast.LENGTH_LONG).show();
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "EXCEÇÃO AO PROCESSAR O JSON NO ONPOSTEXECUTE: ", e);
+                    Log.e(TAG, "[JSON ERRO] Exceção ao ler JSON retornado: ", e);
                     Toast.makeText(LoginActivity.this, "Error processing data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Log.e(TAG, "Resultado nulo recebido em onPostExecute. Conexão falhou completamente.");
-                Toast.makeText(LoginActivity.this, "Connection with server failed", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "[CONEXAO FALHOU] Resposta vazia ou nula retornada pela classe request.");
+                Toast.makeText(LoginActivity.this, "Connection with server failed", Toast.LENGTH_LONG).show();
             }
         }
 
@@ -290,7 +246,7 @@ public class LoginActivity extends Activity {
                     progressDialog.dismiss();
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error dismissing progress dialog", e);
+                Log.e(TAG, "Erro ao ocultar dialog", e);
             }
         }
     }

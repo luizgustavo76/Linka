@@ -457,7 +457,7 @@ public class BookmarksFeed extends Activity {
             boolean isGifMedia = "gif".equals(mediaType) || rawUrl.toLowerCase().endsWith(".gif");
 
             final String finalProxyUrl;
-            if (rawUrl.contains("/midia/") || rawUrl.startsWith("http://linkaProject.pythonanywhere.com") || rawUrl.startsWith("https://linkaProject.pythonanywhere.com")) {
+            if (rawUrl.contains("/midia/") || rawUrl.startsWith("http://anywhere.com") || rawUrl.startsWith("https://linka-ztg3.onrender.com")) {
                 finalProxyUrl = rawUrl;
             } else if (isGifMedia) {
                 finalProxyUrl = rawUrl;

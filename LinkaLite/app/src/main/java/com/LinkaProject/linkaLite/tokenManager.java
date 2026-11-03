@@ -1,19 +1,13 @@
 package com.LinkaProject.linkaLite;
 
 import android.content.Context;
+import android.util.Log;
 import org.json.JSONObject;
-import org.json.JSONException;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 public class tokenManager {
+    private static final String TAG = "TOKEN_MANAGER";
 
     public static String newSession(Context context) {
-        HttpURLConnection conn = null;
         try {
             config cfg = new config();
             String rawJson = cfg.loadCfgAsJson(context, "config.cfg");
@@ -27,103 +21,81 @@ public class tokenManager {
                     
                     String username = fastLogin.optString("username", "");
                     String password = fastLogin.optString("password", "");
-                    String baseUrl = server.optString("url", "http://linkaProject.pythonanywhere.com"); 
+                    String baseUrl = server.optString("url", "https://linka-ztg3.onrender.com").trim(); 
 
                     if (username.length() == 0 || password.length() == 0) {
+                        Log.w(TAG, "[TOKEN ERRO] Usuário ou senha ausentes no config.cfg");
                         return "";
+                    }
+
+                    while (baseUrl.endsWith("/")) {
+                        baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                     }
 
                     JSONObject jsonToken = new JSONObject();
                     jsonToken.put("username", username);
                     jsonToken.put("password", password);
                     
-                    URL url = new URL(baseUrl + "/new-session");
-                    conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("POST");
-                    conn.setRequestProperty("Content-Type", "application/json");
-                    conn.setConnectTimeout(10000);
-                    conn.setReadTimeout(10000);
-                    conn.setDoOutput(true);
-                    conn.setDoInput(true);
+                    String targetUrl = baseUrl + "/new-session";
+                    Log.d(TAG, "[TOKEN HTTP] Solicitando novo token via request.java para: " + targetUrl);
 
-                    OutputStream os = conn.getOutputStream();
-                    os.write(jsonToken.toString().getBytes("UTF-8"));
-                    os.flush();
-                    os.close();
+                    // Reutiliza o request.java com suporte a Conscrypt/TLS e Auto-Fix HTTPS
+                    String result = request.requestHTTP(targetUrl, "POST", jsonToken, context);
+                    Log.d(TAG, "[TOKEN RESPOSTA] " + result);
 
-                    int responseCode = conn.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        InputStream is = conn.getInputStream();
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-                        StringBuilder sb = new StringBuilder();
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            sb.append(line);
-                        }
-                        reader.close();
-                        is.close();
-
-                        JSONObject response = new JSONObject(sb.toString());
+                    if (result != null && result.length() > 0) {
+                        JSONObject response = new JSONObject(result);
+                        
+                        // Busca flexível pelo nome do campo retornado pelo Flask
                         if (response.has("token")) {
                             return response.getString("token");
+                        } else if (response.has("token_session")) {
+                            return response.getString("token_session");
+                        } else if (response.has("session")) {
+                            return response.getString("session");
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
-            }
+            Log.e(TAG, "[TOKEN EXCEÇÃO] Erro ao renovar sessão:", e);
         }
         return "";
     }
 
     public static String valideToken(String token, String url, Context context) {
-        HttpURLConnection conn = null;
         try {
+            if (url == null || url.length() == 0) return "";
+            
+            while (url.endsWith("/")) {
+                url = url.substring(0, url.length() - 1);
+            }
+
             JSONObject valideJson = new JSONObject();
             valideJson.put("token", token);
             
-            URL targetUrl = new URL(url + "/valide-session");
-            conn = (HttpURLConnection) targetUrl.openConnection();
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "application/json");
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(10000);
-            conn.setDoOutput(true);
-            conn.setDoInput(true);
+            String targetUrl = url + "/valide-session";
+            String result = request.requestHTTP(targetUrl, "POST", valideJson, context);
 
-            OutputStream os = conn.getOutputStream();
-            os.write(valideJson.toString().getBytes("UTF-8"));
-            os.flush();
-            os.close();
-
-            int statusCode = conn.getResponseCode();
-            
-            if (statusCode != 200) {
-                try {
-                    config cfg = new config();
-                    JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(context, "config.cfg"));
-                    JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-                    String username = fastLogin.getString("username");
-                    String password = fastLogin.getString("password");
-                    token = newSession(context);
-                    cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "token_session", token);
-                    return "new token has created";
-                } catch (JSONException e) {
-                    return "error in json parsing";
+            if (result != null && result.length() > 0) {
+                JSONObject response = new JSONObject(result);
+                String status = response.optString("status", "");
+                if (status.equalsIgnoreCase("valid") || status.equalsIgnoreCase("success") || response.optBoolean("valid", false)) {
+                    return "valid";
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                conn.disconnect();
+
+            // Se o token for inválido, tenta renovar a sessão
+            Log.w(TAG, "[TOKEN] Sessão expirada ou inválida. Gerando nova sessão...");
+            String newToken = newSession(context);
+            if (newToken.length() > 0) {
+                config cfg = new config();
+                cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "token_session", newToken);
+                return "new token has created";
             }
+        } catch (Exception e) {
+            Log.e(TAG, "[TOKEN EXCEÇÃO] Erro ao validar token:", e);
         }
         return "";
     }
-
 }
