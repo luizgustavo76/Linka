@@ -1,6 +1,7 @@
 package com.LinkaProject.linkaLite;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -79,7 +80,6 @@ public class CommunityAdapter extends BaseAdapter {
             holder.txtDescription.setText(item.getDescription());
         }
 
-        // Limpa imagens antigas antes do reuso da View no ListView
         if (holder.imgBanner != null) {
             holder.imgBanner.setImageDrawable(null);
             if (item.getBannerUrl() != null && item.getBannerUrl().length() > 0) {
@@ -94,7 +94,6 @@ public class CommunityAdapter extends BaseAdapter {
             }
         }
 
-        // Ações dos Botões
         if (holder.btnMember != null) {
             holder.btnMember.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -108,8 +107,11 @@ public class CommunityAdapter extends BaseAdapter {
             holder.btnView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // Aqui pode abrir a Activity da comunidade específica
+                    String id = item.getId(); // Corrigido de int para String
+                    Intent intent = new Intent(context, CommunityFeedActivity.class); // Usa 'context' em vez de 'CommunityAdapter.this'
+                    intent.putExtra("community_id", id);
                     Toast.makeText(context, "Opening " + item.getName(), Toast.LENGTH_SHORT).show();
+                    context.startActivity(intent);
                 }
             });
         }

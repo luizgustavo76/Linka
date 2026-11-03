@@ -1,4 +1,5 @@
 package com.LinkaProject.linkaLite;
+
 import android.content.Intent;
 import android.app.Activity;
 import android.os.Bundle;
@@ -9,29 +10,37 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import android.widget.Button;
+
 public class CommunityIndex extends Activity {
     private ListView listViewCommunities;
     private CommunityAdapter adapter;
     private ArrayList<Community> communityList;
     private String url = "";
     private Button btnNew;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.communities_index);
+        
         btnNew = (Button) findViewById(R.id.btnNew);
-        btnNew.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v){
-                Intent intent = new Intent(CommunityIndex.this, NewCommunity.class);
-                startActivity(intent);
-            }
-        });
+        if (btnNew != null) {
+            btnNew.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v){
+                    Intent intent = new Intent(CommunityIndex.this, NewCommunity.class);
+                    startActivity(intent);
+                }
+            });
+        }
+
         try {
             config cfg = new config();
-            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(CommunityIndex.this, "conifg.cfg"));
-            JSONObject server = jsonCfg.getJSONObject("SERVER");
-            url = server.optString("url");
+            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(CommunityIndex.this, "config.cfg"));
+            JSONObject server = jsonCfg.optJSONObject("SERVER");
+            if (server != null) {
+                url = server.optString("url", "");
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -54,7 +63,9 @@ public class CommunityIndex extends Activity {
                     String description = obj.optString("description", "");
                     String bannerUrl = obj.optString("banner_image", "");
                     String iconUrl = obj.optString("icon_image", "");
-                    Community community = new Community(name, description, bannerUrl, iconUrl);
+                    String id = obj.optString("id", "");
+                    
+                    Community community = new Community(name, description, bannerUrl, iconUrl, id);
                     communityList.add(community);
                 }
             }
