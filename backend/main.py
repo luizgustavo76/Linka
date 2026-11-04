@@ -213,11 +213,14 @@ public_routes = [
 
 @app.before_request
 def valide():
+    # Rotas ignoradas totalmente pelo middleware
     if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post", "/lite-render", "/tos"]:
         return None
-    
-    if request.method == "GET":
-        token = request.headers.get("Authorization")
+
+    token = request.headers.get("Authorization")
+
+    # SE A ROTA É PÚBLICA:
+    if request.endpoint in public_routes:
         if token:
             token = token.replace("Bearer ", "").strip()
             conn = get_db()
@@ -228,14 +231,11 @@ def valide():
             g.username = result["username"] if result else None
         else:
             g.username = None
+        # Rota pública SEMPRE passa, tendo token válido, inválido ou sem token!
         return None
 
-    token = request.headers.get("Authorization")
-    if request.endpoint in public_routes and not token:
-        g.username = None
-        return None
-        
-    if token is None:
+    # SE A ROTA É PRIVADA:
+    if not token:
         return jsonify({"status": "the token is empty"}), 403
         
     token = token.replace("Bearer ", "").strip()
@@ -250,24 +250,24 @@ def valide():
         
     g.username = result["username"]
     
+    # Validações de Ban e Expiração...
     cur.execute("SELECT * FROM banned WHERE username = %s", (g.username,))
     result_user_banned = cur.fetchone()
     conn.close()
     
     if result_user_banned:
-        json_banned = {
+        return jsonify({
             "status": "BANNED",
             "reason": result_user_banned["reason"],
             "time": result_user_banned["time"]
-        }
-        return jsonify(json_banned), 403
+        }), 403
         
     if result["expire_date"]:
         expire_date = datetime.fromisoformat(result["expire_date"])
         if datetime.now() > expire_date:
             return jsonify({"status": "the token has been expired"}), 403
-    return None
 
+    return None
 @app.route("/valide-session", methods=["POST"])
 def valideManual():
     public_paths = ["/login", "/register", "/new-session", "/create-profile", "/tos"]

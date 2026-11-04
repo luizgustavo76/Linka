@@ -45,7 +45,9 @@ public class LoginActivity extends Activity {
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
         txtGuest = (TextView) findViewById(R.id.txtGuest);
-        
+        btnLogin = (Button) findViewById(R.id.btnLogin);
+        txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
+
         txtGuest.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v){
@@ -54,10 +56,8 @@ public class LoginActivity extends Activity {
                 startActivity(intent);
             }
         });
-        
-        btnLogin = (Button) findViewById(R.id.btnLogin);
-        txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
 
+        // Carrega configurações iniciais em thread de background
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -121,7 +121,7 @@ public class LoginActivity extends Activity {
                 String username = edtUsername.getText().toString().trim();
                 String password = edtPassword.getText().toString().trim();
                 if (username.length() == 0 || password.length() == 0) {
-                    Toast.makeText(LoginActivity.this, "fill all the fields", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, "Fill all fields", Toast.LENGTH_SHORT).show();
                 } else {
                     executeLogin(username, password);
                 }
@@ -176,18 +176,13 @@ public class LoginActivity extends Activity {
                 }
                 
                 String targetUrl = baseUrl + "/login";
-                Log.d(TAG, "[HTTP] Enviando POST via request.java para: " + targetUrl);
+                Log.d(TAG, "[HTTP] Enviando POST para: " + targetUrl);
 
                 JSONObject jsonParam = new JSONObject();
                 jsonParam.put("username", attemptedUsername);
                 jsonParam.put("password", attemptedPassword);
 
-                // Executa a requisição delegando para a classe request.java que usa o WolfSSLAdapter
-                String response = request.requestHTTP(targetUrl, "POST", jsonParam, 0, LoginActivity.this);
-                
-                Log.d(TAG, "[HTTP] Resposta bruta recebida via request.java: " + response);
-                return response;
-
+                return request.requestHTTP(targetUrl, "POST", jsonParam, 0, LoginActivity.this);
             } catch (Exception e) {
                 Log.e(TAG, "[HTTP EXCEÇÃO] Erro ao preparar requisição de login: ", e);
                 return null;
@@ -205,17 +200,22 @@ public class LoginActivity extends Activity {
                 try {
                     JSONObject responseJson = new JSONObject(result);
                     String status = responseJson.optString("status", "");
-                    Log.d(TAG, "[POST EXECUTE] Status retornado do JSON: " + status);
 
-                    if (status.equalsIgnoreCase("login is sucessful") || status.equalsIgnoreCase("login is successful") || status.equalsIgnoreCase("success")) {
+                    if (status.equalsIgnoreCase("login is sucessful") || 
+                        status.equalsIgnoreCase("login is successful") || 
+                        status.equalsIgnoreCase("success")) {
                         
+                        // 1. Solicita o token DIRETO com credenciais em memória (Evita reler config.cfg desatualizado)
+                        Log.d(TAG, "[TOKEN] Solicitando token de sessão...");
+                        String newToken = tokenManager.newSession(LoginActivity.this, attemptedUsername, attemptedPassword, serverUrl);
+
+                        // 2. Salva as credenciais e o token obtido no config.cfg em background/persistência
                         config cfg = new config();
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "username", attemptedUsername);
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "password", attemptedPassword);
-                        
-                        Log.d(TAG, "[TOKEN] Solicitando token de sessão...");
-                        String newToken = tokenManager.newSession(LoginActivity.this);
-                        cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
+                        if (newToken.length() > 0) {
+                            cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
+                        }
                 
                         Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
@@ -230,7 +230,7 @@ public class LoginActivity extends Activity {
                     Toast.makeText(LoginActivity.this, "Error processing data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Log.e(TAG, "[CONEXAO FALHOU] Resposta vazia ou nula retornada pela classe request.");
+                Log.e(TAG, "[CONEXAO FALHOU] Resposta vazia ou nula retornada pela rede.");
                 Toast.makeText(LoginActivity.this, "Connection with server failed", Toast.LENGTH_LONG).show();
             }
         }
