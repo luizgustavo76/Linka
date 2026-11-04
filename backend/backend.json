@@ -21,6 +21,7 @@
         "automoderator":false,
         "communities":true,
         "bookmarks":true,
+        "redis":true,
         "url-server":"http://linkaProject.pythonanywhere.com"
 
     }

@@ -22,6 +22,15 @@ with open(json_path, "r") as f:
     modules_flags = json.load(f)
 
 root_flags = modules_flags["modules-flags"]
+redis = False
+r = None
+
+if root_flags.get("redis"):
+    import redis as redis_lib
+    redis = True
+    REDIS_URL = os.getenv("REDIS_URL")
+    if REDIS_URL:
+        r = redis_lib.Redis.from_url(REDIS_URL, decode_responses=True)
 
 if root_flags.get("bluesky-federation"):
     import bluesky_federation.posts as bluesky
@@ -33,6 +42,7 @@ if root_flags.get("mastodon-federation"):
 post_bp = Blueprint("post", __name__)
 load_dotenv("backend.env")
 DATABASE_URL = os.getenv("DATABASE_URL")
+
 bg_executor = ThreadPoolExecutor(max_workers=5)
 
 
@@ -43,10 +53,6 @@ def get_db():
     return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
 
 def get_image_dimensions(url):
-    """
-    Faz o download rápido do cabeçalho da imagem (Stream)
-    e extrai largura e altura sem carregar a imagem inteira na RAM.
-    """
     if not url or not isinstance(url, str) or not url.startswith(("http://", "https://")):
         return "", ""
     try:
@@ -66,9 +72,6 @@ def get_image_dimensions(url):
 
 
 def process_dimensions_in_background(post_id, main_media, media_items):
-    """
-    Task de fundo que roda de forma assíncrona ao criar novos posts.
-    """
     if not DATABASE_URL:
         return
     conn = get_db()
@@ -104,10 +107,6 @@ def process_dimensions_in_background(post_id, main_media, media_items):
 
 
 def check_and_update_missing_dimensions():
-    """
-    Roda em background na inicialização do servidor.
-    Calcula e guarda no DB as dimensões das imagens antigas que não possuem largura/altura.
-    """
     if not DATABASE_URL:
         return
     conn = get_db()
@@ -225,7 +224,6 @@ def create_db():
         conn.close()
 
 
-# Dispara a verificação assíncrona assim que a aplicação sobe
 bg_executor.submit(check_and_update_missing_dimensions)
 
 
@@ -358,10 +356,10 @@ def view_post():
         
         result = []
         for row in posts:
-            r = dict(row)
-            if r.get("datetime"):
-                r["datetime"] = str(r["datetime"])
-            result.append(r)
+            res = dict(row)
+            if res.get("datetime"):
+                res["datetime"] = str(res["datetime"])
+            result.append(res)
             
         return jsonify(result), 200
     finally:
@@ -398,6 +396,13 @@ def new_comment():
             date = datetime.now()
             if post_owner:
                 notificationsModule.CreateNotification(username, post_owner, date, "comment", text_comment)
+
+            if root_flags.get("redis") and r:
+                try:
+                    r.delete("feed:home:page_1")
+                except Exception:
+                    pass
+
             return jsonify({"status": "the comment has been created with sucess!"}), 200
         except Exception as e:
             conn.rollback()
@@ -421,6 +426,13 @@ def edit_post():
         try:
             cur.execute("UPDATE posts SET text_post = %s WHERE id = %s", (text_post, post_id))
             conn.commit()
+
+            if root_flags.get("redis") and r:
+                try:
+                    r.delete("feed:home:page_1")
+                except Exception:
+                    pass
+
             return jsonify({"status": "the post has edited"}), 200
         except Exception as e:
             conn.rollback()
@@ -444,6 +456,13 @@ def delete_post():
             cur.execute("DELETE FROM posts WHERE id = %s", (post_id,))
             cur.execute("DELETE FROM post_media WHERE post_id = %s", (post_id,))
             conn.commit()
+
+            if root_flags.get("redis") and r:
+                try:
+                    r.delete("feed:home:page_1")
+                except Exception:
+                    pass
+
             return jsonify({"status": "the post has deleted"}), 200
         except Exception as e:
             conn.rollback()
@@ -767,6 +786,12 @@ def new_post():
                     background_media_items
                 )
 
+            if root_flags.get("redis") and r:
+                try:
+                    r.delete("feed:home:page_1")
+                except Exception:
+                    pass
+
             linkosModule.add_linkos(username, "5")
             return jsonify({"status": "post created with sucess"}), 200
         else:
@@ -812,6 +837,16 @@ def trending_feed():
 
 @post_bp.route("/feed", methods=["GET"])
 def feed():
+    cache_key = "feed:home:page_1"
+
+    if root_flags.get("redis") and r:
+        try:
+            cached_feed = r.get(cache_key)
+            if cached_feed:
+                return cached_feed, 200, {"Content-Type": "application/json"}
+        except Exception:
+            pass
+
     conn = get_db()
     cur = conn.cursor()
     try:
@@ -882,7 +917,15 @@ def feed():
                 "origin_server": root_flags.get("url-server", "")
             })
 
-        return jsonify(lista_posts), 200
+        payload_json = json.dumps(lista_posts)
+
+        if root_flags.get("redis") and r:
+            try:
+                r.setex(cache_key, 60, payload_json)
+            except Exception:
+                pass
+
+        return payload_json, 200, {"Content-Type": "application/json"}
     finally:
         cur.close()
         conn.close()
