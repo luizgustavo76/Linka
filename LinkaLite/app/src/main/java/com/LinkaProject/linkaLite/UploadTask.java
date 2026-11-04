@@ -18,7 +18,13 @@ public class UploadTask {
 
     private static final String TAG = "Linka_UploadTask";
 
+    // Sobrecarga para compatibilidade legada (3 parâmetros)
     public static String uploadProfilePicture(Context context, Uri imageUri, String requestUrl) {
+        return uploadProfilePicture(context, imageUri, requestUrl, null);
+    }
+
+    // Método principal com username no Multipart Form-Data (4 parâmetros)
+    public static String uploadProfilePicture(Context context, Uri imageUri, String requestUrl, String username) {
         if (context == null || imageUri == null || requestUrl == null || requestUrl.trim().length() == 0) {
             return makeJsonError("UploadTask", "Parâmetros de entrada inválidos (null/vazio).");
         }
@@ -51,9 +57,19 @@ public class UploadTask {
             }
             dos = new DataOutputStream(outStream);
 
-            // Cabeçalho Multipart
+            // 1. Campo 'username' no Multipart Form-Data
+            if (username != null && username.length() > 0) {
+                dos.writeBytes(twoHyphens + boundary + lineEnd);
+                dos.writeBytes("Content-Disposition: form-data; name=\"username\"" + lineEnd);
+                dos.writeBytes("Content-Type: text/plain; charset=UTF-8" + lineEnd);
+                dos.writeBytes(lineEnd);
+                dos.writeBytes(username);
+                dos.writeBytes(lineEnd);
+            }
+
+            // 2. Campo 'image' (Ficheiro de Imagem) no Multipart
             dos.writeBytes(twoHyphens + boundary + lineEnd);
-            dos.writeBytes("Content-Disposition: form-data; name=\"image\"; filename=\"image.jpg\"" + lineEnd);
+            dos.writeBytes("Content-Disposition: form-data; name=\"image\"; filename=\"profile.jpg\"" + lineEnd);
             dos.writeBytes("Content-Type: image/jpeg" + lineEnd);
             dos.writeBytes(lineEnd);
 

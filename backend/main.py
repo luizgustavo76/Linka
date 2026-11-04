@@ -100,7 +100,6 @@ app = Flask(__name__)
 def get_db():
     conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
-
 def init_tables():
     conn = get_db()
     cur = conn.cursor()
@@ -112,6 +111,10 @@ def init_tables():
             expire_date TEXT
         );
     """)
+    # CRIA ÍNDICE DE PERFORMANCE NA COLUNA TOKEN
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token);
+    """)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS banned (
             username TEXT,
@@ -122,7 +125,6 @@ def init_tables():
     conn.commit()
     cur.close()
     conn.close()
-
 # Garante que as tabelas essenciais de tokens/bans existam no Postgres
 init_tables()
 

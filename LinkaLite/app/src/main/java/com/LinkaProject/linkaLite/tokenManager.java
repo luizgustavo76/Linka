@@ -6,8 +6,18 @@ import org.json.JSONObject;
 
 public class tokenManager {
     private static final String TAG = "TOKEN_MANAGER";
+    private static int retryCount = 0;
+    private static final int MAX_RETRIES = 2;
 
     public static String newSession(Context context) {
+        if (retryCount >= MAX_RETRIES) {
+            Log.e(TAG, "[TOKEN BLOQUEADO] Limite de tentativas excedido (" + MAX_RETRIES + "). Abortando loop.");
+            retryCount = 0; // Reseta para futuras tentativas manuais de login
+            return "";
+        }
+
+        retryCount++;
+
         try {
             config cfg = new config();
             String rawJson = cfg.loadCfgAsJson(context, "config.cfg");
@@ -37,22 +47,17 @@ public class tokenManager {
                     jsonToken.put("password", password);
                     
                     String targetUrl = baseUrl + "/new-session";
-                    Log.d(TAG, "[TOKEN HTTP] Solicitando novo token via request.java para: " + targetUrl);
+                    Log.d(TAG, "[TOKEN HTTP] Solicitando novo token (Tentativa " + retryCount + "/" + MAX_RETRIES + "): " + targetUrl);
 
-                    // Reutiliza o request.java com suporte a Conscrypt/TLS e Auto-Fix HTTPS
                     String result = request.requestHTTP(targetUrl, "POST", jsonToken, context);
                     Log.d(TAG, "[TOKEN RESPOSTA] " + result);
 
                     if (result != null && result.length() > 0) {
                         JSONObject response = new JSONObject(result);
                         
-                        // Busca flexível pelo nome do campo retornado pelo Flask
                         if (response.has("token")) {
+                            retryCount = 0; // Sucesso! Zerando o contador de retries
                             return response.getString("token");
-                        } else if (response.has("token_session")) {
-                            return response.getString("token_session");
-                        } else if (response.has("session")) {
-                            return response.getString("session");
                         }
                     }
                 }
@@ -81,11 +86,12 @@ public class tokenManager {
                 JSONObject response = new JSONObject(result);
                 String status = response.optString("status", "");
                 if (status.equalsIgnoreCase("valid") || status.equalsIgnoreCase("success") || response.optBoolean("valid", false)) {
+                    retryCount = 0;
                     return "valid";
                 }
             }
 
-            // Se o token for inválido, tenta renovar a sessão
+            // Se o token for inválido, tenta renovar a sessão UMA ÚNICA VEZ
             Log.w(TAG, "[TOKEN] Sessão expirada ou inválida. Gerando nova sessão...");
             String newToken = newSession(context);
             if (newToken.length() > 0) {

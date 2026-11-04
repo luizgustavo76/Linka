@@ -1,4 +1,5 @@
 package com.LinkaProject.linkaLite;
+
 import org.json.JSONObject;
 import org.json.JSONException;
 import android.app.Activity;
@@ -22,33 +23,38 @@ public class EditAccount extends Activity {
     private String url = "";
     private static final int PICK_IMAGE_REQUEST = 1001;
     private String username = "";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.edit_account_activity);
-        try{
+        
+        try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(EditAccount.this, "config.cfg"));
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             JSONObject server = jsonCfg.getJSONObject("SERVER");
             url = server.optString("url", "");
             username = fastLogin.optString("username", "");
-        }catch (JSONException e){
+        } catch (JSONException e) {
             e.printStackTrace();
         }
+
         btnChangeBiography = (Button) findViewById(R.id.btnChangeBiography);
         btnChangePicture = (Button) findViewById(R.id.btnChangePicture);
         btnHome = (ImageButton) findViewById(R.id.btnHome);
         btnChat = (ImageButton) findViewById(R.id.btnChat);
         btnOptions = (ImageButton) findViewById(R.id.btnOptions);
         btnProfile = (ImageButton) findViewById(R.id.btnProfile);
-        btnChangeBiography.setOnClickListener(new View.OnClickListener(){
+
+        btnChangeBiography.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
+            public void onClick(View v) {
                 Intent intent = new Intent(EditAccount.this, ChangeBiography.class);
                 startActivity(intent);
             }
         });
+
         btnChangePicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -110,12 +116,12 @@ public class EditAccount extends Activity {
         protected String doInBackground(Uri... uris) {
             Uri selectedImageUri = uris[0];
             String fullUrl = url + "/upload-profile"; 
-            return UploadTask.uploadProfilePicture(EditAccount.this, selectedImageUri, fullUrl);
+            return UploadTask.uploadProfilePicture(EditAccount.this, selectedImageUri, fullUrl, username);
         }
 
         @Override
         protected void onPostExecute(String result) {
-            if (result != null) {
+            if (result != null && !result.contains("error")) {
                 Toast.makeText(EditAccount.this, "Profile picture updated!", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(EditAccount.this, "Error in update pfp", Toast.LENGTH_SHORT).show();

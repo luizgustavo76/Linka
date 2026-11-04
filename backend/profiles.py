@@ -161,7 +161,7 @@ def view(username):
     cur = conn.cursor()
     try:
         cur.execute(
-            "SELECT username, bio, dm_header_color, profile_banner_color FROM profile WHERE username = %s",
+            "SELECT username, bio, dm_header_color, profile_banner_color, \"ProfilePicture\" FROM profile WHERE username = %s",
             (username,)
         )
         response = cur.fetchone()
@@ -184,6 +184,7 @@ def view(username):
                 "username": response["username"],
                 "bio": response["bio"],
                 "profile_banner_color": response["profile_banner_color"] if response["profile_banner_color"] else "#99D6FF",
+                "profile_picture": response["ProfilePicture"],
                 "is_friend": is_friend
             }
             return jsonify(row), 200
@@ -222,9 +223,11 @@ def update_hex_banner():
 
 @profile_bp.route("/upload-profile", methods=["POST"])
 def upload_profile_pic():
-    username = getattr(g, "username", None)
+    # Tenta obter do middleware (g.username) ou direto do form multipart enviado pelo app
+    username = getattr(g, "username", None) or request.form.get("username")
+    
     if not username:
-        return jsonify({"status": "forbidden"}), 403
+        return jsonify({"status": "forbidden", "message": "Username is required"}), 403
 
     if "image" not in request.files:
         return jsonify({"error": "No image uploaded"}), 400
@@ -252,7 +255,7 @@ def upload_profile_pic():
         conn = get_db()
         cur = conn.cursor()
         try:
-            cur.execute("UPDATE profile SET \"ProfilePicture\" = %s WHERE username = %s", (public_url, username))
+            cur.execute('UPDATE profile SET "ProfilePicture" = %s WHERE username = %s', (public_url, username))
             conn.commit()
         except Exception as e:
             conn.rollback()
@@ -281,7 +284,7 @@ def get_profile_pic():
     conn = get_db()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT \"ProfilePicture\" FROM profile WHERE username = %s", (username,))
+        cur.execute('SELECT "ProfilePicture" FROM profile WHERE username = %s', (username,))
         result = cur.fetchone()
 
         if result and result["ProfilePicture"]:
