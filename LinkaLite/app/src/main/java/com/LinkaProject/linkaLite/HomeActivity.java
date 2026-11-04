@@ -99,7 +99,7 @@ public class HomeActivity extends ActivityGroup {
     private View footerTimeline, footerLocal;
     private JSONArray tags = new JSONArray();
     private boolean isGuest = false;
-    private ScheduledExecutorService scheduler, schedulerNotifications;
+    private ScheduledExecutorService scheduler, schedulerNotifications, schedulerFeedPolling;
     private DatabaseHelper dbHelper;
     private DrawerLayout drawerLayout;
 
@@ -255,13 +255,13 @@ public class HomeActivity extends ActivityGroup {
         listViewLocal = (ListView) findViewById(R.id.listViewLocal);
 
         if (listViewTimeline != null) {
-            listViewTimeline.setScrollingCacheEnabled(false);
-            listViewTimeline.setAnimationCacheEnabled(false);
+            listViewTimeline.setScrollingCacheEnabled(true);
+            listViewTimeline.setAnimationCacheEnabled(true);
         }
 
         if (listViewLocal != null) {
-            listViewLocal.setScrollingCacheEnabled(false);
-            listViewLocal.setAnimationCacheEnabled(false);
+            listViewLocal.setScrollingCacheEnabled(true);
+            listViewLocal.setAnimationCacheEnabled(true);
         }
 
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -282,8 +282,9 @@ public class HomeActivity extends ActivityGroup {
 
         schedulerNotifications = Executors.newSingleThreadScheduledExecutor();
         scheduler = Executors.newSingleThreadScheduledExecutor();
+        schedulerFeedPolling = Executors.newSingleThreadScheduledExecutor();
 
-        // Intervalo alterado de 15s para 60s para evitar travar a CPU Single-Core do Galaxy Y
+        // Checagem de notificações a cada 60s
         schedulerNotifications.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -291,6 +292,7 @@ public class HomeActivity extends ActivityGroup {
             }
         }, 0, 60, TimeUnit.SECONDS);
 
+        // Validação de token a cada 3 min
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -307,6 +309,19 @@ public class HomeActivity extends ActivityGroup {
                 }
             }
         }, 0, 3, TimeUnit.MINUTES);
+
+        // POLLING AUTOMÁTICO DE FEED: Checa se há posts novos a cada 60 segundos
+        schedulerFeedPolling.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        checkNewPosts();
+                    }
+                });
+            }
+        }, 60, 60, TimeUnit.SECONDS);
     }
 
     private void setupDrawerMenu() {
@@ -446,7 +461,7 @@ public class HomeActivity extends ActivityGroup {
             }
         });
         updateTabHeader();
-        loadFeedForTab(pageTitles[page]);
+        loadFeedForTab(pageTitles[page], false);
     }
 
     private void updateTabHeader() {
@@ -470,7 +485,7 @@ public class HomeActivity extends ActivityGroup {
     @Override
     protected void onResume() {
         super.onResume();
-        loadFeedForTab(pageTitles[currentPage]);
+        loadFeedForTab(pageTitles[currentPage], false);
     }
 
     private void loadActivityInFrame(String id, Intent intent, FrameLayout container) {
@@ -484,16 +499,28 @@ public class HomeActivity extends ActivityGroup {
         }
     }
 
-    private void clearDatabaseCache() {
-        if (postsLocal != null) {
-            postsLocal.clear();
-        }
-        if (adapterLocal != null) {
-            adapterLocal.notifyDataSetChanged();
+    // Método para checar se há novos posts silenciosamente em background
+    private void checkNewPosts() {
+        String tabName = pageTitles[currentPage];
+        if ("Timeline".equals(tabName)) {
+            loadFeedForTab("Timeline", true);
+        } else if ("Local Feed".equals(tabName)) {
+            loadFeedForTab("Local Feed", true);
         }
     }
 
-    private void loadFeedForTab(String tabName) {
+    public void refreshFeed() {
+        if ("Timeline".equals(pageTitles[currentPage])) {
+            postsTimeline.clear();
+            if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
+        } else if ("Local Feed".equals(pageTitles[currentPage])) {
+            postsLocal.clear();
+            if (adapterLocal != null) adapterLocal.notifyDataSetChanged();
+        }
+        loadFeedForTab(pageTitles[currentPage], true);
+    }
+
+    private void loadFeedForTab(String tabName, boolean forceReload) {
         String baseUrl = "http://linkaProject.pythonanywhere.com";
         JSONArray urlsArray = new JSONArray();
 
@@ -529,8 +556,13 @@ public class HomeActivity extends ActivityGroup {
         }
 
         if ("Timeline".equals(tabName)) {
-            JSONObject body = new JSONObject();
             actualTab = "timeline";
+            if (!forceReload && postsTimeline.size() > 0) {
+                if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
+                return;
+            }
+
+            JSONObject body = new JSONObject();
             try {
                 body.put("urls", urlsArray);
                 body.put("filters", tags);
@@ -541,7 +573,11 @@ public class HomeActivity extends ActivityGroup {
 
         } else if ("Local Feed".equals(tabName)) {
             actualTab = "local";
-            clearDatabaseCache();
+            if (!forceReload && postsLocal.size() > 0) {
+                if (adapterLocal != null) adapterLocal.notifyDataSetChanged();
+                return;
+            }
+
             new FetchFeedTask("local", baseUrl + "/feed", "GET", null).execute();
 
         } else if ("Chat".equals(tabName)) {
@@ -584,7 +620,6 @@ public class HomeActivity extends ActivityGroup {
             if (targetList == null || targetAdapter == null) return;
 
             if (result == null || result.trim().length() == 0) {
-                targetAdapter.notifyDataSetChanged();
                 return;
             }
 
@@ -592,9 +627,25 @@ public class HomeActivity extends ActivityGroup {
                 String trimmed = result.trim();
                 if (trimmed.startsWith("[")) {
                     JSONArray jsonArray = new JSONArray(trimmed);
-                    targetList.clear();
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        targetList.add(jsonArray.getJSONObject(i));
+                    
+                    // COMPARAÇÃO REATIVA: Checa se o post no topo mudou ou se o tamanho é diferente antes de atualizar a UI
+                    boolean hasChanges = false;
+                    if (jsonArray.length() != targetList.size()) {
+                        hasChanges = true;
+                    } else if (jsonArray.length() > 0 && targetList.size() > 0) {
+                        String newFirstId = jsonArray.getJSONObject(0).optString("unique_id", jsonArray.getJSONObject(0).optString("id", ""));
+                        String oldFirstId = targetList.get(0).optString("unique_id", targetList.get(0).optString("id", ""));
+                        if (!newFirstId.equals(oldFirstId)) {
+                            hasChanges = true;
+                        }
+                    }
+
+                    if (hasChanges || targetList.size() == 0) {
+                        targetList.clear();
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            targetList.add(jsonArray.getJSONObject(i));
+                        }
+                        targetAdapter.notifyDataSetChanged();
                     }
                 } else if (trimmed.startsWith("{")) {
                     JSONObject errObj = new JSONObject(trimmed);
@@ -604,8 +655,6 @@ public class HomeActivity extends ActivityGroup {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
-            targetAdapter.notifyDataSetChanged();
         }
     }
 
@@ -946,7 +995,6 @@ public class HomeActivity extends ActivityGroup {
                 finalProxyUrl = rawUrl;
             } else {
                 if (rawUrl.startsWith("http")) {
-                    // Pede uma imagem redimensionada para 240px com 60% de qualidade para o Galaxy Y
                     finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=240&q=60&output=jpg";
                 } else {
                     finalProxyUrl = rawUrl;
@@ -994,6 +1042,9 @@ public class HomeActivity extends ActivityGroup {
         }
         if (schedulerNotifications != null && !schedulerNotifications.isShutdown()) {
             schedulerNotifications.shutdownNow();
+        }
+        if (schedulerFeedPolling != null && !schedulerFeedPolling.isShutdown()) {
+            schedulerFeedPolling.shutdownNow();
         }
     }
 }

@@ -148,7 +148,7 @@
                         android:id="@+id/listViewTimeline"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
-                        android:scrollingCache="false"
+                        android:scrollingCache="true"
                         android:divider="#E0E0E0"
                         android:dividerHeight="1dip" />
                 </FrameLayout>
@@ -162,7 +162,7 @@
                         android:id="@+id/listViewLocal"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
-                        android:scrollingCache="false"
+                        android:scrollingCache="true"
                         android:divider="#E0E0E0"
                         android:dividerHeight="1dip" />
                 </FrameLayout>
