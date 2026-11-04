@@ -110,6 +110,9 @@ public class CommunityAdapter extends BaseAdapter {
                     String id = item.getId(); // Corrigido de int para String
                     Intent intent = new Intent(context, CommunityFeedActivity.class); // Usa 'context' em vez de 'CommunityAdapter.this'
                     intent.putExtra("community_id", id);
+                    intent.putExtra("banner_url", item.getBannerUrl());
+                    intent.putExtra("icon_url", item.getIconUrl());
+                    intent.putExtra("description", item.getDescription());
                     Toast.makeText(context, "Opening " + item.getName(), Toast.LENGTH_SHORT).show();
                     context.startActivity(intent);
                 }
