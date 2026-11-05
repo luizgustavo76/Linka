@@ -31,14 +31,30 @@
             android:layout_centerVertical="true"
             android:layout_marginLeft="10dip"
             android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/postUsername"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textStyle="bold"
-                android:textSize="13sp"
-                android:textColor="#111111" />
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="10dip"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/postUsername"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:textColor="#111111" />
+                <TextView
+                    android:id="@+id/txtCommunity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:text=">Community name here"
+                    android:textColor="#0b73d3" 
+                    android:visibility="gone"/>
+                
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/postDate"
