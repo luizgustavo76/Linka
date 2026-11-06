@@ -675,6 +675,7 @@ public class HomeActivity extends ActivityGroup {
         Button btnPublicBookmarks;
         Button btnPrivateBookmarks;
         ImageButton btnCloseBookmarks;
+        ImageButton btnReply;
     }
 
     private class PostAdapter extends BaseAdapter {
@@ -730,7 +731,7 @@ public class HomeActivity extends ActivityGroup {
                 holder.btnPublicBookmarks = (Button) convertView.findViewById(R.id.btnPublicBookmarks);
                 holder.btnPrivateBookmarks = (Button) convertView.findViewById(R.id.btnPrivateBookmarks);
                 holder.btnCloseBookmarks = (ImageButton) convertView.findViewById(R.id.btnCloseBookmarks);
-
+                holder.btnReply = (ImageButton) convertView.findViewById(R.id.btnReply);
                 convertView.setTag(holder);
             } else {
                 holder = (ViewHolder) convertView.getTag();
@@ -750,7 +751,15 @@ public class HomeActivity extends ActivityGroup {
                 final int id = post.optInt("id", -1);
                 final String originalUrl = post.optString("original_url", "");
                 final boolean isExternal = !origin_server.isEmpty() && !origin_server.equals("linka");
-
+                holder.btnReply.setOnClickListener(new View.OnClickListener(){
+                    public void onClick(View v){
+                        Intent intent = new Intent(HomeActivity.this, newPost.class);
+                        intent.putExtra("repostPostId", id);
+                        intent.putExtra("repostUser", username);
+                        intent.putExtra("repostText", textPost);
+                        startActivity(intent);
+                    }
+                });
                 holder.btnBookmarks.setSelected(false);
                 if (holder.containerBookmarkOptions != null) {
                     holder.containerBookmarkOptions.setVisibility(View.GONE);

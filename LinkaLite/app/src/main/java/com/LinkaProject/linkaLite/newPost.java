@@ -91,7 +91,6 @@ public class newPost extends Activity {
             if (txtRepostOriginalUser != null) txtRepostOriginalUser.setText(repostUser);
             if (txtRepostOriginalText != null) txtRepostOriginalText.setText(repostText);
         }
-
         if (btnRemoveRepost != null) {
             btnRemoveRepost.setOnClickListener(new View.OnClickListener() {
                 @Override
