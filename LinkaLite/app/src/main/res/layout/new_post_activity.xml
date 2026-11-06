@@ -11,7 +11,6 @@
         android:orientation="vertical"
         android:padding="12dip">
 
-        <!-- Card de Alerta do Convidado -->
         <LinearLayout
             android:id="@+id/layoutGuest"
             android:layout_width="fill_parent"
@@ -42,7 +41,6 @@
                 android:textColor="#FFFFFF" />
         </LinearLayout>
 
-        <!-- Card Principal (Fundo Branco com Padded Interno) -->
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -50,7 +48,6 @@
             android:background="#FFFFFF"
             android:padding="14dip">
 
-            <!-- Cabeçalho -->
             <TextView
                 android:id="@+id/newPostText"
                 android:layout_width="fill_parent"
@@ -69,22 +66,86 @@
                 android:textColor="#757575"
                 android:layout_marginBottom="12dip" />
 
-            <!-- Caixa de Texto Estilo Material -->
             <EditText
-                android:id="@+id/textPost"
+                android:id="@+id/editPostContent"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:hint="What's on your mind?"
-                android:textSize="14sp"
-                android:minLines="4"
-                android:gravity="top"
-                android:padding="10dip"
-                android:background="#F0F0F0"
-                android:textColor="#212121"
-                android:textColorHint="#9E9E9E"
-                android:layout_marginBottom="12dip" />
+                android:minLines="3"
+                android:gravity="top|left"
+                android:background="#F9F9F9"
+                android:padding="8dip"
+                android:hint="O que está acontecendo?"
+                android:textColor="#222222"
+                android:textColorHint="#AAA"
+                android:textSize="15sp" />
 
-            <!-- Secção "Post in" -->
+            <LinearLayout
+                android:id="@+id/containerRepostPreview"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dip"
+                android:background="#F4F6F8"
+                android:orientation="vertical"
+                android:padding="10dip"
+                android:visibility="gone">
+
+                <RelativeLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/txtRepostOriginalUser"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textStyle="bold"
+                        android:textColor="#333333"
+                        android:textSize="12sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnRemoveRepost"
+                        android:layout_width="18dip"
+                        android:layout_height="18dip"
+                        android:layout_alignParentRight="true"
+                        android:background="@android:color/transparent"
+                        android:src="@android:drawable/ic_menu_close_clear_cancel" />
+                </RelativeLayout>
+
+                <TextView
+                    android:id="@+id/txtRepostOriginalText"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dip"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:textColor="#666666"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <RelativeLayout
+                android:id="@+id/containerMediaPreview"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dip"
+                android:visibility="gone">
+
+                <com.LinkaProject.linkaLite.GifImageView
+                    android:id="@+id/imgMediaPreview"
+                    android:layout_width="fill_parent"
+                    android:layout_height="180dip"
+                    android:adjustViewBounds="true"
+                    android:scaleType="centerCrop" />
+
+                <ImageButton
+                    android:id="@+id/btnRemoveMedia"
+                    android:layout_width="24dip"
+                    android:layout_height="24dip"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_margin="6dip"
+                    android:background="#80000000"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel" />
+            </RelativeLayout>
+
             <TextView
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
@@ -92,9 +153,9 @@
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:textColor="#424242"
+                android:layout_marginTop="12dip"
                 android:layout_marginBottom="6dip" />
 
-            <!-- Grelha de Checkboxes (Linha 1) -->
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
@@ -121,7 +182,6 @@
                     android:textColor="#212121" />
             </LinearLayout>
 
-            <!-- Grelha de Checkboxes (Linha 2) -->
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
@@ -147,7 +207,6 @@
                     android:textColor="#212121" />
             </LinearLayout>
 
-            <!-- Botões de Ação Alinhados -->
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"

@@ -11,7 +11,9 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,7 +25,7 @@ public class newPost extends Activity {
     private static final int PICK_IMAGE_REQUEST = 1001;
 
     private TextView newPostText;
-    private EditText textPost;
+    private EditText editPostContent;
     private Button btnSend;
     private Button btnImage;
     private Button btnLogin;
@@ -35,6 +37,18 @@ public class newPost extends Activity {
     private CheckBox btnMastodon;
     private CheckBox btnBluesky;
 
+    private RelativeLayout containerMediaPreview;
+    private ImageButton btnRemoveMedia;
+    private GifImageView imgMediaPreview;
+
+    private LinearLayout containerRepostPreview;
+    private TextView txtRepostOriginalUser;
+    private TextView txtRepostOriginalText;
+    private ImageButton btnRemoveRepost;
+
+    private String uploadedImageUrl = "";
+    private int repostPostId = -1;
+
     private static final String CFG_EXTERNAL_FILE = "config-external.cfg";
 
     @Override
@@ -45,7 +59,7 @@ public class newPost extends Activity {
         layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
         btnLogin = (Button) findViewById(R.id.btnLogin);
         newPostText = (TextView) findViewById(R.id.newPostText);
-        textPost = (EditText) findViewById(R.id.textPost);
+        editPostContent = (EditText) findViewById(R.id.editPostContent);
         btnSend = (Button) findViewById(R.id.btnSend);
         btnImage = (Button) findViewById(R.id.btnImage);
 
@@ -54,16 +68,54 @@ public class newPost extends Activity {
         btnMastodon = (CheckBox) findViewById(R.id.btnMastodon);
         btnBluesky = (CheckBox) findViewById(R.id.btnBluesky);
 
+        containerMediaPreview = (RelativeLayout) findViewById(R.id.containerMediaPreview);
+        btnRemoveMedia = (ImageButton) findViewById(R.id.btnRemoveMedia);
+        imgMediaPreview = (GifImageView) findViewById(R.id.imgMediaPreview);
+
+        containerRepostPreview = (LinearLayout) findViewById(R.id.containerRepostPreview);
+        txtRepostOriginalUser = (TextView) findViewById(R.id.txtRepostOriginalUser);
+        txtRepostOriginalText = (TextView) findViewById(R.id.txtRepostOriginalText);
+        btnRemoveRepost = (ImageButton) findViewById(R.id.btnRemoveRepost);
+
         if (btnLinka != null) {
             btnLinka.setChecked(true);
         }
 
         isGuest = getIntent().getBooleanExtra("isGuest", false);
+        repostPostId = getIntent().getIntExtra("repostPostId", -1);
+        String repostUser = getIntent().getStringExtra("repostUser");
+        String repostText = getIntent().getStringExtra("repostText");
+
+        if (repostPostId != -1 && containerRepostPreview != null) {
+            containerRepostPreview.setVisibility(View.VISIBLE);
+            if (txtRepostOriginalUser != null) txtRepostOriginalUser.setText(repostUser);
+            if (txtRepostOriginalText != null) txtRepostOriginalText.setText(repostText);
+        }
+
+        if (btnRemoveRepost != null) {
+            btnRemoveRepost.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    repostPostId = -1;
+                    if (containerRepostPreview != null) containerRepostPreview.setVisibility(View.GONE);
+                }
+            });
+        }
+
+        if (btnRemoveMedia != null) {
+            btnRemoveMedia.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    uploadedImageUrl = "";
+                    if (containerMediaPreview != null) containerMediaPreview.setVisibility(View.GONE);
+                }
+            });
+        }
 
         if (isGuest) {
             if (layoutGuest != null) layoutGuest.setVisibility(View.VISIBLE);
             if (newPostText != null) newPostText.setVisibility(View.GONE);
-            if (textPost != null) textPost.setVisibility(View.GONE);
+            if (editPostContent != null) editPostContent.setVisibility(View.GONE);
             if (btnSend != null) btnSend.setVisibility(View.GONE);
             if (btnImage != null) btnImage.setVisibility(View.GONE);
 
@@ -81,7 +133,7 @@ public class newPost extends Activity {
                 layoutGuest.setVisibility(View.GONE);
             }
             if (newPostText != null) newPostText.setVisibility(View.VISIBLE);
-            if (textPost != null) textPost.setVisibility(View.VISIBLE);
+            if (editPostContent != null) editPostContent.setVisibility(View.VISIBLE);
             if (btnSend != null) btnSend.setVisibility(View.VISIBLE);
             if (btnImage != null) btnImage.setVisibility(View.VISIBLE);
 
@@ -93,8 +145,8 @@ public class newPost extends Activity {
                 btnSend.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        String postContent = textPost.getText().toString();
-                        if (postContent.trim().length() == 0) {
+                        String postContent = editPostContent.getText().toString();
+                        if (postContent.trim().length() == 0 && uploadedImageUrl.length() == 0 && repostPostId == -1) {
                             Toast.makeText(newPost.this, "write something!", Toast.LENGTH_SHORT).show();
                             return;
                         }
@@ -171,8 +223,6 @@ public class newPost extends Activity {
     }
 
     private class UploadImageTask extends AsyncTask<Uri, Void, String> {
-        private String lastError = null;
-
         @Override
         protected String doInBackground(Uri... uris) {
             Uri selectedImageUri = uris[0];
@@ -191,7 +241,6 @@ public class newPost extends Activity {
                 return UploadTask.uploadProfilePicture(newPost.this, selectedImageUri, fullUrl);
             } catch (Exception e) {
                 Log.e(TAG, "Exception during upload", e);
-                lastError = e.getClass().getSimpleName() + ": " + e.getMessage();
             }
             return null;
         }
@@ -202,11 +251,13 @@ public class newPost extends Activity {
             if (result != null && result.length() > 0) {
                 try {
                     JSONObject jsonResponse = new JSONObject(result);
-                    String imageUrl = jsonResponse.optString("image_url", "");
+                    uploadedImageUrl = jsonResponse.optString("image_url", "");
 
-                    if (imageUrl.length() > 0) {
-                        if (textPost != null) textPost.append("\n[IMAGE]" + imageUrl);
+                    if (uploadedImageUrl.length() > 0) {
+                        if (containerMediaPreview != null) containerMediaPreview.setVisibility(View.VISIBLE);
                         Toast.makeText(newPost.this, "Image uploaded!", Toast.LENGTH_SHORT).show();
+                        ImageLoader imageLoader = new ImageLoader();
+                        imageLoader.LoadImageUrl(uploadedImageUrl, imgMediaPreview);
                     } else {
                         String serverError = jsonResponse.optString("error", "Upload failed");
                         Toast.makeText(newPost.this, serverError, Toast.LENGTH_LONG).show();
@@ -241,21 +292,29 @@ public class newPost extends Activity {
                 String rawExternal = cfg.loadCfgAsJson(newPost.this, CFG_EXTERNAL_FILE);
                 JSONObject jsonExt = (rawExternal != null && rawExternal.length() > 0) ? new JSONObject(rawExternal) : new JSONObject();
 
+                String finalContent = postTextValue;
+                if (uploadedImageUrl.length() > 0) {
+                    finalContent += "\n[IMAGE]" + uploadedImageUrl;
+                }
+
                 String mainResult = "";
                 if (btnLinka != null && btnLinka.isChecked()) {
                     JSONObject jsonResponse = new JSONObject();
                     jsonResponse.put("username", username);
                     jsonResponse.put("token_session", token);
-                    jsonResponse.put("text_post", postTextValue);
+                    jsonResponse.put("text_post", finalContent);
                     jsonResponse.put("datetime", TimeUtils.getDateTime());
                     jsonResponse.put("external_credentials", jsonExt);
+                    if (repostPostId != -1) {
+                        jsonResponse.put("repost_id", repostPostId);
+                    }
 
                     mainResult = request.requestHTTP(baseUrl + "/new", "post", jsonResponse, newPost.this);
                 }
 
-                dispatchExternalNetwork(btnMastodon, "MASTODON", baseUrl, postTextValue, jsonExt, cfg);
-                dispatchExternalNetwork(btnBluesky, "BLUESKY", baseUrl, postTextValue, jsonExt, cfg);
-                dispatchExternalNetwork(btnReddit, "REDDIT", baseUrl, postTextValue, jsonExt, cfg);
+                dispatchExternalNetwork(btnMastodon, "MASTODON", baseUrl, finalContent, jsonExt, cfg);
+                dispatchExternalNetwork(btnBluesky, "BLUESKY", baseUrl, finalContent, jsonExt, cfg);
+                dispatchExternalNetwork(btnReddit, "REDDIT", baseUrl, finalContent, jsonExt, cfg);
 
                 return mainResult.length() > 0 ? mainResult : "ok";
             } catch (Exception e) {
@@ -288,7 +347,6 @@ public class newPost extends Activity {
                 payload.put("text_post", postText);
 
                 String response = request.requestHTTP(endpoint, "post", payload, newPost.this);
-                Toast.makeText(newPost.this, "Response: " + response, Toast.LENGTH_LONG).show();
             } catch (Exception e) {
                 Log.e(TAG, "Failed to dispatch to " + networkKey, e);
             }
