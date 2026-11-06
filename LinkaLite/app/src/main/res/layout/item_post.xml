@@ -7,6 +7,7 @@
     android:clickable="true"
     android:focusable="true">
 
+    <!-- Cabeçalho do Autor que está Repostando -->
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -31,12 +32,12 @@
             android:layout_centerVertical="true"
             android:layout_marginLeft="10dip"
             android:orientation="vertical">
+
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_marginLeft="10dip"
                 android:orientation="horizontal">
+
                 <TextView
                     android:id="@+id/postUsername"
                     android:layout_width="wrap_content"
@@ -44,16 +45,17 @@
                     android:textStyle="bold"
                     android:textSize="13sp"
                     android:textColor="#111111" />
+
                 <TextView
                     android:id="@+id/txtCommunity"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textStyle="bold"
                     android:textSize="13sp"
-                    android:text=">Community name here"
-                    android:textColor="#0b73d3" 
-                    android:visibility="gone"/>
-                
+                    android:text=" > Community name here"
+                    android:textColor="#0b73d3"
+                    android:visibility="gone" />
+
             </LinearLayout>
 
             <TextView
@@ -62,9 +64,11 @@
                 android:layout_height="wrap_content"
                 android:textSize="10sp"
                 android:textColor="#888888" />
+
         </LinearLayout>
     </RelativeLayout>
 
+    <!-- Texto do Usuário que Repostou (Comentário por cima do repost, se houver) -->
     <TextView
         android:id="@+id/postText"
         android:layout_width="fill_parent"
@@ -76,6 +80,98 @@
         android:textColor="#222222"
         android:lineSpacingExtra="2dip" />
 
+    <!-- Container de Repost Estilo Reddit (Embed do Post Original) -->
+    <LinearLayout
+        android:id="@+id/containerRepost"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="12dip"
+        android:layout_marginRight="12dip"
+        android:layout_marginBottom="8dip"
+        android:orientation="vertical"
+        android:background="#F4F6F8"
+        android:padding="10dip"
+        android:visibility="gone">
+
+        <!-- Cabeçalho do Post Original -->
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/repostAvatar"
+                android:layout_width="24dip"
+                android:layout_height="24dip"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_myplaces" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/repostAvatar"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="8dip"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/repostUsername"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textStyle="bold"
+                        android:textSize="12sp"
+                        android:textColor="#333333" />
+
+                    <TextView
+                        android:id="@+id/repostCommunity"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textStyle="bold"
+                        android:textSize="12sp"
+                        android:textColor="#0b73d3"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/repostDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="9sp"
+                    android:textColor="#888888" />
+
+            </LinearLayout>
+        </RelativeLayout>
+
+        <!-- Texto do Post Original -->
+        <TextView
+            android:id="@+id/repostText"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dip"
+            android:textSize="13sp"
+            android:textColor="#444444"
+            android:lineSpacingExtra="1dip" />
+
+        <!-- Mídia do Post Original (se o post repostado tiver imagem/gif) -->
+        <com.LinkaProject.linkaLite.GifImageView
+            android:id="@+id/repostImg"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dip"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- Container de Mídia Direta (Caso não seja repost, mas um post normal com imagem) -->
     <RelativeLayout
         android:id="@+id/containerMedia"
         android:layout_width="fill_parent"
@@ -134,6 +230,7 @@
             android:visibility="gone" />
     </RelativeLayout>
 
+    <!-- Barra de Ações (Reply, Bookmarks, Comments) -->
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -202,6 +299,15 @@
             </LinearLayout>
 
             <ImageButton
+                android:id="@+id/btnReply"
+                android:layout_width="24dip"
+                android:layout_height="24dip"
+                android:layout_marginRight="16dip"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/reply" />
+
+            <ImageButton
                 android:id="@+id/btnBookmarks"
                 android:layout_width="24dip"
                 android:layout_height="24dip"
@@ -226,6 +332,7 @@
                 android:textColor="#777777"
                 android:textSize="11sp"
                 android:text="0" />
+
         </LinearLayout>
     </RelativeLayout>
 
