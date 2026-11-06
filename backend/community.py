@@ -212,7 +212,7 @@ def view_communities():
         cur.close()
         conn.close()
 
-@community_bp.route("/new-post", methods=["POST"])
+@community_bp.route("/new-post-community", methods=["POST"])
 def new_post():
     data = request.get_json(silent=True) or {}
     username = data.get("username")

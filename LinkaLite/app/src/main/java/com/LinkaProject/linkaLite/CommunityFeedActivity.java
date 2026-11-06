@@ -41,6 +41,7 @@ public class CommunityFeedActivity extends Activity {
         newPost.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
                 Intent intent = new Intent(CommunityFeedActivity.this, NewPostCommunity.class);
+                intent.putExtra("community_id", communityId);
                 startActivity(intent);
             }
         });
