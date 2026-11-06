@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fillViewport="true"
+    android:background="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dip">
+
+        <!-- Card de Alerta do Convidado -->
+        <LinearLayout
+            android:id="@+id/layoutNotMember"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFEBEE"
+            android:padding="12dip"
+            android:layout_marginBottom="12dip"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/memberText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="You are not a member! click here to begin a member"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:textColor="#C62828" />
+
+            <Button
+                android:id="@+id/btnMember"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dip"
+                android:text="Click here to login"
+                android:textSize="12sp"
+                android:textColor="#9c9c9c" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:padding="14dip">
+
+            <!-- Cabeçalho -->
+            <TextView
+                android:id="@+id/newPostText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="New Post"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#212121" />
+
+            <EditText
+                android:id="@+id/textPost"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:hint="What's on your mind?"
+                android:textSize="14sp"
+                android:minLines="4"
+                android:gravity="top"
+                android:padding="10dip"
+                android:background="#F0F0F0"
+                android:textColor="#212121"
+                android:textColorHint="#9E9E9E"
+                android:layout_marginBottom="12dip" />
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnImage"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Attach image"
+                    android:textSize="12sp"
+                    android:layout_marginRight="4dip" />
+
+                <Button
+                    android:id="@+id/btnSend"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Send!"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginLeft="4dip" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

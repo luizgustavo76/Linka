@@ -14,7 +14,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import android.widget.ImageButton;
 public class CommunityFeedActivity extends Activity {
 
     private LinearLayout layoutFeedContainer;
@@ -27,16 +27,23 @@ public class CommunityFeedActivity extends Activity {
     private ImageView imgCommunityAvatar;
     private TextView txtDescription;
     private String description = "";
+    private ImageButton newPost;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_community_feed);
-
+        newPost = (ImageButton) findViewById(R.id.newPost);
         layoutFeedContainer = (LinearLayout) findViewById(R.id.layoutFeedContainer);
         imageLoader = new ImageLoader();
         imgBanner = (ImageView) findViewById(R.id.imgBanner);
         imgCommunityAvatar = (ImageView) findViewById(R.id.imgCommunityAvatar);
         txtDescription = (TextView) findViewById(R.id.txtDescription);
+        newPost.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                Intent intent = new Intent(CommunityFeedActivity.this, NewPostCommunity.class);
+                startActivity(intent);
+            }
+        });
         Intent intent = getIntent();
         if (intent != null && intent.hasExtra("community_id")) {
             communityId = intent.getStringExtra("community_id");
