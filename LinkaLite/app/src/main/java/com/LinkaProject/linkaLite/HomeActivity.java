@@ -13,6 +13,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -102,6 +103,13 @@ public class HomeActivity extends ActivityGroup {
     private ScheduledExecutorService scheduler, schedulerNotifications, schedulerFeedPolling;
     private DatabaseHelper dbHelper;
     private DrawerLayout drawerLayout;
+
+    // Variaveis para Controlo de Paginacao
+    private int feedPageLocal = 1;
+    private int feedPageTimeline = 1;
+    private boolean isLoading = false;
+    private boolean hasMoreLocal = true;
+    private boolean hasMoreTimeline = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -257,11 +265,35 @@ public class HomeActivity extends ActivityGroup {
         if (listViewTimeline != null) {
             listViewTimeline.setScrollingCacheEnabled(true);
             listViewTimeline.setAnimationCacheEnabled(true);
+            listViewTimeline.setOnScrollListener(new AbsListView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(AbsListView view, int scrollState) {}
+
+                @Override
+                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                    if (!isLoading && hasMoreTimeline && totalItemCount > 0 && (firstVisibleItem + visibleItemCount >= totalItemCount - 2)) {
+                        feedPageTimeline++;
+                        loadFeedForTab("Timeline", false, feedPageTimeline);
+                    }
+                }
+            });
         }
 
         if (listViewLocal != null) {
             listViewLocal.setScrollingCacheEnabled(true);
             listViewLocal.setAnimationCacheEnabled(true);
+            listViewLocal.setOnScrollListener(new AbsListView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(AbsListView view, int scrollState) {}
+
+                @Override
+                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                    if (!isLoading && hasMoreLocal && totalItemCount > 0 && (firstVisibleItem + visibleItemCount >= totalItemCount - 2)) {
+                        feedPageLocal++;
+                        loadFeedForTab("Local Feed", false, feedPageLocal);
+                    }
+                }
+            });
         }
 
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -284,7 +316,7 @@ public class HomeActivity extends ActivityGroup {
         scheduler = Executors.newSingleThreadScheduledExecutor();
         schedulerFeedPolling = Executors.newSingleThreadScheduledExecutor();
 
-        // Checagem de notificações a cada 60s
+        // Checagem de notificacoes a cada 60s
         schedulerNotifications.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -292,7 +324,7 @@ public class HomeActivity extends ActivityGroup {
             }
         }, 0, 60, TimeUnit.SECONDS);
 
-        // Validação de token a cada 3 min
+        // Validacao de token a cada 3 min
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -310,7 +342,7 @@ public class HomeActivity extends ActivityGroup {
             }
         }, 0, 3, TimeUnit.MINUTES);
 
-        // POLLING AUTOMÁTICO DE FEED: Checa se há posts novos a cada 60 segundos
+        // POLLING AUTOMATICO DE FEED: Checa novos posts do topo a cada 60s
         schedulerFeedPolling.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -461,7 +493,7 @@ public class HomeActivity extends ActivityGroup {
             }
         });
         updateTabHeader();
-        loadFeedForTab(pageTitles[page], false);
+        loadFeedForTab(pageTitles[page], false, 1);
     }
 
     private void updateTabHeader() {
@@ -485,7 +517,7 @@ public class HomeActivity extends ActivityGroup {
     @Override
     protected void onResume() {
         super.onResume();
-        loadFeedForTab(pageTitles[currentPage], false);
+        loadFeedForTab(pageTitles[currentPage], false, 1);
     }
 
     private void loadActivityInFrame(String id, Intent intent, FrameLayout container) {
@@ -499,28 +531,33 @@ public class HomeActivity extends ActivityGroup {
         }
     }
 
-    // Método para checar se há novos posts silenciosamente em background
     private void checkNewPosts() {
         String tabName = pageTitles[currentPage];
         if ("Timeline".equals(tabName)) {
-            loadFeedForTab("Timeline", true);
+            loadFeedForTab("Timeline", true, 1);
         } else if ("Local Feed".equals(tabName)) {
-            loadFeedForTab("Local Feed", true);
+            loadFeedForTab("Local Feed", true, 1);
         }
     }
 
     public void refreshFeed() {
         if ("Timeline".equals(pageTitles[currentPage])) {
             postsTimeline.clear();
+            feedPageTimeline = 1;
+            hasMoreTimeline = true;
             if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
         } else if ("Local Feed".equals(pageTitles[currentPage])) {
             postsLocal.clear();
+            feedPageLocal = 1;
+            hasMoreLocal = true;
             if (adapterLocal != null) adapterLocal.notifyDataSetChanged();
         }
-        loadFeedForTab(pageTitles[currentPage], true);
+        loadFeedForTab(pageTitles[currentPage], true, 1);
     }
 
-    private void loadFeedForTab(String tabName, boolean forceReload) {
+    private void loadFeedForTab(String tabName, boolean forceReload, int targetPage) {
+        if (isLoading) return;
+
         String baseUrl = "http://linkaProject.pythonanywhere.com";
         JSONArray urlsArray = new JSONArray();
 
@@ -557,7 +594,7 @@ public class HomeActivity extends ActivityGroup {
 
         if ("Timeline".equals(tabName)) {
             actualTab = "timeline";
-            if (!forceReload && postsTimeline.size() > 0) {
+            if (!forceReload && targetPage == 1 && postsTimeline.size() > 0) {
                 if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
                 return;
             }
@@ -566,19 +603,24 @@ public class HomeActivity extends ActivityGroup {
             try {
                 body.put("urls", urlsArray);
                 body.put("filters", tags);
+                body.put("page", targetPage);
+                body.put("limit", 20);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            new FetchFeedTask("timeline", baseUrl + "/view-external-posts", "POST", body).execute();
+
+            isLoading = true;
+            new FetchFeedTask("timeline", baseUrl + "/view-external-posts?page=" + targetPage + "&limit=20", "POST", body, targetPage).execute();
 
         } else if ("Local Feed".equals(tabName)) {
             actualTab = "local";
-            if (!forceReload && postsLocal.size() > 0) {
+            if (!forceReload && targetPage == 1 && postsLocal.size() > 0) {
                 if (adapterLocal != null) adapterLocal.notifyDataSetChanged();
                 return;
             }
 
-            new FetchFeedTask("local", baseUrl + "/feed", "GET", null).execute();
+            isLoading = true;
+            new FetchFeedTask("local", baseUrl + "/feed?page=" + targetPage + "&limit=20", "GET", null, targetPage).execute();
 
         } else if ("Chat".equals(tabName)) {
             FrameLayout pageChat = (FrameLayout) findViewById(R.id.pageChat);
@@ -599,12 +641,14 @@ public class HomeActivity extends ActivityGroup {
         private String url;
         private String method;
         private JSONObject jsonBody;
+        private int pageRequested;
 
-        public FetchFeedTask(String tabType, String url, String method, JSONObject jsonBody) {
+        public FetchFeedTask(String tabType, String url, String method, JSONObject jsonBody, int pageRequested) {
             this.tabType = tabType;
             this.url = url;
             this.method = method;
             this.jsonBody = jsonBody;
+            this.pageRequested = pageRequested;
         }
 
         @Override
@@ -614,12 +658,15 @@ public class HomeActivity extends ActivityGroup {
 
         @Override
         protected void onPostExecute(String result) {
+            isLoading = false;
             ArrayList<JSONObject> targetList = "timeline".equals(tabType) ? postsTimeline : postsLocal;
             PostAdapter targetAdapter = "timeline".equals(tabType) ? adapterTimeline : adapterLocal;
 
             if (targetList == null || targetAdapter == null) return;
 
             if (result == null || result.trim().length() == 0) {
+                if ("timeline".equals(tabType)) hasMoreTimeline = false;
+                else hasMoreLocal = false;
                 return;
             }
 
@@ -627,26 +674,21 @@ public class HomeActivity extends ActivityGroup {
                 String trimmed = result.trim();
                 if (trimmed.startsWith("[")) {
                     JSONArray jsonArray = new JSONArray(trimmed);
-                    
-                    // COMPARAÇÃO REATIVA: Checa se o post no topo mudou ou se o tamanho é diferente antes de atualizar a UI
-                    boolean hasChanges = false;
-                    if (jsonArray.length() != targetList.size()) {
-                        hasChanges = true;
-                    } else if (jsonArray.length() > 0 && targetList.size() > 0) {
-                        String newFirstId = jsonArray.getJSONObject(0).optString("unique_id", jsonArray.getJSONObject(0).optString("id", ""));
-                        String oldFirstId = targetList.get(0).optString("unique_id", targetList.get(0).optString("id", ""));
-                        if (!newFirstId.equals(oldFirstId)) {
-                            hasChanges = true;
-                        }
+
+                    if (jsonArray.length() < 20) {
+                        if ("timeline".equals(tabType)) hasMoreTimeline = false;
+                        else hasMoreLocal = false;
                     }
 
-                    if (hasChanges || targetList.size() == 0) {
+                    if (pageRequested == 1) {
                         targetList.clear();
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            targetList.add(jsonArray.getJSONObject(i));
-                        }
-                        targetAdapter.notifyDataSetChanged();
                     }
+
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        targetList.add(jsonArray.getJSONObject(i));
+                    }
+                    targetAdapter.notifyDataSetChanged();
+
                 } else if (trimmed.startsWith("{")) {
                     JSONObject errObj = new JSONObject(trimmed);
                     String msg = errObj.optString("error", errObj.optString("status", "Error loading feed"));
