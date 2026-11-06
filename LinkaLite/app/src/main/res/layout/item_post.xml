@@ -306,16 +306,6 @@
                 android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@drawable/reply" />
-
-            <ImageButton
-                android:id="@+id/btnBookmarks"
-                android:layout_width="24dip"
-                android:layout_height="24dip"
-                android:layout_marginRight="16dip"
-                android:background="@android:color/transparent"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_bookmark" />
-
             <ImageButton
                 android:id="@+id/btnComments"
                 android:layout_width="24dip"
@@ -332,6 +322,14 @@
                 android:textColor="#777777"
                 android:textSize="11sp"
                 android:text="0" />
+            <ImageButton
+                android:id="@+id/btnBookmarks"
+                android:layout_width="24dip"
+                android:layout_height="24dip"
+                android:layout_marginRight="16dip"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_bookmark" />
 
         </LinearLayout>
     </RelativeLayout>

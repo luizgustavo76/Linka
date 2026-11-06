@@ -5,20 +5,20 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 
-    <!-- 1. CONTEÚDO PRINCIPAL DO APP -->
+    <!-- CONTEÚDO PRINCIPAL DO APP -->
     <LinearLayout 
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:orientation="vertical"
         android:background="#FFFFFF">
 
-        <!-- Top Bar com Botão Hambúrguer, Logo Ajustado e Ações -->
+        <!-- Top Bar com Logo Centralizada Absoluta -->
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="48dip"
-            android:background="#1C1C1C"
-            android:paddingLeft="8dip"
-            android:paddingRight="8dip">
+            android:background="#121212"
+            android:paddingLeft="6dip"
+            android:paddingRight="6dip">
 
             <!-- Botão Hambúrguer -->
             <ImageButton
@@ -31,6 +31,15 @@
                 android:scaleType="centerInside"
                 android:src="@android:drawable/ic_menu_sort_by_size" />
 
+            <!-- Logo Centralizado no Meio da Tela -->
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="wrap_content"
+                android:layout_height="30dip"
+                android:layout_centerInParent="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/linka_icon_bar" />
+
             <!-- Container de Botões da Direita -->
             <LinearLayout
                 android:id="@+id/rightBarButtons"
@@ -42,50 +51,36 @@
 
                 <ImageButton
                     android:id="@+id/newPost"
-                    android:layout_width="40dip"
-                    android:layout_height="40dip"
+                    android:layout_width="38dip"
+                    android:layout_height="38dip"
                     android:background="@android:color/transparent"
                     android:scaleType="centerInside"
                     android:src="@android:drawable/ic_menu_edit" />
 
                 <ImageButton
                     android:id="@+id/btnInbox"
-                    android:layout_width="40dip"
-                    android:layout_height="40dip"
+                    android:layout_width="38dip"
+                    android:layout_height="38dip"
                     android:background="@android:color/transparent"
                     android:scaleType="centerInside"
                     android:src="@android:drawable/sym_action_chat" />
 
                 <ImageButton
                     android:id="@+id/btnProfile"
-                    android:layout_width="40dip"
-                    android:layout_height="40dip"
+                    android:layout_width="38dip"
+                    android:layout_height="38dip"
                     android:background="@android:color/transparent"
                     android:scaleType="centerInside"
                     android:src="@android:drawable/ic_menu_myplaces" />
-
             </LinearLayout>
-
-            <!-- Logo devidamente delimitado no meio sem invadir os ícones -->
-            <ImageView
-                android:id="@+id/logo"
-                android:layout_width="0dip"
-                android:layout_height="36dip"
-                android:layout_centerVertical="true"
-                android:layout_toRightOf="@id/btnHamburger"
-                android:layout_toLeftOf="@id/rightBarButtons"
-                android:layout_marginLeft="4dip"
-                android:layout_marginRight="4dip"
-                android:scaleType="fitCenter"
-                android:src="@drawable/linka_app_login_banner" />
 
         </RelativeLayout>
 
-        <!-- Barra do Indicador de Abas -->
+        <!-- Barra do Indicador de Abas (Dark Harmonizado) -->
         <RelativeLayout
             android:layout_width="fill_parent"
-            android:layout_height="32dip"
-            android:background="#E0E0E0">
+            android:layout_height="30dip"
+            android:background="#222222">
 
             <TextView
                 android:id="@+id/tabPrev"
@@ -95,9 +90,9 @@
                 android:gravity="center_vertical"
                 android:paddingLeft="12dip"
                 android:paddingRight="12dip"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
-                android:textColor="#333333"
+                android:textColor="#888888"
                 android:visibility="invisible" />
 
             <TextView
@@ -107,8 +102,8 @@
                 android:layout_centerInParent="true"
                 android:gravity="center_vertical"
                 android:textStyle="bold"
-                android:textSize="13sp"
-                android:textColor="#000000"
+                android:textSize="12sp"
+                android:textColor="#FFFFFF"
                 android:text="Timeline" />
 
             <TextView
@@ -119,9 +114,9 @@
                 android:gravity="center_vertical"
                 android:paddingLeft="12dip"
                 android:paddingRight="12dip"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold"
-                android:textColor="#333333"
+                android:textColor="#888888"
                 android:text="Local Feed ▶" />
         </RelativeLayout>
 
@@ -139,7 +134,6 @@
                 android:layout_height="fill_parent"
                 android:orientation="horizontal">
 
-                <!-- Página 1: Timeline -->
                 <FrameLayout
                     android:id="@+id/pageTimeline"
                     android:layout_width="wrap_content"
@@ -153,7 +147,6 @@
                         android:dividerHeight="1dip" />
                 </FrameLayout>
 
-                <!-- Página 2: Local Feed -->
                 <FrameLayout
                     android:id="@+id/pageLocal"
                     android:layout_width="wrap_content"
@@ -167,7 +160,6 @@
                         android:dividerHeight="1dip" />
                 </FrameLayout>
 
-                <!-- Página 3: Chat -->
                 <FrameLayout
                     android:id="@+id/pageChat"
                     android:layout_width="wrap_content"
@@ -181,7 +173,6 @@
                         android:dividerHeight="1dip" />
                 </FrameLayout>
 
-                <!-- Página 4: Options -->
                 <FrameLayout
                     android:id="@+id/pageOptions"
                     android:layout_width="wrap_content"
@@ -242,7 +233,7 @@
 
     </LinearLayout>
 
-    <!-- 2. INCLUSÃO DO MENU LATERAL -->
+    <!-- INCLUSÃO DO MENU LATERAL -->
     <include layout="@layout/drawer_home" />
 
 </android.support.v4.widget.DrawerLayout>

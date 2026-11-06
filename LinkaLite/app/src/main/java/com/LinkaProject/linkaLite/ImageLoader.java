@@ -275,13 +275,12 @@ public class ImageLoader {
                                 if (rawBytes != null && rawBytes.length > 0) {
                                     final Bitmap decodedBitmap = decodeByteArrayDirect(rawBytes);
                                     if (decodedBitmap != null) {
-                                        final Bitmap circularBitmap = profile.getCircularBitmap(decodedBitmap);
-                                        memoryCache.put(tagKey, new SoftReference<Bitmap>(circularBitmap));
+                                        memoryCache.put(tagKey, new SoftReference<Bitmap>(decodedBitmap));
                                         mainHandler.post(new Runnable() {
                                             @Override
                                             public void run() {
                                                 if (tagKey.equals(targetImageView.getTag())) {
-                                                    targetImageView.setImageBitmap(circularBitmap);
+                                                    targetImageView.setImageBitmap(decodedBitmap);
                                                 }
                                             }
                                         });

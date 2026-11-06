@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import android.graphics.drawable.BitmapDrawable;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -103,7 +104,7 @@ public class HomeActivity extends ActivityGroup {
     private ScheduledExecutorService scheduler, schedulerNotifications, schedulerFeedPolling;
     private DatabaseHelper dbHelper;
     private DrawerLayout drawerLayout;
-
+    private ImageView logo;
     // Variaveis para Controlo de Paginacao
     private int feedPageLocal = 1;
     private int feedPageTimeline = 1;
@@ -120,7 +121,19 @@ public class HomeActivity extends ActivityGroup {
 
         Display display = getWindowManager().getDefaultDisplay();
         screenWidth = display.getWidth();
-
+        logo = (ImageView) findViewById(R.id.logo);
+        if (logo != null) {
+            BitmapDrawable logoDrawable = (BitmapDrawable) logo.getDrawable();
+            logoDrawable.setAntiAlias(true);
+            logoDrawable.setFilterBitmap(true);
+            logo.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    UIAnimationHelper.rotateWithWeight((ImageView) v);
+                }
+            });
+        }
+        UIAnimationHelper.rotateWithWeight(logo);
         scrollViewPages = (HorizontalScrollView) findViewById(R.id.scrollViewPages);
         tabPrev = (TextView) findViewById(R.id.tabPrev);
         tabCurrent = (TextView) findViewById(R.id.tabCurrent);
