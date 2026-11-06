@@ -26,6 +26,8 @@ with open(json_path, "r") as f:
 root_flags = modules_flags["modules-flags"]
 
 from mentions import mentions_bp
+if root_flags["threads"]:
+    from threads_federation.app import threads_bp
 if root_flags["communities"]:
     from community import community_bp
 if root_flags["reddit-federation"]:
@@ -337,6 +339,8 @@ if root_flags["themes"]:
     app.register_blueprint(theme_bp)
 if root_flags["federations"]:
     app.register_blueprint(federations_bp)
+if root_flags["threads"]:
+    app.register_blueprint(threads_bp)
 if root_flags["federation_index"]:
     app.register_blueprint(federation_index_bp)
 if root_flags["communities"]:
