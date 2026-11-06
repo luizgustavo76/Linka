@@ -1,155 +1,43 @@
 # Linka
 
-**Linka** is an open-source decentralized social network focused on freedom, compatibility and customization.
+Linka is an open-source decentralized social network and cross-platform feed aggregator. It combines a federated architecture with bidirectional integration for external platforms, allowing users to read and publish content to networks like Reddit, Bluesky, Threads, and Mastodon directly from a single interface.
 
-Unlike traditional social platforms, Linka allows anyone to host their own server, create custom clients, modify algorithms and adapt the platform for different devices — from modern desktops to legacy hardware and lightweight systems.
-
-> Connect through any device, any client, any server.
+The project is built with extreme compatibility and efficiency in mind, enabling modern protocol communication while remaining light enough to run on legacy hardware and older mobile operating systems.
 
 ---
 
-# Features
+## Core Characteristics
 
-- Decentralized servers
-- Open-source backend
-- Lightweight architecture
-- Customizable algorithms
-- External client support
-- SDK for bots and integrations
-- Legacy device compatibility
-- Desktop client
-- Android client (LinkaLite)
-- Designed for low-resource hardware
+- **Decentralized & Federated Architecture:** Host your own node or connect to existing instances.
+- **Bidirectional Aggregation:** Read feeds and publish content seamlessly to Reddit, Bluesky, Threads, and Mastodon.
+- **Legacy Android Focus (LinkaLite):** Native Android client targeting Java 1.5 and Android 2.0+, designed for low RAM overhead and high execution speed on legacy devices.
+- **Extensible Backend:** Lightweight API built for rapid response times and minimal server resource consumption.
+- **Developer Tools:** Open endpoints and SDK structure for automated bots, custom scripts, and third-party clients.
 
 ---
 
-# Linka Ecosystem
+## Ecosystem
 
-## Linka
-Main decentralized social platform. 
-*(Backend built with: ![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white) ![Flask](https://img.shields.io/badge/Flask-000000?style=flat&logo=flask&logoColor=white) ![SQLite](https://img.shields.io/badge/SQLite-07405E?style=flat&logo=sqlite&logoColor=white))*
+### Linka Backend
+The core server handling federation, routing, external network bridges, and persistent data storage.
+- **Stack:** Python, Flask, PostgreSQL, Redis
 
-## LinkaLite
-Ultra-light Android client focused on:
-- old Android devices
-- low RAM usage
-- lightweight WebView rendering
-- legacy compatibility
-
-## Linka Qt
-Desktop multi-platform client using C++ and Qt:
-*(Built with: ![C++](https://img.shields.io/badge/C++-00599C?style=flat&logo=c%2B%2B&logoColor=white) ![Qt](https://img.shields.io/badge/Qt-41CD52?style=flat&logo=qt&logoColor=white))*
-- Windows
-- Linux
-- macOS
-- Android
-
-## LinkaSDK
-SDK for:
-- bots
-- custom clients
-- integrations
-- automation
+### LinkaLite (Android Client)
+The primary client implementation for mobile devices.
+- **Target:** Android 2.0+ (Java 1.5 compliant)
+- **Design:** Ultra-lightweight native components, optimized HTTP request cycle, low memory footprint, no heavy modern framework overhead.
 
 ---
 
-# Philosophy
+## Technical Setup
 
-Linka was created with one main idea:
+### Prerequisites
+- Python 3.x
+- PostgreSQL instance
 
-> Social networks should not depend on a single company, platform or device.
+### Backend Installation
 
-The project focuses on:
-- openness
-- modularity
-- accessibility
-- compatibility
-- simplicity
-
----
-
-# Installation
-
-## Clone the repository
-
-```bash
-git clone [https://github.com/luizgustavo76/Linka.git](https://github.com/luizgustavo76/Linka.git)
-cd Linka
-```
-
----
-
-# Running the Backend Server
-
-```bash
-cd backend
-
-# Install the required dependencies
-pip install flask python-dotenv werkzeug flask-cors
-
-# Create your configuration file
-echo "token_gmail=your_smtp_app_password_here" > .env
-
-# Start the server
-python main.py
-```
-
----
-
-# Project Status
-
-Linka is currently under active development.
-
-Current focus:
-- stability
-- security
-- messaging system
-- notifications
-- lightweight clients
-- SDK improvements
-
----
-
-# Roadmap
-
-- [x] Authentication system
-- [x] Notifications
-- [x] Messaging system
-- [x] Lightweight Android client
-- [ ] Groups
-- [ ] Better feed design
-- [ ] Media upload system
-- [ ] Advanced SDK
-
----
-
-# Contributing
-
-Anyone can contribute to Linka.
-
-Ideas, pull requests, forks and custom clients are welcome.
-
----
-
-# Official Links
-
-## Repository
-https://github.com/luizgustavo76/Linka
-
-## Documentation
-https://luizgustavo76.github.io/Linka/documentation/docs.html
-
----
-
-# Author
-
-Luiz Gustavo
-
-Backend and desktop developer focused on lightweight and multi-platform systems.
-
----
-
-# License
-
-This project is open-source.
-read the LICENSE.txt, is a AGpl-3.0
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/luizgustavo76/Linka.git](https://github.com/luizgustavo76/Linka.git)
+   cd Linka
