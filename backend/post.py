@@ -837,7 +837,22 @@ def trending_feed():
 
 @post_bp.route("/feed", methods=["GET"])
 def feed():
-    cache_key = "feed:home:page_1"
+    has_page_param = 'page' in request.args
+    has_limit_param = 'limit' in request.args
+
+    if has_page_param or has_limit_param:
+        page = request.args.get('page', default=1, type=int)
+        limit = request.args.get('limit', default=20, type=int)
+        if page < 1: page = 1
+        if limit < 1: limit = 20
+        offset = (page - 1) * limit
+        cache_key = f"feed:home:page_{page}_limit_{limit}"
+        sql_pagination = " LIMIT %s OFFSET %s"
+        query_params = (limit, offset)
+    else:
+        cache_key = "feed:home:all"
+        sql_pagination = ""
+        query_params = ()
 
     if root_flags.get("redis") and r:
         try:
@@ -850,7 +865,7 @@ def feed():
     conn = get_db()
     cur = conn.cursor()
     try:
-        cur.execute("""
+        query = f"""
             SELECT 
                 p.id, 
                 p.username, 
@@ -865,8 +880,35 @@ def feed():
             LEFT JOIN comments c ON c.post_id = p.id
             GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth
             ORDER BY p.id DESC
-        """)
+            {sql_pagination}
+        """
+        
+        cur.execute(query, query_params)
         posts = cur.fetchall()
+
+        if not posts:
+            return json.dumps([]), 200, {"Content-Type": "application/json"}
+
+        # 4. Busca em lote de todas as mídias (evita N+1 mesmo na versão legada)
+        post_ids = [p["id"] for p in posts]
+        cur.execute("""
+            SELECT id, post_id, media_url, media_type, width, heigth 
+            FROM post_media 
+            WHERE post_id = ANY(%s)
+        """, (post_ids,))
+        all_media_rows = cur.fetchall()
+
+        media_by_post = {}
+        for row in all_media_rows:
+            pid = row["post_id"]
+            if pid not in media_by_post:
+                media_by_post[pid] = []
+            media_by_post[pid].append({
+                "media_url": row["media_url"],
+                "media_type": row["media_type"] or "image",
+                "width": row["width"] or "",
+                "heigth": row["heigth"] or ""
+            })
 
         lista_posts = []
 
@@ -881,18 +923,8 @@ def feed():
             main_width = post["width"] or ""
             main_heigth = post["heigth"] or ""
 
-            cur.execute("SELECT id, media_url, media_type, width, heigth FROM post_media WHERE post_id = %s", (post_id,))
-            media_rows = cur.fetchall()
-
-            media_list = []
-            if media_rows:
-                for row in media_rows:
-                    media_list.append({
-                        "media_url": row["media_url"],
-                        "media_type": row["media_type"] or "image",
-                        "width": row["width"] or "",
-                        "heigth": row["heigth"] or ""
-                    })
+            if post_id in media_by_post:
+                media_list = media_by_post[post_id]
             else:
                 media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
 
@@ -929,8 +961,6 @@ def feed():
     finally:
         cur.close()
         conn.close()
-
-
 @post_bp.route("/star", methods=["POST"])
 def star():
     data = request.get_json(silent=True) or {}
