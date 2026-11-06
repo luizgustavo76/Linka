@@ -34,19 +34,22 @@ def create_db():
             datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # Tabela exclusiva para posts de comunidades (evita colisão com a tabela 'posts' do feed)
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS posts (
+        CREATE TABLE IF NOT EXISTS community_posts (
             id SERIAL PRIMARY KEY,
             community_id INTEGER NOT NULL,
             username TEXT NOT NULL,
             media_attachments TEXT,
             media_type TEXT,
             text_post TEXT,
+            parent_id INTEGER DEFAULT NULL,
             datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # Tabela exclusiva para comentários de posts de comunidades
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS comments (
+        CREATE TABLE IF NOT EXISTS community_post_comments (
             id SERIAL PRIMARY KEY,
             post_id INTEGER NOT NULL,
             username TEXT NOT NULL,
@@ -126,18 +129,20 @@ def view_chat():
         conn = get_db()
         cur = conn.cursor()
         try:
+            # 1. Verifica permissão de membro
+            cur.execute(
+                "SELECT 1 FROM members WHERE username = %s AND community_id = %s",
+                (username, community_id)
+            )
+            if not cur.fetchone():
+                return jsonify({"status": "not a community member"}), 403
+
+            # 2. Busca o histórico de chat da comunidade
             cur.execute("""
-                SELECT 
-                    c.id,
-                    c.username,
-                    c.text_message,
-                    c.media_attachments,
-                    c.media_type
-                FROM chat c
-                INNER JOIN members m 
-                    ON c.username = m.username 
-                   AND c.community_id = m.community_id
-                WHERE c.community_id = %s
+                SELECT id, username, text_message, media_attachments, media_type
+                FROM chat
+                WHERE community_id = %s
+                ORDER BY datetime ASC
             """, (community_id,))
             result = cur.fetchall()
             
@@ -219,6 +224,7 @@ def new_post():
     if username == getattr(g, "username", None):
         text_post = data.get("text_post")
         community_id = data.get("community_id")
+        parent_id = data.get("parent_id")  # Suporte a replies encadeados
         media_attachments = data.get("media_attachments", [])
         
         if not community_id or (not text_post and not media_attachments):
@@ -229,8 +235,9 @@ def new_post():
         cur = conn.cursor()
         try:
             cur.execute(
-                "INSERT INTO posts(community_id, username, media_attachments, text_post) VALUES(%s, %s, %s, %s)", 
-                (community_id, username, media_attachments_json, text_post)
+                """INSERT INTO community_posts(community_id, username, media_attachments, text_post, parent_id) 
+                   VALUES(%s, %s, %s, %s, %s)""", 
+                (community_id, username, media_attachments_json, text_post, parent_id)
             )
             conn.commit()
             return jsonify({"status": "post created"}), 200
@@ -252,7 +259,12 @@ def view_posts():
     conn = get_db()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT id, community_id, username, media_attachments, media_type, text_post, datetime FROM posts WHERE community_id = %s ORDER BY datetime DESC", (community_id,))
+        cur.execute("""
+            SELECT id, community_id, username, media_attachments, media_type, text_post, parent_id, datetime 
+            FROM community_posts 
+            WHERE community_id = %s 
+            ORDER BY datetime DESC
+        """, (community_id,))
         result = cur.fetchall()
         
         json_return = []
@@ -278,6 +290,7 @@ def view_posts():
                 "media_attachments": media_att,
                 "media_type": media_tp,
                 "text_post": post["text_post"],
+                "parent_id": post["parent_id"],
                 "datetime": str(post["datetime"]) if post["datetime"] else None
             })
         return jsonify(json_return), 200
@@ -304,7 +317,9 @@ def new_comment():
         cur = conn.cursor()
         try:
             cur.execute(
-                "INSERT INTO comments(post_id, username, media_attachments, text_comment, comments_level, parent_comment) VALUES(%s, %s, %s, %s, %s, %s)", 
+                """INSERT INTO community_post_comments
+                   (post_id, username, media_attachments, text_comment, comments_level, parent_comment) 
+                   VALUES(%s, %s, %s, %s, %s, %s)""", 
                 (post_id, username, media_attachments_json, text_comment, comments_level, parent_comment)
             )
             conn.commit()
