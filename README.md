@@ -38,6 +38,40 @@ The primary client implementation for mobile devices.
 ### Backend Installation
 
 1. Clone the repository:
-   ```bash
-   git clone [https://github.com/luizgustavo76/Linka.git](https://github.com/luizgustavo76/Linka.git)
+   git clone https://github.com/luizgustavo76/Linka.git
    cd Linka
+
+2. Install dependencies:
+   pip install flask python-dotenv werkzeug flask-cors psycopg2-binary redis
+
+3. Configure environment variables in .env:
+   DATABASE_URL=postgresql://user:password@localhost:5432/linka_db
+   REDIS_URL=redis://localhost:6379/0
+   SECRET_KEY=your_secret_key
+
+4. Run the server:
+   python main.py
+
+---
+
+## Project Status
+
+Linka is under active development. Current focus areas include:
+
+- Expanding external platform bridge endpoints (Reddit, Bluesky, Threads, Mastodon)
+- Optimizing native Java 1.5 data parsing for low-memory Android devices
+- Refining feed pagination (LIMIT / OFFSET) and caching strategies
+- Strengthening authentication mechanisms across federated nodes
+
+---
+
+## Repository Links & Documentation
+
+- **Repository:** https://github.com/luizgustavo76/Linka
+- **Documentation:** https://luizgustavo76.github.io/Linka/documentation/docs.html
+
+---
+
+## License
+
+This project is licensed under the AGPL-3.0 License. See LICENSE.txt for details.
