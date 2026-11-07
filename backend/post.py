@@ -7,7 +7,7 @@ from PIL import ImageFile
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Blueprint, request, jsonify, g
 from dotenv import load_dotenv
@@ -31,7 +31,8 @@ if root_flags.get("redis"):
     REDIS_URL = os.getenv("REDIS_URL")
     if REDIS_URL:
         r = redis_lib.Redis.from_url(REDIS_URL, decode_responses=True)
-
+if root_flags.get("threads"):
+    import threads_federation.app as threads
 if root_flags.get("bluesky-federation"):
     import bluesky_federation.posts as bluesky
 if root_flags.get("reddit-federation"):
@@ -524,11 +525,36 @@ def fetch_single_federation(node_url):
     netloc = parsed.netloc.lower()
     path = parsed.path.rstrip('/')
 
-    if "linkaproject.pythonanywhere.com" in netloc or "127.0.0.1" in netloc or "localhost" in netloc or netloc.startswith("192.168."):
+    # Adicionada a checagem do Render no netloc
+    is_local_node = any(domain in netloc for domain in [
+        "linka-project.onrender.com",
+        "linkaproject.pythonanywhere.com",
+        "127.0.0.1",
+        "localhost"
+    ]) or netloc.startswith("192.168.")
+
+    if is_local_node:
         try:
             if path == "/feed":
                 return get_internal_feed_posts() 
             
+            # --- SUPORTE AO THREADS (BUSCA E FEED) ---
+            elif path.startswith("/feed/threads"):
+                if root_flags.get("threads-federation") and 'threads' in globals():
+                    query_params = parse_qs(parsed.query)
+                    
+                    # Trata a rota de busca por query (/feed/threads/search?q=android)
+                    if path == "/feed/threads/search":
+                        search_term = query_params.get("q", ["brasil"])[0]
+                        if hasattr(threads, "fetch_threads_search_fast"):
+                            return threads.fetch_threads_search_fast(query=search_term, limit=20)
+                    
+                    # Trata o feed geral de conta/me (/feed/threads)
+                    elif path == "/feed/threads":
+                        if hasattr(threads, "fetch_threads_posts"):
+                            return threads.fetch_threads_posts(limit=20)
+
+            # --- REDDIT ---
             elif path.startswith("/feed/reddit/"):
                 if root_flags.get("reddit-federation") and 'reddit' in globals():
                     sub_name = path.replace("/feed/reddit/", "")
@@ -539,6 +565,7 @@ def fetch_single_federation(node_url):
                                 p["platform"] = "reddit"
                         return posts
 
+            # --- MASTODON ---
             elif path.startswith("/feed/mastodon/"):
                 if root_flags.get("mastodon-federation") and 'mastodon' in globals():
                     tag_name = path.replace("/feed/mastodon/", "")
@@ -549,6 +576,7 @@ def fetch_single_federation(node_url):
                                 p["platform"] = "mastodon"
                         return posts
 
+            # --- BLUESKY ---
             elif path.startswith("/feed/bluesky/"):
                 if root_flags.get("bluesky-federation") and 'bluesky' in globals():
                     tag_name = path.replace("/feed/bluesky/", "")
@@ -563,6 +591,7 @@ def fetch_single_federation(node_url):
             print(f"DEBUG - Erro na rota interna {path}: {e}")
             return None
 
+    # Requisição externa REAL (para nós de terceiros)
     try:
         response = requests.get(node_url, timeout=2.5)
         if response.status_code == 200:
@@ -572,8 +601,6 @@ def fetch_single_federation(node_url):
         return None
 
     return None
-
-
 def parse_datetime_flexible(dt_str):
     if not dt_str:
         return datetime.min

@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -896,6 +897,7 @@ public class HomeActivity extends ActivityGroup {
 
             try {
                 final JSONObject post = list.get(position);
+                final String platform = post.optString("platform", "desconhecida");
                 final String username = post.optString("username", post.optString("user", "entity404"));
                 String textPost = post.optString("text_post", post.optString("text", ""));
                 final String origin_server = post.optString("origin_server", "");
@@ -906,6 +908,11 @@ public class HomeActivity extends ActivityGroup {
                 final int id = post.optInt("id", -1);
                 final String originalUrl = post.optString("original_url", "");
                 final boolean isExternal = !origin_server.isEmpty() && !origin_server.equals("linka");
+
+                Log.d("LINKA_DEBUG", "==================================================");
+                Log.d("LINKA_DEBUG", "[POST VIEW] Platform: " + platform + " | User: " + username);
+                Log.d("LINKA_DEBUG", "[POST VIEW] Text: " + textPost);
+
                 holder.btnReply.setOnClickListener(new View.OnClickListener(){
                     public void onClick(View v){
                         Intent intent = new Intent(HomeActivity.this, newPost.class);
@@ -1035,7 +1042,10 @@ public class HomeActivity extends ActivityGroup {
 
                 if ("timeline".equals(actualTab)) {
                     String avatarUrl = post.optString("avatar_url", "");
-                    if (avatarUrl.startsWith("http")) {
+                    if (avatarUrl.contains("cdninstagram.com")) {
+                        holder.avatarPost.setTag(avatarUrl);
+                        imageLoader.LoadImageUrl(avatarUrl, holder.avatarPost);
+                    } else if (avatarUrl.startsWith("http")) {
                         String avatarOtimizado = "http://wsrv.nl/?url=" + avatarUrl + "&w=40&h=40&fit=cover&output=jpg";
                         holder.avatarPost.setTag(avatarOtimizado);
                         imageLoader.LoadImageUrl(avatarOtimizado, holder.avatarPost);
@@ -1113,6 +1123,7 @@ public class HomeActivity extends ActivityGroup {
                 }
 
             } catch (Exception e) {
+                Log.e("LINKA_DEBUG", "[POST VIEW ERR] Erro ao renderizar card: " + e.getMessage());
                 e.printStackTrace();
             }
 
@@ -1122,10 +1133,16 @@ public class HomeActivity extends ActivityGroup {
         private void renderMediaItem(GifImageView imgPost, ArrayList<JSONObject> mediaItems, int index,
                                      TextView txtMediaCount, Button btnPrev, Button btnNext) {
             JSONObject mediaObj = mediaItems.get(index);
-            String rawUrl = mediaObj.optString("media_url", "");
+            final String rawUrl = mediaObj.optString("media_url", "");
             String mediaType = mediaObj.optString("media_type", "").toLowerCase();
+            
             String width = mediaObj.optString("width", "");
-            String height = mediaObj.optString("heigth", "");
+            String height = mediaObj.optString("height", mediaObj.optString("heigth", ""));
+
+            Log.d("LINKA_DEBUG", "--------------------------------------------------");
+            Log.d("LINKA_DEBUG", "[RENDER MEDIA] Index: " + index + " | Type: " + mediaType);
+            Log.d("LINKA_DEBUG", "[RENDER MEDIA] Raw URL: " + rawUrl);
+            Log.d("LINKA_DEBUG", "[RENDER MEDIA] Dims: " + width + "x" + height);
 
             imgPost.setTag(R.id.imgPost, index);
 
@@ -1145,6 +1162,7 @@ public class HomeActivity extends ActivityGroup {
                     params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
                 }
             } catch (Exception e) {
+                Log.e("LINKA_DEBUG", "[RENDER MEDIA ERR] Erro ao calcular dimensao: " + e.getMessage());
                 params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             }
 
@@ -1153,13 +1171,16 @@ public class HomeActivity extends ActivityGroup {
             boolean isGifMedia = "gif".equals(mediaType) || rawUrl.toLowerCase().endsWith(".gif");
 
             final String finalProxyUrl;
-            if (rawUrl.contains("/midia/") || rawUrl.startsWith("http://linkaProject.pythonanywhere.com") || rawUrl.startsWith("https://linkaProject.pythonanywhere.com")) {
+            if (rawUrl.contains("cdninstagram.com") || rawUrl.contains("/midia/") || 
+                rawUrl.startsWith("http://linkaProject.pythonanywhere.com") || 
+                rawUrl.startsWith("https://linkaProject.pythonanywhere.com") || isGifMedia) {
+                
                 finalProxyUrl = rawUrl;
-            } else if (isGifMedia) {
-                finalProxyUrl = rawUrl;
+                Log.d("LINKA_DEBUG", "[RENDER MEDIA] Usando URL DIRETA (sem wsrv.nl): " + finalProxyUrl);
             } else {
                 if (rawUrl.startsWith("http")) {
                     finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=240&q=60&output=jpg";
+                    Log.d("LINKA_DEBUG", "[RENDER MEDIA] Usando Proxy wsrv.nl: " + finalProxyUrl);
                 } else {
                     finalProxyUrl = rawUrl;
                 }
