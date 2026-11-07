@@ -11,7 +11,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLDecoder;
 
 public class request {
 
@@ -107,21 +106,7 @@ public class request {
         try {
             System.setProperty("http.keepAlive", "false");
 
-            String cleanUrlStr = urlParam;
-            try {
-                cleanUrlStr = URLDecoder.decode(urlParam, "UTF-8");
-            } catch (Exception ignored) {}
-
-            URL originalUrl = new URL(cleanUrlStr);
-            String hostName = originalUrl.getHost();
-            String finalUrlStr = cleanUrlStr;
-
-            if (hostName != null && hostName.contains("workers.dev")) {
-                String cloudflareIp = "104.21.80.1";
-                finalUrlStr = cleanUrlStr.replace(hostName, cloudflareIp);
-            }
-
-            URL url = new URL(finalUrlStr);
+            URL url = new URL(urlParam);
             connection = (HttpURLConnection) url.openConnection();
             method = method.toUpperCase();
             
@@ -133,24 +118,26 @@ public class request {
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
             connection.setRequestProperty("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8");
 
-            if (hostName != null) {
-                connection.setRequestProperty("Host", hostName);
+            if (url.getHost() != null) {
+                connection.setRequestProperty("Host", url.getHost());
             }
 
             int responseCode = connection.getResponseCode();
 
+            // Trata redirecionamentos HTTP 301, 302, 303, 307, 308
             if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP || 
                 responseCode == HttpURLConnection.HTTP_MOVED_PERM || 
                 responseCode == 307 || responseCode == 308 || responseCode == 303) {
                 
                 String newUrl = connection.getHeaderField("Location");
                 if (newUrl != null && newUrl.length() > 0) {
-                    if (newUrl.startsWith("/")) {
-                        newUrl = originalUrl.getProtocol() + "://" + hostName + newUrl;
+                    if (!newUrl.startsWith("http://") && !newUrl.startsWith("https://")) {
+                        if (!newUrl.startsWith("/")) {
+                            newUrl = "/" + newUrl;
+                        }
+                        newUrl = url.getProtocol() + "://" + url.getHost() + newUrl;
                     }
-                    if (!newUrl.equals(urlParam) && !newUrl.equals(cleanUrlStr)) {
-                        return requestBytesInternal(newUrl, method, context, redirectCount + 1);
-                    }
+                    return requestBytesInternal(newUrl, method, context, redirectCount + 1);
                 }
             }
 
@@ -164,6 +151,8 @@ public class request {
                 }
                 in.close();
                 return out.toByteArray();
+            } else {
+                Log.e("LINKA_DEBUG", "HTTP " + responseCode + " ao baixar bytes de: " + urlParam);
             }
         } catch (Exception e) {
             Log.e("LINKA_DEBUG", "Erro HTTP em " + urlParam, e);
@@ -180,16 +169,7 @@ public class request {
         try {
             System.setProperty("http.keepAlive", "false");
 
-            URL originalUrl = new URL(urlParam);
-            String hostName = originalUrl.getHost();
-            String finalUrlStr = urlParam;
-
-            if (hostName != null && hostName.contains("workers.dev")) {
-                String cloudflareIp = "104.21.80.1";
-                finalUrlStr = urlParam.replace(hostName, cloudflareIp);
-            }
-
-            URL url = new URL(finalUrlStr);
+            URL url = new URL(urlParam);
             connection = (HttpURLConnection) url.openConnection();
             method = method.toUpperCase();
 
@@ -200,8 +180,8 @@ public class request {
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
 
-            if (hostName != null) {
-                connection.setRequestProperty("Host", hostName);
+            if (url.getHost() != null) {
+                connection.setRequestProperty("Host", url.getHost());
             }
 
             if (context != null) {
