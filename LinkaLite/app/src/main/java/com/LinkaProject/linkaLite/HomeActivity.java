@@ -193,24 +193,24 @@ public class HomeActivity extends ActivityGroup {
         });
 
         scrollViewPages.setOnTouchListener(new View.OnTouchListener() {
-            private float downX;
-            private float downY;
+            private float startX;
+            private float startY;
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    downX = event.getRawX();
-                    downY = event.getRawY();
-                } else if (event.getAction() == MotionEvent.ACTION_UP) {
-                    float upX = event.getRawX();
-                    float upY = event.getRawY();
-                    float deltaX = downX - upX;
-                    float deltaY = downY - upY;
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        startX = event.getRawX();
+                        startY = event.getRawY();
+                        break;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        float endX = event.getRawX();
+                        float endY = event.getRawY();
+                        float deltaX = startX - endX;
+                        float deltaY = startY - endY;
 
-                    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                        int minSwipeDistance = screenWidth / 4;
-
-                        if (Math.abs(deltaX) > minSwipeDistance) {
+                        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
                             if (deltaX > 0 && currentPage < pageTitles.length - 1) {
                                 currentPage++;
                             } else if (deltaX < 0 && currentPage > 0) {
@@ -225,7 +225,6 @@ public class HomeActivity extends ActivityGroup {
 
                         scrollToPage(currentPage);
                         return true;
-                    }
                 }
                 return false;
             }
@@ -334,9 +333,9 @@ public class HomeActivity extends ActivityGroup {
                     showHeaderBar();
                 } else {
                     int diff = currentTop - lastTop;
-                    if (diff < -20) {
+                    if (diff < -25) {
                         hideHeaderBar();
-                    } else if (diff > 20) {
+                    } else if (diff > 25) {
                         showHeaderBar();
                     }
                 }
@@ -596,6 +595,9 @@ public class HomeActivity extends ActivityGroup {
     }
 
     private void scrollToPage(final int page) {
+        if (page < 0 || page >= pageTitles.length) return;
+        currentPage = page;
+
         scrollViewPages.post(new Runnable() {
             @Override
             public void run() {

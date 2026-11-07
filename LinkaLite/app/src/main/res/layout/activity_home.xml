@@ -8,7 +8,7 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:background="#ffffff">
+        android:background="#EFEFEF">
 
         <!-- SCROLL VIEW EXPANDIDO PARA A TELA INTEIRA -->
         <HorizontalScrollView
@@ -31,11 +31,12 @@
                         android:id="@+id/listViewTimeline"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
+                        android:background="#EFEFEF"
                         android:scrollingCache="true"
                         android:clipToPadding="false"
                         android:paddingTop="78dip"
-                        android:divider="#E0E0E0"
-                        android:dividerHeight="1dip" />
+                        android:divider="@null"
+                        android:dividerHeight="0dip" />
                 </FrameLayout>
 
                 <FrameLayout
@@ -46,11 +47,12 @@
                         android:id="@+id/listViewLocal"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
+                        android:background="#EFEFEF"
                         android:scrollingCache="true"
                         android:clipToPadding="false"
                         android:paddingTop="78dip"
-                        android:divider="#E0E0E0"
-                        android:dividerHeight="1dip" />
+                        android:divider="@null"
+                        android:dividerHeight="0dip" />
                 </FrameLayout>
 
                 <FrameLayout
@@ -62,9 +64,10 @@
                         android:id="@+id/listViewChat"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
+                        android:background="#EFEFEF"
                         android:scrollingCache="false"
-                        android:divider="#E0E0E0"
-                        android:dividerHeight="1dip" />
+                        android:divider="@null"
+                        android:dividerHeight="0dip" />
                 </FrameLayout>
 
                 <FrameLayout
