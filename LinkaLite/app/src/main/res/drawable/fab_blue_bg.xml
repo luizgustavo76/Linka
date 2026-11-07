@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sombra Emulada para Android 2.0+ -->
+    <item android:top="2dip" android:left="2dip">
+        <shape android:shape="oval">
+            <solid android:color="#40000000" />
+        </shape>
+    </item>
+
+    <!-- Círculo Azul Linka -->
+    <item android:bottom="2dip" android:right="2dip">
+        <shape android:shape="oval">
+            <solid android:color="#0088CC" /> <!-- Ajustar para o Hex exato do Lexical -->
+        </shape>
+    </item>
+</layer-list>

@@ -5,235 +5,252 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 
-    <!-- CONTEÚDO PRINCIPAL DO APP -->
-    <LinearLayout 
+    <!-- ESTRUTURA PRINCIPAL -->
+    <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:orientation="vertical"
-        android:background="#FFFFFF">
+        android:layout_height="fill_parent">
 
-        <!-- Top Bar com Logo Centralizada Absoluta -->
-        <RelativeLayout
-            android:layout_width="fill_parent"
-            android:layout_height="48dip"
-            android:background="#121212"
-            android:paddingLeft="6dip"
-            android:paddingRight="6dip">
-
-            <!-- Botão Hambúrguer -->
-            <ImageButton
-                android:id="@+id/btnHamburger"
-                android:layout_width="40dip"
-                android:layout_height="40dip"
-                android:layout_centerVertical="true"
-                android:layout_alignParentLeft="true"
-                android:background="@android:color/transparent"
-                android:scaleType="centerInside"
-                android:src="@android:drawable/ic_menu_sort_by_size" />
-
-            <!-- Logo Centralizado no Meio da Tela -->
-            <ImageView
-                android:id="@+id/logo"
-                android:layout_width="wrap_content"
-                android:layout_height="30dip"
-                android:layout_centerInParent="true"
-                android:scaleType="fitCenter"
-                android:src="@drawable/linka_icon_bar" />
-
-            <!-- Container de Botões da Direita -->
-            <LinearLayout
-                android:id="@+id/rightBarButtons"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:layout_alignParentRight="true"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <ImageButton
-                    android:id="@+id/newPost"
-                    android:layout_width="38dip"
-                    android:layout_height="38dip"
-                    android:background="@android:color/transparent"
-                    android:scaleType="centerInside"
-                    android:src="@android:drawable/ic_menu_edit" />
-
-                <ImageButton
-                    android:id="@+id/btnInbox"
-                    android:layout_width="38dip"
-                    android:layout_height="38dip"
-                    android:background="@android:color/transparent"
-                    android:scaleType="centerInside"
-                    android:src="@android:drawable/sym_action_chat" />
-
-                <ImageButton
-                    android:id="@+id/btnProfile"
-                    android:layout_width="38dip"
-                    android:layout_height="38dip"
-                    android:background="@android:color/transparent"
-                    android:scaleType="centerInside"
-                    android:src="@android:drawable/ic_menu_myplaces" />
-            </LinearLayout>
-
-        </RelativeLayout>
-
-        <!-- Barra do Indicador de Abas (Dark Harmonizado) -->
-        <RelativeLayout
-            android:layout_width="fill_parent"
-            android:layout_height="30dip"
-            android:background="#222222">
-
-            <TextView
-                android:id="@+id/tabPrev"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:layout_alignParentLeft="true"
-                android:gravity="center_vertical"
-                android:paddingLeft="12dip"
-                android:paddingRight="12dip"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="#888888"
-                android:visibility="invisible" />
-
-            <TextView
-                android:id="@+id/tabCurrent"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:layout_centerInParent="true"
-                android:gravity="center_vertical"
-                android:textStyle="bold"
-                android:textSize="12sp"
-                android:textColor="#FFFFFF"
-                android:text="Timeline" />
-
-            <TextView
-                android:id="@+id/tabNext"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:layout_alignParentRight="true"
-                android:gravity="center_vertical"
-                android:paddingLeft="12dip"
-                android:paddingRight="12dip"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="#888888"
-                android:text="Local Feed ▶" />
-        </RelativeLayout>
-
-        <!-- Scroll de Páginas do Feed -->
-        <HorizontalScrollView
-            android:id="@+id/scrollViewPages"
-            android:layout_width="fill_parent"
-            android:layout_height="0dip"
-            android:layout_weight="1"
-            android:fillViewport="true"
-            android:scrollbars="none">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:orientation="horizontal">
-
-                <FrameLayout
-                    android:id="@+id/pageTimeline"
-                    android:layout_width="wrap_content"
-                    android:layout_height="fill_parent">
-                    <ListView
-                        android:id="@+id/listViewTimeline"
-                        android:layout_width="fill_parent"
-                        android:layout_height="fill_parent"
-                        android:scrollingCache="true"
-                        android:divider="#E0E0E0"
-                        android:dividerHeight="1dip" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:id="@+id/pageLocal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="fill_parent">
-                    <ListView
-                        android:id="@+id/listViewLocal"
-                        android:layout_width="fill_parent"
-                        android:layout_height="fill_parent"
-                        android:scrollingCache="true"
-                        android:divider="#E0E0E0"
-                        android:dividerHeight="1dip" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:id="@+id/pageChat"
-                    android:layout_width="wrap_content"
-                    android:layout_height="fill_parent">
-                    <ListView
-                        android:id="@+id/listViewChat"
-                        android:layout_width="fill_parent"
-                        android:layout_height="fill_parent"
-                        android:scrollingCache="false"
-                        android:divider="#E0E0E0"
-                        android:dividerHeight="1dip" />
-                </FrameLayout>
-
-                <FrameLayout
-                    android:id="@+id/pageOptions"
-                    android:layout_width="wrap_content"
-                    android:layout_height="fill_parent">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="Settings &amp; Options"
-                        android:textColor="#666666" />
-                </FrameLayout>
-
-            </LinearLayout>
-        </HorizontalScrollView>
-
-        <!-- Barra de Convidado -->
+        <!-- CONTEÚDO VERTICAL DO APP -->
         <LinearLayout 
-            android:id="@+id/layoutGuest"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content" 
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="#333333"
-            android:padding="4dip"
-            android:visibility="gone">
+            android:layout_height="fill_parent"
+            android:orientation="vertical"
+            android:background="#FFFFFF">
 
-            <TextView
-                android:id="@+id/tvGuest"
-                android:layout_width="0dip"
-                android:layout_height="wrap_content"
+            <!-- Top Bar com Logo Centralizada -->
+            <RelativeLayout
+                android:id="@+id/topBarContainer"
+                android:layout_width="fill_parent"
+                android:layout_height="48dip"
+                android:background="#121212"
+                android:paddingLeft="6dip"
+                android:paddingRight="6dip">
+
+                <!-- Botão Hambúrguer -->
+                <ImageButton
+                    android:id="@+id/btnHamburger"
+                    android:layout_width="40dip"
+                    android:layout_height="40dip"
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentLeft="true"
+                    android:background="@android:color/transparent"
+                    android:scaleType="centerInside"
+                    android:src="@android:drawable/ic_menu_sort_by_size" />
+
+                <!-- Logo Centralizado no Meio da Tela -->
+                <ImageView
+                    android:id="@+id/logo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dip"
+                    android:layout_centerInParent="true"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/linka_icon_bar" />
+
+                <!-- Container de Botões da Direita com Espaçamento e Padding -->
+                <LinearLayout
+                    android:id="@+id/rightBarButtons"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_alignParentRight="true"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageButton
+                        android:id="@+id/btnNotifications"
+                        android:layout_width="42dip"
+                        android:layout_height="42dip"
+                        android:padding="6dip"
+                        android:background="@android:color/transparent"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/icon_inbox" />
+
+                    <ImageButton
+                        android:id="@+id/btnProfile"
+                        android:layout_width="42dip"
+                        android:layout_height="42dip"
+                        android:layout_marginLeft="10dip"
+                        android:padding="6dip"
+                        android:background="@android:color/transparent"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/icon_profile" />
+                </LinearLayout>
+
+            </RelativeLayout>
+
+            <!-- Barra do Indicador de Abas -->
+            <RelativeLayout
+                android:id="@+id/tabBarContainer"
+                android:layout_width="fill_parent"
+                android:layout_height="30dip"
+                android:background="#222222">
+
+                <TextView
+                    android:id="@+id/tabPrev"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_alignParentLeft="true"
+                    android:gravity="center_vertical"
+                    android:paddingLeft="12dip"
+                    android:paddingRight="12dip"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#888888"
+                    android:visibility="invisible" />
+
+                <TextView
+                    android:id="@+id/tabCurrent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_centerInParent="true"
+                    android:gravity="center_vertical"
+                    android:textStyle="bold"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
+                    android:text="Timeline" />
+
+                <TextView
+                    android:id="@+id/tabNext"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_alignParentRight="true"
+                    android:gravity="center_vertical"
+                    android:paddingLeft="12dip"
+                    android:paddingRight="12dip"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="#888888"
+                    android:text="Local Feed ▶" />
+            </RelativeLayout>
+
+            <!-- Scroll de Páginas do Feed -->
+            <HorizontalScrollView
+                android:id="@+id/scrollViewPages"
+                android:layout_width="fill_parent"
+                android:layout_height="0dip"
                 android:layout_weight="1"
-                android:text="You are browsing as a guest. Log in for full options!"
-                android:textSize="11sp"
-                android:textColor="#FFFFFF"
-                android:gravity="center_vertical" />
+                android:fillViewport="true"
+                android:scrollbars="none">
 
-            <Button 
-                android:id="@+id/btnLogin"
-                android:layout_width="wrap_content"
-                android:layout_height="32dip"
-                android:paddingLeft="8dip"
-                android:paddingRight="8dip"
-                android:text="Login"
-                android:textSize="11sp"
-                android:layout_marginLeft="4dip"
-                android:layout_marginRight="2dip" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:orientation="horizontal">
 
-            <Button 
-                android:id="@+id/btnClose"
-                android:layout_width="wrap_content"
-                android:layout_height="32dip"
-                android:paddingLeft="8dip"
-                android:paddingRight="8dip"
-                android:text="X"
-                android:textSize="11sp"
-                android:layout_marginLeft="2dip" />
+                    <FrameLayout
+                        android:id="@+id/pageTimeline"
+                        android:layout_width="wrap_content"
+                        android:layout_height="fill_parent">
+                        <ListView
+                            android:id="@+id/listViewTimeline"
+                            android:layout_width="fill_parent"
+                            android:layout_height="fill_parent"
+                            android:scrollingCache="true"
+                            android:divider="#E0E0E0"
+                            android:dividerHeight="1dip" />
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:id="@+id/pageLocal"
+                        android:layout_width="wrap_content"
+                        android:layout_height="fill_parent">
+                        <ListView
+                            android:id="@+id/listViewLocal"
+                            android:layout_width="fill_parent"
+                            android:layout_height="fill_parent"
+                            android:scrollingCache="true"
+                            android:divider="#E0E0E0"
+                            android:dividerHeight="1dip" />
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:id="@+id/pageChat"
+                        android:layout_width="wrap_content"
+                        android:layout_height="fill_parent">
+                        <ListView
+                            android:id="@+id/listViewChat"
+                            android:layout_width="fill_parent"
+                            android:layout_height="fill_parent"
+                            android:scrollingCache="false"
+                            android:divider="#E0E0E0"
+                            android:dividerHeight="1dip" />
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:id="@+id/pageOptions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="fill_parent">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:text="Settings &amp; Options"
+                            android:textColor="#666666" />
+                    </FrameLayout>
+
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- Barra de Convidado -->
+            <LinearLayout 
+                android:id="@+id/layoutGuest"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" 
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="#333333"
+                android:padding="4dip"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvGuest"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="You are browsing as a guest. Log in for full options!"
+                    android:textSize="11sp"
+                    android:textColor="#FFFFFF"
+                    android:gravity="center_vertical" />
+
+                <Button 
+                    android:id="@+id/btnLogin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dip"
+                    android:paddingLeft="8dip"
+                    android:paddingRight="8dip"
+                    android:text="Login"
+                    android:textSize="11sp"
+                    android:layout_marginLeft="4dip"
+                    android:layout_marginRight="2dip" />
+
+                <Button 
+                    android:id="@+id/btnClose"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dip"
+                    android:paddingLeft="8dip"
+                    android:paddingRight="8dip"
+                    android:text="X"
+                    android:textSize="11sp"
+                    android:layout_marginLeft="2dip" />
+            </LinearLayout>
+
         </LinearLayout>
 
-    </LinearLayout>
+        <!-- BOTÃO FLUTUANTE (FAB) REDONDO -->
+        <ImageButton
+            android:id="@+id/fabNewPost"
+            android:layout_width="56dip"
+            android:layout_height="56dip"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginRight="16dip"
+            android:layout_marginBottom="16dip"
+            android:padding="14dip"
+            android:background="@drawable/fab_blue_bg"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icon_post" />
 
-    <!-- INCLUSÃO DO MENU LATERAL -->
+    </RelativeLayout>
+
     <include layout="@layout/drawer_home" />
 
 </android.support.v4.widget.DrawerLayout>

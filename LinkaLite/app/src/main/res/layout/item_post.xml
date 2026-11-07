@@ -68,7 +68,7 @@
         </LinearLayout>
     </RelativeLayout>
 
-    <!-- Texto do Usuário que Repostou (Comentário por cima do repost, se houver) -->
+    <!-- Texto do Usuário que Repostou -->
     <TextView
         android:id="@+id/postText"
         android:layout_width="fill_parent"
@@ -80,7 +80,7 @@
         android:textColor="#222222"
         android:lineSpacingExtra="2dip" />
 
-    <!-- Container de Repost Estilo Reddit (Embed do Post Original) -->
+    <!-- Container de Repost (Embed do Post Original) -->
     <LinearLayout
         android:id="@+id/containerRepost"
         android:layout_width="fill_parent"
@@ -159,7 +159,7 @@
             android:textColor="#444444"
             android:lineSpacingExtra="1dip" />
 
-        <!-- Mídia do Post Original (se o post repostado tiver imagem/gif) -->
+        <!-- Mídia do Post Original -->
         <com.LinkaProject.linkaLite.GifImageView
             android:id="@+id/repostImg"
             android:layout_width="fill_parent"
@@ -171,7 +171,7 @@
 
     </LinearLayout>
 
-    <!-- Container de Mídia Direta (Caso não seja repost, mas um post normal com imagem) -->
+    <!-- Container de Mídia Direta -->
     <RelativeLayout
         android:id="@+id/containerMedia"
         android:layout_width="fill_parent"
@@ -230,7 +230,7 @@
             android:visibility="gone" />
     </RelativeLayout>
 
-    <!-- Barra de Ações (Reply, Bookmarks, Comments) -->
+    <!-- Barra de Ações Ajustada -->
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
@@ -298,35 +298,41 @@
                     android:src="@android:drawable/ic_menu_close_clear_cancel" />
             </LinearLayout>
 
+            <!-- 1. Responder -->
             <ImageButton
                 android:id="@+id/btnReply"
-                android:layout_width="24dip"
-                android:layout_height="24dip"
+                android:layout_width="22dip"
+                android:layout_height="22dip"
                 android:layout_marginRight="16dip"
                 android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@drawable/reply" />
+
+            <!-- 2. Comentários -->
             <ImageButton
                 android:id="@+id/btnComments"
-                android:layout_width="24dip"
-                android:layout_height="24dip"
+                android:layout_width="22dip"
+                android:layout_height="22dip"
                 android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@drawable/icon_comments" />
 
+            <!-- Contagem de Comentários -->
             <TextView
                 android:id="@+id/txtCommentCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="6dip"
+                android:layout_marginLeft="4dip"
+                android:layout_marginRight="18dip"
                 android:textColor="#777777"
                 android:textSize="11sp"
                 android:text="0" />
+
+            <!-- 3. Bookmark (Salvar) descolado do número -->
             <ImageButton
                 android:id="@+id/btnBookmarks"
-                android:layout_width="24dip"
-                android:layout_height="24dip"
-                android:layout_marginRight="16dip"
+                android:layout_width="22dip"
+                android:layout_height="22dip"
                 android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_bookmark" />
