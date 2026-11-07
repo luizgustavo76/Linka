@@ -552,7 +552,8 @@ def fetch_single_federation(node_url):
                             return threads.fetch_threads_posts(limit=20)
 
             elif path.startswith("/feed/twitter"):
-                if root_flags.get("twitter-federation") and 'twitter' in globals():
+                # Ajustado para root_flags.get("twitter") para bater com a importacao do topo!
+                if (root_flags.get("twitter") or root_flags.get("twitter-federation")) and 'twitter' in globals():
                     query_params = parse_qs(parsed.query)
                     
                     if "/search" in path:
@@ -564,7 +565,8 @@ def fetch_single_federation(node_url):
                                     p["platform"] = "twitter"
                             return posts
                     else:
-                        user_target = query_params.get("user", ["NASA"])[0]
+                        # Trata o parametro ?user=choquei ou ?username=choquei
+                        user_target = query_params.get("user", query_params.get("username", ["choquei"]))[0]
                         if hasattr(twitter, "fetch_twitter_user_posts"):
                             posts = twitter.fetch_twitter_user_posts(username=user_target, limit=20)
                             for p in (posts or []):
