@@ -110,7 +110,7 @@
                     android:layout_alignParentLeft="true"
                     android:background="@android:color/transparent"
                     android:scaleType="centerInside"
-                    android:src="@android:drawable/ic_menu_sort_by_size" />
+                    android:src="@drawable/icon_drawer" />
 
                 <ImageView
                     android:id="@+id/logo"
