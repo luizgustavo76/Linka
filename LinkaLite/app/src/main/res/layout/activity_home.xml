@@ -5,19 +5,92 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 
-    <!-- ESTRUTURA PRINCIPAL -->
     <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent">
+        android:layout_height="fill_parent"
+        android:background="#ffffff">
 
-        <!-- CONTEÚDO VERTICAL DO APP -->
-        <LinearLayout 
+        <!-- SCROLL VIEW EXPANDIDO PARA A TELA INTEIRA -->
+        <HorizontalScrollView
+            android:id="@+id/scrollViewPages"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:orientation="vertical"
-            android:background="#FFFFFF">
+            android:fillViewport="true"
+            android:scrollbars="none">
 
-            <!-- Top Bar com Logo Centralizada -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:id="@+id/pageTimeline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent">
+                    <ListView
+                        android:id="@+id/listViewTimeline"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:scrollingCache="true"
+                        android:clipToPadding="false"
+                        android:paddingTop="78dip"
+                        android:divider="#E0E0E0"
+                        android:dividerHeight="1dip" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/pageLocal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent">
+                    <ListView
+                        android:id="@+id/listViewLocal"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:scrollingCache="true"
+                        android:clipToPadding="false"
+                        android:paddingTop="78dip"
+                        android:divider="#E0E0E0"
+                        android:dividerHeight="1dip" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/pageChat"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:paddingTop="78dip">
+                    <ListView
+                        android:id="@+id/listViewChat"
+                        android:layout_width="fill_parent"
+                        android:layout_height="fill_parent"
+                        android:scrollingCache="false"
+                        android:divider="#E0E0E0"
+                        android:dividerHeight="1dip" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/pageOptions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:paddingTop="78dip">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="Settings &amp; Options"
+                        android:textColor="#666666" />
+                </FrameLayout>
+
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- HEADER FLUTUANTE (FICA SOBREPOSTO AO FEED) -->
+        <LinearLayout
+            android:id="@+id/topHeaderContainer"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:orientation="vertical">
+
             <RelativeLayout
                 android:id="@+id/topBarContainer"
                 android:layout_width="fill_parent"
@@ -26,7 +99,6 @@
                 android:paddingLeft="6dip"
                 android:paddingRight="6dip">
 
-                <!-- Botão Hambúrguer -->
                 <ImageButton
                     android:id="@+id/btnHamburger"
                     android:layout_width="40dip"
@@ -37,7 +109,6 @@
                     android:scaleType="centerInside"
                     android:src="@android:drawable/ic_menu_sort_by_size" />
 
-                <!-- Logo Centralizado no Meio da Tela -->
                 <ImageView
                     android:id="@+id/logo"
                     android:layout_width="wrap_content"
@@ -46,7 +117,6 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/linka_icon_bar" />
 
-                <!-- Container de Botões da Direita com Espaçamento e Padding -->
                 <LinearLayout
                     android:id="@+id/rightBarButtons"
                     android:layout_width="wrap_content"
@@ -74,10 +144,8 @@
                         android:scaleType="fitCenter"
                         android:src="@drawable/icon_profile" />
                 </LinearLayout>
-
             </RelativeLayout>
 
-            <!-- Barra do Indicador de Abas -->
             <RelativeLayout
                 android:id="@+id/tabBarContainer"
                 android:layout_width="fill_parent"
@@ -121,121 +189,53 @@
                     android:textColor="#888888"
                     android:text="Local Feed ▶" />
             </RelativeLayout>
-
-            <!-- Scroll de Páginas do Feed -->
-            <HorizontalScrollView
-                android:id="@+id/scrollViewPages"
-                android:layout_width="fill_parent"
-                android:layout_height="0dip"
-                android:layout_weight="1"
-                android:fillViewport="true"
-                android:scrollbars="none">
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="fill_parent"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:id="@+id/pageTimeline"
-                        android:layout_width="wrap_content"
-                        android:layout_height="fill_parent">
-                        <ListView
-                            android:id="@+id/listViewTimeline"
-                            android:layout_width="fill_parent"
-                            android:layout_height="fill_parent"
-                            android:scrollingCache="true"
-                            android:divider="#E0E0E0"
-                            android:dividerHeight="1dip" />
-                    </FrameLayout>
-
-                    <FrameLayout
-                        android:id="@+id/pageLocal"
-                        android:layout_width="wrap_content"
-                        android:layout_height="fill_parent">
-                        <ListView
-                            android:id="@+id/listViewLocal"
-                            android:layout_width="fill_parent"
-                            android:layout_height="fill_parent"
-                            android:scrollingCache="true"
-                            android:divider="#E0E0E0"
-                            android:dividerHeight="1dip" />
-                    </FrameLayout>
-
-                    <FrameLayout
-                        android:id="@+id/pageChat"
-                        android:layout_width="wrap_content"
-                        android:layout_height="fill_parent">
-                        <ListView
-                            android:id="@+id/listViewChat"
-                            android:layout_width="fill_parent"
-                            android:layout_height="fill_parent"
-                            android:scrollingCache="false"
-                            android:divider="#E0E0E0"
-                            android:dividerHeight="1dip" />
-                    </FrameLayout>
-
-                    <FrameLayout
-                        android:id="@+id/pageOptions"
-                        android:layout_width="wrap_content"
-                        android:layout_height="fill_parent">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:text="Settings &amp; Options"
-                            android:textColor="#666666" />
-                    </FrameLayout>
-
-                </LinearLayout>
-            </HorizontalScrollView>
-
-            <!-- Barra de Convidado -->
-            <LinearLayout 
-                android:id="@+id/layoutGuest"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content" 
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="#333333"
-                android:padding="4dip"
-                android:visibility="gone">
-
-                <TextView
-                    android:id="@+id/tvGuest"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="You are browsing as a guest. Log in for full options!"
-                    android:textSize="11sp"
-                    android:textColor="#FFFFFF"
-                    android:gravity="center_vertical" />
-
-                <Button 
-                    android:id="@+id/btnLogin"
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dip"
-                    android:paddingLeft="8dip"
-                    android:paddingRight="8dip"
-                    android:text="Login"
-                    android:textSize="11sp"
-                    android:layout_marginLeft="4dip"
-                    android:layout_marginRight="2dip" />
-
-                <Button 
-                    android:id="@+id/btnClose"
-                    android:layout_width="wrap_content"
-                    android:layout_height="32dip"
-                    android:paddingLeft="8dip"
-                    android:paddingRight="8dip"
-                    android:text="X"
-                    android:textSize="11sp"
-                    android:layout_marginLeft="2dip" />
-            </LinearLayout>
-
         </LinearLayout>
 
-        <!-- BOTÃO FLUTUANTE (FAB) REDONDO -->
+        <!-- BARRA DE GUEST -->
+        <LinearLayout 
+            android:id="@+id/layoutGuest"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" 
+            android:layout_alignParentBottom="true"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#333333"
+            android:padding="4dip"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvGuest"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="You are browsing as a guest. Log in for full options!"
+                android:textSize="11sp"
+                android:textColor="#FFFFFF"
+                android:gravity="center_vertical" />
+
+            <Button 
+                android:id="@+id/btnLogin"
+                android:layout_width="wrap_content"
+                android:layout_height="32dip"
+                android:paddingLeft="8dip"
+                android:paddingRight="8dip"
+                android:text="Login"
+                android:textSize="11sp"
+                android:layout_marginLeft="4dip"
+                android:layout_marginRight="2dip" />
+
+            <Button 
+                android:id="@+id/btnClose"
+                android:layout_width="wrap_content"
+                android:layout_height="32dip"
+                android:paddingLeft="8dip"
+                android:paddingRight="8dip"
+                android:text="X"
+                android:textSize="11sp"
+                android:layout_marginLeft="2dip" />
+        </LinearLayout>
+
+        <!-- BOTÃO FLUTUANTE (FAB) -->
         <ImageButton
             android:id="@+id/fabNewPost"
             android:layout_width="56dip"

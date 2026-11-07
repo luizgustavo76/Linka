@@ -22,6 +22,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -112,12 +113,20 @@ public class HomeActivity extends ActivityGroup {
     private boolean hasMoreLocal = true;
     private boolean hasMoreTimeline = true;
 
+    private View topHeaderContainer;
+    private boolean isHeaderVisible = true;
+    private boolean isHeaderAnimating = false;
+    private int lastFirstVisibleItem = 0;
+    private int lastTop = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
         dbHelper = new DatabaseHelper(this);
+        topHeaderContainer = findViewById(R.id.topHeaderContainer);
+
         fabNewPost = (ImageButton) findViewById(R.id.fabNewPost);
         fabNewPost.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
@@ -185,31 +194,38 @@ public class HomeActivity extends ActivityGroup {
 
         scrollViewPages.setOnTouchListener(new View.OnTouchListener() {
             private float downX;
+            private float downY;
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     downX = event.getRawX();
+                    downY = event.getRawY();
                 } else if (event.getAction() == MotionEvent.ACTION_UP) {
                     float upX = event.getRawX();
+                    float upY = event.getRawY();
                     float deltaX = downX - upX;
-                    int minSwipeDistance = screenWidth / 4;
+                    float deltaY = downY - upY;
 
-                    if (Math.abs(deltaX) > minSwipeDistance) {
-                        if (deltaX > 0 && currentPage < pageTitles.length - 1) {
-                            currentPage++;
-                        } else if (deltaX < 0 && currentPage > 0) {
-                            currentPage--;
+                    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                        int minSwipeDistance = screenWidth / 4;
+
+                        if (Math.abs(deltaX) > minSwipeDistance) {
+                            if (deltaX > 0 && currentPage < pageTitles.length - 1) {
+                                currentPage++;
+                            } else if (deltaX < 0 && currentPage > 0) {
+                                currentPage--;
+                            }
+                        } else {
+                            int scrollX = scrollViewPages.getScrollX();
+                            currentPage = (scrollX + (screenWidth / 2)) / screenWidth;
+                            if (currentPage < 0) currentPage = 0;
+                            if (currentPage >= pageTitles.length) currentPage = pageTitles.length - 1;
                         }
-                    } else {
-                        int scrollX = scrollViewPages.getScrollX();
-                        currentPage = (scrollX + (screenWidth / 2)) / screenWidth;
-                        if (currentPage < 0) currentPage = 0;
-                        if (currentPage >= pageTitles.length) currentPage = pageTitles.length - 1;
-                    }
 
-                    scrollToPage(currentPage);
-                    return true;
+                        scrollToPage(currentPage);
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -281,38 +297,65 @@ public class HomeActivity extends ActivityGroup {
         listViewTimeline = (ListView) findViewById(R.id.listViewTimeline);
         listViewLocal = (ListView) findViewById(R.id.listViewLocal);
 
+        AbsListView.OnScrollListener feedScrollListener = new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {}
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (!isLoading && ((view == listViewTimeline && hasMoreTimeline) || (view == listViewLocal && hasMoreLocal)) 
+                    && totalItemCount > 0 && (firstVisibleItem + visibleItemCount >= totalItemCount - 2)) {
+                    if (view == listViewTimeline) {
+                        feedPageTimeline++;
+                        loadFeedForTab("Timeline", false, feedPageTimeline);
+                    } else {
+                        feedPageLocal++;
+                        loadFeedForTab("Local Feed", false, feedPageLocal);
+                    }
+                }
+
+                if (firstVisibleItem == 0) {
+                    View firstChild = view.getChildAt(0);
+                    int currentTop = (firstChild == null) ? 0 : firstChild.getTop();
+                    if (currentTop >= 0) {
+                        showHeaderBar();
+                        lastFirstVisibleItem = firstVisibleItem;
+                        lastTop = currentTop;
+                        return;
+                    }
+                }
+
+                View firstChild = view.getChildAt(0);
+                int currentTop = (firstChild == null) ? 0 : firstChild.getTop();
+
+                if (firstVisibleItem > lastFirstVisibleItem) {
+                    hideHeaderBar();
+                } else if (firstVisibleItem < lastFirstVisibleItem) {
+                    showHeaderBar();
+                } else {
+                    int diff = currentTop - lastTop;
+                    if (diff < -20) {
+                        hideHeaderBar();
+                    } else if (diff > 20) {
+                        showHeaderBar();
+                    }
+                }
+
+                lastFirstVisibleItem = firstVisibleItem;
+                lastTop = currentTop;
+            }
+        };
+
         if (listViewTimeline != null) {
             listViewTimeline.setScrollingCacheEnabled(true);
             listViewTimeline.setAnimationCacheEnabled(true);
-            listViewTimeline.setOnScrollListener(new AbsListView.OnScrollListener() {
-                @Override
-                public void onScrollStateChanged(AbsListView view, int scrollState) {}
-
-                @Override
-                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                    if (!isLoading && hasMoreTimeline && totalItemCount > 0 && (firstVisibleItem + visibleItemCount >= totalItemCount - 2)) {
-                        feedPageTimeline++;
-                        loadFeedForTab("Timeline", false, feedPageTimeline);
-                    }
-                }
-            });
+            listViewTimeline.setOnScrollListener(feedScrollListener);
         }
 
         if (listViewLocal != null) {
             listViewLocal.setScrollingCacheEnabled(true);
             listViewLocal.setAnimationCacheEnabled(true);
-            listViewLocal.setOnScrollListener(new AbsListView.OnScrollListener() {
-                @Override
-                public void onScrollStateChanged(AbsListView view, int scrollState) {}
-
-                @Override
-                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                    if (!isLoading && hasMoreLocal && totalItemCount > 0 && (firstVisibleItem + visibleItemCount >= totalItemCount - 2)) {
-                        feedPageLocal++;
-                        loadFeedForTab("Local Feed", false, feedPageLocal);
-                    }
-                }
-            });
+            listViewLocal.setOnScrollListener(feedScrollListener);
         }
 
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -335,7 +378,6 @@ public class HomeActivity extends ActivityGroup {
         scheduler = Executors.newSingleThreadScheduledExecutor();
         schedulerFeedPolling = Executors.newSingleThreadScheduledExecutor();
 
-        // Checagem de notificacoes a cada 60s
         schedulerNotifications.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -343,7 +385,6 @@ public class HomeActivity extends ActivityGroup {
             }
         }, 0, 60, TimeUnit.SECONDS);
 
-        // Validacao de token a cada 3 min
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -361,7 +402,6 @@ public class HomeActivity extends ActivityGroup {
             }
         }, 0, 3, TimeUnit.MINUTES);
 
-        // POLLING AUTOMATICO DE FEED: Checa novos posts do topo a cada 60s
         schedulerFeedPolling.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -373,6 +413,57 @@ public class HomeActivity extends ActivityGroup {
                 });
             }
         }, 60, 60, TimeUnit.SECONDS);
+    }
+
+    private void hideHeaderBar() {
+        if (!isHeaderVisible || isHeaderAnimating || topHeaderContainer == null) return;
+
+        TranslateAnimation anim = new TranslateAnimation(0, 0, 0, -topHeaderContainer.getHeight());
+        anim.setDuration(180);
+        anim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                isHeaderAnimating = true;
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                topHeaderContainer.setVisibility(View.GONE);
+                isHeaderVisible = false;
+                isHeaderAnimating = false;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+
+        topHeaderContainer.startAnimation(anim);
+    }
+
+    private void showHeaderBar() {
+        if (isHeaderVisible || isHeaderAnimating || topHeaderContainer == null) return;
+
+        topHeaderContainer.setVisibility(View.VISIBLE);
+
+        TranslateAnimation anim = new TranslateAnimation(0, 0, -topHeaderContainer.getHeight(), 0);
+        anim.setDuration(180);
+        anim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                isHeaderAnimating = true;
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                isHeaderVisible = true;
+                isHeaderAnimating = false;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+
+        topHeaderContainer.startAnimation(anim);
     }
 
     private void setupDrawerMenu() {
