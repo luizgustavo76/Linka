@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 
 public class request {
 
@@ -93,30 +94,42 @@ public class request {
     }
 
     public static byte[] requestBytes(String urlParam, String method, Context context) {
+        return requestBytesInternal(urlParam, method, context, 0);
+    }
+
+    private static byte[] requestBytesInternal(String urlParam, String method, Context context, int redirectCount) {
+        if (redirectCount > 5) {
+            Log.e("LINKA_DEBUG", "Loop de redirecionamento abortado para: " + urlParam);
+            return null;
+        }
+
         HttpURLConnection connection = null;
         try {
             System.setProperty("http.keepAlive", "false");
 
-            URL originalUrl = new URL(urlParam);
-            String hostName = originalUrl.getHost();
-            String finalUrlStr = urlParam;
+            String cleanUrlStr = urlParam;
+            try {
+                cleanUrlStr = URLDecoder.decode(urlParam, "UTF-8");
+            } catch (Exception ignored) {}
 
-            // Intercepta e aplica o IP direto para Cloudflare Workers se necessário
+            URL originalUrl = new URL(cleanUrlStr);
+            String hostName = originalUrl.getHost();
+            String finalUrlStr = cleanUrlStr;
+
             if (hostName != null && hostName.contains("workers.dev")) {
                 String cloudflareIp = "104.21.80.1";
-                finalUrlStr = urlParam.replace(hostName, cloudflareIp);
+                finalUrlStr = cleanUrlStr.replace(hostName, cloudflareIp);
             }
 
             URL url = new URL(finalUrlStr);
             connection = (HttpURLConnection) url.openConnection();
             method = method.toUpperCase();
             
-            connection.setConnectTimeout(25000);
-            connection.setReadTimeout(25000);
+            connection.setConnectTimeout(15000);
+            connection.setReadTimeout(15000);
             connection.setRequestMethod(method);
-            connection.setInstanceFollowRedirects(true);
+            connection.setInstanceFollowRedirects(false);
 
-            // Adiciona User-Agent de navegador moderno para evitar redirecionamento infinito/bloqueios do Nitter/Cloudflare
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
             connection.setRequestProperty("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8");
 
@@ -124,43 +137,20 @@ public class request {
                 connection.setRequestProperty("Host", hostName);
             }
 
-            if (context != null) {
-                try {
-                    config cfg = new config();
-                    String rawCfg = cfg.loadCfgAsJson(context, "config.cfg");
-                    if (rawCfg != null && rawCfg.length() > 0) {
-                        JSONObject jsonCfg = new JSONObject(rawCfg);
-                        if (jsonCfg.has("FAST_LOGIN")) {
-                            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
-                            String token = fastLogin.optString("token_session", "");
-                            if (token.length() > 0) {
-                                connection.setRequestProperty("Authorization", "Bearer " + token);
-                            }
-                        }
-                    }
-                } catch (Exception ignored) {}
-            }
-
             int responseCode = connection.getResponseCode();
 
-            // Trata redirecionamento manual se o servidor retornar 301/302/303/307
-            if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP || responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == 307 || responseCode == 303) {
+            if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP || 
+                responseCode == HttpURLConnection.HTTP_MOVED_PERM || 
+                responseCode == 307 || responseCode == 308 || responseCode == 303) {
+                
                 String newUrl = connection.getHeaderField("Location");
                 if (newUrl != null && newUrl.length() > 0) {
                     if (newUrl.startsWith("/")) {
                         newUrl = originalUrl.getProtocol() + "://" + hostName + newUrl;
                     }
-                    if (!newUrl.equals(urlParam)) {
-                        return requestBytes(newUrl, method, context);
+                    if (!newUrl.equals(urlParam) && !newUrl.equals(cleanUrlStr)) {
+                        return requestBytesInternal(newUrl, method, context, redirectCount + 1);
                     }
-                }
-            }
-
-            if (responseCode == 403 && context != null) {
-                String newToken = tokenManager.newSession(context);
-                if (newToken != null && newToken.length() > 0) {
-                    config cfg = new config();
-                    cfg.updateCfg(context, "config.cfg", "FAST_LOGIN", "token_session", newToken);
                 }
             }
 
