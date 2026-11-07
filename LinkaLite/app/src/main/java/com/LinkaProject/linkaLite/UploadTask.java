@@ -18,15 +18,13 @@ public class UploadTask {
 
     private static final String TAG = "Linka_UploadTask";
 
-    // Sobrecarga para compatibilidade legada (3 parâmetros)
     public static String uploadProfilePicture(Context context, Uri imageUri, String requestUrl) {
         return uploadProfilePicture(context, imageUri, requestUrl, null);
     }
 
-    // Método principal com username no Multipart Form-Data (4 parâmetros)
     public static String uploadProfilePicture(Context context, Uri imageUri, String requestUrl, String username) {
         if (context == null || imageUri == null || requestUrl == null || requestUrl.trim().length() == 0) {
-            return makeJsonError("UploadTask", "Parâmetros de entrada inválidos (null/vazio).");
+            return makeJsonError("UploadTask", "Parâmetros de entrada inválidos.");
         }
 
         String boundary = "*****" + System.currentTimeMillis() + "*****";
@@ -53,30 +51,29 @@ public class UploadTask {
 
             OutputStream outStream = conn.getOutputStream();
             if (outStream == null) {
-                return makeJsonError("UploadTask", "Não foi possível obter OutputStream da ligação HTTP.");
+                return makeJsonError("UploadTask", "Não foi possível obter OutputStream HTTP.");
             }
             dos = new DataOutputStream(outStream);
 
             // 1. Campo 'username' no Multipart Form-Data
             if (username != null && username.length() > 0) {
-                dos.writeBytes(twoHyphens + boundary + lineEnd);
-                dos.writeBytes("Content-Disposition: form-data; name=\"username\"" + lineEnd);
-                dos.writeBytes("Content-Type: text/plain; charset=UTF-8" + lineEnd);
-                dos.writeBytes(lineEnd);
-                dos.writeBytes(username);
-                dos.writeBytes(lineEnd);
+                String userPart = twoHyphens + boundary + lineEnd +
+                        "Content-Disposition: form-data; name=\"username\"" + lineEnd +
+                        "Content-Type: text/plain; charset=UTF-8" + lineEnd + lineEnd +
+                        username + lineEnd;
+                dos.write(userPart.getBytes("UTF-8"));
             }
 
-            // 2. Campo 'image' (Ficheiro de Imagem) no Multipart
-            dos.writeBytes(twoHyphens + boundary + lineEnd);
-            dos.writeBytes("Content-Disposition: form-data; name=\"image\"; filename=\"profile.jpg\"" + lineEnd);
-            dos.writeBytes("Content-Type: image/jpeg" + lineEnd);
-            dos.writeBytes(lineEnd);
+            // 2. Cabeçalhos da Imagem
+            String fileHeader = twoHyphens + boundary + lineEnd +
+                    "Content-Disposition: form-data; name=\"image\"; filename=\"profile.jpg\"" + lineEnd +
+                    "Content-Type: image/jpeg" + lineEnd + lineEnd;
+            dos.write(fileHeader.getBytes("UTF-8"));
 
-            // Abrir imagem
+            // 3. Leitura e escrita dos bytes da imagem
             inputStream = context.getContentResolver().openInputStream(imageUri);
             if (inputStream == null) {
-                return makeJsonError("UploadTask", "Falha ao abrir InputStream do ficheiro de imagem.");
+                return makeJsonError("UploadTask", "Falha ao abrir InputStream da imagem.");
             }
 
             byte[] buffer = new byte[4096];
@@ -85,8 +82,10 @@ public class UploadTask {
                 dos.write(buffer, 0, bytesRead);
             }
 
-            dos.writeBytes(lineEnd);
-            dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+            // 4. Fechamento das boundaries do Multipart
+            dos.write(lineEnd.getBytes("UTF-8"));
+            String endBoundary = twoHyphens + boundary + twoHyphens + lineEnd;
+            dos.write(endBoundary.getBytes("UTF-8"));
             dos.flush();
 
             int status = conn.getResponseCode();
@@ -100,7 +99,7 @@ public class UploadTask {
                 return makeJsonError("UploadTask", "Servidor retornou HTTP " + status + " sem corpo de resposta.");
             }
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream, "UTF-8"));
             StringBuilder response = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -112,26 +111,11 @@ public class UploadTask {
 
         } catch (Exception e) {
             Log.e(TAG, "Erro no upload da imagem", e);
-            
-            int lineNumber = -1;
-            if (e.getStackTrace() != null && e.getStackTrace().length > 0) {
-                lineNumber = e.getStackTrace()[0].getLineNumber();
-            }
-            
-            String detail = e.getClass().getSimpleName() + " (linha " + lineNumber + "): " + 
-                           (e.getMessage() != null ? e.getMessage() : "causa nula/desconhecida");
-            
-            return makeJsonError("UploadTask", detail);
+            return makeJsonError("UploadTask", e.getClass().getSimpleName() + ": " + e.getMessage());
         } finally {
-            if (inputStream != null) {
-                try { inputStream.close(); } catch (Exception ignored) {}
-            }
-            if (dos != null) {
-                try { dos.close(); } catch (Exception ignored) {}
-            }
-            if (conn != null) {
-                conn.disconnect();
-            }
+            if (inputStream != null) { try { inputStream.close(); } catch (Exception ignored) {} }
+            if (dos != null) { try { dos.close(); } catch (Exception ignored) {} }
+            if (conn != null) { conn.disconnect(); }
         }
     }
 
