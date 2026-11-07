@@ -24,7 +24,7 @@ public class ImageLoader {
 
     private static final String TAG = "ImageLoader";
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private static final ExecutorService executor = Executors.newFixedThreadPool(1);
+    private static final ExecutorService executor = Executors.newFixedThreadPool(2);
     private static final HashMap<String, SoftReference<Bitmap>> memoryCache = new HashMap<String, SoftReference<Bitmap>>();
     private static String cachedBaseUrl = null;
 
@@ -52,22 +52,20 @@ public class ImageLoader {
     private int getTargetWidth(Context context) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         int width = metrics.widthPixels > 0 ? metrics.widthPixels : 320;
-        int height = metrics.heightPixels > 0 ? metrics.heightPixels : 480;
-        
-        Log.d(TAG, "Resolucao detectada: " + width + "x" + height + " | Densidade (density): " + metrics.density);
         return width;
     }
 
     /**
-     * Limpa URLs encadeadas/duplicadas do wsrv.nl vindas do backend
-     * e aplica o proxy wsrv.nl com as dimensoes reais e qualidade 85/90.
+     * Limpa URLs encadeadas/duplicadas do wsrv.nl vindas do backend,
+     * ignora domínios sensíveis a bloqueios (Nitter, Twitter, unavatar)
+     * e aplica o proxy wsrv.nl apenas quando seguro.
      */
     private String cleanAndPrepareUrl(String rawUrl, int targetWidth, Integer targetHeight, int quality) {
         if (rawUrl == null || rawUrl.trim().length() == 0) return "";
         
         String cleanUrl = rawUrl.trim();
 
-        // Se a URL ja veio envelopada com wsrv.nl, desfaz o encadeamento para pegar a URL original
+        // 1. Desfaz encadeamento prévio do wsrv.nl se houver
         while (cleanUrl.contains("wsrv.nl/?url=")) {
             try {
                 int urlIndex = cleanUrl.indexOf("url=") + 4;
@@ -83,14 +81,23 @@ public class ImageLoader {
             }
         }
 
-        // Se for midia local (/midia/), nao usa wsrv.nl
-        if (cleanUrl.contains("/midia/")) {
+        // 2. Domínios que devem ser carregados diretamente sem o proxy wsrv.nl
+        if (cleanUrl.contains("/midia/") || 
+            cleanUrl.contains("unavatar.io") || 
+            cleanUrl.contains("ui-avatars.com") || 
+            cleanUrl.contains("cdninstagram.com") ||
+            cleanUrl.contains("nitter") ||
+            cleanUrl.contains("twimg.com")) {
             return cleanUrl;
         }
 
-        // Se for URL externa via HTTP/HTTPS, envelopa no wsrv.nl limpo
+        // 3. Aplica o proxy wsrv.nl para as demais mídias de forma limpa
         if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
             try {
+                try {
+                    cleanUrl = URLDecoder.decode(cleanUrl, "UTF-8");
+                } catch (Exception ignored) {}
+
                 StringBuilder builder = new StringBuilder("http://wsrv.nl/?url=");
                 builder.append(URLEncoder.encode(cleanUrl, "UTF-8"));
                 builder.append("&w=").append(targetWidth);
@@ -209,6 +216,8 @@ public class ImageLoader {
                                 }
                             });
                         }
+                    } else {
+                        Log.e(TAG, "[LoadImageUrl] Retorno dos bytes nulo ou 0 para a URL: " + fetchUrl);
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Excecao no LoadImageUrl", e);
@@ -263,8 +272,6 @@ public class ImageLoader {
 
                                 DisplayMetrics metrics = appContext.getResources().getDisplayMetrics();
                                 int avatarPx = Math.round(64 * metrics.density);
-
-                                Log.d(TAG, "Calculando dimensao do Avatar: " + avatarPx + "px");
 
                                 String fetchUrl = cleanAndPrepareUrl(avatarUrl, avatarPx, avatarPx, 90);
 

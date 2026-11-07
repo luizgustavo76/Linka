@@ -1042,14 +1042,7 @@ public class HomeActivity extends ActivityGroup {
 
                 if ("timeline".equals(actualTab)) {
                     String avatarUrl = post.optString("avatar_url", "");
-                    if (avatarUrl.contains("cdninstagram.com")) {
-                        holder.avatarPost.setTag(avatarUrl);
-                        imageLoader.LoadImageUrl(avatarUrl, holder.avatarPost);
-                    } else if (avatarUrl.startsWith("http")) {
-                        String avatarOtimizado = "http://wsrv.nl/?url=" + avatarUrl + "&w=40&h=40&fit=cover&output=jpg";
-                        holder.avatarPost.setTag(avatarOtimizado);
-                        imageLoader.LoadImageUrl(avatarOtimizado, holder.avatarPost);
-                    } else {
+                    if (avatarUrl != null && avatarUrl.trim().length() > 0) {
                         holder.avatarPost.setTag(avatarUrl);
                         imageLoader.LoadImageUrl(avatarUrl, holder.avatarPost);
                     }
@@ -1168,24 +1161,6 @@ public class HomeActivity extends ActivityGroup {
 
             imgPost.setLayoutParams(params);
 
-            boolean isGifMedia = "gif".equals(mediaType) || rawUrl.toLowerCase().endsWith(".gif");
-
-            final String finalProxyUrl;
-            if (rawUrl.contains("cdninstagram.com") || rawUrl.contains("/midia/") || 
-                rawUrl.startsWith("http://linkaProject.pythonanywhere.com") || 
-                rawUrl.startsWith("https://linkaProject.pythonanywhere.com") || isGifMedia) {
-                
-                finalProxyUrl = rawUrl;
-                Log.d("LINKA_DEBUG", "[RENDER MEDIA] Usando URL DIRETA (sem wsrv.nl): " + finalProxyUrl);
-            } else {
-                if (rawUrl.startsWith("http")) {
-                    finalProxyUrl = "http://wsrv.nl/?url=" + rawUrl + "&w=240&q=60&output=jpg";
-                    Log.d("LINKA_DEBUG", "[RENDER MEDIA] Usando Proxy wsrv.nl: " + finalProxyUrl);
-                } else {
-                    finalProxyUrl = rawUrl;
-                }
-            }
-
             imgPost.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -1196,8 +1171,8 @@ public class HomeActivity extends ActivityGroup {
                 }
             });
 
-            imgPost.setTag(finalProxyUrl);
-            imageLoader.LoadImageUrl(finalProxyUrl, imgPost);
+            imgPost.setTag(rawUrl);
+            imageLoader.LoadImageUrl(rawUrl, imgPost);
 
             updateCarouselControls(index, mediaItems.size(), txtMediaCount, btnPrev, btnNext);
         }

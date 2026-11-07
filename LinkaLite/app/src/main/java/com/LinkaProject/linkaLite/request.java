@@ -114,6 +114,11 @@ public class request {
             connection.setConnectTimeout(25000);
             connection.setReadTimeout(25000);
             connection.setRequestMethod(method);
+            connection.setInstanceFollowRedirects(true);
+
+            // Adiciona User-Agent de navegador moderno para evitar redirecionamento infinito/bloqueios do Nitter/Cloudflare
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
+            connection.setRequestProperty("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8");
 
             if (hostName != null) {
                 connection.setRequestProperty("Host", hostName);
@@ -137,6 +142,20 @@ public class request {
             }
 
             int responseCode = connection.getResponseCode();
+
+            // Trata redirecionamento manual se o servidor retornar 301/302/303/307
+            if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP || responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == 307 || responseCode == 303) {
+                String newUrl = connection.getHeaderField("Location");
+                if (newUrl != null && newUrl.length() > 0) {
+                    if (newUrl.startsWith("/")) {
+                        newUrl = originalUrl.getProtocol() + "://" + hostName + newUrl;
+                    }
+                    if (!newUrl.equals(urlParam)) {
+                        return requestBytes(newUrl, method, context);
+                    }
+                }
+            }
+
             if (responseCode == 403 && context != null) {
                 String newToken = tokenManager.newSession(context);
                 if (newToken != null && newToken.length() > 0) {
@@ -175,7 +194,6 @@ public class request {
             String hostName = originalUrl.getHost();
             String finalUrlStr = urlParam;
 
-            // Intercepta e aplica o IP direto para Cloudflare Workers se necessário (Bypass DNS Dalvik)
             if (hostName != null && hostName.contains("workers.dev")) {
                 String cloudflareIp = "104.21.80.1";
                 finalUrlStr = urlParam.replace(hostName, cloudflareIp);
@@ -190,6 +208,7 @@ public class request {
             
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
 
             if (hostName != null) {
                 connection.setRequestProperty("Host", hostName);
