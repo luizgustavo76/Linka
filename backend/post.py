@@ -31,6 +31,8 @@ if root_flags.get("redis"):
     REDIS_URL = os.getenv("REDIS_URL")
     if REDIS_URL:
         r = redis_lib.Redis.from_url(REDIS_URL, decode_responses=True)
+if root_flags.get("twitter"):
+    import twitter_federation.posts as twitter
 if root_flags.get("threads"):
     import threads_federation.app as threads
 if root_flags.get("bluesky-federation"):
