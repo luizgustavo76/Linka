@@ -221,7 +221,8 @@ def valide():
 
     token = request.headers.get("Authorization")
 
-    # SE A ROTA É PÚBLICA:
+    if request.method == "GET":
+        return None
     if request.endpoint in public_routes:
         if token:
             token = token.replace("Bearer ", "").strip()
