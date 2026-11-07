@@ -144,6 +144,7 @@ public class HomeActivity extends ActivityGroup {
             logo.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    refreshFeed();
                     UIAnimationHelper.rotateWithWeight((ImageView) v);
                 }
             });
