@@ -11,7 +11,7 @@
         android:id="@+id/tvFooterText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Is your For You feed empty? Customize and edit it in the menu..."
+        android:text="Is your feed empty? Edit and customize it!"
         android:textColor="#1c1c1c"
         android:textSize="13sp"
         android:gravity="center" />

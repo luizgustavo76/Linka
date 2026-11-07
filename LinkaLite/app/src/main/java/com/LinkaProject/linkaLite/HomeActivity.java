@@ -105,7 +105,7 @@ public class HomeActivity extends ActivityGroup {
     private DatabaseHelper dbHelper;
     private DrawerLayout drawerLayout;
     private ImageView logo;
-    // Variaveis para Controlo de Paginacao
+    private ImageButton fabNewPost;
     private int feedPageLocal = 1;
     private int feedPageTimeline = 1;
     private boolean isLoading = false;
@@ -118,7 +118,13 @@ public class HomeActivity extends ActivityGroup {
         setContentView(R.layout.activity_home);
 
         dbHelper = new DatabaseHelper(this);
-
+        fabNewPost = (ImageButton) findViewById(R.id.fabNewPost);
+        fabNewPost.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                Intent intent = new Intent(HomeActivity.this, newPost.class);
+                startActivity(intent);
+            }
+        });
         Display display = getWindowManager().getDefaultDisplay();
         screenWidth = display.getWidth();
         logo = (ImageView) findViewById(R.id.logo);
