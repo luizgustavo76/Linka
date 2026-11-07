@@ -10,7 +10,7 @@ import requests
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 env_path = BASE_DIR / ".env"
-dotenv.load_dotenv(dotenv_path=env_path)
+dotenv.load_dotenv()
 
 THREADS_APP_ID = os.getenv("THREADS_APP_ID", "").strip()
 THREADS_APP_SECRET = os.getenv("THREADS_APP_SECRET", "").strip()
@@ -58,28 +58,6 @@ def get_relative_time(post_date):
     return f"{years} yr ago" if years == 1 else f"{years} yrs ago"
 
 
-def fetch_threads_user_avatar(threads_user_id, access_token=None):
-    token = access_token or THREADS_ACCESS_TOKEN
-    if not token or not threads_user_id:
-        return ""
-
-    url = f"https://graph.threads.net/v1.0/{threads_user_id}"
-    params = {
-        "fields": "id,username,threads_profile_picture_url",
-        "access_token": token,
-    }
-
-    try:
-        response = requests.get(url, params=params, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            return data.get("threads_profile_picture_url", "")
-    except Exception as e:
-        print(f"[THREADS AVATAR EXCEPTION] {e}")
-
-    return ""
-
-
 def formate(posts):
     if isinstance(posts, str):
         try:
@@ -98,20 +76,28 @@ def formate(posts):
         if not isinstance(post, dict) or "error" in post:
             continue
 
-        account_info = post.get("owner", {})
+        account_info = post.get("owner", {}) or post.get("user", {})
         username = post.get("username") or account_info.get("username") or "desconhecido"
         account_id = str(account_info.get("id", post.get("owner_id", "")))
 
         datetime_formatado = None
-        raw_created_at = post.get("timestamp") or post.get("created_at")
+        raw_created_at = post.get("timestamp") or post.get("created_at") or post.get("taken_at")
         if raw_created_at:
-            try:
-                dt = datetime.fromisoformat(raw_created_at.replace("Z", "+00:00"))
+            if isinstance(raw_created_at, (int, float)):
+                dt = datetime.fromtimestamp(raw_created_at)
                 datetime_formatado = dt.strftime("%Y-%m-%d %H:%M:%S")
-            except ValueError:
-                datetime_formatado = raw_created_at
+            else:
+                try:
+                    dt = datetime.fromisoformat(str(raw_created_at).replace("Z", "+00:00"))
+                    datetime_formatado = dt.strftime("%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    datetime_formatado = str(raw_created_at)
 
-        raw_text = post.get("text", "") or post.get("caption", "")
+        caption_obj = post.get("caption")
+        if isinstance(caption_obj, dict):
+            raw_text = caption_obj.get("text", "")
+        else:
+            raw_text = post.get("text", "") or caption_obj or ""
 
         soup = BeautifulSoup(raw_text, "html.parser")
         text_post = soup.get_text()
@@ -132,31 +118,33 @@ def formate(posts):
         media_elements = children if children else [post]
 
         for elem in media_elements:
-            m_type = elem.get("media_type", "").upper()
-            if m_type in ["IMAGE", "CAROUSEL_ALBUM"] or elem.get("media_url"):
-                img_url = elem.get("media_url")
-                if img_url:
-                    images_for_v2.append(img_url)
+            m_type = str(elem.get("media_type", "")).upper()
+            img_candidates = elem.get("image_versions2", {}).get("candidates", [])
+            img_url = elem.get("media_url") or (img_candidates[0].get("url") if img_candidates else None)
+            
+            if img_url:
+                images_for_v2.append(img_url)
 
-                    m_w = str(elem.get("width", "")) if elem.get("width") else ""
-                    m_h = str(elem.get("height", "")) if elem.get("height") else ""
+                m_w = str(elem.get("width", "")) if elem.get("width") else ""
+                m_h = str(elem.get("height", "")) if elem.get("height") else ""
 
-                    media_list.append({
-                        "media_url": img_url,
-                        "media_type": "image",
-                        "width": m_w,
-                        "heigth": m_h
-                    })
+                media_list.append({
+                    "media_url": img_url,
+                    "media_type": "image",
+                    "width": m_w,
+                    "heigth": m_h
+                })
 
-                    if not media_url:
-                        media_url = img_url
-                        media_type = "image"
-                        width = m_w
-                        height = m_h
+                if not media_url:
+                    media_url = img_url
+                    media_type = "image"
+                    width = m_w
+                    height = m_h
 
         avatar_url = (
             post.get("threads_profile_picture_url")
             or account_info.get("threads_profile_picture_url")
+            or account_info.get("profile_pic_url")
             or ""
         )
 
@@ -168,6 +156,8 @@ def formate(posts):
 
         comments_count = post.get("replies_count", 0)
         original_url = post.get("permalink", "")
+        if not original_url and post.get("code"):
+            original_url = f"https://www.threads.net/@{username}/post/{post.get('code')}"
 
         if text_final or media_url:
             posts_formatados.append(
@@ -221,23 +211,76 @@ def fetch_threads_posts(threads_user_id="me", limit=100, access_token=None):
 
     try:
         response = requests.get(url, params=params, timeout=10)
-
         if response.status_code != 200:
-            print(f"[THREADS ERROR] Status Code: {response.status_code} - Response: {response.text}")
+            print(f"[THREADS ERROR] Status Code: {response.status_code} Response: {response.text}")
             return []
 
         data = response.json()
         raw_posts = data.get("data", [])
-        print(f"[THREADS DEBUG] Quantidade de posts brutos retornados: {len(raw_posts)}")
-
-        formatted_posts = formate(raw_posts)
-        return formatted_posts[:limit]
+        return formate(raw_posts)[:limit]
 
     except Exception as e:
         print(f"[THREADS EXCEPTION] {e}")
         return []
 
+def fetch_threads_search_fast(query="brasil", limit=20):
+    """
+    Scraping HTTP limpo via extração de JSON da página web pública do Threads.
+    Consome < 5MB de RAM e não estoura a memória na Render.
+    """
+    tag_clean = query.lstrip("#").strip().lower()
+    url = f"https://www.threads.net/search?q={tag_clean}"
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1"
+    }
 
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, "html.parser")
+            scripts = soup.find_all("script", {"type": "application/json"})
+            raw_posts = []
+
+            for script in scripts:
+                content = script.string or ""
+                if "thread_items" in content or "searchResults" in content:
+                    try:
+                        data = json.loads(content)
+                        # Função recursiva para vasculhar nós de post dentro da árvore JSON
+                        def find_posts(obj):
+                            if isinstance(obj, dict):
+                                if "thread_items" in obj and isinstance(obj["thread_items"], list):
+                                    for item in obj["thread_items"]:
+                                        if isinstance(item, dict) and "post" in item:
+                                            raw_posts.append(item["post"])
+                                for k, v in obj.items():
+                                    find_posts(v)
+                            elif isinstance(obj, list):
+                                for item in obj:
+                                    find_posts(item)
+
+                        find_posts(data)
+                    except json.JSONDecodeError:
+                        continue
+
+            if raw_posts:
+                return formate(raw_posts)[:limit]
+        else:
+            print(f"[THREADS SCRAPE SEARCH] Status Code: {response.status_code}")
+    except Exception as e:
+        print(f"[THREADS SCRAPE SEARCH EXCEPTION] {e}")
+
+    # Fallback local seguro caso a raspagem web seja bloqueada
+    all_posts = fetch_threads_posts(limit=100)
+    return [p for p in all_posts if query.lower() in p.get("text_post", "").lower()][:limit]
 def fetch_threads_comments(original_post_id, access_token=None):
     token = access_token or THREADS_ACCESS_TOKEN
     if not original_post_id or not token:
@@ -255,7 +298,6 @@ def fetch_threads_comments(original_post_id, access_token=None):
 
     try:
         response = requests.get(url, params=params, timeout=10)
-
         if response.status_code != 200:
             print(f"[THREADS COMMENTS ERROR] Status {response.status_code} na URL: {url}")
             return []
@@ -281,51 +323,7 @@ def fetch_threads_comments(original_post_id, access_token=None):
     except Exception as e:
         print(f"[THREADS COMMENTS EXCEPTION] {e}")
         return []
-# --- BUSCA DE POSTS PUBLICOS (FEED DE TOPICOS/HASHTAGS) ---
 
-def fetch_threads_search_feed(query="tech", limit=20, access_token=None):
-    token = access_token or THREADS_ACCESS_TOKEN
-    if not token:
-        print("[THREADS SEARCH ERROR] Token não configurado.")
-        return []
-
-    url = "https://graph.threads.net/v1.0/threads/search"
-    fields = (
-        "id,media_product_type,media_type,media_url,permalink,owner,username,"
-        "text,timestamp,children{id,media_url,media_type}"
-    )
-
-    params = {
-        "q": query,
-        "fields": fields,
-        "limit": min(limit, 50),
-        "access_token": token
-    }
-
-    try:
-        response = requests.get(url, params=params, timeout=10)
-
-        if response.status_code != 200:
-            print(f"[THREADS SEARCH ERROR] Status: {response.status_code} - {response.text}")
-            return []
-
-        data = response.json()
-        raw_posts = data.get("data", [])
-        return formate(raw_posts)
-
-    except Exception as e:
-        print(f"[THREADS SEARCH EXCEPTION] {e}")
-        return []
-
-
-# Nova Rota para buscar o Feed de Tópicos
-@threads_bp.route("/feed/threads/search", methods=["GET"])
-def get_threads_search_feed():
-    query = request.args.get("q", default="brasil", type=str)
-    limit = request.args.get("limit", default=20, type=int)
-    
-    posts = fetch_threads_search_feed(query=query, limit=limit)
-    return jsonify(posts)
 
 # --- ROTAS FLASK PARA O LINKA ---
 
@@ -333,6 +331,15 @@ def get_threads_search_feed():
 def get_threads_feed():
     limit = request.args.get("limit", default=20, type=int)
     posts = fetch_threads_posts(limit=limit)
+    return jsonify(posts)
+
+
+@threads_bp.route("/feed/threads/search", methods=["GET"])
+def get_threads_search_feed():
+    query = request.args.get("q", default="brasil", type=str)
+    limit = request.args.get("limit", default=20, type=int)
+    
+    posts = fetch_threads_search_fast(query=query, limit=limit)
     return jsonify(posts)
 
 
