@@ -525,7 +525,6 @@ def fetch_single_federation(node_url):
     netloc = parsed.netloc.lower()
     path = parsed.path.rstrip('/')
 
-    # Adicionada a checagem do Render no netloc
     is_local_node = any(domain in netloc for domain in [
         "linka-project.onrender.com",
         "linkaproject.pythonanywhere.com",
@@ -540,17 +539,18 @@ def fetch_single_federation(node_url):
             
             # --- SUPORTE AO THREADS (BUSCA E FEED) ---
             elif path.startswith("/feed/threads"):
-                if root_flags.get("threads-federation") and 'threads' in globals():
+                if root_flags.get("threads") and 'threads' in globals():
                     query_params = parse_qs(parsed.query)
                     
-                    # Trata a rota de busca por query (/feed/threads/search?q=android)
-                    if path == "/feed/threads/search":
-                        search_term = query_params.get("q", ["brasil"])[0]
+                    # Trata a rota de busca por query (/feed/threads/search?q=android ou ?g=android)
+                    if "/search" in path:
+                        # Pega o parametro 'q' ou 'g' da query string
+                        search_term = query_params.get("q", query_params.get("g", ["brasil"]))[0]
                         if hasattr(threads, "fetch_threads_search_fast"):
                             return threads.fetch_threads_search_fast(query=search_term, limit=20)
                     
-                    # Trata o feed geral de conta/me (/feed/threads)
-                    elif path == "/feed/threads":
+                    # Trata o feed geral (/feed/threads)
+                    else:
                         if hasattr(threads, "fetch_threads_posts"):
                             return threads.fetch_threads_posts(limit=20)
 
@@ -591,7 +591,10 @@ def fetch_single_federation(node_url):
             print(f"DEBUG - Erro na rota interna {path}: {e}")
             return None
 
-    # Requisição externa REAL (para nós de terceiros)
+        # RETORNO DE SEGURANÇA: Se é no local mas nenhuma rota bateu, RETORNA VAZIO sem fazer requests.get!
+        return None
+
+    # Requisição externa REAL (para nós de terceiros como Workers / Cloudflare)
     try:
         response = requests.get(node_url, timeout=2.5)
         if response.status_code == 200:
