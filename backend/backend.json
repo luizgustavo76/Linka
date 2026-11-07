@@ -23,6 +23,7 @@
         "bookmarks":true,
         "redis":true,
         "threads":true,
+        "twitter":true,
         "url-server":"http://linkaProject.pythonanywhere.com"
 
     }

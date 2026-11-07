@@ -536,25 +536,40 @@ def fetch_single_federation(node_url):
         try:
             if path == "/feed":
                 return get_internal_feed_posts() 
-            
-            # --- SUPORTE AO THREADS (BUSCA E FEED) ---
+
             elif path.startswith("/feed/threads"):
                 if root_flags.get("threads") and 'threads' in globals():
                     query_params = parse_qs(parsed.query)
                     
-                    # Trata a rota de busca por query (/feed/threads/search?q=android ou ?g=android)
                     if "/search" in path:
-                        # Pega o parametro 'q' ou 'g' da query string
                         search_term = query_params.get("q", query_params.get("g", ["brasil"]))[0]
                         if hasattr(threads, "fetch_threads_search_fast"):
                             return threads.fetch_threads_search_fast(query=search_term, limit=20)
-                    
-                    # Trata o feed geral (/feed/threads)
                     else:
                         if hasattr(threads, "fetch_threads_posts"):
                             return threads.fetch_threads_posts(limit=20)
 
-            # --- REDDIT ---
+            elif path.startswith("/feed/twitter"):
+                if root_flags.get("twitter-federation") and 'twitter' in globals():
+                    query_params = parse_qs(parsed.query)
+                    
+                    if "/search" in path:
+                        search_term = query_params.get("q", query_params.get("g", ["android"]))[0]
+                        if hasattr(twitter, "fetch_twitter_search_fast"):
+                            posts = twitter.fetch_twitter_search_fast(query=search_term, limit=20)
+                            for p in (posts or []):
+                                if isinstance(p, dict):
+                                    p["platform"] = "twitter"
+                            return posts
+                    else:
+                        user_target = query_params.get("user", ["NASA"])[0]
+                        if hasattr(twitter, "fetch_twitter_user_posts"):
+                            posts = twitter.fetch_twitter_user_posts(username=user_target, limit=20)
+                            for p in (posts or []):
+                                if isinstance(p, dict):
+                                    p["platform"] = "twitter"
+                            return posts
+
             elif path.startswith("/feed/reddit/"):
                 if root_flags.get("reddit-federation") and 'reddit' in globals():
                     sub_name = path.replace("/feed/reddit/", "")
@@ -565,7 +580,6 @@ def fetch_single_federation(node_url):
                                 p["platform"] = "reddit"
                         return posts
 
-            # --- MASTODON ---
             elif path.startswith("/feed/mastodon/"):
                 if root_flags.get("mastodon-federation") and 'mastodon' in globals():
                     tag_name = path.replace("/feed/mastodon/", "")
@@ -576,7 +590,6 @@ def fetch_single_federation(node_url):
                                 p["platform"] = "mastodon"
                         return posts
 
-            # --- BLUESKY ---
             elif path.startswith("/feed/bluesky/"):
                 if root_flags.get("bluesky-federation") and 'bluesky' in globals():
                     tag_name = path.replace("/feed/bluesky/", "")
@@ -591,10 +604,8 @@ def fetch_single_federation(node_url):
             print(f"DEBUG - Erro na rota interna {path}: {e}")
             return None
 
-        # RETORNO DE SEGURANÇA: Se é no local mas nenhuma rota bateu, RETORNA VAZIO sem fazer requests.get!
         return None
 
-    # Requisição externa REAL (para nós de terceiros como Workers / Cloudflare)
     try:
         response = requests.get(node_url, timeout=2.5)
         if response.status_code == 200:
