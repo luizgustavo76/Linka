@@ -161,7 +161,7 @@ public class EditTimeline extends Activity {
                     "", 
                     "Local server", 
                     "Linka-local", 
-                    "http://anywhere.com"
+                    "http://linka-ztg3.onrender.com"
                 ));
 
                 if (response != null && response.trim().length() > 0) {

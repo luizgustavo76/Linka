@@ -1,87 +1,125 @@
-from flask import Flask, Blueprint, request, jsonify
-import sqlite3
 import os
-from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
-import jwt
 import datetime
 from datetime import timedelta
-jwt_key = os.environ.get("LINKA_GATE_SECRET")
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from flask import Blueprint, request, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
+
 linkaGate_bp = Blueprint("linkaGate_bp", __name__)
-base_dir = os.path.dirname(os.path.abspath(__file__))
-db_dir = os.path.join(base_dir, "DB")
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 def get_db():
-    conn = sqlite3.connect(db_dir + "/linkaGate.db")
-    return conn
-def get_db_session():
-    conn = sqlite3.connect(db_dir + "/sessionToken.db")
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+
 def create_db():
     conn = get_db()
     cur = conn.cursor()
+    
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS linkaGate(
-                username TEXT UNIQUE,
-                global_id TEXT,
-                password TEXT)""")
-    conn.close()
+        CREATE TABLE IF NOT EXISTS linka_gate (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            global_id TEXT NOT NULL,
+            password TEXT NOT NULL
+        )
+    """)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS session_tokens (
+            id SERIAL PRIMARY KEY,
+            username TEXT NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            expired_at TIMESTAMP NOT NULL
+        )
+    """)
+    
     conn.commit()
-    conn = get_db_session()
-    cur = conn.cursor()
-    cur.execute("""""
-                CREATE TABLE IF NOT EXISTS sessionTokens(
-                username TEXT,
-                token TEXT,
-                expire_at TEXT)""")
-    conn.commit()
+    cur.close()
     conn.close()
-create_db()
-@linkaGate_bp.route("/register-gate",methods=["POST"])
+
+@linkaGate_bp.route("/register-gate", methods=["POST"])
 def register_gate():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
     password = data.get("password")
+
+    if not username or not password:
+        return jsonify({"status": "username and password are required"}), 400
+
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT username FROM linkaGate WHERE username = ?",(username,))
-    result = cur.fetchone()
-    conn.close()
-    if result != None:
-        return jsonify({"status":"username exists"}),401
-    else:
+    try:
+        cur.execute("SELECT username FROM linka_gate WHERE username = %s", (username,))
+        result = cur.fetchone()
+
+        if result is not None:
+            return jsonify({"status": "username exists"}), 401
+
         coded_password = generate_password_hash(password)
         global_id = secrets.token_hex(16)
-        cur.execute("INSERT INTO linkaGate (username, password, global_id) VALUES(?, ?, ?)",(username, coded_password, global_id))
+        
+        cur.execute(
+            "INSERT INTO linka_gate (username, password, global_id) VALUES (%s, %s, %s)",
+            (username, coded_password, global_id)
+        )
         conn.commit()
+        return jsonify({"status": "account created with sucess on the LinkaGate!"}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        cur.close()
         conn.close()
-        return jsonify({"status":"account created with sucess on the LinkaGate!"}),200
-@linkaGate_bp.route("/login-gate",methods=["POST"])
+
+@linkaGate_bp.route("/login-gate", methods=["POST"])
 def login():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     username = data.get("username")
     password = data.get("password")
     session_token = data.get("session_token")
-    conn = get_db_session()
+
+    conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT token FROM sessionToken WHERE token = ? AND expired_at > ?",(session_token, datetime.datetime.utcnow()))
-    result = cur.fetchone()
-    conn.close()
-    if session_token == None or result == None:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM linkaGate WHERE username = ?",(username,))
-        result = cur.fetchone()
-        conn.close()
-        if result == None:
-            return jsonify({"status":"the account dont exists"}),401
-        if check_password_hash(result[2], password):
+    try:
+        # 1. Verifica se já existe um token de sessão válido no Postgres
+        if session_token:
+            cur.execute(
+                "SELECT token FROM session_tokens WHERE token = %s AND expired_at > %s",
+                (session_token, datetime.datetime.utcnow())
+            )
+            token_valid = cur.fetchone()
+            if token_valid:
+                return jsonify({"status": "logged with sucess!"}), 200
+
+        # 2. Se não houver token válido, tenta autenticar via usuário e senha
+        if not username or not password:
+            return jsonify({"status": "username or password missing"}), 400
+
+        cur.execute("SELECT username, password FROM linka_gate WHERE username = %s", (username,))
+        user_data = cur.fetchone()
+
+        if user_data is None:
+            return jsonify({"status": "the account dont exists"}), 401
+
+        if check_password_hash(user_data["password"], password):
             new_token = secrets.token_hex(32)
-            conn = get_db_session()
-            cur = conn.cursor()
             expired_at = datetime.datetime.utcnow() + timedelta(hours=2)
-            cur.execute("INSERT INTO sessionToken (username, token, expired_at) VALUES (?, ?, ?)",(username, new_token, expired_at))
-            return jsonify({"status":"you logged with sucess!", "token":new_token}),200
+
+            cur.execute(
+                "INSERT INTO session_tokens (username, token, expired_at) VALUES (%s, %s, %s)",
+                (username, new_token, expired_at)
+            )
+            conn.commit()
+            return jsonify({"status": "you logged with sucess!", "token": new_token}), 200
         else:
-            return jsonify({"status":"username or password incorrect!"}),401
-    else:
-        return jsonify({"status":"logged with sucess!"}),200
+            return jsonify({"status": "username or password incorrect!"}), 401
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()

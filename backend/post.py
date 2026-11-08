@@ -55,6 +55,7 @@ def get_db():
         raise ValueError("[ERRO CRÍTICO] DATABASE_URL não está definida nas variáveis de ambiente!")
     return psycopg2.connect(db_url, cursor_factory=RealDictCursor)
 
+
 def get_image_dimensions(url):
     if not url or not isinstance(url, str) or not url.startswith(("http://", "https://")):
         return "", ""
@@ -552,7 +553,6 @@ def fetch_single_federation(node_url):
                             return threads.fetch_threads_posts(limit=20)
 
             elif path.startswith("/feed/twitter"):
-                # Ajustado para root_flags.get("twitter") para bater com a importacao do topo!
                 if (root_flags.get("twitter") or root_flags.get("twitter-federation")) and 'twitter' in globals():
                     query_params = parse_qs(parsed.query)
                     
@@ -565,7 +565,6 @@ def fetch_single_federation(node_url):
                                     p["platform"] = "twitter"
                             return posts
                     else:
-                        # Trata o parametro ?user=choquei ou ?username=choquei
                         user_target = query_params.get("user", query_params.get("username", ["choquei"]))[0]
                         if hasattr(twitter, "fetch_twitter_user_posts"):
                             posts = twitter.fetch_twitter_user_posts(username=user_target, limit=20)
@@ -619,6 +618,8 @@ def fetch_single_federation(node_url):
         return None
 
     return None
+
+
 def parse_datetime_flexible(dt_str):
     if not dt_str:
         return datetime.min
@@ -739,12 +740,19 @@ def new_post():
             media = data.get("media")
             media_type = data.get("media_type")
             datetime_post = data.get("datetime") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
             width = data.get("width", "")
             heigth = data.get("heigth", "")
-
+            repost = data.get("repost")
+            if repost:
+                original_id = repost.get("original_id")
+                username_repost = repost.get("username")
+                text_post_repost = repost.get("text_post")
+                datetime_repost = repost.get("datetime")
+                media_attachments_repost = repost.get("media_attachments")
+                width_repost = media_attachments_repost.get("width")
+                height_repost = media_attachments_repost.get("height")
+                media_url_repost = media_attachments_repost.get("media_url")
             media_list_input = data.get("media_list") or data.get("media_attachments")
-
             match = re.search(r'\[IMAGE\]\s*(.*)', text_post)
             if match:
                 media = match.group(1).strip()
@@ -934,7 +942,6 @@ def feed():
         if not posts:
             return json.dumps([]), 200, {"Content-Type": "application/json"}
 
-        # 4. Busca em lote de todas as mídias (evita N+1 mesmo na versão legada)
         post_ids = [p["id"] for p in posts]
         cur.execute("""
             SELECT id, post_id, media_url, media_type, width, heigth 
@@ -1006,6 +1013,8 @@ def feed():
     finally:
         cur.close()
         conn.close()
+
+
 @post_bp.route("/star", methods=["POST"])
 def star():
     data = request.get_json(silent=True) or {}
