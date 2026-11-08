@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="themeBackgroundColor" format="color" />
+    <attr name="themeTextColor" format="color" />
+    <attr name="themeHeaderBg" format="color" />
+    <attr name="themeCardBg" format="color" />
+    <attr name="themeCardStroke" format="color" />
+</resources>

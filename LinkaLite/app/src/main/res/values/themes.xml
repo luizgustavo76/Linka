@@ -1,5 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="@android:style/Theme.NoTitleBar">
+
+    <!-- Tema Padrao (Light) -->
+    <style name="AppTheme" parent="android:Theme.NoTitleBar">
+        <item name="themeBackgroundColor">#F4F4F6</item>
+        <item name="themeTextColor">#222222</item>
+        <item name="themeHeaderBg">#E0E0E0</item>
+        <item name="themeCardBg">#FFFFFF</item>
+        <item name="themeCardStroke">#CCCCCC</item>
     </style>
+
+    <!-- Tema Dark -->
+    <style name="AppTheme.Dark">
+        <item name="themeBackgroundColor">#121212</item>
+        <item name="themeTextColor">#FFFFFF</item>
+        <item name="themeHeaderBg">#1E1E1E</item>
+        <item name="themeCardBg">#242424</item>
+        <item name="themeCardStroke">#333333</item>
+    </style>
+
+    <!-- Tema Dark Blue -->
+    <style name="AppTheme.DarkBlue">
+        <item name="themeBackgroundColor">#0A192F</item>
+        <item name="themeTextColor">#E6F1FF</item>
+        <item name="themeHeaderBg">#112240</item>
+        <item name="themeCardBg">#1D2D50</item>
+        <item name="themeCardStroke">#233554</item>
+    </style>
+
+    <!-- Tema Light Blue -->
+    <style name="AppTheme.LightBlue">
+        <item name="themeBackgroundColor">#E3F2FD</item>
+        <item name="themeTextColor">#0D47A1</item>
+        <item name="themeHeaderBg">#BBDEFB</item>
+        <item name="themeCardBg">#FFFFFF</item>
+        <item name="themeCardStroke">#90CAF9</item>
+    </style>
+
+    <!-- Tema Dark Red -->
+    <style name="AppTheme.DarkRed">
+        <item name="themeBackgroundColor">#1B0000</item>
+        <item name="themeTextColor">#FFCDD2</item>
+        <item name="themeHeaderBg">#330000</item>
+        <item name="themeCardBg">#2B0000</item>
+        <item name="themeCardStroke">#4A0000</item>
+    </style>
+
+    <!-- Tema Light Red -->
+    <style name="AppTheme.LightRed">
+        <item name="themeBackgroundColor">#FFEBEE</item>
+        <item name="themeTextColor">#B71C1C</item>
+        <item name="themeHeaderBg">#FFCDD2</item>
+        <item name="themeCardBg">#FFFFFF</item>
+        <item name="themeCardStroke">#EF9A9A</item>
+    </style>
+
 </resources>

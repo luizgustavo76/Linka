@@ -22,6 +22,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".BookmarksFeed" android:label="bookmarks" />
+        <activity android:name=".ThemesViewer"/>
         <activity android:name=".NewCommunity" android:label="New" />
         <activity android:name=".NewPostCommunity"/>
         <activity android:name=".CommunityFeedActivity"/>

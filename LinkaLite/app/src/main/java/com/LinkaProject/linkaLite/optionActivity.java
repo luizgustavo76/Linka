@@ -25,12 +25,11 @@ public class optionActivity extends Activity {
         optionsListView = (ListView) findViewById(R.id.optionsListView);
         List<Map<String, String>> data = new ArrayList<Map<String, String>>();
         
-        // Adicionando os 5 itens em ordem exata com os cases do switch
-        addItem(data, "Generate invite", "Create an invitation code for a friend");
         addItem(data, "Edit timeline", "Customize feeds, federations and post sources");
         addItem(data, "Inbox", "View messages and notifications");
         addItem(data, "Friends", "Manage your contacts and federation friends");
         addItem(data, "Change server", "Switch or configure your current node server");
+        addItem(data, "Themes", "Change your theme, Linka is colorful now");
 
         // Utiliza o layout customizado da v3.0 (R.layout.item_option)
         SimpleAdapter adapter = new SimpleAdapter(
@@ -48,20 +47,20 @@ public class optionActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 switch (position) {
-                    case 0: // Generate invite
-                        startActivity(new Intent(optionActivity.this, GenerateInvite.class));
-                        break;
-                    case 1: // Edit timeline
+                    case 0: 
                         startActivity(new Intent(optionActivity.this, MainEditTimeline.class));
                         break;
-                    case 2: // Inbox
+                    case 1: 
                         startActivity(new Intent(optionActivity.this, InboxActivity.class));
                         break;
-                    case 3: // Friends
+                    case 2:
                         startActivity(new Intent(optionActivity.this, addFriendActivity.class));
                         break;
-                    case 4: // Change server
+                    case 3: // Change server
                         startActivity(new Intent(optionActivity.this, ChangeServer.class));
+                        break;
+                    case 4:
+                        startActivity(new Intent(optionActivity.this, ThemesViewer.class));
                         break;
                 }
             }
