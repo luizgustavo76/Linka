@@ -116,15 +116,26 @@ public class HomeActivity extends ActivityGroup {
     private ImageButton fabNewPost;
     private int feedPageTimeline = 1;
     private boolean isLoading = false;
-    private String actualFeed = "";
+    private String actualFeed = "Linka";
     private boolean hasMoreTimeline = true;
     private Spinner spinnerFeeds;
     private View topHeaderContainer;
+    private String username = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        
+        try {
+            config cfg = new config();
+            JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
+            JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
+            username = fastLogin.optString("username", "");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         List<String> redesList = new ArrayList<>(Arrays.asList("Linka >", "Communities >", "Friends >", "+ New Feed"));
@@ -156,12 +167,20 @@ public class HomeActivity extends ActivityGroup {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectItem = parent.getItemAtPosition(position).toString();
-                actualFeed = selectItem;
+                String newFeed = selectItem.replace(">", "").trim();
+                
+                if (!newFeed.equals(actualFeed)) {
+                    actualFeed = newFeed;
+                    postsTimeline.clear();
+                    if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
+                    refreshFeed();
+                }
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
+
         topHeaderContainer = findViewById(R.id.topHeaderContainer);
 
         fabNewPost = (ImageButton) findViewById(R.id.fabNewPost);
@@ -171,6 +190,7 @@ public class HomeActivity extends ActivityGroup {
                 startActivity(intent);
             }
         });
+
         Display display = getWindowManager().getDefaultDisplay();
         screenWidth = display.getWidth();
         logo = (ImageView) findViewById(R.id.logo);
@@ -639,23 +659,33 @@ public class HomeActivity extends ActivityGroup {
 
         if ("Timeline".equals(tabName)) {
             actualTab = "timeline";
+            
+            // Se mudou a seleção do Spinner ou não é forceReload, mas a lista tá com dados do feed anterior,
+            // a gente SÓ reaproveita o cache se o forceReload for falso E não tiver trocado de feed.
             if (!forceReload && targetPage == 1 && postsTimeline.size() > 0) {
                 if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
                 return;
             }
 
-            JSONObject body = new JSONObject();
-            try {
-                body.put("urls", urlsArray);
-                body.put("filters", tags);
-                body.put("page", targetPage);
-                body.put("limit", 20);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
             isLoading = true;
-            new FetchFeedTask("timeline", baseUrl + "/view-external-posts?page=" + targetPage + "&limit=20", "POST", body, targetPage).execute();
+
+            if ("Linka".equalsIgnoreCase(actualFeed.trim())) {
+                // Chamada pura e simples do /feed nativo (sem username, sem frescura)
+                new FetchFeedTask("timeline", baseUrl + "/feed?page=" + targetPage + "&limit=20", "GET", null, targetPage).execute();
+
+            } else {
+                // Chamada externa / Nitter / Twitter
+                JSONObject body = new JSONObject();
+                try {
+                    body.put("urls", urlsArray);
+                    body.put("filters", tags);
+                    body.put("page", targetPage);
+                    body.put("limit", 20);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                new FetchFeedTask("timeline", baseUrl + "/view-external-posts?page=" + targetPage + "&limit=20", "POST", body, targetPage).execute();
+            }
 
         } else if ("Chat".equals(tabName)) {
             FrameLayout pageChat = (FrameLayout) findViewById(R.id.pageChat);
@@ -811,7 +841,7 @@ public class HomeActivity extends ActivityGroup {
             try {
                 final JSONObject post = list.get(position);
                 final String platform = post.optString("platform", "desconhecida");
-                final String username = post.optString("username", post.optString("user", "entity404"));
+                final String postUsername = post.optString("username", post.optString("user", "entity404"));
                 String textPost = post.optString("text_post", post.optString("text", ""));
                 final String origin_server = post.optString("origin_server", "");
                 String datetime = post.optString("datetime", post.optString("date", ""));
@@ -823,14 +853,14 @@ public class HomeActivity extends ActivityGroup {
                 final boolean isExternal = !origin_server.isEmpty() && !origin_server.equals("linka");
 
                 Log.d("LINKA_DEBUG", "==================================================");
-                Log.d("LINKA_DEBUG", "[POST VIEW] Platform: " + platform + " | User: " + username);
+                Log.d("LINKA_DEBUG", "[POST VIEW] Platform: " + platform + " | User: " + postUsername);
                 Log.d("LINKA_DEBUG", "[POST VIEW] Text: " + textPost);
 
                 holder.btnReply.setOnClickListener(new View.OnClickListener(){
                     public void onClick(View v){
                         Intent intent = new Intent(HomeActivity.this, newPost.class);
                         intent.putExtra("repostPostId", id);
-                        intent.putExtra("repostUser", username);
+                        intent.putExtra("repostUser", postUsername);
                         intent.putExtra("repostText", textPost);
                         startActivity(intent);
                     }
@@ -926,7 +956,7 @@ public class HomeActivity extends ActivityGroup {
                     @Override
                     public void onClick(View v) {
                         Intent intent = new Intent(HomeActivity.this, ViewProfile.class);
-                        intent.putExtra("usernameProfile", username);
+                        intent.putExtra("usernameProfile", postUsername);
                         startActivity(intent);
                     }
                 });
@@ -950,7 +980,7 @@ public class HomeActivity extends ActivityGroup {
                 });
 
                 holder.txtCommentCount.setText(commentsCount);
-                holder.tvUsername.setText(username.startsWith("@") ? username : "@" + username);
+                holder.tvUsername.setText(postUsername.startsWith("@") ? postUsername : "@" + postUsername);
                 holder.tvDate.setText(relative_datetime.length() > 0 ? relative_datetime : datetime);
 
                 if ("timeline".equals(actualTab)) {
@@ -960,8 +990,8 @@ public class HomeActivity extends ActivityGroup {
                         imageLoader.LoadImageUrl(avatarUrl, holder.avatarPost);
                     }
                 } else {
-                    holder.avatarPost.setTag("avatar_" + username);
-                    imageLoader.viewProfilePicture(context, username, holder.avatarPost);
+                    holder.avatarPost.setTag("avatar_" + postUsername);
+                    imageLoader.viewProfilePicture(context, postUsername, holder.avatarPost);
                 }
 
                 final ArrayList<JSONObject> mediaItems = new ArrayList<JSONObject>();
