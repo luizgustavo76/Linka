@@ -10,7 +10,7 @@
         android:layout_height="fill_parent"
         android:background="#EFEFEF">
 
-        <!-- SCROLL VIEW EXPANDIDO PARA A TELA INTEIRA -->
+        <!-- SCROLL VIEW APENAS COM TIMELINE E CHAT -->
         <HorizontalScrollView
             android:id="@+id/scrollViewPages"
             android:layout_width="fill_parent"
@@ -40,22 +40,6 @@
                 </FrameLayout>
 
                 <FrameLayout
-                    android:id="@+id/pageLocal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="fill_parent">
-                    <ListView
-                        android:id="@+id/listViewLocal"
-                        android:layout_width="fill_parent"
-                        android:layout_height="fill_parent"
-                        android:background="#EFEFEF"
-                        android:scrollingCache="true"
-                        android:clipToPadding="false"
-                        android:paddingTop="78dip"
-                        android:divider="@null"
-                        android:dividerHeight="0dip" />
-                </FrameLayout>
-
-                <FrameLayout
                     android:id="@+id/pageChat"
                     android:layout_width="wrap_content"
                     android:layout_height="fill_parent"
@@ -70,23 +54,10 @@
                         android:dividerHeight="0dip" />
                 </FrameLayout>
 
-                <FrameLayout
-                    android:id="@+id/pageOptions"
-                    android:layout_width="wrap_content"
-                    android:layout_height="fill_parent"
-                    android:paddingTop="78dip">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:text="Settings &amp; Options"
-                        android:textColor="#666666" />
-                </FrameLayout>
-
             </LinearLayout>
         </HorizontalScrollView>
 
-        <!-- HEADER FLUTUANTE (FICA SOBREPOSTO AO FEED) -->
+        <!-- HEADER FLUTUANTE -->
         <LinearLayout
             android:id="@+id/topHeaderContainer"
             android:layout_width="fill_parent"
@@ -112,7 +83,6 @@
                     android:scaleType="centerInside"
                     android:src="@drawable/icon_drawer" />
 
-                <!-- SPINNER COMPACTO INTEGRADO À ACTIONBAR -->
                 <Spinner
                     android:id="@+id/spinner_feeds"
                     android:layout_width="wrap_content"
@@ -124,7 +94,6 @@
                     android:background="@android:color/transparent"
                     android:spinnerMode="dropdown" />
 
-                <!-- LOGO COM HITBOX RESTRITA AO SEU TAMANHO REAL (30x30) -->
                 <ImageView
                     android:id="@+id/logo"
                     android:layout_width="30dip"
@@ -203,7 +172,7 @@
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:textColor="#888888"
-                    android:text="Local Feed ▶" />
+                    android:text="Chat ▶" />
             </RelativeLayout>
         </LinearLayout>
 

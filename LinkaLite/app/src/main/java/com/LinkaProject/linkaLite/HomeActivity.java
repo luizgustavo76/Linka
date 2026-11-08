@@ -26,7 +26,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -49,11 +48,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import android.graphics.drawable.BitmapDrawable;
-import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import com.LinkaProject.linkaLite.DatabaseHelper;
+
 public class HomeActivity extends ActivityGroup {
 
     private static final Pattern MENTION_PATTERN = Pattern.compile("@([a-zA-Z0-9_]+(@[a-zA-Z0-9_.-]+)?)");
@@ -101,14 +100,13 @@ public class HomeActivity extends ActivityGroup {
     private TextView tabPrev, tabCurrent, tabNext;
     private int screenWidth;
     private int currentPage = 0;
-    private String[] pageTitles = new String[]{"Timeline", "Local Feed", "Chat", "Options"};
+    private String[] pageTitles = new String[]{"Timeline", "Chat"};
     private String url = "";
-    private ListView listViewTimeline, listViewLocal;
-    private PostAdapter adapterTimeline, adapterLocal;
+    private ListView listViewTimeline;
+    private PostAdapter adapterTimeline;
     private ArrayList<JSONObject> postsTimeline = new ArrayList<JSONObject>();
-    private ArrayList<JSONObject> postsLocal = new ArrayList<JSONObject>();
     private String actualTab = "";
-    private View footerTimeline, footerLocal;
+    private View footerTimeline;
     private JSONArray tags = new JSONArray();
     private boolean isGuest = false;
     private ScheduledExecutorService scheduler, schedulerNotifications, schedulerFeedPolling;
@@ -116,17 +114,12 @@ public class HomeActivity extends ActivityGroup {
     private DrawerLayout drawerLayout;
     private ImageView logo;
     private ImageButton fabNewPost;
-    private int feedPageLocal = 1;
     private int feedPageTimeline = 1;
     private boolean isLoading = false;
-    private boolean hasMoreLocal = true;
+    private String actualFeed = "";
     private boolean hasMoreTimeline = true;
     private Spinner spinnerFeeds;
     private View topHeaderContainer;
-    private boolean isHeaderVisible = true;
-    private boolean isHeaderAnimating = false;
-    private int lastFirstVisibleItem = 0;
-    private int lastTop = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -163,6 +156,7 @@ public class HomeActivity extends ActivityGroup {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectItem = parent.getItemAtPosition(position).toString();
+                actualFeed = selectItem;
             }
 
             @Override
@@ -199,9 +193,7 @@ public class HomeActivity extends ActivityGroup {
         tabNext = (TextView) findViewById(R.id.tabNext);
 
         setPageWidth(R.id.pageTimeline);
-        setPageWidth(R.id.pageLocal);
         setPageWidth(R.id.pageChat);
-        setPageWidth(R.id.pageOptions);
 
         drawerLayout = (DrawerLayout) findViewById(R.id.drawerLayout);
         setupDrawerMenu();
@@ -236,43 +228,45 @@ public class HomeActivity extends ActivityGroup {
             }
         });
 
-        scrollViewPages.setOnTouchListener(new View.OnTouchListener() {
-            private float startX;
-            private float startY;
+        if (scrollViewPages != null) {
+            scrollViewPages.setOnTouchListener(new View.OnTouchListener() {
+                private float startX;
+                private float startY;
 
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        startX = event.getRawX();
-                        startY = event.getRawY();
-                        break;
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        float endX = event.getRawX();
-                        float endY = event.getRawY();
-                        float deltaX = startX - endX;
-                        float deltaY = startY - endY;
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startX = event.getRawX();
+                            startY = event.getRawY();
+                            break;
+                        case MotionEvent.ACTION_UP:
+                        case MotionEvent.ACTION_CANCEL:
+                            float endX = event.getRawX();
+                            float endY = event.getRawY();
+                            float deltaX = startX - endX;
+                            float deltaY = startY - endY;
 
-                        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
-                            if (deltaX > 0 && currentPage < pageTitles.length - 1) {
-                                currentPage++;
-                            } else if (deltaX < 0 && currentPage > 0) {
-                                currentPage--;
+                            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 40) {
+                                if (deltaX > 0 && currentPage < pageTitles.length - 1) {
+                                    currentPage++;
+                                } else if (deltaX < 0 && currentPage > 0) {
+                                    currentPage--;
+                                }
+                            } else {
+                                int scrollX = scrollViewPages.getScrollX();
+                                currentPage = (scrollX + (screenWidth / 2)) / screenWidth;
+                                if (currentPage < 0) currentPage = 0;
+                                if (currentPage >= pageTitles.length) currentPage = pageTitles.length - 1;
                             }
-                        } else {
-                            int scrollX = scrollViewPages.getScrollX();
-                            currentPage = (scrollX + (screenWidth / 2)) / screenWidth;
-                            if (currentPage < 0) currentPage = 0;
-                            if (currentPage >= pageTitles.length) currentPage = pageTitles.length - 1;
-                        }
 
-                        scrollToPage(currentPage);
-                        return true;
+                            scrollToPage(currentPage);
+                            return true;
+                    }
+                    return false;
                 }
-                return false;
-            }
-        });
+            });
+        }
 
         updateTabHeader();
 
@@ -304,7 +298,7 @@ public class HomeActivity extends ActivityGroup {
             btnInbox.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    currentPage = 2;
+                    currentPage = 1;
                     scrollToPage(currentPage);
                 }
             });
@@ -338,7 +332,6 @@ public class HomeActivity extends ActivityGroup {
         }
 
         listViewTimeline = (ListView) findViewById(R.id.listViewTimeline);
-        listViewLocal = (ListView) findViewById(R.id.listViewLocal);
 
         AbsListView.OnScrollListener feedScrollListener = new AbsListView.OnScrollListener() {
             @Override
@@ -346,46 +339,11 @@ public class HomeActivity extends ActivityGroup {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (!isLoading && ((view == listViewTimeline && hasMoreTimeline) || (view == listViewLocal && hasMoreLocal)) 
+                if (!isLoading && (view == listViewTimeline && hasMoreTimeline) 
                     && totalItemCount > 0 && (firstVisibleItem + visibleItemCount >= totalItemCount - 2)) {
-                    if (view == listViewTimeline) {
-                        feedPageTimeline++;
-                        loadFeedForTab("Timeline", false, feedPageTimeline);
-                    } else {
-                        feedPageLocal++;
-                        loadFeedForTab("Local Feed", false, feedPageLocal);
-                    }
+                    feedPageTimeline++;
+                    loadFeedForTab("Timeline", false, feedPageTimeline);
                 }
-
-                if (firstVisibleItem == 0) {
-                    View firstChild = view.getChildAt(0);
-                    int currentTop = (firstChild == null) ? 0 : firstChild.getTop();
-                    if (currentTop >= 0) {
-                        showHeaderBar();
-                        lastFirstVisibleItem = firstVisibleItem;
-                        lastTop = currentTop;
-                        return;
-                    }
-                }
-
-                View firstChild = view.getChildAt(0);
-                int currentTop = (firstChild == null) ? 0 : firstChild.getTop();
-
-                if (firstVisibleItem > lastFirstVisibleItem) {
-                    hideHeaderBar();
-                } else if (firstVisibleItem < lastFirstVisibleItem) {
-                    showHeaderBar();
-                } else {
-                    int diff = currentTop - lastTop;
-                    if (diff < -25) {
-                        hideHeaderBar();
-                    } else if (diff > 25) {
-                        showHeaderBar();
-                    }
-                }
-
-                lastFirstVisibleItem = firstVisibleItem;
-                lastTop = currentTop;
             }
         };
 
@@ -395,26 +353,13 @@ public class HomeActivity extends ActivityGroup {
             listViewTimeline.setOnScrollListener(feedScrollListener);
         }
 
-        if (listViewLocal != null) {
-            listViewLocal.setScrollingCacheEnabled(true);
-            listViewLocal.setAnimationCacheEnabled(true);
-            listViewLocal.setOnScrollListener(feedScrollListener);
-        }
-
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         footerTimeline = inflater.inflate(R.layout.footer_federations, null);
-        footerLocal = inflater.inflate(R.layout.footer_federations, null);
 
         if (listViewTimeline != null) {
             listViewTimeline.addFooterView(footerTimeline);
             adapterTimeline = new PostAdapter(this, postsTimeline, "timeline");
             listViewTimeline.setAdapter(adapterTimeline);
-        }
-
-        if (listViewLocal != null) {
-            listViewLocal.addFooterView(footerLocal);
-            adapterLocal = new PostAdapter(this, postsLocal, "local");
-            listViewLocal.setAdapter(adapterLocal);
         }
 
         schedulerNotifications = Executors.newSingleThreadScheduledExecutor();
@@ -456,57 +401,6 @@ public class HomeActivity extends ActivityGroup {
                 });
             }
         }, 60, 60, TimeUnit.SECONDS);
-    }
-
-    private void hideHeaderBar() {
-        if (!isHeaderVisible || isHeaderAnimating || topHeaderContainer == null) return;
-
-        TranslateAnimation anim = new TranslateAnimation(0, 0, 0, -topHeaderContainer.getHeight());
-        anim.setDuration(180);
-        anim.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                isHeaderAnimating = true;
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                topHeaderContainer.setVisibility(View.GONE);
-                isHeaderVisible = false;
-                isHeaderAnimating = false;
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {}
-        });
-
-        topHeaderContainer.startAnimation(anim);
-    }
-
-    private void showHeaderBar() {
-        if (isHeaderVisible || isHeaderAnimating || topHeaderContainer == null) return;
-
-        topHeaderContainer.setVisibility(View.VISIBLE);
-
-        TranslateAnimation anim = new TranslateAnimation(0, 0, -topHeaderContainer.getHeight(), 0);
-        anim.setDuration(180);
-        anim.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                isHeaderAnimating = true;
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                isHeaderVisible = true;
-                isHeaderAnimating = false;
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {}
-        });
-
-        topHeaderContainer.startAnimation(anim);
     }
 
     private void setupDrawerMenu() {
@@ -562,7 +456,7 @@ public class HomeActivity extends ActivityGroup {
                 @Override
                 public void onClick(View v) {
                     if (drawerLayout != null) drawerLayout.closeDrawers();
-                    scrollToPage(1);
+                    scrollToPage(0);
                 }
             });
         }
@@ -580,7 +474,7 @@ public class HomeActivity extends ActivityGroup {
                 @Override
                 public void onClick(View v) {
                     if (drawerLayout != null) drawerLayout.closeDrawers();
-                    scrollToPage(2);
+                    scrollToPage(1);
                 }
             });
         }
@@ -642,12 +536,14 @@ public class HomeActivity extends ActivityGroup {
         if (page < 0 || page >= pageTitles.length) return;
         currentPage = page;
 
-        scrollViewPages.post(new Runnable() {
-            @Override
-            public void run() {
-                scrollViewPages.smoothScrollTo(page * screenWidth, 0);
-            }
-        });
+        if (scrollViewPages != null) {
+            scrollViewPages.post(new Runnable() {
+                @Override
+                public void run() {
+                    scrollViewPages.smoothScrollTo(page * screenWidth, 0);
+                }
+            });
+        }
         updateTabHeader();
         loadFeedForTab(pageTitles[page], false, 1);
     }
@@ -691,8 +587,6 @@ public class HomeActivity extends ActivityGroup {
         String tabName = pageTitles[currentPage];
         if ("Timeline".equals(tabName)) {
             loadFeedForTab("Timeline", true, 1);
-        } else if ("Local Feed".equals(tabName)) {
-            loadFeedForTab("Local Feed", true, 1);
         }
     }
 
@@ -702,11 +596,6 @@ public class HomeActivity extends ActivityGroup {
             feedPageTimeline = 1;
             hasMoreTimeline = true;
             if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
-        } else if ("Local Feed".equals(pageTitles[currentPage])) {
-            postsLocal.clear();
-            feedPageLocal = 1;
-            hasMoreLocal = true;
-            if (adapterLocal != null) adapterLocal.notifyDataSetChanged();
         }
         loadFeedForTab(pageTitles[currentPage], true, 1);
     }
@@ -768,27 +657,11 @@ public class HomeActivity extends ActivityGroup {
             isLoading = true;
             new FetchFeedTask("timeline", baseUrl + "/view-external-posts?page=" + targetPage + "&limit=20", "POST", body, targetPage).execute();
 
-        } else if ("Local Feed".equals(tabName)) {
-            actualTab = "local";
-            if (!forceReload && targetPage == 1 && postsLocal.size() > 0) {
-                if (adapterLocal != null) adapterLocal.notifyDataSetChanged();
-                return;
-            }
-
-            isLoading = true;
-            new FetchFeedTask("local", baseUrl + "/feed?page=" + targetPage + "&limit=20", "GET", null, targetPage).execute();
-
         } else if ("Chat".equals(tabName)) {
             FrameLayout pageChat = (FrameLayout) findViewById(R.id.pageChat);
             Intent intent = new Intent(HomeActivity.this, chatActivity.class);
             intent.putExtra("isGuest", isGuest);
             loadActivityInFrame("ChatActivityID", intent, pageChat);
-
-        } else if ("Options".equals(tabName)) {
-            FrameLayout pageOptions = (FrameLayout) findViewById(R.id.pageOptions);
-            Intent intent = new Intent(HomeActivity.this, optionActivity.class);
-            intent.putExtra("isGuest", isGuest);
-            loadActivityInFrame("OptionActivityID", intent, pageOptions);
         }
     }
 
@@ -815,14 +688,13 @@ public class HomeActivity extends ActivityGroup {
         @Override
         protected void onPostExecute(String result) {
             isLoading = false;
-            ArrayList<JSONObject> targetList = "timeline".equals(tabType) ? postsTimeline : postsLocal;
-            PostAdapter targetAdapter = "timeline".equals(tabType) ? adapterTimeline : adapterLocal;
+            ArrayList<JSONObject> targetList = postsTimeline;
+            PostAdapter targetAdapter = adapterTimeline;
 
             if (targetList == null || targetAdapter == null) return;
 
             if (result == null || result.trim().length() == 0) {
-                if ("timeline".equals(tabType)) hasMoreTimeline = false;
-                else hasMoreLocal = false;
+                hasMoreTimeline = false;
                 return;
             }
 
@@ -832,8 +704,7 @@ public class HomeActivity extends ActivityGroup {
                     JSONArray jsonArray = new JSONArray(trimmed);
 
                     if (jsonArray.length() < 20) {
-                        if ("timeline".equals(tabType)) hasMoreTimeline = false;
-                        else hasMoreLocal = false;
+                        hasMoreTimeline = false;
                     }
 
                     if (pageRequested == 1) {
