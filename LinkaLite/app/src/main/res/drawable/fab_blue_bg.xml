@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Sombra Emulada para Android 2.0+ -->
+    <!-- 1. Sombra Emulada no Fundo -->
     <item android:top="2dip" android:left="2dip">
         <shape android:shape="oval">
             <solid android:color="#40000000" />
         </shape>
     </item>
 
-    <!-- Círculo Azul Linka -->
+    <!-- 2. Círculo com Gradiente Linear (Azul Vivo -> Azul Escuro) -->
     <item android:bottom="2dip" android:right="2dip">
         <shape android:shape="oval">
-            <solid android:color="#0088CC" /> <!-- Ajustar para o Hex exato do Lexical -->
+            <gradient
+                android:angle="270"
+                android:startColor="#00A8FF"
+                android:centerColor="#0088CC"
+                android:endColor="#005588"
+                android:type="linear" />
         </shape>
     </item>
 </layer-list>
