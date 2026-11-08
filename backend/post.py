@@ -1177,6 +1177,114 @@ def new_feed():
         cur.close()
         conn.close()
 
+@post_bp.route("/friends-feed",methods=["POST"])
+def friends_feed():
+    data = request.get_json()
+    has_page_param = 'page' in request.args
+    has_limit_param = 'limit' in request.args
+
+    if has_page_param or has_limit_param:
+        page = request.args.get('page', default=1, type=int)
+        limit = request.args.get('limit', default=20, type=int)
+        if page < 1: page = 1
+        if limit < 1: limit = 20
+        offset = (page - 1) * limit
+        cache_key = f"feed:home:page_{page}_limit_{limit}"
+        sql_pagination = " LIMIT %s OFFSET %s"
+        query_params = (limit, offset)
+    else:
+        cache_key = "feed:home:all"
+        sql_pagination = ""
+        query_params = ()
+
+    if root_flags.get("redis") and r:
+        try:
+            cached_feed = r.get(cache_key)
+            if cached_feed:
+                return cached_feed, 200, {"Content-Type": "application/json"}
+        except Exception:
+            pass
+    username = data.get("username")
+    if username == g.username:
+        conn = get_db()
+        cur = conn.cursor()
+        try:
+            query = f"""
+                SELECT 
+                    p.id, 
+                    p.username, 
+                    p.text_post, 
+                    p.datetime, 
+                    p.media,
+                    p.media_type,
+                    p.width,
+                    p.heigth,
+                    COUNT(DISTINCT c.id) AS comment_count  -- DISTINCT evita multiplicar se houver múltiplos JOINs
+                FROM posts p
+                LEFT JOIN comments c ON c.post_id = p.id
+                LEFT JOIN friends f ON (f.receiver = p.username OR f.remittee = p.username)
+                GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth
+                ORDER BY p.id DESC
+                {sql_pagination}
+            """
+            cur.execute(query)
+            posts = cur.fetchall()
+
+            lista_posts = []
+
+            for post in posts:
+                post_id = post["id"]
+                text_content = post["text_post"] or ""
+                match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
+                
+                media_url = match.group(1).strip() if match else post["media"]
+                media_type = "image" if match else post["media_type"]
+
+                main_width = post["width"] or ""
+                main_heigth = post["heigth"] or ""
+
+                cur.execute("SELECT id, media_url, media_type, width, heigth FROM post_media WHERE post_id = %s", (post_id,))
+                media_rows = cur.fetchall()
+
+                media_list = []
+                if media_rows:
+                    for row in media_rows:
+                        media_list.append({
+                            "media_url": row["media_url"],
+                            "media_type": row["media_type"] or "image",
+                            "width": row["width"] or "",
+                            "heigth": row["heigth"] or ""
+                        })
+                else:
+                    media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
+
+                dt_val = str(post["datetime"]) if post["datetime"] else ""
+
+                lista_posts.append({
+                    "id": post["id"],
+                    "username": post["username"],
+                    "text_post": text_content,
+                    "datetime": dt_val,
+                    "relative_datetime": get_relative_time(post["datetime"]),
+                    "comment_count": post["comment_count"],
+                    "media": {
+                        "media_url": media_url or "",
+                        "media_type": media_type or "image",
+                        "width": main_width,
+                        "heigth": main_heigth
+                    },
+                    "media_list": media_list,
+                    "media_attachments": media_list,
+                    "platform": "linka",
+                    "origin_server": root_flags.get("url-server", "")
+                })
+
+            return jsonify(lista_posts), 200
+        finally:
+            cur.close()
+            conn.close()
+        
+        
 
 @post_bp.route("/has-star", methods=["POST"])
 def has_star():
