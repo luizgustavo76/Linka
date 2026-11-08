@@ -8,7 +8,7 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:background="#EFEFEF">
+        android:background="?attr/themeHeaderBg">
 
         <!-- SCROLL VIEW APENAS COM TIMELINE E CHAT -->
         <HorizontalScrollView
@@ -31,7 +31,7 @@
                         android:id="@+id/listViewTimeline"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
-                        android:background="#EFEFEF"
+                        android:background="?attr/themeHeaderBg"
                         android:scrollingCache="true"
                         android:clipToPadding="false"
                         android:paddingTop="78dip"
@@ -48,7 +48,7 @@
                         android:id="@+id/listViewChat"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
-                        android:background="#EFEFEF"
+                        android:background="?attr/themeHeaderBg"
                         android:scrollingCache="false"
                         android:divider="@null"
                         android:dividerHeight="0dip" />

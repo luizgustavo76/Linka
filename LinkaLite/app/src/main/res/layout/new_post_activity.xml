@@ -45,7 +45,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#FFFFFF"
+            android:background="?attr/themeBackgroundColor"
             android:padding="14dip">
 
             <TextView
@@ -75,7 +75,7 @@
                 android:background="#F9F9F9"
                 android:padding="8dip"
                 android:hint="O que está acontecendo?"
-                android:textColor="#222222"
+                android:textColor="?attr/themeTextColor"
                 android:textColorHint="#AAA"
                 android:textSize="15sp" />
 
@@ -98,7 +98,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textStyle="bold"
-                        android:textColor="#333333"
+                        android:textColor="?attr/themeTextColor"
                         android:textSize="12sp" />
 
                     <ImageButton

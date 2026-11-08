@@ -18,7 +18,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-public class NewGroupActivity extends Activity{
+public class NewGroupActivity extends BaseActivity{
     private ImageButton btnHome;
     private ImageButton btnChat;
     private ImageButton btnOptions;

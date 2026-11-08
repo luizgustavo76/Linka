@@ -12,7 +12,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
-public class AddGroupMember extends Activity {
+public class AddGroupMember extends BaseActivity {
     private ImageButton btnHome;
     private ImageButton btnChat;
     private ImageButton btnOptions;

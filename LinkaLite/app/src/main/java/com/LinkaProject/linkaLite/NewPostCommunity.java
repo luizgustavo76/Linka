@@ -11,7 +11,7 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class NewPostCommunity extends Activity {
+public class NewPostCommunity extends BaseActivity {
     private Button btnSend;
     private String url = "";
     private String username = "";

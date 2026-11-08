@@ -14,7 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
-public class feedFinder extends Activity{
+public class feedFinder extends BaseActivity{
     private Button btnNewer;
     private EditText edtUrl;
     private Button btnSend;

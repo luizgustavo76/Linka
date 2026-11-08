@@ -20,7 +20,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RemoveGroupChannel extends Activity {
+public class RemoveGroupChannel extends BaseActivity {
 
     private ImageButton btnBack;
     private TextView textGroup;

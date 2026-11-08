@@ -10,7 +10,7 @@ import org.json.JSONArray;
 import android.view.View;
 import android.content.Intent;
 import org.json.JSONException;
-public class InboxActivity extends Activity {
+public class InboxActivity extends BaseActivity {
     private ListView lvInbox;
     private InboxAdapter adapter;
     private List<InboxItem> itemList;

@@ -17,7 +17,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-public class EnterGroup extends Activity{
+public class EnterGroup extends BaseActivity{
     private Button btnSend;
     private EditText edtCode;
     private String url = "";

@@ -13,7 +13,7 @@ import android.widget.LinearLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ExternalLogin extends Activity {
+public class ExternalLogin extends BaseActivity {
     private static final String TAG = "[DEBUG_BRUNO]";
     private ImageView networkLogo;
     private EditText edtUsername;

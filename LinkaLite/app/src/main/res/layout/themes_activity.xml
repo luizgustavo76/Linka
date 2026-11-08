@@ -10,13 +10,13 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#E0E0E0"
+        android:background="?attr/themeHeaderBg"
         android:padding="16dp">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Select your theme"
-            android:textColor="#222222"
+            android:textColor="?attr/themeTextColor"
             android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -43,7 +43,7 @@
                 android:focusable="true"
                 android:padding="14dp"
                 android:text="Light"
-                android:textColor="#333333"
+                android:textColor="?attr/themeTextColor"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
@@ -57,7 +57,7 @@
                 android:focusable="true"
                 android:padding="14dp"
                 android:text="Dark"
-                android:textColor="#333333"
+                android:textColor="?attr/themeTextColor"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
@@ -71,7 +71,7 @@
                 android:focusable="true"
                 android:padding="14dp"
                 android:text="Light Blue"
-                android:textColor="#333333"
+                android:textColor="?attr/themeTextColor"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
@@ -85,7 +85,7 @@
                 android:focusable="true"
                 android:padding="14dp"
                 android:text="Dark Blue"
-                android:textColor="#333333"
+                android:textColor="?attr/themeTextColor"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
@@ -99,7 +99,7 @@
                 android:focusable="true"
                 android:padding="14dp"
                 android:text="Light Red"
-                android:textColor="#333333"
+                android:textColor="?attr/themeTextColor"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
@@ -112,7 +112,7 @@
                 android:focusable="true"
                 android:padding="14dp"
                 android:text="Dark Red"
-                android:textColor="#333333"
+                android:textColor="?attr/themeTextColor"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 

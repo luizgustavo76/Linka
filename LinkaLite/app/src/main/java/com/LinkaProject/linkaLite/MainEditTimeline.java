@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-public class MainEditTimeline extends Activity{
+public class MainEditTimeline extends BaseActivity{
     private ListView optionsListView;
     private ImageButton btnHome;
     private ImageButton btnChat;

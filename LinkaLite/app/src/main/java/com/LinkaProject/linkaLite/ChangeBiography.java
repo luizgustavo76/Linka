@@ -11,7 +11,7 @@ import android.widget.EditText;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
-public class ChangeBiography extends Activity{
+public class ChangeBiography extends BaseActivity{
     private EditText edtBiography;
     private Button btnSend;
     private String username = "";

@@ -18,7 +18,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class comments_activity extends Activity {
+public class comments_activity extends BaseActivity {
 
     private ListView lvComments;
     private String postId = "";

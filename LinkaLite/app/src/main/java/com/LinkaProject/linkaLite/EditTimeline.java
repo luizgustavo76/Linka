@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class EditTimeline extends Activity {
+public class EditTimeline extends BaseActivity {
     private Button btnNewer;
     private EditText edtUrl;
     private Button btnAdd;

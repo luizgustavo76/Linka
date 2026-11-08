@@ -16,7 +16,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BanUserGroup extends Activity {
+public class BanUserGroup extends BaseActivity {
     private ImageButton btnHome;
     private ImageButton btnChat;
     private ImageButton btnOptions;

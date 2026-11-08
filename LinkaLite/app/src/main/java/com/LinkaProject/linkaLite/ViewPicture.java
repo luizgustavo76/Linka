@@ -13,7 +13,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.ImageButton;
-public class ViewPicture extends Activity {
+public class ViewPicture extends BaseActivity {
 
     private ImageView imageView;
     private Button btnDownload;

@@ -12,7 +12,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-public class EditAccount extends Activity {
+public class EditAccount extends BaseActivity {
 
     private Button btnChangePicture;
     private Button btnChangeBiography;

@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-public class ExternalChat extends Activity{
+public class ExternalChat extends BaseActivity{
     private String username = "";
     private String url = "";
     private ImageButton btnHome;

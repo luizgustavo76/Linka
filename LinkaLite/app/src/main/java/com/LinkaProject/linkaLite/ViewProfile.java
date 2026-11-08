@@ -21,7 +21,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class ViewProfile extends Activity {
+public class ViewProfile extends BaseActivity {
     private ImageView imgProfilePicture;
     private String username = "";
     private String url = "";

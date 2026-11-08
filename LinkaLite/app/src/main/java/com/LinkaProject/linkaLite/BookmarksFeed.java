@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class BookmarksFeed extends Activity {
+public class BookmarksFeed extends BaseActivity {
     private String username = "";
     private String url = "";
     private ListView listView;

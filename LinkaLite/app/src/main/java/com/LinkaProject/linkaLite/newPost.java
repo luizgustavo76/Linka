@@ -20,7 +20,7 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class newPost extends Activity {
+public class newPost extends BaseActivity {
     private static final String TAG = "Linka_Upload";
     private static final int PICK_IMAGE_REQUEST = 1001;
 

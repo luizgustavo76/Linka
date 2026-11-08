@@ -11,7 +11,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import android.widget.Button;
 
-public class CommunityIndex extends Activity {
+public class CommunityIndex extends BaseActivity {
     private ListView listViewCommunities;
     private CommunityAdapter adapter;
     private ArrayList<Community> communityList;

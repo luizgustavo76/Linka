@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-public class AddManualUrl extends Activity{
+public class AddManualUrl extends BaseActivity{
     private ImageButton btnHome;
     private ImageButton btnChat;
     private ImageButton btnOptions;

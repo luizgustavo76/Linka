@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-public class addFriendActivity extends Activity{
+public class addFriendActivity extends BaseActivity{
     private EditText edtUsername;
     private EditText edtMessage;
     private Button btnSend;

@@ -11,7 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class TimelineThemes extends Activity {
+public class TimelineThemes extends BaseActivity {
     private String url = "";
     private ImageButton btnHome;
     private ImageButton btnChat;

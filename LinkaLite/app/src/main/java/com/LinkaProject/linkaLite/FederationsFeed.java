@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FederationsFeed extends Activity {
+public class FederationsFeed extends BaseActivity {
 
     private ImageButton btnHome;
     private ImageButton btnProfile;

@@ -15,7 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import android.widget.ImageButton;
-public class CommunityFeedActivity extends Activity {
+public class CommunityFeedActivity extends BaseActivity {
 
     private LinearLayout layoutFeedContainer;
     private String communityId = "";

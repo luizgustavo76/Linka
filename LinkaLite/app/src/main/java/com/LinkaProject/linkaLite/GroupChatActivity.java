@@ -18,7 +18,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class GroupChatActivity extends Activity {
+public class GroupChatActivity extends BaseActivity {
     private static final String TAG = "LINKA_DEBUG";
     private ImageButton btnHeaderImage;
     private TextView txtHeaderTitle;

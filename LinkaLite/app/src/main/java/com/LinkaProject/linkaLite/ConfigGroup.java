@@ -19,7 +19,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-public class ConfigGroup extends Activity{
+public class ConfigGroup extends BaseActivity{
     private Button btnBanUser;
     private Button btnChangeName;
     private Button btnExit;

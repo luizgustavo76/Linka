@@ -13,7 +13,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
-public class AddGroupChannel extends Activity{
+public class AddGroupChannel extends BaseActivity{
     private Button btnSend;
     private EditText edtName;
     private String username = "";

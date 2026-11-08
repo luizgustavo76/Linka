@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class optionActivity extends Activity {
+public class optionActivity extends BaseActivity {
 
     private ListView optionsListView;
 

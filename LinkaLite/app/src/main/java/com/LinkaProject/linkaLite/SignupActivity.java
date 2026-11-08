@@ -13,7 +13,7 @@ import android.widget.Toast;
 import org.json.JSONObject;
 import org.json.JSONException;
 
-public class SignupActivity extends Activity {
+public class SignupActivity extends BaseActivity {
     private static final String TAG = "LinkaSignup";
 
     private EditText edtUsername;

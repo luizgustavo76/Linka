@@ -16,7 +16,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GenerateInvite extends Activity {
+public class GenerateInvite extends BaseActivity {
 
     private ImageButton btnHome;
     private ImageButton btnProfile;

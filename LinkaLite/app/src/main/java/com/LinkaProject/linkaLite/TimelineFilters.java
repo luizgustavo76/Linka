@@ -16,7 +16,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TimelineFilters extends Activity {
+public class TimelineFilters extends BaseActivity {
 
     private ImageButton btnHome;
     private ImageButton btnChat;

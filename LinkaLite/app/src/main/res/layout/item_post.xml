@@ -83,7 +83,7 @@
             android:paddingRight="12dip"
             android:paddingBottom="8dip"
             android:textSize="14sp"
-            android:textColor="#222222"
+            android:textColor="?attr/themeTextColor"
             android:lineSpacingExtra="2dip" />
 
         <!-- Container de Repost -->
@@ -131,7 +131,7 @@
                             android:layout_height="wrap_content"
                             android:textStyle="bold"
                             android:textSize="12sp"
-                            android:textColor="#333333" />
+                            android:textColor="?attr/themeTextColor" />
 
                         <TextView
                             android:id="@+id/repostCommunity"

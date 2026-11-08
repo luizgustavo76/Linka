@@ -9,7 +9,7 @@ import android.widget.EditText;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ChangeGroupName extends Activity {
+public class ChangeGroupName extends BaseActivity {
     private EditText edtName;
     private Button btnSend;
     private String username = "";

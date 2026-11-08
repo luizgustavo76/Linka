@@ -8,7 +8,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 import org.json.JSONObject;
 import org.json.JSONException;
-public class NewCommunity extends Activity {
+public class NewCommunity extends BaseActivity {
     private String url = "";
     private String username = "";
     private EditText edtName;

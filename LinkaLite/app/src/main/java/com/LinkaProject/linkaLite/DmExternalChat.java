@@ -16,7 +16,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-public class DmExternalChat extends Activity {
+public class DmExternalChat extends BaseActivity {
     private static final String TAG = "LINKA_DEBUG";
     private ImageButton btnHeaderImage;
     private TextView txtHeaderTitle;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-    android:background="#ffffff"
+    android:background="?attr/themeBackgroundColor"
     android:layout_marginBottom="4dip"
     android:padding="10dip" xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
@@ -21,5 +21,5 @@
         android:textStyle="bold"
         android:textSize="13sp"
         android:layout_marginLeft="6dip"
-        android:textColor="#000000"></TextView>
+        android:textColor="?attr/themeTextColor"></TextView>
 </LinearLayout>
