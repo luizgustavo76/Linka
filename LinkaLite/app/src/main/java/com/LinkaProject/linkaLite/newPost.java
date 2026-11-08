@@ -16,7 +16,9 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.view.View;
+import android.widget.ImageView;
+import android.view.ViewGroup;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -45,7 +47,8 @@ public class newPost extends BaseActivity {
     private TextView txtRepostOriginalUser;
     private TextView txtRepostOriginalText;
     private ImageButton btnRemoveRepost;
-
+    private ImageView avatarRepost;
+    private ImageView imgMedia;
     private String uploadedImageUrl = "";
     private int repostPostId = -1;
 
@@ -67,7 +70,8 @@ public class newPost extends BaseActivity {
         btnReddit = (CheckBox) findViewById(R.id.btnReddit);
         btnMastodon = (CheckBox) findViewById(R.id.btnMastodon);
         btnBluesky = (CheckBox) findViewById(R.id.btnBluesky);
-
+        imgMedia = (ImageView) findViewById(R.id.imgMedia);
+        avatarRepost = (ImageView) findViewById(R.id.avatarRepost);
         containerMediaPreview = (RelativeLayout) findViewById(R.id.containerMediaPreview);
         btnRemoveMedia = (ImageButton) findViewById(R.id.btnRemoveMedia);
         imgMediaPreview = (GifImageView) findViewById(R.id.imgMediaPreview);
@@ -85,11 +89,26 @@ public class newPost extends BaseActivity {
         repostPostId = getIntent().getIntExtra("repostPostId", -1);
         String repostUser = getIntent().getStringExtra("repostUser");
         String repostText = getIntent().getStringExtra("repostText");
-
+        String repostAvatarUrl = getIntent().getStringExtra("repostAvatarUrl");
+        String repostMediaUrl = getIntent().getStringExtra("repostMediaUrl");
+        int repostMediaHeight = getIntent().getIntExtra("repostMediaHeight", 0);
+        int repostMediaWidth = getIntent().getIntExtra("repostMediaWidth", 0);
         if (repostPostId != -1 && containerRepostPreview != null) {
             containerRepostPreview.setVisibility(View.VISIBLE);
             if (txtRepostOriginalUser != null) txtRepostOriginalUser.setText(repostUser);
             if (txtRepostOriginalText != null) txtRepostOriginalText.setText(repostText);
+            if (repostMediaUrl != null){
+                ImageLoader imageLoader = new ImageLoader();
+                ViewGroup.LayoutParams params = imgMedia.getLayoutParams();
+                params.width = repostMediaWidth;
+                params.height = repostMediaHeight;
+                imgMedia.setLayoutParams(params);
+                imageLoader.LoadImageUrl(repostMediaUrl, imgMedia);
+            }
+            if (repostAvatarUrl != null){
+                ImageLoader imageLoader = new ImageLoader();
+                imageLoader.LoadImageUrl(repostAvatarUrl, avatarRepost);
+            }
         }
         if (btnRemoveRepost != null) {
             btnRemoveRepost.setOnClickListener(new View.OnClickListener() {

@@ -950,6 +950,17 @@ public class HomeActivity extends ActivityGroup {
                         intent.putExtra("repostPostId", id);
                         intent.putExtra("repostUser", postUsername);
                         intent.putExtra("repostText", textPost);
+                        try{
+                            JSONArray jsonArray = new JSONArray(post.getJSONObject("media_list"));
+                            if (jsonArray.length() > 0) {
+                                JSONObject media = jsonArray.getJSONObject(0);
+                                intent.putExtra("repostMediaUrl", media.getString("media_url"));
+                                intent.putExtra("repostMediaWidth", media.getString("width"));
+                                intent.putExtra("repostMediaHeight", media.getString("height"));
+                            }
+                        }catch(JSONException e){
+                            e.printStackTrace();
+                        }
                         startActivity(intent);
                     }
                 });
