@@ -26,6 +26,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -121,6 +122,10 @@ public class HomeActivity extends ActivityGroup {
     private Spinner spinnerFeeds;
     private View topHeaderContainer;
     private String username = "";
+    private boolean isHeaderVisible = true;
+    private boolean isHeaderAnimating = false;
+    private int lastFirstVisibleItem = 0;
+    private int lastTop = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -364,6 +369,36 @@ public class HomeActivity extends ActivityGroup {
                     feedPageTimeline++;
                     loadFeedForTab("Timeline", false, feedPageTimeline);
                 }
+
+                if (firstVisibleItem == 0) {
+                    View firstChild = view.getChildAt(0);
+                    int currentTop = (firstChild == null) ? 0 : firstChild.getTop();
+                    if (currentTop >= 0) {
+                        showHeaderBar();
+                        lastFirstVisibleItem = firstVisibleItem;
+                        lastTop = currentTop;
+                        return;
+                    }
+                }
+
+                View firstChild = view.getChildAt(0);
+                int currentTop = (firstChild == null) ? 0 : firstChild.getTop();
+
+                if (firstVisibleItem > lastFirstVisibleItem) {
+                    hideHeaderBar();
+                } else if (firstVisibleItem < lastFirstVisibleItem) {
+                    showHeaderBar();
+                } else {
+                    int diff = currentTop - lastTop;
+                    if (diff < -25) {
+                        hideHeaderBar();
+                    } else if (diff > 25) {
+                        showHeaderBar();
+                    }
+                }
+
+                lastFirstVisibleItem = firstVisibleItem;
+                lastTop = currentTop;
             }
         };
 
@@ -423,6 +458,57 @@ public class HomeActivity extends ActivityGroup {
         }, 60, 60, TimeUnit.SECONDS);
     }
 
+    private void hideHeaderBar() {
+        if (!isHeaderVisible || isHeaderAnimating || topHeaderContainer == null) return;
+
+        TranslateAnimation anim = new TranslateAnimation(0, 0, 0, -topHeaderContainer.getHeight());
+        anim.setDuration(180);
+        anim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                isHeaderAnimating = true;
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                topHeaderContainer.setVisibility(View.GONE);
+                isHeaderVisible = false;
+                isHeaderAnimating = false;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+
+        topHeaderContainer.startAnimation(anim);
+    }
+
+    private void showHeaderBar() {
+        if (isHeaderVisible || isHeaderAnimating || topHeaderContainer == null) return;
+
+        topHeaderContainer.setVisibility(View.VISIBLE);
+
+        TranslateAnimation anim = new TranslateAnimation(0, 0, -topHeaderContainer.getHeight(), 0);
+        anim.setDuration(180);
+        anim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                isHeaderAnimating = true;
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                isHeaderVisible = true;
+                isHeaderAnimating = false;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {}
+        });
+
+        topHeaderContainer.startAnimation(anim);
+    }
+
     private void setupDrawerMenu() {
         LinearLayout drawerHeader = (LinearLayout) findViewById(R.id.drawerHeader);
         ImageView imgProfile = (ImageView) findViewById(R.id.imgProfile);
@@ -436,8 +522,14 @@ public class HomeActivity extends ActivityGroup {
         Button btnDrawerFavorites = (Button) findViewById(R.id.btnDrawerFavorites);
         Button btnDrawerLogout = (Button) findViewById(R.id.btnDrawerLogout);
         Button btnCommunities = (Button) findViewById(R.id.btnCommunities);
+        Button btnDrawerOptions = (Button) findViewById(R.id.btnDrawerOptions);
         String currentUsername = "user";
-
+        btnDrawerOptions.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                startActivity(new Intent(HomeActivity.this, optionActivity.class));
+            }
+        });
         try {
             config cfg = new config();
             String rawCfg = cfg.loadCfgAsJson(HomeActivity.this, "config.cfg");
@@ -660,8 +752,6 @@ public class HomeActivity extends ActivityGroup {
         if ("Timeline".equals(tabName)) {
             actualTab = "timeline";
             
-            // Se mudou a seleção do Spinner ou não é forceReload, mas a lista tá com dados do feed anterior,
-            // a gente SÓ reaproveita o cache se o forceReload for falso E não tiver trocado de feed.
             if (!forceReload && targetPage == 1 && postsTimeline.size() > 0) {
                 if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
                 return;
@@ -670,11 +760,8 @@ public class HomeActivity extends ActivityGroup {
             isLoading = true;
 
             if ("Linka".equalsIgnoreCase(actualFeed.trim())) {
-                // Chamada pura e simples do /feed nativo (sem username, sem frescura)
                 new FetchFeedTask("timeline", baseUrl + "/feed?page=" + targetPage + "&limit=20", "GET", null, targetPage).execute();
-
             } else {
-                // Chamada externa / Nitter / Twitter
                 JSONObject body = new JSONObject();
                 try {
                     body.put("urls", urlsArray);
