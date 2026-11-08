@@ -31,6 +31,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.widget.Toast;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -40,6 +42,9 @@ import android.text.style.ClickableSpan;
 import android.graphics.Color;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -127,11 +132,24 @@ public class HomeActivity extends ActivityGroup {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        dbHelper = new DatabaseHelper(this);
-        spinnerFeeds = (Spinner) findViewById(R.id.spinner_feeds);
-        String[] redes = new String[]{"Todas ▾", "Twitter/X", "Reddit", "Bluesky", "Mastodon"};
+        DatabaseHelper dbHelper = new DatabaseHelper(this);
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        List<String> redesList = new ArrayList<>(Arrays.asList("Linka >", "Communities >", "Friends >", "+ New Feed"));
+        Cursor cursor = db.rawQuery("SELECT * from feeds", null);
 
-        // Usa o layout customizado spinner_item_top para o texto que fica na Action Bar
+        if (cursor.moveToFirst()) {
+            do {
+                String name = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                redesList.add(name);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+
+        String[] redes = redesList.toArray(new String[0]);
+
+        spinnerFeeds = (Spinner) findViewById(R.id.spinner_feeds);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(
                 this,
                 R.layout.spinner_item_top,
