@@ -17,6 +17,9 @@ import android.view.Window;
 import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
@@ -45,7 +48,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
+import com.LinkaProject.linkaLite.DatabaseHelper;
 public class HomeActivity extends ActivityGroup {
 
     private static final Pattern MENTION_PATTERN = Pattern.compile("@([a-zA-Z0-9_]+(@[a-zA-Z0-9_.-]+)?)");
@@ -113,7 +116,7 @@ public class HomeActivity extends ActivityGroup {
     private boolean isLoading = false;
     private boolean hasMoreLocal = true;
     private boolean hasMoreTimeline = true;
-
+    private Spinner spinnerFeeds;
     private View topHeaderContainer;
     private boolean isHeaderVisible = true;
     private boolean isHeaderAnimating = false;
@@ -124,8 +127,29 @@ public class HomeActivity extends ActivityGroup {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-
         dbHelper = new DatabaseHelper(this);
+        spinnerFeeds = (Spinner) findViewById(R.id.spinner_feeds);
+        String[] redes = new String[]{"Todas ▾", "Twitter/X", "Reddit", "Bluesky", "Mastodon"};
+
+        // Usa o layout customizado spinner_item_top para o texto que fica na Action Bar
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+                this,
+                R.layout.spinner_item_top,
+                redes
+        );
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerFeeds.setAdapter(adapter);
+
+        spinnerFeeds.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectItem = parent.getItemAtPosition(position).toString();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
         topHeaderContainer = findViewById(R.id.topHeaderContainer);
 
         fabNewPost = (ImageButton) findViewById(R.id.fabNewPost);

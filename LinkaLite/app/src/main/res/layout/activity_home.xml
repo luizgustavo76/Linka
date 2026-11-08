@@ -97,24 +97,37 @@
             <RelativeLayout
                 android:id="@+id/topBarContainer"
                 android:layout_width="fill_parent"
+                android:background="@drawable/bg_header_gradient"
                 android:layout_height="48dip"
-                android:background="#121212"
                 android:paddingLeft="6dip"
                 android:paddingRight="6dip">
 
                 <ImageButton
                     android:id="@+id/btnHamburger"
-                    android:layout_width="40dip"
-                    android:layout_height="40dip"
+                    android:layout_width="30dip"
+                    android:layout_height="30dip"
                     android:layout_centerVertical="true"
                     android:layout_alignParentLeft="true"
                     android:background="@android:color/transparent"
                     android:scaleType="centerInside"
                     android:src="@drawable/icon_drawer" />
 
+                <!-- SPINNER COMPACTO INTEGRADO À ACTIONBAR -->
+                <Spinner
+                    android:id="@+id/spinner_feeds"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_toRightOf="@+id/btnHamburger"
+                    android:layout_toLeftOf="@+id/logo"
+                    android:layout_marginLeft="4dip"
+                    android:layout_marginRight="4dip"
+                    android:background="@android:color/transparent"
+                    android:spinnerMode="dropdown" />
+
+                <!-- LOGO COM HITBOX RESTRITA AO SEU TAMANHO REAL (30x30) -->
                 <ImageView
                     android:id="@+id/logo"
-                    android:layout_width="wrap_content"
+                    android:layout_width="30dip"
                     android:layout_height="30dip"
                     android:layout_centerInParent="true"
                     android:scaleType="fitCenter"
@@ -238,7 +251,6 @@
                 android:layout_marginLeft="2dip" />
         </LinearLayout>
 
-        <!-- BOTÃO FLUTUANTE (FAB) -->
         <ImageButton
             android:id="@+id/fabNewPost"
             android:layout_width="56dip"

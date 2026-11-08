@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Camada 1: O gradiente com contraste marcante -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#555555"
+                android:centerColor="#262626"
+                android:endColor="#0D0D0D"
+                android:type="linear" />
+        </shape>
+    </item>
+
+    <!-- Camada 2: Linha de brilho sutil no topo (1px) -->
+    <item android:bottom="47dip">
+        <shape android:shape="rectangle">
+            <solid android:color="#777777" />
+        </shape>
+    </item>
+
+    <!-- Camada 3: Linha de divisória escura na base (1px) -->
+    <item android:top="47dip">
+        <shape android:shape="rectangle">
+            <solid android:color="#000000" />
+        </shape>
+    </item>
+</layer-list>
