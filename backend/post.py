@@ -989,6 +989,7 @@ def feed():
                 "username": post["username"],
                 "text_post": text_content,
                 "datetime": dt_val,
+                "avatar_url":avatar_url,
                 "relative_datetime": get_relative_time(post["datetime"]),
                 "comment_count": post["comment_count"],
                 "media": {
