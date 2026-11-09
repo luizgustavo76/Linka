@@ -950,17 +950,19 @@ public class HomeActivity extends ActivityGroup {
                         intent.putExtra("repostPostId", id);
                         intent.putExtra("repostUser", postUsername);
                         intent.putExtra("repostText", textPost);
-                        try{
-                            JSONArray jsonArray = new JSONArray(post.getJSONObject("media_list"));
-                            if (jsonArray.length() > 0) {
-                                JSONObject media = jsonArray.getJSONObject(0);
-                                intent.putExtra("repostMediaUrl", media.getString("media_url"));
-                                intent.putExtra("repostMediaWidth", media.getString("width"));
-                                intent.putExtra("repostMediaHeight", media.getString("height"));
+                        
+                        // Trata a lista de mídias de forma segura
+                        JSONArray jsonArray = post.optJSONArray("media_list");
+                        if (jsonArray != null && jsonArray.length() > 0) {
+                            JSONObject media = jsonArray.optJSONObject(0);
+                            if (media != null) {
+                                intent.putExtra("repostMediaUrl", media.optString("media_url", ""));
+                                intent.putExtra("repostMediaWidth", media.optString("width", "0"));
+                                // ATENÇÃO: buscando "heigth" conforme vem do seu backend
+                                intent.putExtra("repostMediaHeight", media.optString("heigth", "0")); 
                             }
-                        }catch(JSONException e){
-                            e.printStackTrace();
                         }
+
                         startActivity(intent);
                     }
                 });
