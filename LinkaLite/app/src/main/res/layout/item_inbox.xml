@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/themeBackgroundColor"
+    android:background="#ffffff"
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:padding="10dip">
@@ -28,7 +28,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="\@username"
-            android:textColor="?attr/themeTextColor"
+            android:textColor="#000000"
             android:textSize="13sp"
             android:textStyle="bold" />
 
@@ -54,7 +54,7 @@
             android:paddingLeft="8dip"
             android:paddingRight="8dip"
             android:text="Aceitar"
-            android:textColor="?attr/themeTextColor"
+            android:textColor="#000000"
             android:textSize="11sp" />
 
         <Button
@@ -64,7 +64,7 @@
             android:paddingLeft="8dip"
             android:paddingRight="8dip"
             android:text="Recusar"
-            android:textColor="?attr/themeTextColor"
+            android:textColor="#000000"
             android:textSize="11sp" />
 
     </LinearLayout>

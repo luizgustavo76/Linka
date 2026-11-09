@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/themeBackgroundColor"
+    android:background="#ffffff"
     android:orientation="vertical"
     android:padding="12dip">
 
@@ -11,7 +11,7 @@
         android:id="@+id/txtOptionTitle"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:textColor="?attr/themeTextColor"
+        android:textColor="#000000"
         android:textSize="14sp"
         android:textStyle="bold" />
 

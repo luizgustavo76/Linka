@@ -3,7 +3,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical"
-    android:background="?attr/themeBackgroundColor">
+    android:background="#FFFFFF">
 
     <RelativeLayout
         android:layout_width="fill_parent"
@@ -35,7 +35,7 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="32dip"
-        android:background="?attr/themeHeaderBg"
+        android:background="#E0E0E0"
         android:paddingLeft="12dip"
         android:paddingRight="12dip">
     </RelativeLayout>
@@ -51,7 +51,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="?attr/themeBackgroundColor"
+            android:background="#ffffff"
             android:padding="6dip">
         </LinearLayout>
     </ScrollView>
@@ -68,11 +68,11 @@
             android:layout_width="0dip"
             android:layout_height="36dip"
             android:layout_weight="1"
-            android:background="?attr/themeBackgroundColor"
+            android:background="#FFFFFF"
             android:hint="Type a Message"
             android:paddingLeft="8dip"
             android:paddingRight="8dip"
-            android:textColor="?attr/themeTextColor"
+            android:textColor="#000000"
             android:textSize="13sp" />
 
         <Button

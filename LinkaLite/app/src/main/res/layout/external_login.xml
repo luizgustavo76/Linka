@@ -4,7 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:fillViewport="true"
-    android:background="?attr/themeHeaderBg">
+    android:background="#E0E0E0">
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -38,7 +38,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="?attr/themeBackgroundColor"
+            android:background="#FFFFFF"
             android:padding="14dip"
             android:layout_marginBottom="12dip">
 
@@ -116,7 +116,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="?attr/themeBackgroundColor"
+            android:background="#FFFFFF"
             android:padding="14dip"
             android:layout_marginTop="12dip"
             android:visibility="gone">
