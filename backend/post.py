@@ -931,7 +931,7 @@ def feed():
                 m.avatar_url AS avatar_url,
                 COUNT(c.id) AS comment_count
             FROM posts p
-            LEFT JOIN profiles m ON p.username = m.username
+            LEFT JOIN profile m ON p.username = m.username
             LEFT JOIN comments c ON c.post_id = p.id
             GROUP BY p.id, p.username, p.text_post, m."ProfilePicture", p.datetime, p.media, p.media_type, p.width, p.heigth
             ORDER BY p.id DESC
