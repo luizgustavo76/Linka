@@ -938,7 +938,9 @@ public class HomeActivity extends ActivityGroup {
                 final String relative_datetime = post.optString("relative_datetime", "");
                 final int id = post.optInt("id", -1);
                 final String originalUrl = post.optString("original_url", "");
-                final boolean isExternal = !origin_server.isEmpty() && !origin_server.equals("linka");
+                
+                // Checa se o post vem de servidor externo
+                final boolean isExternal = !origin_server.isEmpty() && !origin_server.equalsIgnoreCase("linka");
 
                 Log.d("LINKA_DEBUG", "==================================================");
                 Log.d("LINKA_DEBUG", "[POST VIEW] Platform: " + platform + " | User: " + postUsername);
@@ -951,14 +953,12 @@ public class HomeActivity extends ActivityGroup {
                         intent.putExtra("repostUser", postUsername);
                         intent.putExtra("repostText", textPost);
                         
-                        // Trata a lista de mídias de forma segura
                         JSONArray jsonArray = post.optJSONArray("media_list");
                         if (jsonArray != null && jsonArray.length() > 0) {
                             JSONObject media = jsonArray.optJSONObject(0);
                             if (media != null) {
                                 intent.putExtra("repostMediaUrl", media.optString("media_url", ""));
                                 intent.putExtra("repostMediaWidth", media.optString("width", "0"));
-                                // ATENÇÃO: buscando "heigth" conforme vem do seu backend
                                 intent.putExtra("repostMediaHeight", media.optString("heigth", "0")); 
                             }
                         }
@@ -1062,18 +1062,23 @@ public class HomeActivity extends ActivityGroup {
                     }
                 });
 
+                // CORREÇÃO AQUI: Passa isExternal = false para posts nativos do Linka
                 holder.btnComments.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Intent intent = new Intent(HomeActivity.this, comments_activity.class);
-                        if ("timeline".equals(actualTab)) {
-                            intent.putExtra("isExternal", true);
-                            intent.putExtra("externalUrl", origin_server);
-                            intent.putExtra("uniqueId", postUniqueId);
-                            intent.putExtra("originalUrl", originalUrl);
-                        } else {
+                        
+                        if ("Linka".equalsIgnoreCase(actualFeed.trim())) {
                             intent.putExtra("isExternal", false);
+                        } else {
+                            intent.putExtra("isExternal", isExternal);
+                            if (isExternal) {
+                                intent.putExtra("externalUrl", origin_server);
+                                intent.putExtra("uniqueId", postUniqueId);
+                                intent.putExtra("originalUrl", originalUrl);
+                            }
                         }
+                        
                         intent.putExtra("isGuest", isGuest);
                         intent.putExtra("post_id", String.valueOf(id));
                         startActivity(intent);

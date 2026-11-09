@@ -261,7 +261,7 @@ public class comments_activity extends BaseActivity {
                     targetUrl = targetUrl.substring(0, targetUrl.length() - 1);
                 }
 
-                String endpoint = isExternal ? "/comments" : "/view-comments";
+                String endpoint = "/view-comments";
                 String fullUrl = targetUrl + endpoint;
 
                 return request.requestHTTP(fullUrl, "post", jsonComment, comments_activity.this);
