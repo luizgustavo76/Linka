@@ -970,7 +970,7 @@ def feed():
             post_id = post["id"]
             text_content = post["text_post"] or ""
             match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
-            
+            avatar_url = post["avatar_url"] or ""
             media_url = match.group(1).strip() if match else post["media"]
             media_type = "image" if match else post["media_type"]
 
