@@ -117,4 +117,5 @@ android {
 // Dependências ficam FORA do bloco android { ... }
 dependencies {
     implementation("com.android.support:support-v4:23.4.0")
+    implementation("junit:junit:4.13.2")
 }
