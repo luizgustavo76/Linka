@@ -762,7 +762,17 @@ public class HomeActivity extends ActivityGroup {
 
             if ("Linka".equalsIgnoreCase(actualFeed.trim())) {
                 new FetchFeedTask("timeline", baseUrl + "/feed?page=" + targetPage + "&limit=20", "GET", null, targetPage).execute();
-            } else {
+            } 
+            else if("Friends".equalsIgnoreCase(actualFeed.trim())){
+                try{
+                    JSONObject jsonFriends = new JSONObject();
+                    jsonFriends.put("username", username);
+                    new FetchFeedTask("timeline", baseUrl + "/friends-feed?page=" + targetPage + "&limit=20", "POST", jsonFriends, targetPage).execute();
+                }catch(JSONException e){
+                    e.printStackTrace();
+                }
+            }
+            else {
                 JSONObject body = new JSONObject();
                 try {
                     body.put("urls", urlsArray);
