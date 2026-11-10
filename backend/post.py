@@ -1180,9 +1180,9 @@ def new_feed():
         cur.close()
         conn.close()
 
-@post_bp.route("/friends-feed",methods=["POST"])
+@post_bp.route("/friends-feed", methods=["POST"])
 def friends_feed():
-    data = request.get_json()
+    data = request.get_json() or {}
     has_page_param = 'page' in request.args
     has_limit_param = 'limit' in request.args
 
@@ -1207,6 +1207,7 @@ def friends_feed():
                 return cached_feed, 200, {"Content-Type": "application/json"}
         except Exception:
             pass
+
     username = data.get("username")
     if username == g.username:
         conn = get_db()
@@ -1222,7 +1223,7 @@ def friends_feed():
                     p.media_type,
                     p.width,
                     p.heigth,
-                    COUNT(DISTINCT c.id) AS comment_count  -- DISTINCT evita multiplicar se houver múltiplos JOINs
+                    COUNT(DISTINCT c.id) AS comment_count 
                 FROM posts p
                 LEFT JOIN comments c ON c.post_id = p.id
                 LEFT JOIN friends f ON (f.receiver = p.username OR f.remittee = p.username)
@@ -1230,7 +1231,7 @@ def friends_feed():
                 ORDER BY p.id DESC
                 {sql_pagination}
             """
-            cur.execute(query)
+            cur.execute(query, query_params)
             posts = cur.fetchall()
 
             lista_posts = []
@@ -1286,8 +1287,8 @@ def friends_feed():
         finally:
             cur.close()
             conn.close()
-        
-        
+
+    return jsonify({"error": "Unauthorized or invalid user"}), 401
 
 @post_bp.route("/has-star", methods=["POST"])
 def has_star():
