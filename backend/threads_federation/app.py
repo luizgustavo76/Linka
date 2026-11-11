@@ -108,6 +108,7 @@ def formate(posts):
 
         media_url = None
         media_type = None
+        media_thumb = None
         width = None
         height = None
 
@@ -118,26 +119,41 @@ def formate(posts):
         media_elements = children if children else [post]
 
         for elem in media_elements:
-            m_type = str(elem.get("media_type", "")).upper()
+            raw_m_type = str(elem.get("media_type", "")).upper()
+            video_versions = elem.get("video_versions", [])
             img_candidates = elem.get("image_versions2", {}).get("candidates", [])
-            img_url = elem.get("media_url") or (img_candidates[0].get("url") if img_candidates else None)
             
-            if img_url:
-                images_for_v2.append(img_url)
+            is_video = raw_m_type == "VIDEO" or bool(video_versions)
+
+            if is_video:
+                m_url = elem.get("media_url") or (video_versions[0].get("url") if video_versions else None)
+                t_url = elem.get("thumbnail_url") or (img_candidates[0].get("url") if img_candidates else "")
+                item_type = "video"
+            else:
+                m_url = elem.get("media_url") or (img_candidates[0].get("url") if img_candidates else None)
+                t_url = ""
+                item_type = "image"
+            
+            if m_url:
+                if item_type == "image":
+                    images_for_v2.append(m_url)
 
                 m_w = str(elem.get("width", "")) if elem.get("width") else ""
                 m_h = str(elem.get("height", "")) if elem.get("height") else ""
 
                 media_list.append({
-                    "media_url": img_url,
-                    "media_type": "image",
+                    "media_url": m_url,
+                    "media_type": item_type,
+                    "thumbnail": t_url,
+                    "thumbnail_url": t_url,
                     "width": m_w,
                     "heigth": m_h
                 })
 
                 if not media_url:
-                    media_url = img_url
-                    media_type = "image"
+                    media_url = m_url
+                    media_type = item_type
+                    media_thumb = t_url
                     width = m_w
                     height = m_h
 
@@ -176,6 +192,8 @@ def formate(posts):
                     "media": {
                         "media_url": media_url,
                         "media_type": media_type,
+                        "thumbnail": media_thumb or "",
+                        "thumbnail_url": media_thumb or "",
                         "width": width,
                         "heigth": height
                     },
@@ -190,6 +208,38 @@ def formate(posts):
 
     return posts_formatados
 
+
+def fetch_threads_posts(threads_user_id="me", limit=100, access_token=None):
+    token = access_token or THREADS_ACCESS_TOKEN
+    if not token:
+        print("[THREADS ERROR] Token de acesso não configurado no .env.")
+        return []
+
+    url = f"https://graph.threads.net/v1.0/{threads_user_id}/threads"
+    fields = (
+        "id,media_product_type,media_type,media_url,thumbnail_url,permalink,owner,username,"
+        "text,timestamp,children{id,media_url,media_type,thumbnail_url}"
+    )
+
+    params = {
+        "fields": fields,
+        "limit": min(limit, 100),
+        "access_token": token
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code != 200:
+            print(f"[THREADS ERROR] Status Code: {response.status_code} Response: {response.text}")
+            return []
+
+        data = response.json()
+        raw_posts = data.get("data", [])
+        return formate(raw_posts)[:limit]
+
+    except Exception as e:
+        print(f"[THREADS EXCEPTION] {e}")
+        return []
 
 def fetch_threads_posts(threads_user_id="me", limit=100, access_token=None):
     token = access_token or THREADS_ACCESS_TOKEN
