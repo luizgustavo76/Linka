@@ -189,6 +189,7 @@ def create_db():
                 media_type TEXT,
                 width TEXT,
                 heigth TEXT,
+                thumbnail TEXT,
                 text_post TEXT,
                 datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -199,6 +200,7 @@ def create_db():
                 post_id INTEGER REFERENCES posts(id) ON DELETE CASCADE,
                 media_url TEXT,
                 media_type TEXT,
+                thumbnail TEXT,
                 width TEXT,
                 heigth TEXT
             )
@@ -928,12 +930,13 @@ def feed():
                 p.media_type,
                 p.width,
                 p.heigth,
+                p.thumbnail,
                 m."ProfilePicture" AS avatar_url,
                 COUNT(c.id) AS comment_count
             FROM posts p
             LEFT JOIN profile m ON p.username = m.username
             LEFT JOIN comments c ON c.post_id = p.id
-            GROUP BY p.id, p.username, p.text_post, m."ProfilePicture", p.datetime, p.media, p.media_type, p.width, p.heigth
+            GROUP BY p.id, p.username, p.text_post, m."ProfilePicture", p.thumbnail, p.datetime, p.media, p.media_type, p.width, p.heigth
             ORDER BY p.id DESC
             {sql_pagination}
         """
@@ -946,7 +949,7 @@ def feed():
 
         post_ids = [p["id"] for p in posts]
         cur.execute("""
-            SELECT id, post_id, media_url, media_type, width, heigth 
+            SELECT id, post_id, media_url, media_type, width, heigth , thumbnail
             FROM post_media 
             WHERE post_id = ANY(%s)
         """, (post_ids,))
@@ -961,7 +964,8 @@ def feed():
                 "media_url": row["media_url"],
                 "media_type": row["media_type"] or "image",
                 "width": row["width"] or "",
-                "heigth": row["heigth"] or ""
+                "heigth": row["heigth"] or "",
+                "thumbnail": row["thumbnail"] or ""
             })
 
         lista_posts = []
@@ -976,7 +980,7 @@ def feed():
 
             main_width = post["width"] or ""
             main_heigth = post["heigth"] or ""
-
+            main_thumbnail = post["thumbnail"] or ""
             if post_id in media_by_post:
                 media_list = media_by_post[post_id]
             else:
@@ -996,7 +1000,8 @@ def feed():
                     "media_url": media_url or "",
                     "media_type": media_type or "image",
                     "width": main_width,
-                    "heigth": main_heigth
+                    "heigth": main_heigth,
+                    "thumbnail":main_thumbnail
                 },
                 "media_list": media_list,
                 "media_attachments": media_list,
