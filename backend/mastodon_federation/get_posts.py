@@ -145,6 +145,7 @@ def formate(posts, instance="mastodon.social"):
 
         media_url = None
         media_type = None
+        media_thumb = None
         width = None
         height = None
 
@@ -152,25 +153,49 @@ def formate(posts, instance="mastodon.social"):
         media_list = []
         
         for media in target_post.get("media_attachments", []):
-            if isinstance(media, dict) and media.get("type") == "image":
+            if not isinstance(media, dict):
+                continue
+
+            m_raw_type = media.get("type", "")
+            meta_original = media.get("meta", {}).get("original", {})
+            m_w = str(meta_original.get("width", "")) if meta_original.get("width") else ""
+            m_h = str(meta_original.get("height", "")) if meta_original.get("height") else ""
+
+            if m_raw_type == "image":
                 img_url = media.get("url") or media.get("preview_url")
                 if img_url:
                     images_for_v2.append(img_url)
-                    
-                    meta_original = media.get("meta", {}).get("original", {})
-                    m_w = str(meta_original.get("width", "")) if meta_original.get("width") else ""
-                    m_h = str(meta_original.get("height", "")) if meta_original.get("height") else ""
-
                     media_list.append({
                         "media_url": img_url,
                         "media_type": "image",
+                        "thumbnail": "",
+                        "thumbnail_url": "",
                         "width": m_w,
                         "heigth": m_h
                     })
-
                     if not media_url:
                         media_url = img_url
                         media_type = "image"
+                        media_thumb = ""
+                        width = m_w
+                        height = m_h
+
+            elif m_raw_type in ("video", "gifv"):
+                vid_url = media.get("url")
+                thumb_url = media.get("preview_url") or ""
+                if vid_url:
+                    media_list.append({
+                        "media_url": vid_url,
+                        "media_type": "video",
+                        "thumbnail": thumb_url,
+                        "thumbnail_url": thumb_url,
+                        "width": m_w,
+                        "heigth": m_h
+                    })
+                    if not media_url:
+                        media_url = vid_url
+                        media_type = "video"
+                        media_thumb = thumb_url
                         width = m_w
                         height = m_h
 
@@ -211,6 +236,8 @@ def formate(posts, instance="mastodon.social"):
                     "media": {
                         "media_url": media_url,
                         "media_type": media_type,
+                        "thumbnail": media_thumb or "",
+                        "thumbnail_url": media_thumb or "",
                         "width": width,
                         "heigth": height
                     },
@@ -224,8 +251,6 @@ def formate(posts, instance="mastodon.social"):
             )
 
     return posts_formatados
-
-
 def fetch_mastodon_posts(
     tag="retrocomputing", instance="mastodon.social", limit=100
 ):
