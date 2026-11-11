@@ -33,6 +33,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.VideoView;
 import android.widget.MediaController;
+import android.media.MediaPlayer;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.widget.Toast;
@@ -59,7 +60,6 @@ public class HomeActivity extends ActivityGroup {
 
     private static final Pattern MENTION_PATTERN = Pattern.compile("@([a-zA-Z0-9_]+(@[a-zA-Z0-9_.-]+)?)");
 
-    // Controle global para 1 único vídeo rodando por vez no feed
     private static VideoView currentPlayingVideo = null;
     private static ImageButton currentPlayButton = null;
     private static View currentThumbnail = null;
@@ -123,7 +123,7 @@ public class HomeActivity extends ActivityGroup {
     private ImageButton fabNewPost;
     private int feedPageTimeline = 1;
     private boolean isLoading = false;
-    private String actualFeed = "Linka";
+    private String actualFeed = "Timeline";
     private boolean hasMoreTimeline = true;
     private Spinner spinnerFeeds;
     private View topHeaderContainer;
@@ -150,7 +150,8 @@ public class HomeActivity extends ActivityGroup {
 
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        List<String> redesList = new ArrayList<>(Arrays.asList("Linka >", "Communities >", "Friends >", "+ New Feed"));
+        
+        List<String> redesList = new ArrayList<>(Arrays.asList("Timeline", "Linka >", "Communities >", "Friends >", "+ New Feed"));
         Cursor cursor = db.rawQuery("SELECT * from feeds", null);
 
         if (cursor.moveToFirst()) {
@@ -772,10 +773,22 @@ public class HomeActivity extends ActivityGroup {
 
             isLoading = true;
 
-            if ("Linka".equalsIgnoreCase(actualFeed.trim())) {
+            if ("Timeline".equalsIgnoreCase(actualFeed.trim())) {
+                JSONObject body = new JSONObject();
+                try {
+                    body.put("urls", urlsArray);
+                    body.put("filters", tags);
+                    body.put("page", targetPage);
+                    body.put("limit", 20);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                new FetchFeedTask("timeline", baseUrl + "/view-external-posts?page=" + targetPage + "&limit=20", "POST", body, targetPage).execute();
+            }
+            else if ("Linka".equalsIgnoreCase(actualFeed.trim())) {
                 new FetchFeedTask("timeline", baseUrl + "/feed?page=" + targetPage + "&limit=20", "GET", null, targetPage).execute();
             } 
-            else if("Friends".equalsIgnoreCase(actualFeed.trim())){
+            else if ("Friends".equalsIgnoreCase(actualFeed.trim())){
                 try{
                     JSONObject jsonFriends = new JSONObject();
                     jsonFriends.put("username", username);
@@ -1003,7 +1016,10 @@ public class HomeActivity extends ActivityGroup {
                 holder.txtMediaCount.setVisibility(View.GONE);
                 if (holder.btnPrevImage != null) holder.btnPrevImage.setVisibility(View.GONE);
                 if (holder.btnNextImage != null) holder.btnNextImage.setVisibility(View.GONE);
-                if (holder.videoPost != null) holder.videoPost.setVisibility(View.GONE);
+                if (holder.videoPost != null) {
+                    holder.videoPost.stopPlayback();
+                    holder.videoPost.setVisibility(View.GONE);
+                }
                 if (holder.btnPlayVideo != null) holder.btnPlayVideo.setVisibility(View.GONE);
 
                 holder.btnBookmarks.setOnClickListener(new View.OnClickListener() {
@@ -1129,12 +1145,30 @@ public class HomeActivity extends ActivityGroup {
 
                 if (mediaList != null && mediaList.length() > 0) {
                     for (int i = 0; i < mediaList.length(); i++) {
-                        mediaItems.add(mediaList.getJSONObject(i));
+                        JSONObject item = mediaList.getJSONObject(i);
+                        String itemUrl = item.optString("media_url", item.optString("url", ""));
+                        if (itemUrl.length() > 0 && !itemUrl.equals("null")) {
+                            mediaItems.add(item);
+                        }
                     }
                 } else {
                     JSONObject singleMedia = post.optJSONObject("media");
                     if (singleMedia != null && singleMedia.optString("media_url", "").length() > 0) {
                         mediaItems.add(singleMedia);
+                    } else {
+                        String stringMedia = post.optString("media", "");
+                        if (stringMedia.length() > 0 && !stringMedia.equals("null") && stringMedia.startsWith("http")) {
+                            JSONObject fallbackObj = new JSONObject();
+                            try {
+                                fallbackObj.put("media_url", stringMedia);
+                                fallbackObj.put("media_type", post.optString("media_type", "image"));
+                                fallbackObj.put("width", post.optString("width", ""));
+                                fallbackObj.put("heigth", post.optString("heigth", ""));
+                                mediaItems.add(fallbackObj);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }
 
@@ -1173,6 +1207,8 @@ public class HomeActivity extends ActivityGroup {
                             });
                         }
                     }
+                } else {
+                    holder.containerMedia.setVisibility(View.GONE);
                 }
 
                 String cleanText = textPost;
@@ -1200,8 +1236,9 @@ public class HomeActivity extends ActivityGroup {
 
         private void renderMediaItem(final ViewHolder holder, final ArrayList<JSONObject> mediaItems, final int index) {
             JSONObject mediaObj = mediaItems.get(index);
-            final String rawUrl = mediaObj.optString("media_url", "");
+            final String rawUrl = mediaObj.optString("media_url", mediaObj.optString("url", ""));
             String mediaType = mediaObj.optString("media_type", "").toLowerCase();
+            String thumbUrl = mediaObj.optString("thumbnail_url", "");
             
             String width = mediaObj.optString("width", "");
             String height = mediaObj.optString("height", mediaObj.optString("heigth", ""));
@@ -1209,42 +1246,56 @@ public class HomeActivity extends ActivityGroup {
             holder.imgPost.setTag(R.id.imgPost, index);
 
             ViewGroup.LayoutParams params = holder.imgPost.getLayoutParams();
-            params.width = screenWidth;
+            params.width = ViewGroup.LayoutParams.MATCH_PARENT; 
 
             try {
                 if (width.length() > 0 && height.length() > 0 && !width.equals("null") && !height.equals("null")) {
                     int origW = Integer.parseInt(width);
                     int origH = Integer.parseInt(height);
                     if (origW > 0) {
-                        params.height = (screenWidth * origH) / origW;
+                        int calculatedHeight = (screenWidth * origH) / origW;
+                        params.height = Math.min(calculatedHeight, screenWidth); 
                     } else {
-                        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                        params.height = screenWidth; 
                     }
                 } else {
-                    params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    params.height = screenWidth;
                 }
             } catch (Exception e) {
-                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                params.height = screenWidth;
             }
-
             holder.imgPost.setLayoutParams(params);
+            holder.imgPost.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
-            // Suporte para Reprodução de Vídeo Inline
-            if ("video".equals(mediaType) || rawUrl.endsWith(".mp4")) {
-                if (holder.btnPlayVideo != null) holder.btnPlayVideo.setVisibility(View.VISIBLE);
+            boolean isVideo = "video".equalsIgnoreCase(mediaType) || rawUrl.endsWith(".mp4") || rawUrl.contains("video.twimg.com");
+
+            if (isVideo) {
+                if (holder.btnPlayVideo != null) {
+                    holder.btnPlayVideo.setVisibility(View.VISIBLE);
+                    holder.btnPlayVideo.bringToFront();
+                }
                 if (holder.videoPost != null) holder.videoPost.setVisibility(View.GONE);
                 holder.imgPost.setVisibility(View.VISIBLE);
 
-                holder.imgPost.setTag(rawUrl);
-                imageLoader.LoadImageUrl(rawUrl, holder.imgPost);
+                String previewUrl = (thumbUrl.length() > 0 && !thumbUrl.endsWith(".mp4")) ? thumbUrl : "";
+                if (previewUrl.length() > 0) {
+                    holder.imgPost.setTag(previewUrl);
+                    imageLoader.LoadImageUrl(previewUrl, holder.imgPost);
+                } else if (!rawUrl.endsWith(".mp4")) {
+                    holder.imgPost.setTag(rawUrl);
+                    imageLoader.LoadImageUrl(rawUrl, holder.imgPost);
+                } else {
+                    holder.imgPost.setImageResource(android.R.drawable.ic_media_play);
+                }
 
                 if (holder.btnPlayVideo != null) {
                     holder.btnPlayVideo.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                            // Para e reseta o vídeo que estava tocando anteriormente
                             if (currentPlayingVideo != null) {
-                                currentPlayingVideo.stopPlayback();
+                                try {
+                                    currentPlayingVideo.stopPlayback();
+                                } catch (Exception e) {}
                                 currentPlayingVideo.setVisibility(View.GONE);
                                 if (currentPlayButton != null) currentPlayButton.setVisibility(View.VISIBLE);
                                 if (currentThumbnail != null) currentThumbnail.setVisibility(View.VISIBLE);
@@ -1254,22 +1305,48 @@ public class HomeActivity extends ActivityGroup {
                             holder.btnPlayVideo.setVisibility(View.GONE);
                             holder.videoPost.setVisibility(View.VISIBLE);
 
+                            ViewGroup.LayoutParams vidParams = holder.videoPost.getLayoutParams();
+                            vidParams.width = ViewGroup.LayoutParams.FILL_PARENT;
+                            vidParams.height = (screenWidth * 9) / 16;
+                            holder.videoPost.setLayoutParams(vidParams);
+
                             MediaController mediaController = new MediaController(HomeActivity.this);
                             mediaController.setAnchorView(holder.videoPost);
                             holder.videoPost.setMediaController(mediaController);
 
                             holder.videoPost.setVideoPath(rawUrl);
                             holder.videoPost.requestFocus();
-                            holder.videoPost.start();
+
+                            holder.videoPost.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                                @Override
+                                public void onPrepared(MediaPlayer mp) {
+                                    mp.setLooping(false);
+                                    mp.start();
+                                }
+                            });
+
+                            holder.videoPost.setOnInfoListener(new MediaPlayer.OnInfoListener() {
+                                @Override
+                                public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                                    if (what == MediaPlayer.MEDIA_INFO_BUFFERING_START) {
+                                        return true;
+                                    } else if (what == MediaPlayer.MEDIA_INFO_BUFFERING_END) {
+                                        if (!mp.isPlaying()) {
+                                            mp.start();
+                                        }
+                                        return true;
+                                    }
+                                    return false;
+                                }
+                            }); // <-- FALTAVA FECHAR O setOnInfoListener AQUI
 
                             currentPlayingVideo = holder.videoPost;
                             currentPlayButton = holder.btnPlayVideo;
                             currentThumbnail = holder.imgPost;
                         }
-                    });
+                    }); // <-- FECHA O setOnClickListener
                 }
             } else {
-                // Imagem normal
                 if (holder.btnPlayVideo != null) holder.btnPlayVideo.setVisibility(View.GONE);
                 if (holder.videoPost != null) holder.videoPost.setVisibility(View.GONE);
                 holder.imgPost.setVisibility(View.VISIBLE);
@@ -1315,7 +1392,9 @@ public class HomeActivity extends ActivityGroup {
     protected void onDestroy() {
         super.onDestroy();
         if (currentPlayingVideo != null) {
-            currentPlayingVideo.stopPlayback();
+            try {
+                currentPlayingVideo.stopPlayback();
+            } catch (Exception e) {}
             currentPlayingVideo = null;
         }
         if (scheduler != null && !scheduler.isShutdown()) {

@@ -79,13 +79,118 @@ def get_active_shitter_instances():
                         instances.append(clean_url)
             if instances:
                 return instances
-    except Exception as e:
-        print(f"[TWITTER INSTANCES ERROR] {e}")
+    except Exception:
+        pass
 
     return [
         "https://nitter.meowing.monster",
         "https://shitter.thepixora.com",
     ]
+
+
+def get_video_vxtwitter(tweet_id):
+    """
+    Busca os links diretos de vídeo .mp4 na API do VxTwitter/FixupX
+    """
+    try:
+        url = f"https://api.vxtwitter.com/Twitter/status/{tweet_id}"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        res = requests.get(url, headers=headers, timeout=4.0)
+        
+        if res.status_code == 200:
+            data = res.json()
+            media_list = data.get("media_extended", [])
+            for media in media_list:
+                if media.get("type") == "video" and media.get("url"):
+                    return media.get("url")
+    except Exception:
+        pass
+        
+    return None
+
+
+def get_direct_video_cobalt(tweet_url):
+    """
+    Usa instâncias públicas abertas do Cobalt sem JWT
+    """
+    try:
+        match = re.search(r"/status/(\d+)", tweet_url)
+        clean_url = f"https://x.com/i/status/{match.group(1)}" if match else tweet_url
+
+        payload = {"url": clean_url, "videoQuality": "480"}
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+        }
+        
+        cobalt_instances = [
+            "https://cobalt-api.kwippy.com/",
+            "https://api.cobalt.lol/"
+        ]
+
+        for instance in cobalt_instances:
+            try:
+                res = requests.post(instance, json=payload, headers=headers, timeout=3.5)
+                if res.status_code == 200:
+                    data = res.json()
+                    status = data.get("status")
+                    if status in ["tunnel", "redirect"]:
+                        return data.get("url")
+                    elif status == "picker" and data.get("picker"):
+                        for item in data.get("picker"):
+                            if item.get("type") == "video" and item.get("url"):
+                                return item.get("url")
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    return None
+
+
+def resolve_twitter_video_url(tweet_link, base_instance):
+    """
+    1. VxTwitter API
+    2. Cobalt API
+    3. Scraping Nitter
+    """
+    match = re.search(r"/status/(\d+)", tweet_link)
+    tweet_id = match.group(1) if match else None
+
+    if tweet_id:
+        vx_url = get_video_vxtwitter(tweet_id)
+        if vx_url:
+            return vx_url
+
+    cobalt_url = get_direct_video_cobalt(tweet_link)
+    if cobalt_url:
+        return cobalt_url
+
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"}
+        parsed = urlparse(tweet_link)
+        target_url = f"{base_instance}{parsed.path}"
+
+        res = requests.get(target_url, headers=headers, timeout=3.5)
+        if res.status_code == 200:
+            soup = BeautifulSoup(res.text, "html.parser")
+            video_tag = soup.find("video")
+            if video_tag:
+                v_url = video_tag.get("src") or (video_tag.find("source").get("src") if video_tag.find("source") else None)
+                if v_url:
+                    if v_url.startswith("/"):
+                        v_url = f"{base_instance}{v_url}"
+                    return unquote(v_url)
+
+            mp4_matches = re.findall(r'https?://video\.twimg\.com/[^"\']+\.mp4', res.text)
+            if mp4_matches:
+                return mp4_matches[0]
+
+    except Exception:
+        pass
+
+    return None
 
 
 def formate(items, base_instance="https://nitter.meowing.monster", default_query=""):
@@ -128,9 +233,11 @@ def formate(items, base_instance="https://nitter.meowing.monster", default_query
             line.strip() for line in text_post.splitlines() if line.strip()
         ).strip()
 
-        images_found = []
+        media_list = []
+        
         if description_raw:
             desc_soup = BeautifulSoup(description_raw, "html.parser")
+            
             for img in desc_soup.find_all("img"):
                 src = img.get("src")
                 if src:
@@ -141,26 +248,45 @@ def formate(items, base_instance="https://nitter.meowing.monster", default_query
                     elif src.startswith("http://"):
                         src = src.replace("http://", "https://")
                     
-                    # Decodifica %2F para barra normal / evitando o loop de 302 do Nitter
                     src = unquote(src)
-                    images_found.append(src)
 
-        media_url = None
-        media_type = None
+                    is_video_thumb = (
+                        "video_thumb" in src
+                        or "amplify_video" in src
+                        or "ext_tw_video" in src
+                        or "/card_img/" in src
+                    )
+                    
+                    if is_video_thumb:
+                        real_video_url = resolve_twitter_video_url(link, base_instance)
+                        
+                        if real_video_url:
+                            media_list.append({
+                                "media_url": real_video_url,
+                                "thumbnail_url": src,
+                                "media_type": "video",
+                                "width": "1080",
+                                "heigth": "1080"
+                            })
+                        else:
+                            media_list.append({
+                                "media_url": src,
+                                "media_type": "image",
+                                "width": "1080",
+                                "heigth": "1080"
+                            })
+                    else:
+                        media_list.append({
+                            "media_url": src,
+                            "media_type": "image",
+                            "width": "1080",
+                            "heigth": "1080"
+                        })
+
+        media_url = media_list[0]["media_url"] if media_list else None
+        media_type = media_list[0]["media_type"] if media_list else "image"
         width = "1080"
         height = "1080"
-        media_list = []
-
-        for img_url in images_found:
-            media_list.append({
-                "media_url": img_url,
-                "media_type": "image",
-                "width": width,
-                "heigth": height
-            })
-            if not media_url:
-                media_url = img_url
-                media_type = "image"
 
         datetime_formatado = None
         if pub_date_raw:
@@ -171,8 +297,8 @@ def formate(items, base_instance="https://nitter.meowing.monster", default_query
             except Exception:
                 datetime_formatado = str(pub_date_raw)
 
-        if len(images_found) > 1:
-            links_formatados = "".join(f"\n[IMAGE]{url}" for url in images_found[1:])
+        if len(media_list) > 1:
+            links_formatados = "".join(f"\n[{m['media_type'].upper()}]{m['media_url']}" for m in media_list[1:])
             text_final = f"{text_post}{links_formatados}".strip()
         else:
             text_final = text_post
@@ -194,7 +320,7 @@ def formate(items, base_instance="https://nitter.meowing.monster", default_query
                     "avatar_url": avatar_url,
                     "media": {
                         "media_url": media_url or "",
-                        "media_type": media_type or "image",
+                        "media_type": media_type,
                         "width": width if media_url else "",
                         "heigth": height if media_url else ""
                     },
@@ -244,8 +370,7 @@ def fetch_twitter_search_fast(query="android", limit=20):
                 if raw_items:
                     return formate(raw_items, base_instance=instance, default_query=query)[:limit]
 
-        except Exception as e:
-            print(f"[TWITTER SEARCH DEBUG] Instância {instance} falhou: {e}")
+        except Exception:
             continue
 
     return []
@@ -284,8 +409,7 @@ def fetch_twitter_user_posts(username="NASA", limit=20):
                 if raw_items:
                     return formate(raw_items, base_instance=instance)[:limit]
 
-        except Exception as e:
-            print(f"[TWITTER USER DEBUG] Instância {instance} falhou: {e}")
+        except Exception:
             continue
 
     return []
