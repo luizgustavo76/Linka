@@ -109,6 +109,7 @@ def formate_bluesky(posts):
 
         media_url = None
         media_type = None
+        media_thumb = None
         width = None
         height = None
 
@@ -118,6 +119,38 @@ def formate_bluesky(posts):
         embed = post.get("embed") or {}
         record_embed = record.get("embed") or {}
 
+        # 1. Verifica vídeos do Bluesky (app.bsky.embed.video#view ou recordWithMedia)
+        video_obj = None
+        if embed.get("$type") == "app.bsky.embed.video#view" or embed.get("playlist"):
+            video_obj = embed
+        elif isinstance(embed.get("media"), dict) and (
+            embed["media"].get("$type") == "app.bsky.embed.video#view" or embed["media"].get("playlist")
+        ):
+            video_obj = embed["media"]
+
+        if video_obj:
+            playlist_url = video_obj.get("playlist")
+            thumb_url = video_obj.get("thumbnail") or ""
+            aspect_ratio = video_obj.get("aspectRatio") or {}
+            v_w = str(aspect_ratio.get("width", "")) if aspect_ratio.get("width") else ""
+            v_h = str(aspect_ratio.get("height", "")) if aspect_ratio.get("height") else ""
+
+            if playlist_url:
+                media_list.append({
+                    "media_url": playlist_url,
+                    "media_type": "video",
+                    "thumbnail": thumb_url,
+                    "thumbnail_url": thumb_url,
+                    "width": v_w,
+                    "heigth": v_h
+                })
+                media_url = playlist_url
+                media_type = "video"
+                media_thumb = thumb_url
+                width = v_w
+                height = v_h
+
+        # 2. Verifica imagens do Bluesky
         imgs = (
             embed.get("images")
             or record_embed.get("images")
@@ -147,6 +180,8 @@ def formate_bluesky(posts):
                     media_list.append({
                         "media_url": img_url,
                         "media_type": "image",
+                        "thumbnail": "",
+                        "thumbnail_url": "",
                         "width": m_w,
                         "heigth": m_h
                     })
@@ -154,10 +189,11 @@ def formate_bluesky(posts):
                     if not media_url:
                         media_url = img_url
                         media_type = "image"
+                        media_thumb = ""
                         width = m_w
                         height = m_h
 
-        if not text_post and not images_for_v2:
+        if not text_post and not media_list:
             continue
 
         if images_for_v2:
@@ -172,6 +208,8 @@ def formate_bluesky(posts):
         except (ValueError, TypeError):
             comments_count = 0
 
+        avatar_url = author_info.get("avatar") or ""
+
         posts_formatados.append(
             {
                 "username": (
@@ -183,9 +221,12 @@ def formate_bluesky(posts):
                 "datetime": datetime_formatado,
                 "relative_datetime": get_relative_time(datetime_formatado),
                 "comment_count": comments_count,
+                "avatar_url": avatar_url,
                 "media": {
                     "media_url": media_url,
                     "media_type": media_type,
+                    "thumbnail": media_thumb or "",
+                    "thumbnail_url": media_thumb or "",
                     "width": width,
                     "heigth": height
                 },
@@ -197,7 +238,6 @@ def formate_bluesky(posts):
         )
 
     return posts_formatados
-
 
 def fetch_bluesky_posts(query="retrocomputing", limit=40):
     token = get_bluesky_token()
