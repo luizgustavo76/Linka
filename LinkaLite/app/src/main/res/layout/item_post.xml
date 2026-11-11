@@ -13,7 +13,6 @@
         android:focusable="true">
 
         <!-- Cabeçalho do Autor -->
-        <!-- Cabeçalho do Autor -->
         <RelativeLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -87,6 +86,8 @@
 
             </LinearLayout>
         </RelativeLayout>
+
+        <!-- Texto do Usuário -->
         <TextView
             android:id="@+id/postText"
             android:layout_width="fill_parent"
@@ -186,13 +187,14 @@
 
         </LinearLayout>
 
-        <!-- Container de Mídia -->
+        <!-- Container de Mídia (Imagem + Vídeo Inline + Carrossel) -->
         <RelativeLayout
             android:id="@+id/containerMedia"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:visibility="gone">
 
+            <!-- Imagem Estática / Thumbnail do Vídeo -->
             <com.LinkaProject.linkaLite.GifImageView
                 android:id="@+id/imgPost"
                 android:layout_width="fill_parent"
@@ -201,6 +203,26 @@
                 android:scaleType="fitCenter"
                 android:background="#F5F5F5" />
 
+            <!-- Player de Vídeo Nativo (Escondido por padrão) -->
+            <VideoView
+                android:id="@+id/videoPost"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:visibility="gone" />
+
+            <!-- Ícone / Botão de Play Transparente Sobreposto -->
+            <ImageButton
+                android:id="@+id/btnPlayVideo"
+                android:layout_width="50dip"
+                android:layout_height="50dip"
+                android:layout_centerInParent="true"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:src="@android:drawable/ic_media_play"
+                android:visibility="gone" />
+
+            <!-- Indicador de Páginas / Carrossel -->
             <TextView
                 android:id="@+id/txtMediaCount"
                 android:layout_width="wrap_content"
@@ -218,6 +240,7 @@
                 android:textStyle="bold"
                 android:visibility="gone" />
 
+            <!-- Botões Anterior e Próximo RESTAURADOS -->
             <Button
                 android:id="@+id/btnPrevImage"
                 android:layout_width="32dip"
