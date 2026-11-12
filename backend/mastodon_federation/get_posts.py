@@ -155,12 +155,10 @@ def formate(posts, instance="mastodon.social"):
         for media in target_post.get("media_attachments", []):
             if not isinstance(media, dict):
                 continue
-
-            m_raw_type = media.get("type", "")
-            meta_original = media.get("meta", {}).get("original", {})
-            m_w = str(meta_original.get("width", "")) if meta_original.get("width") else ""
-            m_h = str(meta_original.get("height", "")) if meta_original.get("height") else ""
-
+            m_raw_type = media.get("type") or ""
+            meta_original = (media.get("meta") or {}).get("original") or {}
+            m_w = str(meta_original.get("width")) if meta_original.get("width") else ""
+            m_h = str(meta_original.get("height")) if meta_original.get("height") else ""
             if m_raw_type == "image":
                 img_url = media.get("url") or media.get("preview_url")
                 if img_url:
