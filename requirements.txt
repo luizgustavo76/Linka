@@ -10,3 +10,4 @@ bs4
 pillow
 boto3
 redis
+markdown

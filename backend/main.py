@@ -5,10 +5,10 @@ from datetime import datetime, timedelta
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from werkzeug.security import check_password_hash
-from flask import Flask, Blueprint, request, jsonify, g
+from flask import Flask, Blueprint, request, jsonify, g, Response
 from flask_cors import CORS
 import dotenv
-
+import markdown
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Carrega backend.env localmente se existir
@@ -137,7 +137,43 @@ def verificar_hash(senha, hash_salvo):
 
 def gerar_token():
     return secrets.token_hex(16)
+@app.route("/privacy")
+def privacy():
+    privacy_path = os.path.join(base_dir, "privacy.md")
+    try:
+        with open(privacy_path, "r", encoding="utf-8") as f:
+            md_text = f.read()
+    except FileNotFoundError:
+        return Response("Privacy policy not found.", status=404, mimetype="text/plain")
 
+    html_body = markdown.markdown(md_text)
+
+    html_page = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linka Privacy Policy</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 720px;
+            margin: 40px auto;
+            padding: 0 20px;
+            line-height: 1.6;
+            color: #222;
+            background: #fafafa;
+        }}
+        h1, h2 {{ color: #111; border-bottom: 1px solid #ddd; padding-bottom: 6px; }}
+        code {{ background: #eee; padding: 2px 6px; border-radius: 4px; }}
+    </style>
+</head>
+<body>
+    {html_body}
+</body>
+</html>"""
+
+    return Response(html_page, mimetype="text/html; charset=utf-8")
 @app.route("/tos")
 def tos_route():
     html = f"""
