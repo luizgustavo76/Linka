@@ -11,15 +11,6 @@
                 android:type="linear" />
         </shape>
     </item>
-
-    <!-- Camada 2: Linha de brilho sutil no topo (1px) -->
-    <item android:bottom="47dip">
-        <shape android:shape="rectangle">
-            <solid android:color="#777777" />
-        </shape>
-    </item>
-
-    <!-- Camada 3: Linha de divisória escura na base (1px) -->
     <item android:top="47dip">
         <shape android:shape="rectangle">
             <solid android:color="#000000" />

@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Camada 1: O gradiente com contraste marcante -->
+    <!-- Camada 1: Cor sólida sem gradiente -->
     <item>
         <shape android:shape="rectangle">
-            <gradient
-                android:angle="270"
-                android:startColor="#93d8f4"
-                android:centerColor="#72d7ff"
-                android:endColor="#39c6fe"
-                android:type="linear" />
+            <solid android:color="#39c6fe" />
         </shape>
     </item>
 

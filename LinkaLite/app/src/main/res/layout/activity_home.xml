@@ -68,7 +68,7 @@
             <RelativeLayout
                 android:id="@+id/topBarContainer"
                 android:layout_width="fill_parent"
-                android:background="@drawable/bg_header_gradient"
+                android:background="@drawable/bg_header_frutiger_blue"
                 android:layout_height="48dip"
                 android:paddingLeft="6dip"
                 android:paddingRight="6dip">
@@ -135,7 +135,7 @@
                 android:id="@+id/tabBarContainer"
                 android:layout_width="fill_parent"
                 android:layout_height="30dip"
-                android:background="#222222">
+                android:background="#e1e1e1">
 
                 <TextView
                     android:id="@+id/tabPrev"
@@ -147,7 +147,7 @@
                     android:paddingRight="12dip"
                     android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="#888888"
+                    android:textColor="#d2d2d2"
                     android:visibility="invisible" />
 
                 <TextView
@@ -158,7 +158,7 @@
                     android:gravity="center_vertical"
                     android:textStyle="bold"
                     android:textSize="12sp"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#252525"
                     android:text="Timeline" />
 
                 <TextView
@@ -171,7 +171,7 @@
                     android:paddingRight="12dip"
                     android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textColor="#888888"
+                    android:textColor="#191919"
                     android:text="Chat ▶" />
             </RelativeLayout>
         </LinearLayout>

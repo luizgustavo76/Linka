@@ -7,15 +7,10 @@
         </shape>
     </item>
 
-    <!-- 2. Círculo com Gradiente Linear (Azul Vivo -> Azul Escuro) -->
+    <!-- 2. Círculo com Cor Sólida -->
     <item android:bottom="2dip" android:right="2dip">
         <shape android:shape="oval">
-            <gradient
-                android:angle="270"
-                android:startColor="#00A8FF"
-                android:centerColor="#0088CC"
-                android:endColor="#005588"
-                android:type="linear" />
+            <solid android:color="#39c6fe" />
         </shape>
     </item>
 </layer-list>
