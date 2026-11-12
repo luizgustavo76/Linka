@@ -74,7 +74,7 @@
                 android:gravity="top|left"
                 android:background="#F9F9F9"
                 android:padding="8dip"
-                android:hint="O que está acontecendo?"
+                android:hint="Whats happening?"
                 android:textColor="?attr/themeTextColor"
                 android:textColorHint="#AAA"
                 android:textSize="15sp" />
