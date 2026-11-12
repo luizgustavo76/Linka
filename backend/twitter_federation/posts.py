@@ -90,22 +90,28 @@ def get_active_shitter_instances():
 
 def get_video_vxtwitter(tweet_id):
     """
-    Busca os links diretos de vídeo .mp4 na API do VxTwitter/FixupX
+    Busca URL direta .mp4, thumbnail, width e height reais na API do VxTwitter
     """
     try:
         url = f"https://api.vxtwitter.com/Twitter/status/{tweet_id}"
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         res = requests.get(url, headers=headers, timeout=4.0)
-        
+
         if res.status_code == 200:
             data = res.json()
             media_list = data.get("media_extended", [])
             for media in media_list:
-                if media.get("type") == "video" and media.get("url"):
-                    return media.get("url")
+                if media.get("type") in ("video", "gif") and media.get("url"):
+                    size = media.get("size") or {}
+                    return {
+                        "url": media.get("url"),
+                        "thumb": media.get("thumbnail_url") or "",
+                        "width": str(size.get("width") or media.get("width") or ""),
+                        "height": str(size.get("height") or media.get("height") or ""),
+                    }
     except Exception:
         pass
-        
+
     return None
 
 
@@ -123,7 +129,7 @@ def get_direct_video_cobalt(tweet_url):
             "Content-Type": "application/json",
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
         }
-        
+
         cobalt_instances = [
             "https://cobalt-api.kwippy.com/",
             "https://api.cobalt.lol/"
@@ -149,23 +155,24 @@ def get_direct_video_cobalt(tweet_url):
     return None
 
 
-def resolve_twitter_video_url(tweet_link, base_instance):
+def resolve_twitter_video(tweet_link, base_instance):
     """
-    1. VxTwitter API
+    Retorna dict {url, thumb, width, height} usando:
+    1. VxTwitter API (traz mp4 + dimensões reais)
     2. Cobalt API
-    3. Scraping Nitter
+    3. Scraping Nitter/Shitter
     """
     match = re.search(r"/status/(\d+)", tweet_link)
     tweet_id = match.group(1) if match else None
 
     if tweet_id:
-        vx_url = get_video_vxtwitter(tweet_id)
-        if vx_url:
-            return vx_url
+        vx_data = get_video_vxtwitter(tweet_id)
+        if vx_data:
+            return vx_data
 
     cobalt_url = get_direct_video_cobalt(tweet_link)
     if cobalt_url:
-        return cobalt_url
+        return {"url": cobalt_url, "thumb": "", "width": "", "height": ""}
 
     try:
         headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"}
@@ -178,14 +185,17 @@ def resolve_twitter_video_url(tweet_link, base_instance):
             video_tag = soup.find("video")
             if video_tag:
                 v_url = video_tag.get("src") or (video_tag.find("source").get("src") if video_tag.find("source") else None)
+                poster = video_tag.get("poster") or ""
                 if v_url:
                     if v_url.startswith("/"):
                         v_url = f"{base_instance}{v_url}"
-                    return unquote(v_url)
+                    if poster.startswith("/"):
+                        poster = f"{base_instance}{poster}"
+                    return {"url": unquote(v_url), "thumb": unquote(poster), "width": "", "height": ""}
 
             mp4_matches = re.findall(r'https?://video\.twimg\.com/[^"\']+\.mp4', res.text)
             if mp4_matches:
-                return mp4_matches[0]
+                return {"url": mp4_matches[0], "thumb": "", "width": "", "height": ""}
 
     except Exception:
         pass
@@ -225,7 +235,7 @@ def formate(items, base_instance="https://nitter.meowing.monster", default_query
         username_formatted = f"@{clean_user}"
 
         avatar_url = f"https://unavatar.io/twitter/{clean_user}"
-        
+
         soup = BeautifulSoup(title_raw or description_raw, "html.parser")
         text_post = soup.get_text()
         text_post = unicodedata.normalize("NFKC", text_post)
@@ -234,10 +244,10 @@ def formate(items, base_instance="https://nitter.meowing.monster", default_query
         ).strip()
 
         media_list = []
-        
+
         if description_raw:
             desc_soup = BeautifulSoup(description_raw, "html.parser")
-            
+
             for img in desc_soup.find_all("img"):
                 src = img.get("src")
                 if src:
@@ -247,8 +257,10 @@ def formate(items, base_instance="https://nitter.meowing.monster", default_query
                         src = f"{base_instance}{src}"
                     elif src.startswith("http://"):
                         src = src.replace("http://", "https://")
-                    
+
                     src = unquote(src)
+                    img_w = str(img.get("width") or "")
+                    img_h = str(img.get("height") or "")
 
                     is_video_thumb = (
                         "video_thumb" in src
@@ -256,37 +268,67 @@ def formate(items, base_instance="https://nitter.meowing.monster", default_query
                         or "ext_tw_video" in src
                         or "/card_img/" in src
                     )
-                    
+
                     if is_video_thumb:
-                        real_video_url = resolve_twitter_video_url(link, base_instance)
-                        
-                        if real_video_url:
+                        vid_info = resolve_twitter_video(link, base_instance)
+
+                        if vid_info and vid_info.get("url"):
+                            v_w = vid_info.get("width") or img_w
+                            v_h = vid_info.get("height") or img_h
+                            thumb = vid_info.get("thumb") or src
                             media_list.append({
-                                "media_url": real_video_url,
-                                "thumbnail_url": src,
+                                "media_url": vid_info["url"],
+                                "thumbnail": thumb,
+                                "thumbnail_url": thumb,
                                 "media_type": "video",
-                                "width": "1080",
-                                "heigth": "1080"
+                                "width": v_w,
+                                "height": v_h,
+                                "heigth": v_h
                             })
                         else:
                             media_list.append({
                                 "media_url": src,
                                 "media_type": "image",
-                                "width": "1080",
-                                "heigth": "1080"
+                                "width": img_w,
+                                "height": img_h,
+                                "heigth": img_h
                             })
                     else:
                         media_list.append({
                             "media_url": src,
                             "media_type": "image",
-                            "width": "1080",
-                            "heigth": "1080"
+                            "width": img_w,
+                            "height": img_h,
+                            "heigth": img_h
                         })
+
+        # Fallback: quando o RSS omite <img> mas inclui tag <video> ou link de vídeo no HTML/texto
+        if not media_list and (
+            "<video" in description_raw
+            or "video.twimg.com" in description_raw
+            or "pic.twitter.com" in text_post
+            or "https://t.co/" in text_post
+        ):
+            vid_info = resolve_twitter_video(link, base_instance)
+            if vid_info and vid_info.get("url"):
+                v_w = vid_info.get("width") or ""
+                v_h = vid_info.get("height") or ""
+                thumb = vid_info.get("thumb") or ""
+                media_list.append({
+                    "media_url": vid_info["url"],
+                    "thumbnail": thumb,
+                    "thumbnail_url": thumb,
+                    "media_type": "video",
+                    "width": v_w,
+                    "height": v_h,
+                    "heigth": v_h
+                })
 
         media_url = media_list[0]["media_url"] if media_list else None
         media_type = media_list[0]["media_type"] if media_list else "image"
-        width = "1080"
-        height = "1080"
+        media_thumb = media_list[0].get("thumbnail_url", "") if media_list else ""
+        width = media_list[0].get("width", "") if media_list else ""
+        height = media_list[0].get("height", "") if media_list else ""
 
         datetime_formatado = None
         if pub_date_raw:
@@ -321,8 +363,11 @@ def formate(items, base_instance="https://nitter.meowing.monster", default_query
                     "media": {
                         "media_url": media_url or "",
                         "media_type": media_type,
-                        "width": width if media_url else "",
-                        "heigth": height if media_url else ""
+                        "thumbnail": media_thumb,
+                        "thumbnail_url": media_thumb,
+                        "width": width,
+                        "height": height,
+                        "heigth": height
                     },
                     "media_list": media_list,
                     "media_attachments": media_list,
@@ -339,7 +384,7 @@ def formate(items, base_instance="https://nitter.meowing.monster", default_query
 def fetch_twitter_search_fast(query="android", limit=20):
     instances = get_active_shitter_instances()
     encoded_query = quote(query.strip())
-    
+
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -352,12 +397,12 @@ def fetch_twitter_search_fast(query="android", limit=20):
         try:
             url = f"{instance}/search/rss?f=tweets&q={encoded_query}"
             response = requests.get(url, headers=headers, timeout=3.5)
-            
+
             if response.status_code == 200 and ("<rss" in response.text or "<feed" in response.text):
                 root = ET.fromstring(response.text)
                 channel = root.find("channel")
                 items = channel.findall("item") if channel is not None else root.findall(".//item")
-                
+
                 for item in items[:limit]:
                     raw_items.append({
                         "title": item.findtext("title", ""),
@@ -379,7 +424,7 @@ def fetch_twitter_search_fast(query="android", limit=20):
 def fetch_twitter_user_posts(username="NASA", limit=20):
     instances = get_active_shitter_instances()
     clean_user = username.lstrip("@").strip()
-    
+
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -391,7 +436,7 @@ def fetch_twitter_user_posts(username="NASA", limit=20):
         try:
             url = f"{instance}/{clean_user}/rss"
             response = requests.get(url, headers=headers, timeout=3.5)
-            
+
             if response.status_code == 200 and ("<rss" in response.text or "<feed" in response.text):
                 root = ET.fromstring(response.text)
                 channel = root.find("channel")

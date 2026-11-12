@@ -131,7 +131,12 @@ def formate_bluesky(posts):
         if video_obj:
             playlist_url = video_obj.get("playlist")
             thumb_url = video_obj.get("thumbnail") or ""
-            aspect_ratio = video_obj.get("aspectRatio") or {}
+            aspect_ratio = (
+                video_obj.get("aspectRatio")
+                or (record_embed.get("video") or {}).get("aspectRatio")
+                or ((record_embed.get("media") or {}).get("video") or {}).get("aspectRatio")
+                or {}
+            )
             v_w = str(aspect_ratio.get("width", "")) if aspect_ratio.get("width") else ""
             v_h = str(aspect_ratio.get("height", "")) if aspect_ratio.get("height") else ""
 
@@ -142,6 +147,7 @@ def formate_bluesky(posts):
                     "thumbnail": thumb_url,
                     "thumbnail_url": thumb_url,
                     "width": v_w,
+                    "height": v_h,
                     "heigth": v_h
                 })
                 media_url = playlist_url
@@ -154,7 +160,7 @@ def formate_bluesky(posts):
         imgs = (
             embed.get("images")
             or record_embed.get("images")
-            or embed.get("media", {}).get("images")
+            or (embed.get("media") or {}).get("images")
             or []
         )
 
@@ -163,7 +169,7 @@ def formate_bluesky(posts):
                 img_url = (
                     img.get("fullsize")
                     or img.get("thumb")
-                    or img.get("image", {}).get("ref", {}).get("$link")
+                    or (img.get("image") or {}).get("ref", {}).get("$link")
                 )
 
                 if img_url and not img_url.startswith("http"):
@@ -173,7 +179,11 @@ def formate_bluesky(posts):
                 if img_url:
                     images_for_v2.append(img_url)
 
-                    aspect_ratio = img.get("aspectRatio") or img.get("image", {}).get("aspectRatio") or {}
+                    aspect_ratio = (
+                        img.get("aspectRatio")
+                        or (img.get("image") or {}).get("aspectRatio")
+                        or {}
+                    )
                     m_w = str(aspect_ratio.get("width", "")) if aspect_ratio.get("width") else ""
                     m_h = str(aspect_ratio.get("height", "")) if aspect_ratio.get("height") else ""
 
@@ -183,6 +193,7 @@ def formate_bluesky(posts):
                         "thumbnail": "",
                         "thumbnail_url": "",
                         "width": m_w,
+                        "height": m_h,
                         "heigth": m_h
                     })
 
@@ -228,6 +239,7 @@ def formate_bluesky(posts):
                     "thumbnail": media_thumb or "",
                     "thumbnail_url": media_thumb or "",
                     "width": width,
+                    "height": height,
                     "heigth": height
                 },
                 "media_list": media_list,
@@ -238,6 +250,7 @@ def formate_bluesky(posts):
         )
 
     return posts_formatados
+
 
 def fetch_bluesky_posts(query="retrocomputing", limit=40):
     token = get_bluesky_token()

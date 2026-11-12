@@ -79,6 +79,15 @@ def fetch_mastodon_user_avatar(username, instance="mastodon.social"):
     return ""
 
 
+def extract_mastodon_dims(media):
+    meta = media.get("meta") or {}
+    orig = meta.get("original") or {}
+    small = meta.get("small") or {}
+    w = orig.get("width") or small.get("width") or meta.get("width") or ""
+    h = orig.get("height") or small.get("height") or meta.get("height") or ""
+    return (str(w) if w else "", str(h) if h else "")
+
+
 def formate(posts, instance="mastodon.social"):
     if isinstance(posts, str):
         try:
@@ -156,9 +165,8 @@ def formate(posts, instance="mastodon.social"):
             if not isinstance(media, dict):
                 continue
             m_raw_type = media.get("type") or ""
-            meta_original = (media.get("meta") or {}).get("original") or {}
-            m_w = str(meta_original.get("width")) if meta_original.get("width") else ""
-            m_h = str(meta_original.get("height")) if meta_original.get("height") else ""
+            m_w, m_h = extract_mastodon_dims(media)
+
             if m_raw_type == "image":
                 img_url = media.get("url") or media.get("preview_url")
                 if img_url:
@@ -169,6 +177,7 @@ def formate(posts, instance="mastodon.social"):
                         "thumbnail": "",
                         "thumbnail_url": "",
                         "width": m_w,
+                        "height": m_h,
                         "heigth": m_h
                     })
                     if not media_url:
@@ -188,6 +197,7 @@ def formate(posts, instance="mastodon.social"):
                         "thumbnail": thumb_url,
                         "thumbnail_url": thumb_url,
                         "width": m_w,
+                        "height": m_h,
                         "heigth": m_h
                     })
                     if not media_url:
@@ -237,6 +247,7 @@ def formate(posts, instance="mastodon.social"):
                         "thumbnail": media_thumb or "",
                         "thumbnail_url": media_thumb or "",
                         "width": width,
+                        "height": height,
                         "heigth": height
                     },
                     "media_list": media_list,
@@ -249,6 +260,8 @@ def formate(posts, instance="mastodon.social"):
             )
 
     return posts_formatados
+
+
 def fetch_mastodon_posts(
     tag="retrocomputing", instance="mastodon.social", limit=100
 ):
