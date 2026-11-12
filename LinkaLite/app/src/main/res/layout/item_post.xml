@@ -30,7 +30,6 @@
                 android:scaleType="centerCrop"
                 android:src="@android:drawable/ic_menu_myplaces" />
 
-            <!-- Botão de Opções (3 Pontos) alinhado à direita -->
             <Button
                 android:id="@+id/btnPostOptions"
                 android:layout_width="30dip"
@@ -42,6 +41,12 @@
                 android:textColor="#666666"
                 android:textSize="18sp"
                 android:textStyle="bold" />
+            <Spinner
+                android:id="@+id/optionsSpinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -187,7 +192,6 @@
 
         </LinearLayout>
 
-        <!-- Container de Mídia (Imagem + Vídeo Inline + Carrossel) -->
         <RelativeLayout
             android:id="@+id/containerMedia"
             android:layout_width="fill_parent"
@@ -335,16 +339,6 @@
                         android:scaleType="fitCenter"
                         android:src="@android:drawable/ic_menu_close_clear_cancel" />
                 </LinearLayout>
-
-                <ImageButton
-                    android:id="@+id/btnReply"
-                    android:layout_width="22dip"
-                    android:layout_height="22dip"
-                    android:layout_marginRight="16dip"
-                    android:background="@android:color/transparent"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/reply" />
-
                 <ImageButton
                     android:id="@+id/btnComments"
                     android:layout_width="22dip"
@@ -362,6 +356,14 @@
                     android:textColor="#777777"
                     android:textSize="11sp"
                     android:text="0" />
+                <ImageButton
+                    android:id="@+id/btnReply"
+                    android:layout_width="22dip"
+                    android:layout_height="22dip"
+                    android:layout_marginRight="16dip"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/reply" /> 
 
                 <ImageButton
                     android:id="@+id/btnBookmarks"
@@ -375,7 +377,6 @@
         </RelativeLayout>
     </LinearLayout>
 
-    <!-- ESPAÇADOR FORA DO CARD (MOSTRAM A COR DE FUNDO DA LISTVIEW DA ACTIVITY_HOME) -->
     <View
         android:layout_width="fill_parent"
         android:layout_height="10dip"
