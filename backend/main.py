@@ -10,8 +10,6 @@ from flask_cors import CORS
 import dotenv
 import markdown
 base_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Carrega backend.env localmente se existir
 env_path = os.path.join(base_dir, "backend.env")
 if os.path.exists(env_path):
     dotenv.load_dotenv(env_path)
@@ -44,7 +42,8 @@ if root_flags["chat"]:
     from chat import chat_bp
 if root_flags["bookmarks"]:
     from bookmarks import bookmarks_bp
-
+if root_flags["poll"]:
+    from poll import poll_bp
 tos_content = ""
 if root_flags.get("automoderator"):
     import sys
@@ -354,6 +353,8 @@ if root_flags["post"]:
     app.register_blueprint(post_bp)
 if root_flags["chat"]:
     app.register_blueprint(chat_bp)
+if root_flags["poll"]:
+    app.register_blueprint(poll_bp)
 if root_flags["sincronizer"]:
     app.register_blueprint(sincronizer_bp)
 if root_flags["friends"]:

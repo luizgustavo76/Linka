@@ -24,7 +24,8 @@
         "redis":true,
         "threads":true,
         "twitter":true,
-        "url-server":"http://linkaProject.pythonanywhere.com"
+        "poll":true,
+        "url-server":"https://linka-project.onrender.com"
 
     }
 }

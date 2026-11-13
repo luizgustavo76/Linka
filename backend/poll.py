@@ -100,3 +100,41 @@ def create_poll():
             if conn:
                 conn.close()
     return jsonify({"status": "unauthorized"}), 403
+@poll_bp.route("/vote-poll",methods=["POST"])
+def vote_poll():
+    data = request.get_json()
+    username = data.get("username")
+    if username == g.username:
+        post_id = data.get("post_id")
+        option_id = data.get("option_id")
+        if not post_id:
+            return jsonify({"status":"id is missing"})
+        try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("""
+            WITH deleted AS (
+                DELETE FROM poll_votes
+                WHERE username = %s AND post_id = %s
+                RETURNING id
+            ),
+            inserted AS (
+                INSERT INTO poll_votes (username, post_id, option_id)
+                SELECT %s, %s, %s
+                WHERE NOT EXISTS (SELECT 1 FROM deleted)
+                RETURNING id
+            )
+            SELECT EXISTS (SELECT 1 FROM inserted) AS voted;
+        """, (username, post_id, username, post_id, option_id))
+
+            status = cur.fetchone()["voted"]
+            conn.commit()
+            cur.close()
+            if status:
+                return jsonify({"status":"voted in poll"}),200
+            else:
+                return jsonify({"status":"the vote has removed"}),200
+        except Exception as e:
+            return jsonify({"status":"error", "error":e}),500
+    else:
+        return jsonify({"status":"forbidden"}),403
