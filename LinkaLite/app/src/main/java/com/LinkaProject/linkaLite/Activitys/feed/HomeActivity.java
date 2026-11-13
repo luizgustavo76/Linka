@@ -523,14 +523,14 @@ public class HomeActivity extends ActivityGroup {
         TextView txtDisplayName = (TextView) findViewById(R.id.txtDisplayName);
         TextView txtUsername = (TextView) findViewById(R.id.txtUsername);
 
-        Button btnDrawerFeed = (Button) findViewById(R.id.btnDrawerFeed);
-        Button btnDrawerChat = (Button) findViewById(R.id.btnDrawerChat);
-        Button btnDrawerInbox = (Button) findViewById(R.id.btnDrawerInbox);
-        Button btnDrawerProfile = (Button) findViewById(R.id.btnDrawerProfile);
-        Button btnDrawerFavorites = (Button) findViewById(R.id.btnDrawerFavorites);
-        Button btnDrawerLogout = (Button) findViewById(R.id.btnDrawerLogout);
-        Button btnCommunities = (Button) findViewById(R.id.btnCommunities);
-        Button btnDrawerOptions = (Button) findViewById(R.id.btnDrawerOptions);
+        View btnDrawerFeed = findViewById(R.id.btnDrawerFeed);
+        View btnCommunities = findViewById(R.id.btnCommunities);
+        View btnDrawerChat = findViewById(R.id.btnDrawerChat);
+        View btnDrawerInbox = findViewById(R.id.btnDrawerInbox);
+        View btnDrawerProfile = findViewById(R.id.btnDrawerProfile);
+        View btnDrawerFavorites = findViewById(R.id.btnDrawerFavorites);
+        View btnDrawerOptions = findViewById(R.id.btnDrawerOptions);
+        View btnDrawerLogout = findViewById(R.id.btnDrawerLogout);
         String currentUsername = "user";
 
         if (btnDrawerOptions != null) {

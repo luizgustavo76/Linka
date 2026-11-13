@@ -3,7 +3,7 @@
     android:layout_width="280dp"
     android:layout_height="fill_parent"
     android:layout_gravity="start"
-    android:background="#1B1B1B"
+    android:background="#ffffff"
     android:clickable="true"
     android:orientation="vertical">
 
@@ -12,7 +12,7 @@
         android:id="@+id/drawerHeader"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#141414"
+        android:background="#dddddd"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="16dp">
@@ -35,7 +35,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Linka User"
-                android:textColor="#FFFFFF"
+                android:textColor="#090909"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -44,8 +44,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="@username"
-                android:textColor="#888888"
+                android:text="\@username"
+                android:textColor="#393939"
                 android:textSize="13sp" />
         </LinearLayout>
     </LinearLayout>
@@ -69,100 +69,194 @@
             android:paddingTop="8dp"
             android:paddingBottom="8dp">
 
-            <Button
+            <LinearLayout
                 android:id="@+id/btnDrawerFeed"
                 android:layout_width="fill_parent"
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
-                android:drawableLeft="@android:drawable/ic_menu_agenda"
-                android:drawablePadding="16dp"
-                android:gravity="left|center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:text="Feed"
-                android:textColor="#E0E0E0"
-                android:textSize="15sp" />
-            <Button
+                android:paddingRight="16dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon_feed" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:text="Feed"
+                    android:textColor="#000000"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnCommunities"
                 android:layout_width="fill_parent"
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
-                android:drawableLeft="@android:drawable/ic_menu_slideshow"
-                android:drawablePadding="16dp"
-                android:gravity="left|center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:text="Communities"
-                android:textColor="#E0E0E0"
-                android:textSize="15sp" />
-            <Button
+                android:paddingRight="16dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon_community" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:text="Communities"
+                    android:textColor="#000000"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnDrawerChat"
                 android:layout_width="fill_parent"
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
-                android:drawableLeft="@android:drawable/ic_menu_send"
-                android:drawablePadding="16dp"
-                android:gravity="left|center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:text="Chat"
-                android:textColor="#E0E0E0"
-                android:textSize="15sp" />
+                android:paddingRight="16dp">
 
-            <Button
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon_chats" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:text="Chat"
+                    android:textColor="#000000"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnDrawerInbox"
                 android:layout_width="fill_parent"
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
-                android:drawableLeft="@android:drawable/ic_dialog_email"
-                android:drawablePadding="16dp"
-                android:gravity="left|center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:text="Inbox"
-                android:textColor="#E0E0E0"
-                android:textSize="15sp" />
+                android:paddingRight="16dp">
 
-            <Button
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon_inbox_drawer" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:text="Inbox"
+                    android:textColor="#000000"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnDrawerProfile"
                 android:layout_width="fill_parent"
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
-                android:drawableLeft="@android:drawable/ic_menu_myplaces"
-                android:drawablePadding="16dp"
-                android:gravity="left|center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:text="Account"
-                android:textColor="#E0E0E0"
-                android:textSize="15sp" />
+                android:paddingRight="16dp">
 
-            <Button
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon_profile_drawer" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:text="Account"
+                    android:textColor="#020202"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnDrawerFavorites"
                 android:layout_width="fill_parent"
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
-                android:drawableLeft="@android:drawable/btn_star"
-                android:drawablePadding="16dp"
-                android:gravity="left|center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:text="Bookmarks"
-                android:textColor="#E0E0E0"
-                android:textSize="15sp" />
-            <Button
+                android:paddingRight="16dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_bookmark_gray" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:text="Bookmarks"
+                    android:textColor="#000000"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/btnDrawerOptions"
                 android:layout_width="fill_parent"
                 android:layout_height="48dp"
                 android:background="@android:color/transparent"
-                android:drawableLeft="@android:drawable/ic_menu_preferences"
-                android:drawablePadding="16dp"
-                android:gravity="left|center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
                 android:paddingLeft="16dp"
-                android:paddingRight="16dp"
-                android:text="Options"
-                android:textColor="#E0E0E0"
-                android:textSize="15sp" />
+                android:paddingRight="16dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon_config" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:text="Options"
+                    android:textColor="#000000"
+                    android:textSize="15sp" />
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
@@ -174,19 +268,32 @@
         android:background="#2C2C2C" />
 
     <!-- Logout Button -->
-    <Button
+    <LinearLayout
         android:id="@+id/btnDrawerLogout"
         android:layout_width="fill_parent"
         android:layout_height="52dp"
         android:background="@android:color/transparent"
-        android:drawableLeft="@android:drawable/ic_lock_power_off"
-        android:drawablePadding="16dp"
-        android:gravity="left|center_vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:paddingLeft="16dp"
-        android:paddingRight="16dp"
-        android:text="Log Out"
-        android:textColor="#FF5252"
-        android:textSize="15sp"
-        android:textStyle="bold" />
+        android:paddingRight="16dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/icon_logout" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:text="Log Out"
+            android:textColor="#FF5252"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
 </LinearLayout>
