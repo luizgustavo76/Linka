@@ -11,9 +11,6 @@ env_path = os.path.join(BASE_DIR, "backend.env")
 if os.path.exists(env_path):
     dotenv.load_dotenv(env_path)
 
-# ==========================================
-# CONFIGURAÇÃO DO BACKBLAZE B2 VIA BOTO3
-# ==========================================
 B2_KEY_ID = os.getenv("B2_KEY_ID")
 B2_APPLICATION_KEY = os.getenv("B2_APPLICATION_KEY")
 B2_ENDPOINT = os.getenv("B2_ENDPOINT", "https://s3.us-east-005.backblazeb2.com")
@@ -91,7 +88,68 @@ def create_table():
 # ==========================================
 # ROTAS DO PERFIL
 # ==========================================
+@profile_bp.route("/suggest-follow", methods=["POST"])
+def suggest_follow():
+    data = request.get_json(silent=True) or {}
+    username = data.get("username")
 
+    if username != getattr(g, "username", None):
+        return jsonify({"status": "forbidden"}), 403
+
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        query = """
+        WITH meus_amigos AS (
+            SELECT CASE WHEN receiver = %s THEN remittee ELSE receiver END AS friend_username
+            FROM friends
+            WHERE receiver = %s OR remittee = %s
+        ),
+        amigos_em_comum AS (
+            SELECT 
+                CASE WHEN f.receiver = ma.friend_username THEN f.remittee ELSE f.receiver END AS suggested_username,
+                COUNT(DISTINCT ma.friend_username) AS mutual_count
+            FROM friends f
+            JOIN meus_amigos ma ON (f.receiver = ma.friend_username OR f.remittee = ma.friend_username)
+            GROUP BY suggested_username
+        ),
+        atividade AS (
+            SELECT 
+                p.username AS user_name,
+                (
+                    COALESCE((SELECT COUNT(*) FROM posts WHERE username = p.username), 0) +
+                    COALESCE((SELECT COUNT(*) FROM comments WHERE username = p.username), 0) +
+                    COALESCE((SELECT COUNT(*) FROM chat_global WHERE sender = p.username), 0)
+                ) AS total_activity
+            FROM profile p
+        )
+        SELECT 
+            p.username,
+            p.bio,
+            p.actual_badge,
+            p."ProfilePicture" AS profile_picture,
+            p.profile_banner_color,
+            COALESCE(ac.mutual_count, 0) AS mutual_friends,
+            COALESCE(at.total_activity, 0) AS activity_score
+        FROM profile p
+        LEFT JOIN amigos_em_comum ac ON ac.suggested_username = p.username
+        LEFT JOIN atividade at ON at.user_name = p.username
+        WHERE p.username != %s
+          AND p.username NOT IN (SELECT friend_username FROM meus_amigos)
+          AND (ac.mutual_count > 0 OR at.total_activity > 0)
+        ORDER BY 
+            ((COALESCE(ac.mutual_count, 0) * 3) + (COALESCE(at.total_activity, 0) * 0.5)) * RANDOM() DESC
+        LIMIT 15;
+        """
+
+        cur.execute(query, (username, username, username, username))
+        suggestions = cur.fetchall()
+        return jsonify([dict(row) for row in suggestions]), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
 @profile_bp.route("/edit", methods=["POST"])
 def edit():
     data = request.get_json(silent=True) or {}
