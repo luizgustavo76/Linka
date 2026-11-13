@@ -892,6 +892,9 @@ def trending_feed():
 
 @post_bp.route("/feed", methods=["GET"])
 def feed():
+    # Pega o usuário logado (se vier pelo middleware g.username ou query param)
+    current_user = getattr(g, "username", None) or request.args.get("username", "")
+
     has_page_param = 'page' in request.args
     has_limit_param = 'limit' in request.args
 
@@ -901,13 +904,13 @@ def feed():
         if page < 1: page = 1
         if limit < 1: limit = 20
         offset = (page - 1) * limit
-        cache_key = f"feed:home:page_{page}_limit_{limit}"
+        cache_key = f"feed:home:{current_user}:page_{page}_limit_{limit}"
         sql_pagination = " LIMIT %s OFFSET %s"
-        query_params = (limit, offset)
+        query_params = (current_user, limit, offset)
     else:
-        cache_key = "feed:home:all"
+        cache_key = f"feed:home:{current_user}:all"
         sql_pagination = ""
-        query_params = ()
+        query_params = (current_user,)
 
     if root_flags.get("redis") and r:
         try:
@@ -932,11 +935,39 @@ def feed():
                 p.heigth,
                 p.thumbnail,
                 m."ProfilePicture" AS avatar_url,
-                COUNT(c.id) AS comment_count
+                COUNT(c.id) AS comment_count,
+                CASE 
+                    WHEN poll.id IS NULL THEN NULL
+                    ELSE json_build_object(
+                        'poll_id', poll.id,
+                        'title', poll.title,
+                        'expires_at', poll.expires_at,
+                        'user_voted_option_id', pv.option_id,
+                        'options', COALESCE(
+                            (
+                                SELECT json_agg(
+                                    json_build_object(
+                                        'id', po.id,
+                                        'text', po.option_text,
+                                        'votes', po.votes_count
+                                    ) ORDER BY po.id ASC
+                                )
+                                FROM poll_options po
+                                WHERE po.poll_id = poll.id
+                            ),
+                            '[]'::json
+                        )
+                    )
+                END AS poll
             FROM posts p
             LEFT JOIN profile m ON p.username = m.username
             LEFT JOIN comments c ON c.post_id = p.id
-            GROUP BY p.id, p.username, p.text_post, m."ProfilePicture", p.thumbnail, p.datetime, p.media, p.media_type, p.width, p.heigth
+            LEFT JOIN poll ON poll.post_id = p.id::text
+            LEFT JOIN poll_votes pv ON pv.poll_id = poll.id AND pv.username = %s
+            GROUP BY 
+                p.id, p.username, p.text_post, m."ProfilePicture", 
+                p.thumbnail, p.datetime, p.media, p.media_type, 
+                p.width, p.heigth, poll.id, pv.option_id
             ORDER BY p.id DESC
             {sql_pagination}
         """
@@ -949,7 +980,7 @@ def feed():
 
         post_ids = [p["id"] for p in posts]
         cur.execute("""
-            SELECT id, post_id, media_url, media_type, width, heigth , thumbnail
+            SELECT id, post_id, media_url, media_type, width, heigth, thumbnail
             FROM post_media 
             WHERE post_id = ANY(%s)
         """, (post_ids,))
@@ -993,15 +1024,16 @@ def feed():
                 "username": post["username"],
                 "text_post": text_content,
                 "datetime": dt_val,
-                "avatar_url":avatar_url,
+                "avatar_url": avatar_url,
                 "relative_datetime": get_relative_time(post["datetime"]),
                 "comment_count": post["comment_count"],
+                "poll": post["poll"],
                 "media": {
                     "media_url": media_url or "",
                     "media_type": media_type or "image",
                     "width": main_width,
                     "heigth": main_heigth,
-                    "thumbnail":main_thumbnail
+                    "thumbnail": main_thumbnail
                 },
                 "media_list": media_list,
                 "media_attachments": media_list,
@@ -1009,7 +1041,7 @@ def feed():
                 "origin_server": root_flags.get("url-server", "")
             })
 
-        payload_json = json.dumps(lista_posts)
+        payload_json = json.dumps(lista_posts, default=str)
 
         if root_flags.get("redis") and r:
             try:
@@ -1021,8 +1053,6 @@ def feed():
     finally:
         cur.close()
         conn.close()
-
-
 @post_bp.route("/star", methods=["POST"])
 def star():
     data = request.get_json(silent=True) or {}

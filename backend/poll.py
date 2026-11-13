@@ -4,7 +4,6 @@ from psycopg2.extras import RealDictCursor, execute_values
 from flask import Blueprint, request, jsonify, g
 from datetime import datetime
 
-chat_bp = Blueprint("chat", __name__)
 poll_bp = Blueprint("poll_bp", __name__)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -100,41 +99,61 @@ def create_poll():
             if conn:
                 conn.close()
     return jsonify({"status": "unauthorized"}), 403
-@poll_bp.route("/vote-poll",methods=["POST"])
+@poll_bp.route("/vote-poll", methods=["POST"])
 def vote_poll():
-    data = request.get_json()
+    data = request.get_json() or {}
     username = data.get("username")
-    if username == g.username:
-        post_id = data.get("post_id")
-        option_id = data.get("option_id")
-        if not post_id:
-            return jsonify({"status":"id is missing"})
-        try:
-            conn = get_db()
-            cur = conn.cursor()
-            cur.execute("""
-            WITH deleted AS (
-                DELETE FROM poll_votes
-                WHERE username = %s AND post_id = %s
-                RETURNING id
-            ),
-            inserted AS (
-                INSERT INTO poll_votes (username, post_id, option_id)
-                SELECT %s, %s, %s
-                WHERE NOT EXISTS (SELECT 1 FROM deleted)
-                RETURNING id
-            )
-            SELECT EXISTS (SELECT 1 FROM inserted) AS voted;
-        """, (username, post_id, username, post_id, option_id))
+    if username != g.username:
+        return jsonify({"status": "forbidden"}), 403
 
-            status = cur.fetchone()["voted"]
-            conn.commit()
+    poll_id = data.get("poll_id")
+    option_id = data.get("option_id")
+    if not poll_id or not option_id:
+        return jsonify({"status": "poll_id or option_id is missing"}), 400
+
+    conn = None
+    cur = None
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""
+            DELETE FROM poll_votes
+            WHERE username = %s AND poll_id = %s
+            RETURNING option_id
+        """, (username, poll_id))
+        prev = cur.fetchone()
+
+        if prev:
+            cur.execute("""
+                UPDATE poll_options
+                SET votes_count = GREATEST(votes_count - 1, 0)
+                WHERE id = %s
+            """, (prev["option_id"],))
+
+            if prev["option_id"] == int(option_id):
+                conn.commit()
+                return jsonify({"status": "the vote has removed", "voted_option_id": None}), 200
+
+        cur.execute("""
+            INSERT INTO poll_votes (poll_id, option_id, username)
+            VALUES (%s, %s, %s)
+        """, (poll_id, option_id, username))
+
+        cur.execute("""
+            UPDATE poll_options
+            SET votes_count = votes_count + 1
+            WHERE id = %s AND poll_id = %s
+        """, (option_id, poll_id))
+
+        conn.commit()
+        return jsonify({"status": "voted in poll", "voted_option_id": int(option_id)}), 200
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return jsonify({"status": "error", "error": str(e)}), 500
+    finally:
+        if cur:
             cur.close()
-            if status:
-                return jsonify({"status":"voted in poll"}),200
-            else:
-                return jsonify({"status":"the vote has removed"}),200
-        except Exception as e:
-            return jsonify({"status":"error", "error":e}),500
-    else:
-        return jsonify({"status":"forbidden"}),403
+        if conn:
+            conn.close()
