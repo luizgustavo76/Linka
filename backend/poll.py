@@ -51,7 +51,7 @@ def create_db():
     conn.commit()
     cur.close()
     conn.close()
-
+create_db()
 @poll_bp.route("/create-poll", methods=["POST"])
 def create_poll():
     data = request.get_json()
