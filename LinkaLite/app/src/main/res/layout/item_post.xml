@@ -201,13 +201,12 @@
             <!-- Imagem Estática / Thumbnail do Vídeo -->
             <com.LinkaProject.linkaLite.GifImageView
                 android:id="@+id/imgPost"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+                android:layout_width="0dip"
+                android:layout_height="0dip"
                 android:adjustViewBounds="true"
                 android:scaleType="fitCenter"
                 android:background="#F5F5F5" />
 
-            <!-- Player de Vídeo Nativo (Escondido por padrão) -->
             <VideoView
                 android:id="@+id/videoPost"
                 android:layout_width="fill_parent"

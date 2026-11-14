@@ -229,6 +229,7 @@
                     android:text="Attach image"
                     android:textSize="12sp"
                     android:layout_marginRight="4dip" />
+                
 
                 <Button
                     android:id="@+id/btnSend"
@@ -240,7 +241,27 @@
                     android:textStyle="bold"
                     android:layout_marginLeft="4dip" />
             </LinearLayout>
-
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/btnVideo"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Attach Video"
+                    android:textSize="12sp"
+                    android:layout_marginRight="4dip" />
+                <Button
+                    android:id="@+id/btnPoll"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Create poll"
+                    android:textSize="12sp"
+                    android:layout_marginRight="4dip" />
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>
