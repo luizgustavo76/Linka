@@ -3,18 +3,36 @@
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="6dip"
+    android:layout_marginBottom="4dip"
     android:background="#e0e0e0">
+
     <View
         android:layout_width="18dip"
         android:layout_height="18dip"
-        android:visibility="gone"
-        android:background="@drawable/circle_selected" />
-    <View
-        android:layout_width="18dip"
-        android:layout_height="18dip"
+        android:layout_marginRight="8dip"
         android:background="@drawable/circle_normal" />
+
+    <EditText
+        android:id="@+id/editOption"
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:hint="Option"
+        android:textSize="13sp"
+        android:singleLine="true"
+        android:background="#FFFFFF"
+        android:padding="6dip" />
+
     <TextView
-        android:id="@+id/txtOption"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"/>
+        android:id="@+id/txtClose"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="10dip"
+        android:paddingRight="6dip"
+        android:text="X"
+        android:textStyle="bold"
+        android:textColor="#C62828"
+        android:textSize="14sp" />
 </LinearLayout>

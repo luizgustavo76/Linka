@@ -3,14 +3,15 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:fillViewport="true"
-    android:background="#F5F5F5">
+    android:background="?attr/themeBackgroundColor">
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dip">
+        android:padding="10dip">
 
+        <!-- Aviso de Guest -->
         <LinearLayout
             android:id="@+id/layoutGuest"
             android:layout_width="fill_parent"
@@ -18,7 +19,7 @@
             android:orientation="vertical"
             android:background="#FFEBEE"
             android:padding="12dip"
-            android:layout_marginBottom="12dip"
+            android:layout_marginBottom="10dip"
             android:visibility="gone">
 
             <TextView
@@ -38,246 +39,261 @@
                 android:layout_marginTop="8dip"
                 android:text="Click here to login"
                 android:textSize="12sp"
-                android:textColor="#FFFFFF" />
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Cabeçalho -->
+        <TextView
+            android:id="@+id/newPostText"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="New Post"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="?attr/themeTextColor" />
+
+        <TextView
+            android:id="@+id/newPostContent"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Links are supported now"
+            android:textSize="11sp"
+            android:textColor="#757575"
+            android:layout_marginBottom="10dip" />
+
+        <!-- Caixa de Texto Principal -->
+        <EditText
+            android:id="@+id/editPostContent"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:minLines="4"
+            android:gravity="top|left"
+            android:background="#14888888"
+            android:padding="10dip"
+            android:hint="What's happening?"
+            android:textColor="?attr/themeTextColor"
+            android:textColorHint="#888888"
+            android:textSize="15sp" />
+
+        <!-- Card de Repost Compacto (Avatar ao lado do nome) -->
+        <RelativeLayout
+            android:id="@+id/containerRepostPreview"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dip"
+            android:background="#1A888888"
+            android:padding="8dip"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/avatarRepost"
+                android:layout_width="28dip"
+                android:layout_height="28dip"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginRight="8dip"
+                android:background="#BFBFBF" />
+
+            <ImageButton
+                android:id="@+id/btnRemoveRepost"
+                android:layout_width="20dip"
+                android:layout_height="20dip"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:background="@android:color/transparent"
+                android:src="@android:drawable/ic_menu_close_clear_cancel" />
+
+            <TextView
+                android:id="@+id/txtRepostOriginalUser"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@id/avatarRepost"
+                android:layout_toLeftOf="@id/btnRemoveRepost"
+                android:layout_alignTop="@id/avatarRepost"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textStyle="bold"
+                android:textColor="?attr/themeTextColor"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/txtRepostOriginalText"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/avatarRepost"
+                android:layout_marginTop="6dip"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textColor="#666666"
+                android:textSize="12sp" />
+
+            <ImageView
+                android:id="@+id/imgMedia"
+                android:layout_width="0dip"
+                android:layout_height="0dip"
+                android:layout_below="@id/txtRepostOriginalText"
+                android:layout_marginTop="4dip"
+                android:background="#BFBFBF" />
+        </RelativeLayout>
+
+        <!-- Preview de Mídia Anexada -->
+        <RelativeLayout
+            android:id="@+id/containerMediaPreview"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dip"
+            android:visibility="gone">
+
+            <com.LinkaProject.linkaLite.GifImageView
+                android:id="@+id/imgMediaPreview"
+                android:layout_width="fill_parent"
+                android:layout_height="180dip"
+                android:adjustViewBounds="true"
+                android:scaleType="centerCrop" />
+
+            <ImageButton
+                android:id="@+id/btnRemoveMedia"
+                android:layout_width="26dip"
+                android:layout_height="26dip"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_margin="6dip"
+                android:background="#99000000"
+                android:src="@android:drawable/ic_menu_close_clear_cancel" />
+        </RelativeLayout>
+
+        <!-- Container de Enquete -->
+        <LinearLayout
+            android:id="@+id/containerPoll"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dip"
+            android:padding="8dip"
+            android:orientation="vertical"
+            android:background="#1A888888"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/btnAddOption"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dip"
+                android:text="+ Add option"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Barra de Anexos (Image / Video / Poll em uma linha só) -->
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dip"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnImage"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginRight="3dip"
+                android:text="Image"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/btnVideo"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginLeft="3dip"
+                android:layout_marginRight="3dip"
+                android:text="Video"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/btnPoll"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginLeft="3dip"
+                android:text="Poll"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Divisor visual sutil -->
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dip"
+            android:layout_marginTop="10dip"
+            android:layout_marginBottom="8dip"
+            android:background="#26888888" />
+
+        <!-- Cross-posting (Post in) -->
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Post in:"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="?attr/themeTextColor"
+            android:layout_marginBottom="4dip" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/btnLinka"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Linka"
+                android:textSize="12sp"
+                android:textColor="?attr/themeTextColor"
+                android:checked="true" />
+
+            <CheckBox
+                android:id="@+id/btnReddit"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Reddit"
+                android:textSize="12sp"
+                android:textColor="?attr/themeTextColor" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="?attr/themeBackgroundColor"
-            android:padding="14dip">
+            android:orientation="horizontal"
+            android:layout_marginBottom="14dip">
 
-            <TextView
-                android:id="@+id/newPostText"
-                android:layout_width="fill_parent"
+            <CheckBox
+                android:id="@+id/btnMastodon"
+                android:layout_width="0dip"
                 android:layout_height="wrap_content"
-                android:text="New Post"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#212121" />
-
-            <TextView
-                android:id="@+id/newPostContent"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:text="Links are supported now"
-                android:textSize="11sp"
-                android:textColor="#757575"
-                android:layout_marginBottom="12dip" />
-
-            <EditText
-                android:id="@+id/editPostContent"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:minLines="3"
-                android:gravity="top|left"
-                android:background="#F9F9F9"
-                android:padding="8dip"
-                android:hint="Whats happening?"
-                android:textColor="?attr/themeTextColor"
-                android:textColorHint="#AAA"
-                android:textSize="15sp" />
-
-            <LinearLayout
-                android:id="@+id/containerRepostPreview"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dip"
-                android:background="#F4F6F8"
-                android:orientation="vertical"
-                android:padding="10dip"
-                android:visibility="gone">
-                <ImageView
-                        android:id="@+id/avatarRepost"
-                        android:layout_width="32dip"
-                        android:layout_height="32dip"
-                        android:background="#bfbfbf"/>
-                <RelativeLayout
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content">
-                    
-                    <TextView
-                        android:id="@+id/txtRepostOriginalUser"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textStyle="bold"
-                        android:textColor="?attr/themeTextColor"
-                        android:textSize="12sp" />
-
-                    <ImageButton
-                        android:id="@+id/btnRemoveRepost"
-                        android:layout_width="18dip"
-                        android:layout_height="18dip"
-                        android:layout_alignParentRight="true"
-                        android:background="@android:color/transparent"
-                        android:src="@android:drawable/ic_menu_close_clear_cancel" />
-                </RelativeLayout>
-
-                <TextView
-                    android:id="@+id/txtRepostOriginalText"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dip"
-                    android:maxLines="2"
-                    android:ellipsize="end"
-                    android:textColor="#666666"
-                    android:textSize="12sp" />
-                <ImageView
-                    android:id="@+id/imgMedia"
-                    android:layout_width="0dip"
-                    android:layout_height="0dip"
-                    android:background="#bfbfbf"/>
-            </LinearLayout>
-
-            <RelativeLayout
-                android:id="@+id/containerMediaPreview"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dip"
-                android:visibility="gone">
-
-                <com.LinkaProject.linkaLite.GifImageView
-                    android:id="@+id/imgMediaPreview"
-                    android:layout_width="fill_parent"
-                    android:layout_height="180dip"
-                    android:adjustViewBounds="true"
-                    android:scaleType="centerCrop" />
-
-                <ImageButton
-                    android:id="@+id/btnRemoveMedia"
-                    android:layout_width="24dip"
-                    android:layout_height="24dip"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentTop="true"
-                    android:layout_margin="6dip"
-                    android:background="#80000000"
-                    android:src="@android:drawable/ic_menu_close_clear_cancel" />
-            </RelativeLayout>
-
-            <TextView
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:text="Post in:"
+                android:layout_weight="1"
+                android:text="Mastodon"
                 android:textSize="12sp"
-                android:textStyle="bold"
-                android:textColor="#424242"
-                android:layout_marginTop="12dip"
-                android:layout_marginBottom="6dip" />
+                android:textColor="?attr/themeTextColor" />
 
-            <LinearLayout
-                android:layout_width="fill_parent"
+            <CheckBox
+                android:id="@+id/btnBluesky"
+                android:layout_width="0dip"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="4dip">
-
-                <CheckBox
-                    android:id="@+id/btnLinka"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Linka"
-                    android:textSize="12sp"
-                    android:textColor="#212121"
-                    android:checked="true" />
-
-                <CheckBox
-                    android:id="@+id/btnReddit"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Reddit"
-                    android:textSize="12sp"
-                    android:textColor="#212121" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="16dip">
-
-                <CheckBox
-                    android:id="@+id/btnMastodon"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Mastodon"
-                    android:textSize="12sp"
-                    android:textColor="#212121" />
-
-                <CheckBox
-                    android:id="@+id/btnBluesky"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Bluesky"
-                    android:textSize="12sp"
-                    android:textColor="#212121" />
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/containerOptions"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="#d2d2d2"
-                android:visibility="gone">
-                <Button
-                    android:id="@+id/btnAddOption"
-                    android:text="Add option"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-            <LinearLayout
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btnImage"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Attach image"
-                    android:textSize="12sp"
-                    android:layout_marginRight="4dip" />
-                
-
-                <Button
-                    android:id="@+id/btnSend"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Send!"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:layout_marginLeft="4dip" />
-            </LinearLayout>
-            <LinearLayout
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <Button
-                    android:id="@+id/btnVideo"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Attach Video"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:layout_marginRight="4dip" />
-                <Button
-                    android:id="@+id/btnPoll"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Create poll"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:layout_marginRight="4dip" />
-            </LinearLayout>
-
+                android:layout_weight="1"
+                android:text="Bluesky"
+                android:textSize="12sp"
+                android:textColor="?attr/themeTextColor" />
         </LinearLayout>
+
+        <!-- Botão Principal de Envio em Destaque -->
+        <Button
+            android:id="@+id/btnSend"
+            android:layout_width="fill_parent"
+            android:layout_height="44dip"
+            android:text="Send Post"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
     </LinearLayout>
 </ScrollView>

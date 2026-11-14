@@ -16,6 +16,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.view.ViewGroup;
@@ -23,6 +24,38 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class newPost extends BaseActivity {
+    private void addPollOption() {
+        if (containerPoll == null) return;
+
+        // Limite opcional (ex: máximo 4 ou 5 opções)
+        int currentOptions = containerPoll.getChildCount() - 1; // desconta o btnAddOption
+        if (currentOptions >= 8) {
+            Toast.makeText(newPost.this, "Max 8 options", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        LayoutInflater inflater = LayoutInflater.from(this);
+        final View optionView = inflater.inflate(R.layout.item_poll, containerPoll, false);
+
+        EditText editOption = (EditText) optionView.findViewById(R.id.editOption);
+        TextView txtClose = (TextView) optionView.findViewById(R.id.txtClose);
+
+        editOption.setHint("Option " + (currentOptions + 1));
+
+        txtClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (containerPoll.getChildCount() - 1 > 2) {
+                    containerPoll.removeView(optionView);
+                } else {
+                    Toast.makeText(newPost.this, "Minimum 2 options", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        int insertIndex = Math.max(0, containerPoll.getChildCount() - 1);
+        containerPoll.addView(optionView, insertIndex);
+    }
     private static final String TAG = "Linka_Upload";
     private static final int PICK_IMAGE_REQUEST = 1001;
 
@@ -33,7 +66,7 @@ public class newPost extends BaseActivity {
     private Button btnLogin;
     private LinearLayout layoutGuest;
     private boolean isGuest;
-
+    private Button btnAddOption;
     private CheckBox btnLinka;
     private CheckBox btnReddit;
     private CheckBox btnMastodon;
@@ -43,7 +76,7 @@ public class newPost extends BaseActivity {
     private ImageButton btnRemoveMedia;
     private GifImageView imgMediaPreview;
 
-    private LinearLayout containerRepostPreview;
+    private RelativeLayout containerRepostPreview;
     private TextView txtRepostOriginalUser;
     private TextView txtRepostOriginalText;
     private ImageButton btnRemoveRepost;
@@ -51,9 +84,9 @@ public class newPost extends BaseActivity {
     private ImageView imgMedia;
     private String uploadedImageUrl = "";
     private int repostPostId = -1;
-
+    private LinearLayout containerPoll;
     private static final String CFG_EXTERNAL_FILE = "config-external.cfg";
-
+    private Button btnPoll;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);        
@@ -65,7 +98,7 @@ public class newPost extends BaseActivity {
         editPostContent = (EditText) findViewById(R.id.editPostContent);
         btnSend = (Button) findViewById(R.id.btnSend);
         btnImage = (Button) findViewById(R.id.btnImage);
-
+        containerPoll = (LinearLayout) findViewById(R.id.containerPoll);
         btnLinka = (CheckBox) findViewById(R.id.btnLinka);
         btnReddit = (CheckBox) findViewById(R.id.btnReddit);
         btnMastodon = (CheckBox) findViewById(R.id.btnMastodon);
@@ -75,16 +108,52 @@ public class newPost extends BaseActivity {
         containerMediaPreview = (RelativeLayout) findViewById(R.id.containerMediaPreview);
         btnRemoveMedia = (ImageButton) findViewById(R.id.btnRemoveMedia);
         imgMediaPreview = (GifImageView) findViewById(R.id.imgMediaPreview);
-
-        containerRepostPreview = (LinearLayout) findViewById(R.id.containerRepostPreview);
+        btnPoll = (Button) findViewById(R.id.btnPoll);
+        containerRepostPreview = (RelativeLayout) findViewById(R.id.containerRepostPreview);
         txtRepostOriginalUser = (TextView) findViewById(R.id.txtRepostOriginalUser);
         txtRepostOriginalText = (TextView) findViewById(R.id.txtRepostOriginalText);
         btnRemoveRepost = (ImageButton) findViewById(R.id.btnRemoveRepost);
-
+        btnPoll.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                if (containerPoll.getVisibility() == View.VISIBLE){
+                    containerPoll.setVisibility(View.GONE);
+                }else{
+                   containerPoll.setVisibility(View.VISIBLE); 
+                }
+            }
+        });
         if (btnLinka != null) {
             btnLinka.setChecked(true);
         }
+        btnAddOption = (Button) findViewById(R.id.btnAddOption);
 
+        btnPoll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (containerPoll.getVisibility() == View.VISIBLE) {
+                    containerPoll.setVisibility(View.GONE);
+                    btnPoll.setText("Create poll");
+                } else {
+                    containerPoll.setVisibility(View.VISIBLE);
+                    btnPoll.setText("Remove poll");
+                    // Garante pelo menos 2 opções iniciais ao abrir a enquete
+                    if (containerPoll.getChildCount() <= 1) {
+                        addPollOption();
+                        addPollOption();
+                    }
+                }
+            }
+        });
+
+        if (btnAddOption != null) {
+            btnAddOption.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    addPollOption();
+                }
+            });
+        }
         isGuest = getIntent().getBooleanExtra("isGuest", false);
         repostPostId = getIntent().getIntExtra("repostPostId", -1);
         String repostUser = getIntent().getStringExtra("repostUser");
