@@ -3,23 +3,38 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical"
-    android:background="#d6d6d6">
+    android:background="#ffffff">
 
+    <!-- Post original incluído no topo -->
+    <include
+        android:id="@+id/postHeader"
+        layout="@layout/item_post"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
+    <!-- Divisor visual entre o post e os comentários -->
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#DDDDDD" />
+
+    <!-- Lista de comentários -->
     <ListView
         android:id="@+id/lvComments"
         android:layout_width="fill_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
-        android:divider="#2a2a3c"
+        android:divider="#EEEEEE"
         android:dividerHeight="1dip" />
 
+    <!-- Barra de comentário (Logado) -->
     <LinearLayout
         android:id="@+id/layoutComment"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="6dip"
-        android:background="#d1d1d1">
+        android:background="#F5F5F5">
 
         <EditText
             android:id="@+id/commentEdt"
@@ -27,31 +42,32 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="Comment..."
-            android:textColor="#191919"
-            android:textSize="13sp"
             android:singleLine="true" />
 
         <Button
             android:id="@+id/btnSend"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Send"
-            android:textSize="13sp" />
+            android:text="Send" />
     </LinearLayout>
+
+    <!-- Aviso para visitante (Guest) -->
     <LinearLayout
         android:id="@+id/layoutGuest"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="12dip"
-        android:background="@drawable/bg_material_card"
+        android:padding="10dip"
+        android:gravity="center"
+        android:background="#F5F5F5"
         android:visibility="gone">
-        
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#2e2e2e"
-            android:text="You are a guest! Login to comment in post and more"
-            android:textStyle="bold"/>
+            android:text="Faça login para comentar."
+            android:textColor="#666666"
+            android:textSize="13sp" />
     </LinearLayout>
+
 </LinearLayout>

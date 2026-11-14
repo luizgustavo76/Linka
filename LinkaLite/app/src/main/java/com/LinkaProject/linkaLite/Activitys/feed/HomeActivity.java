@@ -1117,7 +1117,13 @@ public class HomeActivity extends ActivityGroup {
                                 intent.putExtra("originalUrl", originalUrl);
                             }
                         }
-                        
+                        intent.putExtra("post_author", postUsername);
+                        intent.putExtra("post_date", datetime);
+                        intent.putExtra("post_text", textPost);
+                        intent.putExtra("post_community", "");
+                        intent.putExtra("avatar_url", post.optString("avatar_url", "").toString());
+                        intent.putExtra("media_list", post.optJSONArray("media_list"));
+                        intent.putExtra("comment_count", commentsCount);
                         intent.putExtra("isGuest", isGuest);
                         intent.putExtra("post_id", String.valueOf(id));
                         startActivity(intent);

@@ -1,14 +1,16 @@
 package com.LinkaProject.linkaLite;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -32,6 +34,13 @@ public class comments_activity extends BaseActivity {
     private String baseUrl = "";
     private String uniqueId = "";
     private LinearLayout layoutGuest;
+    private ImageView postAvatar;
+    private View postHeader;
+    private TextView postUsername;
+    private TextView txtCommunity;
+    private TextView postDate;
+    private TextView postText;
+    private TextView txtCommentCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +75,10 @@ public class comments_activity extends BaseActivity {
         }
 
         setContentView(R.layout.comments_activity);
+
+        // Inicializa o Post Original no topo
+        setupPostHeader(intent);
+
         lvComments = (ListView) findViewById(R.id.lvComments);
         commentEdt = (EditText) findViewById(R.id.commentEdt);
         layoutComment = (LinearLayout) findViewById(R.id.layoutComment);
@@ -75,7 +88,7 @@ public class comments_activity extends BaseActivity {
         boolean isGuest = intent != null && intent.getBooleanExtra("isGuest", false);
 
         if (isGuest && layoutComment != null && layoutGuest != null) {
-            layoutComment.setVisibility(View.INVISIBLE);
+            layoutComment.setVisibility(View.GONE);
             layoutGuest.setVisibility(View.VISIBLE);
         }
 
@@ -134,6 +147,66 @@ public class comments_activity extends BaseActivity {
         }
     }
 
+    private void setupPostHeader(Intent intent) {
+        postHeader = findViewById(R.id.postHeader);
+        if (postHeader == null) return;
+
+        postUsername = (TextView) postHeader.findViewById(R.id.postUsername);
+        txtCommunity = (TextView) postHeader.findViewById(R.id.txtCommunity);
+        postDate = (TextView) postHeader.findViewById(R.id.postDate);
+        postText = (TextView) postHeader.findViewById(R.id.postText);
+        txtCommentCount = (TextView) postHeader.findViewById(R.id.txtCommentCount);
+        postAvatar = (ImageView) postHeader.findViewById(R.id.postAvatar);
+        ImageButton btnComments = (ImageButton) postHeader.findViewById(R.id.btnComments);
+        Button btnPostOptions = (Button) postHeader.findViewById(R.id.btnPostOptions);
+        if (btnComments != null) btnComments.setEnabled(false);
+        if (btnPostOptions != null) btnPostOptions.setVisibility(View.GONE);
+
+        if (intent != null) {
+            String author = intent.getStringExtra("post_author");
+            String date = intent.getStringExtra("post_date");
+            String content = intent.getStringExtra("post_text");
+            String community = intent.getStringExtra("post_community");
+            int commentCount = intent.getIntExtra("comment_count", 0);
+            String avatarUrl = intent.getStringExtra("avatar_url");
+            if (avatarUrl == null) avatarUrl = "";
+            if (!avatarUrl.equals("")){
+                ImageLoader imageLoader = new ImageLoader();
+                imageLoader.LoadImageUrl(avatarUrl, postAvatar);
+            }
+            if (postUsername != null) {
+                postUsername.setText(author != null ? author : "");
+            }
+            if (postDate != null) {
+                if (date != null && date.trim().length() > 0) {
+                    postDate.setText(date);
+                    postDate.setVisibility(View.VISIBLE);
+                } else {
+                    postDate.setVisibility(View.GONE);
+                }
+            }
+            if (postText != null) {
+                if (content != null && content.trim().length() > 0) {
+                    postText.setText(content);
+                    postText.setVisibility(View.VISIBLE);
+                } else {
+                    postText.setVisibility(View.GONE);
+                }
+            }
+            if (txtCommunity != null) {
+                if (community != null && community.trim().length() > 0) {
+                    txtCommunity.setText(" > " + community);
+                    txtCommunity.setVisibility(View.VISIBLE);
+                } else {
+                    txtCommunity.setVisibility(View.GONE);
+                }
+            }
+            if (txtCommentCount != null) {
+                txtCommentCount.setText(String.valueOf(commentCount));
+            }
+        }
+    }
+
     private class SendCommentTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... params) {
@@ -146,7 +219,7 @@ public class comments_activity extends BaseActivity {
                     targetUrl = targetUrl.substring(0, targetUrl.length() - 1);
                 }
 
-                String endpoint = isExternal ? "/comments" : "/comments";
+                String endpoint = "/comments";
                 String fullUrl = targetUrl + endpoint;
 
                 return request.requestHTTP(fullUrl, "post", commentJson, comments_activity.this);
@@ -159,12 +232,12 @@ public class comments_activity extends BaseActivity {
         protected void onPostExecute(String response) {
             if (response != null && (response.contains("sucess") || response.contains("success"))) {
                 commentEdt.setText("");
-                Toast.makeText(comments_activity.this, "Enviado com sucesso!", Toast.LENGTH_SHORT).show();
-                
+                Toast.makeText(comments_activity.this, "Commented with sucess!", Toast.LENGTH_SHORT).show();
+
                 String target = isExternal ? uniqueId : postId;
                 new FetchCommentsTask().execute(target);
             } else {
-                Toast.makeText(comments_activity.this, "Erro ao enviar comentário", Toast.LENGTH_LONG).show();
+                Toast.makeText(comments_activity.this, "Erro in comment send", Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -193,7 +266,6 @@ public class comments_activity extends BaseActivity {
                     JSONObject commentObj = commentsArray.getJSONObject(i);
 
                     String rawCommentId = commentObj.optString("comment_id", String.valueOf(i));
-                    String rawPostId = commentObj.optString("post_id", "0");
                     String commentUsername = commentObj.optString("username", "Anonimo");
                     String textComment = commentObj.optString("text_comment", "");
 
@@ -206,7 +278,7 @@ public class comments_activity extends BaseActivity {
                     }
 
                     if (textComment == null || textComment.trim().length() == 0) {
-                        textComment = "[Sem conteúdo]";
+                        textComment = "[No content]";
                     } else if (textComment.contains("<") && textComment.contains(">")) {
                         textComment = android.text.Html.fromHtml(textComment).toString().trim();
                     }
@@ -225,10 +297,15 @@ public class comments_activity extends BaseActivity {
     public void popularLista(String jsonResult) {
         List<Comment> comments = parseCommentsResponse(jsonResult);
 
+        // Atualiza o contador de comentários no cabeçalho do post
+        if (txtCommentCount != null) {
+            txtCommentCount.setText(String.valueOf(comments.size()));
+        }
+
         CommentAdapter adapter = new CommentAdapter(
-            comments_activity.this, 
-            comments, 
-            isExternal, 
+            comments_activity.this,
+            comments,
+            isExternal,
             externalUrl
         );
 
