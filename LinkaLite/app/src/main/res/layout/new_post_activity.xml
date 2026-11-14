@@ -215,7 +215,19 @@
                     android:textSize="12sp"
                     android:textColor="#212121" />
             </LinearLayout>
-
+            <LinearLayout
+                android:id="@+id/containerOptions"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#d2d2d2"
+                android:visibility="gone">
+                <Button
+                    android:id="@+id/btnAddOption"
+                    android:text="Add option"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
             <LinearLayout
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
@@ -252,6 +264,7 @@
                     android:layout_weight="1"
                     android:text="Attach Video"
                     android:textSize="12sp"
+                    android:textStyle="bold"
                     android:layout_marginRight="4dip" />
                 <Button
                     android:id="@+id/btnPoll"
@@ -260,8 +273,10 @@
                     android:layout_weight="1"
                     android:text="Create poll"
                     android:textSize="12sp"
+                    android:textStyle="bold"
                     android:layout_marginRight="4dip" />
             </LinearLayout>
+
         </LinearLayout>
 
     </LinearLayout>
