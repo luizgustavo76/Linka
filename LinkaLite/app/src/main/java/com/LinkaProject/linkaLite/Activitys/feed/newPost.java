@@ -27,7 +27,6 @@ public class newPost extends BaseActivity {
     private void addPollOption() {
         if (containerPoll == null) return;
 
-        // Limite opcional (ex: máximo 4 ou 5 opções)
         int currentOptions = containerPoll.getChildCount() - 1; // desconta o btnAddOption
         if (currentOptions >= 8) {
             Toast.makeText(newPost.this, "Max 8 options", Toast.LENGTH_SHORT).show();
