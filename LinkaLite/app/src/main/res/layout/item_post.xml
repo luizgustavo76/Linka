@@ -2,7 +2,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:paddingBottom="10dip">
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -41,11 +42,12 @@
                 android:textColor="#666666"
                 android:textSize="18sp"
                 android:textStyle="bold" />
+
             <Spinner
                 android:id="@+id/optionsSpinner"
-                android:layout_width="match_parent"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="8dip"
                 android:visibility="gone" />
 
             <LinearLayout
@@ -66,6 +68,8 @@
                         android:id="@+id/postUsername"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:singleLine="true"
+                        android:ellipsize="end"
                         android:textStyle="bold"
                         android:textSize="13sp"
                         android:textColor="#111111" />
@@ -74,6 +78,8 @@
                         android:id="@+id/txtCommunity"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:singleLine="true"
+                        android:ellipsize="end"
                         android:textStyle="bold"
                         android:textSize="13sp"
                         android:text=" > Community name here"
@@ -147,6 +153,7 @@
                             android:id="@+id/repostUsername"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:singleLine="true"
                             android:textStyle="bold"
                             android:textSize="12sp"
                             android:textColor="#333333" />
@@ -155,6 +162,7 @@
                             android:id="@+id/repostCommunity"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:singleLine="true"
                             android:textStyle="bold"
                             android:textSize="12sp"
                             android:textColor="#0b73d3"
@@ -192,26 +200,30 @@
 
         </LinearLayout>
 
-        <RelativeLayout
+        <!-- Container de Mídia Otimizado (FrameLayout é 2x mais rápido que RelativeLayout na ListView) -->
+        <FrameLayout
             android:id="@+id/containerMedia"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:background="#000000"
             android:visibility="gone">
 
             <!-- Imagem Estática / Thumbnail do Vídeo -->
             <com.LinkaProject.linkaLite.GifImageView
                 android:id="@+id/imgPost"
-                android:layout_width="0dip"
-                android:layout_height="0dip"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:adjustViewBounds="true"
                 android:scaleType="fitCenter"
                 android:background="#F5F5F5" />
 
-            <VideoView
+            <!-- VideoView Proporcional (não estica mais!) -->
+            <com.LinkaProject.linkaLite.ProportionalVideoView
                 android:id="@+id/videoPost"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
+                android:layout_gravity="center"
                 android:visibility="gone" />
 
             <!-- Ícone / Botão de Play Transparente Sobreposto -->
@@ -219,7 +231,7 @@
                 android:id="@+id/btnPlayVideo"
                 android:layout_width="50dip"
                 android:layout_height="50dip"
-                android:layout_centerInParent="true"
+                android:layout_gravity="center"
                 android:background="@android:color/transparent"
                 android:scaleType="fitCenter"
                 android:src="@android:drawable/ic_media_play"
@@ -230,8 +242,7 @@
                 android:id="@+id/txtMediaCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_alignParentTop="true"
+                android:layout_gravity="top|right"
                 android:layout_margin="8dip"
                 android:background="#80000000"
                 android:paddingLeft="6dip"
@@ -243,13 +254,12 @@
                 android:textStyle="bold"
                 android:visibility="gone" />
 
-            <!-- Botões Anterior e Próximo RESTAURADOS -->
+            <!-- Botões Anterior e Próximo -->
             <Button
                 android:id="@+id/btnPrevImage"
                 android:layout_width="32dip"
                 android:layout_height="32dip"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
+                android:layout_gravity="center_vertical|left"
                 android:layout_marginLeft="6dip"
                 android:background="#60000000"
                 android:text="◀"
@@ -261,124 +271,114 @@
                 android:id="@+id/btnNextImage"
                 android:layout_width="32dip"
                 android:layout_height="32dip"
-                android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"
+                android:layout_gravity="center_vertical|right"
                 android:layout_marginRight="6dip"
                 android:background="#60000000"
                 android:text="▶"
                 android:textColor="#FFFFFF"
                 android:textSize="10sp"
                 android:visibility="gone" />
-        </RelativeLayout>
+        </FrameLayout>
 
         <!-- Barra de Ações -->
-        <RelativeLayout
+        <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:gravity="right|center_vertical"
+            android:orientation="horizontal"
             android:paddingLeft="12dip"
             android:paddingRight="12dip"
             android:paddingTop="8dip"
             android:paddingBottom="10dip">
 
             <LinearLayout
+                android:id="@+id/containerBookmarkOptions"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
+                android:layout_height="26dip"
+                android:layout_marginRight="8dip"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:background="#F0F0F0"
+                android:paddingLeft="8dip"
+                android:paddingRight="6dip"
+                android:visibility="gone">
 
-                <LinearLayout
-                    android:id="@+id/containerBookmarkOptions"
+                <Button
+                    android:id="@+id/btnPublicBookmarks"
                     android:layout_width="wrap_content"
-                    android:layout_height="26dip"
-                    android:layout_marginRight="8dip"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:background="#F0F0F0"
-                    android:paddingLeft="8dip"
-                    android:paddingRight="6dip"
-                    android:visibility="gone">
-
-                    <Button
-                        android:id="@+id/btnPublicBookmarks"
-                        android:layout_width="wrap_content"
-                        android:layout_height="fill_parent"
-                        android:background="@android:color/transparent"
-                        android:text="Public"
-                        android:textColor="#0066CC"
-                        android:textSize="11sp"
-                        android:textStyle="bold"
-                        android:paddingLeft="4dip"
-                        android:paddingRight="4dip" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="|"
-                        android:textColor="#CCCCCC"
-                        android:textSize="10sp" />
-
-                    <Button
-                        android:id="@+id/btnPrivateBookmarks"
-                        android:layout_width="wrap_content"
-                        android:layout_height="fill_parent"
-                        android:background="@android:color/transparent"
-                        android:text="Private"
-                        android:textColor="#666666"
-                        android:textSize="11sp"
-                        android:paddingLeft="4dip"
-                        android:paddingRight="4dip" />
-
-                    <ImageButton
-                        android:id="@+id/btnCloseBookmarks"
-                        android:layout_width="16dip"
-                        android:layout_height="16dip"
-                        android:layout_marginLeft="6dip"
-                        android:background="@android:color/transparent"
-                        android:scaleType="fitCenter"
-                        android:src="@android:drawable/ic_menu_close_clear_cancel" />
-                </LinearLayout>
-                <ImageButton
-                    android:id="@+id/btnComments"
-                    android:layout_width="22dip"
-                    android:layout_height="22dip"
+                    android:layout_height="fill_parent"
                     android:background="@android:color/transparent"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/icon_comments" />
+                    android:text="Public"
+                    android:textColor="#0066CC"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:paddingLeft="4dip"
+                    android:paddingRight="4dip" />
 
                 <TextView
-                    android:id="@+id/txtCommentCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="4dip"
-                    android:layout_marginRight="18dip"
-                    android:textColor="#777777"
+                    android:text="|"
+                    android:textColor="#CCCCCC"
+                    android:textSize="10sp" />
+
+                <Button
+                    android:id="@+id/btnPrivateBookmarks"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:background="@android:color/transparent"
+                    android:text="Private"
+                    android:textColor="#666666"
                     android:textSize="11sp"
-                    android:text="0" />
-                <ImageButton
-                    android:id="@+id/btnReply"
-                    android:layout_width="22dip"
-                    android:layout_height="22dip"
-                    android:layout_marginRight="16dip"
-                    android:background="@android:color/transparent"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/reply" /> 
+                    android:paddingLeft="4dip"
+                    android:paddingRight="4dip" />
 
                 <ImageButton
-                    android:id="@+id/btnBookmarks"
-                    android:layout_width="22dip"
-                    android:layout_height="22dip"
+                    android:id="@+id/btnCloseBookmarks"
+                    android:layout_width="16dip"
+                    android:layout_height="16dip"
+                    android:layout_marginLeft="6dip"
                     android:background="@android:color/transparent"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/ic_bookmark" />
-
+                    android:src="@android:drawable/ic_menu_close_clear_cancel" />
             </LinearLayout>
-        </RelativeLayout>
-    </LinearLayout>
 
-    <View
-        android:layout_width="fill_parent"
-        android:layout_height="10dip"
-        android:background="@android:color/transparent" />
+            <ImageButton
+                android:id="@+id/btnComments"
+                android:layout_width="22dip"
+                android:layout_height="22dip"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_comments" />
+
+            <TextView
+                android:id="@+id/txtCommentCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dip"
+                android:layout_marginRight="18dip"
+                android:textColor="#777777"
+                android:textSize="11sp"
+                android:text="0" />
+
+            <ImageButton
+                android:id="@+id/btnReply"
+                android:layout_width="22dip"
+                android:layout_height="22dip"
+                android:layout_marginRight="16dip"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/reply" />
+
+            <ImageButton
+                android:id="@+id/btnBookmarks"
+                android:layout_width="22dip"
+                android:layout_height="22dip"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_bookmark" />
+
+        </LinearLayout>
+    </LinearLayout>
 
 </LinearLayout>
