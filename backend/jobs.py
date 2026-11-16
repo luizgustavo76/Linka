@@ -24,7 +24,6 @@ def sync_profiles():
     cur = conn.cursor()
     
     try:
-        # Insere em 'profile' selecionando os usuários de 'login' que não existem em 'profile'
         query = """
             INSERT INTO profile (username, bio, actual_badge, "ProfilePicture", followers, following)
             SELECT 
