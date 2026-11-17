@@ -12,10 +12,14 @@ import android.widget.ImageView;
 import com.LinkaProject.linkaLite.GifImageView;
 import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,8 +28,9 @@ public class ImageLoader {
 
     private static final String TAG = "ImageLoader";
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private static final ExecutorService executor = Executors.newFixedThreadPool(2);
+    private static final ExecutorService executor = Executors.newFixedThreadPool(4);
     private static final HashMap<String, SoftReference<Bitmap>> memoryCache = new HashMap<String, SoftReference<Bitmap>>();
+    private static final HashMap<String, String> avatarUrlCache = new HashMap<String, String>();
     private static String cachedBaseUrl = null;
 
     public ImageLoader() {
@@ -51,21 +56,14 @@ public class ImageLoader {
 
     private int getTargetWidth(Context context) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        int width = metrics.widthPixels > 0 ? metrics.widthPixels : 320;
-        return width;
+        return metrics.widthPixels > 0 ? metrics.widthPixels : 320;
     }
 
-    /**
-     * Limpa URLs encadeadas/duplicadas do wsrv.nl vindas do backend,
-     * ignora domínios sensíveis a bloqueios (Nitter, Twitter, unavatar)
-     * e aplica o proxy wsrv.nl apenas quando seguro.
-     */
     private String cleanAndPrepareUrl(String rawUrl, int targetWidth, Integer targetHeight, int quality) {
         if (rawUrl == null || rawUrl.trim().length() == 0) return "";
-        
+
         String cleanUrl = rawUrl.trim();
 
-        // 1. Desfaz encadeamento prévio do wsrv.nl se houver
         while (cleanUrl.contains("wsrv.nl/?url=")) {
             try {
                 int urlIndex = cleanUrl.indexOf("url=") + 4;
@@ -81,17 +79,18 @@ public class ImageLoader {
             }
         }
 
-        // 2. Domínios que devem ser carregados diretamente sem o proxy wsrv.nl
-        if (cleanUrl.contains("/midia/") || 
-            cleanUrl.contains("unavatar.io") || 
-            cleanUrl.contains("ui-avatars.com") || 
+        if (cleanUrl.toLowerCase().contains(".gif")) {
+            return cleanUrl;
+        }
+
+        if (cleanUrl.contains("unavatar.io") ||
+            cleanUrl.contains("ui-avatars.com") ||
             cleanUrl.contains("cdninstagram.com") ||
             cleanUrl.contains("nitter") ||
             cleanUrl.contains("twimg.com")) {
             return cleanUrl;
         }
 
-        // 3. Aplica o proxy wsrv.nl para as demais mídias de forma limpa
         if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
             try {
                 try {
@@ -114,6 +113,57 @@ public class ImageLoader {
         return cleanUrl;
     }
 
+    private String md5Key(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(input.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < digest.length; i++) {
+                String hex = Integer.toHexString(0xff & digest[i]);
+                if (hex.length() == 1) sb.append('0');
+                sb.append(hex);
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return String.valueOf(input.hashCode());
+        }
+    }
+
+    private byte[] readFromDiskCache(Context context, String key) {
+        try {
+            File cacheDir = new File(context.getCacheDir(), "linka_img_cache");
+            File file = new File(cacheDir, md5Key(key));
+            if (!file.exists() || file.length() == 0) return null;
+
+            FileInputStream fis = new FileInputStream(file);
+            byte[] data = new byte[(int) file.length()];
+            int offset = 0;
+            int read;
+            while (offset < data.length && (read = fis.read(data, offset, data.length - offset)) != -1) {
+                offset += read;
+            }
+            fis.close();
+            return data;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void writeToDiskCache(Context context, String key, byte[] data) {
+        if (data == null || data.length == 0) return;
+        try {
+            File cacheDir = new File(context.getCacheDir(), "linka_img_cache");
+            if (!cacheDir.exists()) {
+                cacheDir.mkdirs();
+            }
+            File file = new File(cacheDir, md5Key(key));
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(data);
+            fos.flush();
+            fos.close();
+        } catch (Exception ignored) {}
+    }
+
     private boolean isGif(String url, byte[] data) {
         if (url != null && url.toLowerCase().endsWith(".gif")) {
             return true;
@@ -124,12 +174,28 @@ public class ImageLoader {
         return false;
     }
 
-    private Bitmap decodeByteArrayDirect(byte[] data) {
+    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth) {
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+        if (width > reqWidth && reqWidth > 0) {
+            final int halfWidth = width / 2;
+            while ((halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+        return inSampleSize;
+    }
+
+    private Bitmap decodeSampledBitmap(byte[] data, int reqWidth) {
         if (data == null || data.length == 0) return null;
 
         try {
             final BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inSampleSize = 1; 
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeByteArray(data, 0, data.length, options);
+
+            options.inSampleSize = calculateInSampleSize(options, reqWidth);
+            options.inJustDecodeBounds = false;
             options.inPreferredConfig = Bitmap.Config.RGB_565;
             options.inDither = true;
             options.inPurgeable = true;
@@ -158,7 +224,7 @@ public class ImageLoader {
             SoftReference<Bitmap> ref = memoryCache.get(imageUrl);
             if (ref != null) {
                 Bitmap cachedBitmap = ref.get();
-                if (cachedBitmap != null) {
+                if (cachedBitmap != null && !cachedBitmap.isRecycled()) {
                     targetView.setImageBitmap(cachedBitmap);
                     return;
                 }
@@ -175,11 +241,15 @@ public class ImageLoader {
 
                 try {
                     int targetWidth = getTargetWidth(appContext);
-                    String fetchUrl = cleanAndPrepareUrl(imageUrl, targetWidth, null, 85);
+                    String fetchUrl = cleanAndPrepareUrl(imageUrl, targetWidth, null, 75);
 
-                    Log.d(TAG, "Requisitando imagem na URL: " + fetchUrl);
-
-                    byte[] rawBytes = request.requestBytes(fetchUrl, "GET", appContext);
+                    byte[] rawBytes = readFromDiskCache(appContext, fetchUrl);
+                    if (rawBytes == null || rawBytes.length == 0) {
+                        rawBytes = request.requestBytes(fetchUrl, "GET", appContext);
+                        if (rawBytes != null && rawBytes.length > 0) {
+                            writeToDiskCache(appContext, fetchUrl, rawBytes);
+                        }
+                    }
 
                     if (rawBytes != null && rawBytes.length > 0) {
                         if (!imageUrl.equals(targetView.getTag())) return;
@@ -202,10 +272,9 @@ public class ImageLoader {
                             }
                         }
 
-                        final Bitmap decodedBitmap = decodeByteArrayDirect(rawBytes);
+                        final Bitmap decodedBitmap = decodeSampledBitmap(rawBytes, targetWidth);
 
                         if (decodedBitmap != null) {
-                            Log.d(TAG, "Imagem decodificada com sucesso! Dims reais do Bitmap: " + decodedBitmap.getWidth() + "x" + decodedBitmap.getHeight());
                             memoryCache.put(imageUrl, new SoftReference<Bitmap>(decodedBitmap));
                             mainHandler.post(new Runnable() {
                                 @Override
@@ -238,7 +307,7 @@ public class ImageLoader {
             SoftReference<Bitmap> ref = memoryCache.get(tagKey);
             if (ref != null) {
                 Bitmap cachedAvatar = ref.get();
-                if (cachedAvatar != null) {
+                if (cachedAvatar != null && !cachedAvatar.isRecycled()) {
                     targetImageView.setImageBitmap(cachedAvatar);
                     return;
                 }
@@ -254,45 +323,55 @@ public class ImageLoader {
                 try {
                     if (!tagKey.equals(targetImageView.getTag())) return;
 
-                    String baseUrl = getBaseUrl(appContext);
-                    JSONObject requestBody = new JSONObject();
-                    requestBody.put("username", username);
+                    String avatarUrl = avatarUrlCache.get(username);
 
-                    String jsonResponse = request.requestHTTP(baseUrl + "/view-profile-picture", "POST", requestBody, appContext);
+                    if (avatarUrl == null || avatarUrl.length() == 0) {
+                        String baseUrl = getBaseUrl(appContext);
+                        JSONObject requestBody = new JSONObject();
+                        requestBody.put("username", username);
 
-                    if (!tagKey.equals(targetImageView.getTag())) return;
+                        String jsonResponse = request.requestHTTP(baseUrl + "/view-profile-picture", "POST", requestBody, appContext);
+                        if (!tagKey.equals(targetImageView.getTag())) return;
 
-                    if (jsonResponse != null && jsonResponse.trim().length() > 0) {
-                        JSONObject responseData = new JSONObject(jsonResponse);
-
-                        if (!responseData.isNull("profile-picture")) {
-                            String avatarUrl = responseData.optString("profile-picture", "");
-
-                            if (avatarUrl.length() > 0 && !avatarUrl.equals("null")) {
-
-                                DisplayMetrics metrics = appContext.getResources().getDisplayMetrics();
-                                int avatarPx = Math.round(64 * metrics.density);
-
-                                String fetchUrl = cleanAndPrepareUrl(avatarUrl, avatarPx, avatarPx, 90);
-
-                                byte[] rawBytes = request.requestBytes(fetchUrl, "GET", appContext);
-
-                                if (!tagKey.equals(targetImageView.getTag())) return;
-
-                                if (rawBytes != null && rawBytes.length > 0) {
-                                    final Bitmap decodedBitmap = decodeByteArrayDirect(rawBytes);
-                                    if (decodedBitmap != null) {
-                                        memoryCache.put(tagKey, new SoftReference<Bitmap>(decodedBitmap));
-                                        mainHandler.post(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                if (tagKey.equals(targetImageView.getTag())) {
-                                                    targetImageView.setImageBitmap(decodedBitmap);
-                                                }
-                                            }
-                                        });
-                                    }
+                        if (jsonResponse != null && jsonResponse.trim().length() > 0) {
+                            JSONObject responseData = new JSONObject(jsonResponse);
+                            if (!responseData.isNull("profile-picture")) {
+                                avatarUrl = responseData.optString("profile-picture", "");
+                                if (avatarUrl.length() > 0 && !avatarUrl.equals("null")) {
+                                    avatarUrlCache.put(username, avatarUrl);
                                 }
+                            }
+                        }
+                    }
+
+                    if (avatarUrl != null && avatarUrl.length() > 0 && !avatarUrl.equals("null")) {
+                        DisplayMetrics metrics = appContext.getResources().getDisplayMetrics();
+                        int avatarPx = Math.round(64 * metrics.density);
+
+                        String fetchUrl = cleanAndPrepareUrl(avatarUrl, avatarPx, avatarPx, 80);
+
+                        byte[] rawBytes = readFromDiskCache(appContext, fetchUrl);
+                        if (rawBytes == null || rawBytes.length == 0) {
+                            rawBytes = request.requestBytes(fetchUrl, "GET", appContext);
+                            if (rawBytes != null && rawBytes.length > 0) {
+                                writeToDiskCache(appContext, fetchUrl, rawBytes);
+                            }
+                        }
+
+                        if (!tagKey.equals(targetImageView.getTag())) return;
+
+                        if (rawBytes != null && rawBytes.length > 0) {
+                            final Bitmap decodedBitmap = decodeSampledBitmap(rawBytes, avatarPx);
+                            if (decodedBitmap != null) {
+                                memoryCache.put(tagKey, new SoftReference<Bitmap>(decodedBitmap));
+                                mainHandler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (tagKey.equals(targetImageView.getTag())) {
+                                            targetImageView.setImageBitmap(decodedBitmap);
+                                        }
+                                    }
+                                });
                             }
                         }
                     }
