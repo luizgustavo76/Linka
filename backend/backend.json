@@ -25,6 +25,7 @@
         "threads":true,
         "twitter":true,
         "poll":true,
+        "feeds-slots":true,
         "url-server":"https://linka-project.onrender.com"
 
     }

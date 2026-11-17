@@ -24,6 +24,8 @@ with open(json_path, "r") as f:
 root_flags = modules_flags["modules-flags"]
 
 from mentions import mentions_bp
+if root_flags["feeds-slots"]:
+    from feeds_slots import feeds_slots_bp
 if root_flags["twitter"]:
     from twitter_federation.posts import twitter_bp
 if root_flags["threads"]:
@@ -389,6 +391,8 @@ if root_flags["bookmarks"]:
     app.register_blueprint(bookmarks_bp)
 if root_flags["twitter"]:
     app.register_blueprint(twitter_bp)
+if root_flags["feeds-slots"]:
+    app.register_blueprint(feeds_slots_bp)
 app.register_blueprint(mentions_bp)
 
 if __name__ == "__main__":
