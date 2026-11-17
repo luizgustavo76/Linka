@@ -138,7 +138,8 @@ public class HomeActivity extends ActivityGroup {
     private ImageButton fabNewPost;
     private int feedPageTimeline = 1;
     private boolean isLoading = false;
-    private String actualFeed = "Timeline";
+    private String actualFeed = "Linka";
+    private int lastValidSpinnerPos = 0;
     private boolean hasMoreTimeline = true;
     private Spinner spinnerFeeds;
     private View topHeaderContainer;
@@ -163,7 +164,7 @@ public class HomeActivity extends ActivityGroup {
             e.printStackTrace();
         }
 
-        List<String> redesList = new ArrayList<String>(Arrays.asList("Timeline", "Linka >", "Communities >", "Friends >", "+ New Feed"));
+        List<String> redesList = new ArrayList<String>(Arrays.asList("Linka >", "Timeline", "Communities >", "Friends >", "+ New Feed"));
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         SQLiteDatabase db = null;
         Cursor cursor = null;
@@ -201,10 +202,26 @@ public class HomeActivity extends ActivityGroup {
                 String selectItem = parent.getItemAtPosition(position).toString();
                 String newFeed = selectItem.replace(">", "").trim();
 
-                if (!newFeed.equals(actualFeed)) {
+                if ("Communities".equalsIgnoreCase(newFeed)) {
+                    spinnerFeeds.setSelection(lastValidSpinnerPos);
+                    startActivity(new Intent(HomeActivity.this, CommunityIndex.class));
+                    return;
+                }
+
+                if ("+ New Feed".equalsIgnoreCase(newFeed)) {
+                    spinnerFeeds.setSelection(lastValidSpinnerPos);
+                    startActivity(new Intent(HomeActivity.this, MainEditTimeline.class));
+                    return;
+                }
+
+                lastValidSpinnerPos = position;
+
+                if (!newFeed.equalsIgnoreCase(actualFeed)) {
                     stopActiveVideo();
                     actualFeed = newFeed;
                     postsTimeline.clear();
+                    feedPageTimeline = 1;
+                    hasMoreTimeline = true;
                     if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
                     refreshFeed();
                 }
@@ -832,8 +849,11 @@ public class HomeActivity extends ActivityGroup {
             }
 
             isLoading = true;
+            String currentFeedClean = actualFeed.trim();
 
-            if ("Timeline".equalsIgnoreCase(actualFeed.trim())) {
+            if ("Linka".equalsIgnoreCase(currentFeedClean)) {
+                new FetchFeedTask("timeline", baseUrl + "/feed?page=" + targetPage + "&limit=20", "GET", null, targetPage).execute();
+            } else if ("Timeline".equalsIgnoreCase(currentFeedClean)) {
                 JSONObject body = new JSONObject();
                 try {
                     body.put("urls", urlsArray);
@@ -844,9 +864,7 @@ public class HomeActivity extends ActivityGroup {
                     e.printStackTrace();
                 }
                 new FetchFeedTask("timeline", baseUrl + "/view-external-posts?page=" + targetPage + "&limit=20", "POST", body, targetPage).execute();
-            } else if ("Linka".equalsIgnoreCase(actualFeed.trim())) {
-                new FetchFeedTask("timeline", baseUrl + "/slot-feed", "GET", null, targetPage).execute();
-            } else if ("Friends".equalsIgnoreCase(actualFeed.trim())) {
+            } else if ("Friends".equalsIgnoreCase(currentFeedClean)) {
                 try {
                     JSONObject jsonFriends = new JSONObject();
                     jsonFriends.put("username", username);
@@ -890,44 +908,9 @@ public class HomeActivity extends ActivityGroup {
             this.pageRequested = pageRequested;
         }
 
-        private JSONObject buildSlotFeedPayload() {
-            JSONObject payload = new JSONObject();
-            try {
-                if (jsonBody != null) {
-                    payload = new JSONObject(jsonBody.toString());
-                }
-
-                if (!payload.has("username") || payload.optString("username", "").trim().length() == 0) {
-                    config cfg = new config();
-                    String rawCfg = cfg.loadCfgAsJson(HomeActivity.this, "config.cfg");
-                    if (rawCfg != null && rawCfg.length() > 0) {
-                        JSONObject jsonCfg = new JSONObject(rawCfg);
-                        if (jsonCfg.has("FAST_LOGIN")) {
-                            String savedUser = jsonCfg.getJSONObject("FAST_LOGIN").optString("username", "");
-                            if (savedUser.length() > 0) {
-                                payload.put("username", savedUser);
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return payload;
-        }
-
         @Override
         protected String doInBackground(Void... params) {
-            String targetUrl = url;
-            String targetMethod = method;
-            JSONObject bodyToSend = jsonBody;
-
-            if (targetUrl != null && targetUrl.endsWith("/slot-feed")) {
-                targetMethod = "POST";
-                bodyToSend = buildSlotFeedPayload();
-            }
-
-            return request.requestHTTP(targetUrl, targetMethod, bodyToSend, HomeActivity.this);
+            return requestHTTP(url, method, jsonBody);
         }
 
         @Override
@@ -948,9 +931,7 @@ public class HomeActivity extends ActivityGroup {
                 if (trimmed.startsWith("[")) {
                     JSONArray jsonArray = new JSONArray(trimmed);
 
-                    if (url != null && url.endsWith("/slot-feed")) {
-                        hasMoreTimeline = false;
-                    } else if (jsonArray.length() < 20) {
+                    if (jsonArray.length() < 20) {
                         hasMoreTimeline = false;
                     }
 
@@ -965,13 +946,8 @@ public class HomeActivity extends ActivityGroup {
 
                 } else if (trimmed.startsWith("{")) {
                     JSONObject errObj = new JSONObject(trimmed);
-                    String status = errObj.optString("status", "");
-                    if ("unauthorized".equals(status)) {
-                        Toast.makeText(HomeActivity.this, "Session expired. Please refresh.", Toast.LENGTH_SHORT).show();
-                    } else {
-                        String msg = errObj.optString("error", status.length() > 0 ? status : "Error loading feed");
-                        Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
-                    }
+                    String msg = errObj.optString("error", errObj.optString("status", "Error loading feed"));
+                    Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1415,7 +1391,6 @@ public class HomeActivity extends ActivityGroup {
                             holder.btnPlayVideo.setVisibility(View.GONE);
                             holder.videoPost.setVisibility(View.VISIBLE);
 
-                            // Define proporção inicial (se veio da API) antes mesmo do buffering terminar
                             if (initialVideoW > 0 && initialVideoH > 0) {
                                 holder.videoPost.setVideoSize(initialVideoW, initialVideoH);
                             } else {
@@ -1432,7 +1407,6 @@ public class HomeActivity extends ActivityGroup {
                             holder.videoPost.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                                 @Override
                                 public void onPrepared(MediaPlayer mp) {
-                                    // Ajusta para a resolução real exata do stream MP4
                                     int realW = mp.getVideoWidth();
                                     int realH = mp.getVideoHeight();
                                     if (realW > 0 && realH > 0) {
