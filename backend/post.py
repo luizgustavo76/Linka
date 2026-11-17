@@ -744,17 +744,30 @@ def new_post():
             datetime_post = data.get("datetime") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             width = data.get("width", "")
             heigth = data.get("heigth", "")
+
             repost = data.get("repost")
-            if repost:
+            original_id = None
+            username_repost = None
+            text_post_repost = None
+            datetime_repost = None
+            media_url_repost = None
+            width_repost = ""
+            height_repost = ""
+
+            if isinstance(repost, dict) and repost:
                 original_id = repost.get("original_id")
                 username_repost = repost.get("username")
                 text_post_repost = repost.get("text_post")
                 datetime_repost = repost.get("datetime")
                 media_attachments_repost = repost.get("media_attachments")
-                width_repost = media_attachments_repost.get("width")
-                height_repost = media_attachments_repost.get("height")
-                media_url_repost = media_attachments_repost.get("media_url")
+                if isinstance(media_attachments_repost, dict):
+                    width_repost = str(media_attachments_repost.get("width", ""))
+                    height_repost = str(media_attachments_repost.get("height", ""))
+                    media_url_repost = media_attachments_repost.get("media_url")
+
+            poll_data = data.get("poll")
             media_list_input = data.get("media_list") or data.get("media_attachments")
+
             match = re.search(r'\[IMAGE\]\s*(.*)', text_post)
             if match:
                 media = match.group(1).strip()
@@ -763,7 +776,7 @@ def new_post():
             if not username:
                 return jsonify({"status": "username not send"}), 400
 
-            if not text_post and not media and not media_list_input:
+            if not text_post and not media and not media_list_input and not original_id and not poll_data:
                 return jsonify({"status": "its not possible create a post with no cotent"}), 400
 
             if "@" in text_post:
@@ -789,13 +802,48 @@ def new_post():
             try:
                 cur.execute(
                     """
-                    INSERT INTO posts(username, text_post, datetime, media, media_type, width, heigth) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s) 
+                    INSERT INTO posts(
+                        username, text_post, datetime, media, media_type, width, heigth,
+                        repost_id, repost_username, repost_text, repost_datetime,
+                        repost_media_url, repost_media_width, repost_media_height
+                    ) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
                     RETURNING id
                     """,
-                    (username, text_post, datetime_post, main_media, media_type, str(width or ""), str(heigth or ""))
+                    (
+                        username, text_post, datetime_post, main_media, media_type,
+                        str(width or ""), str(heigth or ""),
+                        original_id, username_repost, text_post_repost, datetime_repost,
+                        media_url_repost, width_repost, height_repost
+                    )
                 )
                 post_id = cur.fetchone()["id"]
+
+                if isinstance(poll_data, dict):
+                    options = poll_data.get("options", [])
+                    if isinstance(options, list) and len(options) >= 2:
+                        poll_title = poll_data.get("title") or text_post or "Poll"
+                        duration_hours = int(poll_data.get("duration_hours", 24))
+                        cur.execute(
+                            """
+                            INSERT INTO poll (post_id, title, expires_at)
+                            VALUES (%s, %s, NOW() + (%s || ' hours')::interval)
+                            RETURNING id
+                            """,
+                            (str(post_id), poll_title, duration_hours)
+                        )
+                        poll_id = cur.fetchone()["id"]
+
+                        for opt in options:
+                            opt_text = str(opt).strip()
+                            if opt_text:
+                                cur.execute(
+                                    """
+                                    INSERT INTO poll_options (poll_id, option_text, votes_count)
+                                    VALUES (%s, %s, 0)
+                                    """,
+                                    (poll_id, opt_text)
+                                )
 
                 background_media_items = []
 
@@ -833,11 +881,11 @@ def new_post():
                 cur.close()
                 conn.close()
 
-            if (main_media and (not width or not heigth)) or background_media_items:
+            if (main_media and media_type != "video" and (not width or not heigth)) or background_media_items:
                 bg_executor.submit(
                     process_dimensions_in_background,
                     post_id,
-                    main_media if (not width or not heigth) else None,
+                    main_media if (media_type != "video" and (not width or not heigth)) else None,
                     background_media_items
                 )
 
@@ -848,13 +896,12 @@ def new_post():
                     pass
 
             linkosModule.add_linkos(username, "5")
-            return jsonify({"status": "post created with sucess"}), 200
+            return jsonify({"status": "post created with sucess", "post_id": post_id}), 200
         else:
             return jsonify({"status": "forbidden"}), 403
     except Exception as e:
         print("ERROR", e)
         return jsonify({"status": "error", "message": "internal server error"}), 500
-
 
 @post_bp.route("/trending-feed", methods=["GET"])
 def trending_feed():

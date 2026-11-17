@@ -5,8 +5,45 @@ import boto3
 from botocore.config import Config
 import dotenv
 from flask import Blueprint, Response, jsonify, redirect, request
+import os
+import uuid
+import cloudinary
+import cloudinary.uploader
+from flask import Blueprint, request, jsonify
 
-# Tenta carregar o arquivo .env local se existir
+upload_video_bp = Blueprint("upload_video", __name__)
+
+@upload_video_bp.route("/upload-video", methods=["POST"])
+def upload_video():
+    if "file" not in request.files and "image" not in request.files:
+        return jsonify({"error": "No video file provided"}), 400
+
+    video_file = request.files.get("file") or request.files.get("image")
+    if not video_file or video_file.filename == "":
+        return jsonify({"error": "Empty filename"}), 400
+
+    try:
+        res = cloudinary.uploader.upload(
+            video_file,
+            resource_type="video",
+            folder="linka_videos",
+            public_id=f"vid_{uuid.uuid4().hex[:12]}",
+            eager=[{"width": 480, "crop": "limit", "format": "mp4", "video_codec": "h264"}],
+            eager_async=False
+        )
+        video_url = res.get("eager", [{}])[0].get("secure_url") or res.get("secure_url")
+        thumb_url = video_url.rsplit(".", 1)[0] + ".jpg" if video_url else ""
+
+        return jsonify({
+            "status": "ok",
+            "video_url": video_url,
+            "media_url": video_url,
+            "thumbnail_url": thumb_url,
+            "width": res.get("width", ""),
+            "height": res.get("height", "")
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 env_path = os.path.join(BASE_DIR, "backend.env")
 if os.path.exists(env_path):
