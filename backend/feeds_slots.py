@@ -260,6 +260,159 @@ def filter_posts_list(result, filters=None, fallback_platform=""):
     return filtered
 
 
+def get_explore_candidate_pool(exclude_urls=None, exclude_platforms=None, filters=None, max_sources=2):
+    exclude_urls = exclude_urls or set()
+    exclude_platforms = {p.lower() for p in (exclude_platforms or set())}
+
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT url FROM federation_index WHERE url IS NOT NULL AND url != ''")
+        rows = cur.fetchall()
+    finally:
+        cur.close()
+        conn.close()
+
+    by_platform = {}
+    for r in rows:
+        u = r.get("url")
+        if not u or u in exclude_urls or u.rstrip("/").endswith("/feed"):
+            continue
+        plat = extract_platform_from_url(u)
+        if plat in exclude_platforms:
+            continue
+        by_platform.setdefault(plat, []).append(u)
+
+    if not by_platform:
+        return []
+
+    platforms = list(by_platform.keys())
+    random.shuffle(platforms)
+
+    selected = []
+    for plat in platforms[:max_sources]:
+        cached_candidates = [u for u in by_platform[plat] if get_cached_url(u) is not None]
+        chosen_u = random.choice(cached_candidates) if cached_candidates else random.choice(by_platform[plat])
+        selected.append((plat, chosen_u))
+
+    pool = []
+    with ThreadPoolExecutor(max_workers=len(selected)) as executor:
+        future_map = {
+            executor.submit(fetch_federation_cached, u): plat
+            for plat, u in selected
+        }
+        for future, plat in future_map.items():
+            try:
+                res = future.result(timeout=15)
+                posts = filter_posts_list(res, filters, fallback_platform=plat)
+                random.shuffle(posts)
+                pool.extend(posts[:5])
+            except Exception as e:
+                print(f"DEBUG - Erro ao buscar pool explore ({plat}): {e}")
+
+    random.shuffle(pool)
+    return pool
+
+
+def pop_next_different_platform(pool, last_platform):
+    if not pool:
+        return None
+    for idx, item in enumerate(pool):
+        if item.get("platform", "").lower() != (last_platform or "").lower():
+            return pool.pop(idx)
+    return pool.pop(0)
+
+
+def fill_temporal_gaps(
+    base_posts,
+    external_pool,
+    hours_per_post=12.0,
+    max_posts_per_gap=2,
+    max_total_external=8
+):
+    if not external_pool or max_total_external <= 0:
+        return list(base_posts)
+
+    available_pool = list(external_pool)
+    injected_total = 0
+    now = datetime.now()
+
+    if not base_posts:
+        picked = []
+        last_plat = ""
+        while available_pool and len(picked) < min(5, max_total_external):
+            item = pop_next_different_platform(available_pool, last_plat)
+            if not item:
+                break
+            last_plat = item.get("platform", "")
+            picked.append(item)
+        return picked
+
+    sorted_base = sorted(
+        base_posts,
+        key=lambda x: parse_datetime_flexible(x.get("datetime")),
+        reverse=True
+    )
+
+    result = []
+    last_platform = ""
+
+    first_dt = parse_datetime_flexible(sorted_base[0].get("datetime"))
+    if first_dt != datetime.min and available_pool and injected_total < max_total_external:
+        top_gap_hours = (now - first_dt).total_seconds() / 3600.0
+        top_fill = min(
+            int(top_gap_hours / hours_per_post),
+            max_posts_per_gap,
+            max_total_external - injected_total
+        )
+        for step in range(top_fill):
+            if not available_pool:
+                break
+            filler = pop_next_different_platform(available_pool, last_platform)
+            if not filler:
+                break
+            last_platform = filler.get("platform", "")
+            injected_total += 1
+            fake_dt = now - timedelta(hours=(step + 1) * (top_gap_hours / (top_fill + 1)))
+            filler["datetime"] = fake_dt.strftime("%Y-%m-%d %H:%M:%S")
+            filler["relative_datetime"] = get_relative_time(fake_dt)
+            result.append(filler)
+
+    for i in range(len(sorted_base)):
+        current_post = sorted_base[i]
+        result.append(current_post)
+        last_platform = current_post.get("platform", last_platform)
+
+        if i + 1 < len(sorted_base) and available_pool and injected_total < max_total_external:
+            dt_newer = parse_datetime_flexible(current_post.get("datetime"))
+            dt_older = parse_datetime_flexible(sorted_base[i + 1].get("datetime"))
+
+            if dt_newer != datetime.min and dt_older != datetime.min and dt_newer > dt_older:
+                gap_hours = (dt_newer - dt_older).total_seconds() / 3600.0
+                fill_count = min(
+                    int(gap_hours / hours_per_post),
+                    max_posts_per_gap,
+                    max_total_external - injected_total
+                )
+
+                if fill_count > 0:
+                    step_hours = gap_hours / (fill_count + 1)
+                    for step in range(1, fill_count + 1):
+                        if not available_pool:
+                            break
+                        filler = pop_next_different_platform(available_pool, last_platform)
+                        if not filler:
+                            break
+                        last_platform = filler.get("platform", "")
+                        injected_total += 1
+                        interpolated_dt = dt_newer - timedelta(hours=step * step_hours)
+                        filler["datetime"] = interpolated_dt.strftime("%Y-%m-%d %H:%M:%S")
+                        filler["relative_datetime"] = get_relative_time(interpolated_dt)
+                        result.append(filler)
+
+    return result
+
+
 def sort_strict_no_repeat_platform(all_posts):
     for post in all_posts:
         post["_dt_obj"] = parse_datetime_flexible(post.get("datetime"))
@@ -382,11 +535,13 @@ def slot_feed():
         cur.close()
         conn.close()
 
-    combined_posts = filter_posts_list(
+    base_posts = filter_posts_list(
         get_linka_native_posts(current_user=username, limit=30),
         filters,
         fallback_platform="linka"
     )
+    occupied_urls = {row["feed_url"] for row in saved_slots}
+    occupied_platforms = {extract_platform_from_url(row["feed_url"]) for row in saved_slots}
 
     if saved_slots:
         with ThreadPoolExecutor(max_workers=4) as executor:
@@ -394,13 +549,31 @@ def slot_feed():
                 executor.submit(fetch_by_url, row["feed_url"], username): extract_platform_from_url(row["feed_url"])
                 for row in saved_slots
             }
-            for future in as_completed(future_map, timeout=8):
-                plat = future_map[future]
+            for future, plat in future_map.items():
                 try:
-                    res = future.result()
-                    combined_posts.extend(filter_posts_list(res, filters, fallback_platform=plat))
+                    res = future.result(timeout=15)
+                    base_posts.extend(filter_posts_list(res, filters, fallback_platform=plat))
                 except Exception as e:
-                    print(f"DEBUG - Erro na thread do slot: {e}")
+                    print(f"DEBUG - Erro na thread do slot ({plat}): {e}")
+
+    has_empty_slots = len(saved_slots) < 4
+    if has_empty_slots:
+        max_external = max(2, min(8, len(base_posts)))
+        explore_pool = get_explore_candidate_pool(
+            exclude_urls=occupied_urls,
+            exclude_platforms=occupied_platforms,
+            filters=filters,
+            max_sources=2
+        )
+        combined_posts = fill_temporal_gaps(
+            base_posts,
+            explore_pool,
+            hours_per_post=12.0,
+            max_posts_per_gap=2,
+            max_total_external=max_external
+        )
+    else:
+        combined_posts = base_posts
 
     if not combined_posts:
         return jsonify([]), 200
