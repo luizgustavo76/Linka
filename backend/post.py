@@ -758,7 +758,7 @@ def new_post():
                 original_id = repost.get("original_id")
                 username_repost = repost.get("username")
                 text_post_repost = repost.get("text_post")
-                datetime_repost = repost.get("datetime")
+                datetime_repost = repost.get("datetime") or None
                 media_attachments_repost = repost.get("media_attachments")
                 if isinstance(media_attachments_repost, dict):
                     width_repost = str(media_attachments_repost.get("width", ""))
@@ -800,6 +800,18 @@ def new_post():
             conn = get_db()
             cur = conn.cursor()
             try:
+                repost_columns = [
+                    ("repost_id", "INTEGER"),
+                    ("repost_username", "TEXT"),
+                    ("repost_text", "TEXT"),
+                    ("repost_datetime", "TEXT"),
+                    ("repost_media_url", "TEXT"),
+                    ("repost_media_width", "TEXT"),
+                    ("repost_media_height", "TEXT")
+                ]
+                for col_name, col_type in repost_columns:
+                    cur.execute(f"ALTER TABLE posts ADD COLUMN IF NOT EXISTS {col_name} {col_type}")
+
                 cur.execute(
                     """
                     INSERT INTO posts(
@@ -822,6 +834,23 @@ def new_post():
                 if isinstance(poll_data, dict):
                     options = poll_data.get("options", [])
                     if isinstance(options, list) and len(options) >= 2:
+                        cur.execute("""
+                            CREATE TABLE IF NOT EXISTS poll (
+                                id SERIAL PRIMARY KEY,
+                                post_id TEXT,
+                                title TEXT,
+                                expires_at TIMESTAMP
+                            )
+                        """)
+                        cur.execute("""
+                            CREATE TABLE IF NOT EXISTS poll_options (
+                                id SERIAL PRIMARY KEY,
+                                poll_id INTEGER REFERENCES poll(id) ON DELETE CASCADE,
+                                option_text TEXT,
+                                votes_count INTEGER DEFAULT 0
+                            )
+                        """)
+
                         poll_title = poll_data.get("title") or text_post or "Poll"
                         duration_hours = int(poll_data.get("duration_hours", 24))
                         cur.execute(
@@ -876,6 +905,7 @@ def new_post():
                 conn.commit()
             except Exception as e:
                 conn.rollback()
+                print("DB ERROR /new:", traceback.format_exc())
                 return jsonify({"status": "error", "message": str(e)}), 500
             finally:
                 cur.close()
@@ -900,9 +930,8 @@ def new_post():
         else:
             return jsonify({"status": "forbidden"}), 403
     except Exception as e:
-        print("ERROR", e)
-        return jsonify({"status": "error", "message": "internal server error"}), 500
-
+        print("ERROR /new:", traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
 @post_bp.route("/trending-feed", methods=["GET"])
 def trending_feed():
     posts_id = []
