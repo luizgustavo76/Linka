@@ -11,3 +11,4 @@ pillow
 boto3
 redis
 markdown
+cloudnary
