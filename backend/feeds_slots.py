@@ -1,7 +1,9 @@
 import os
 import re
+import time
 import json
 import random
+import threading
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -23,6 +25,35 @@ with open(json_path, "r") as f:
 root_flags = modules_flags["modules-flags"]
 url_server = root_flags["url-server"]
 DATABASE_URL = os.getenv("DATABASE_URL")
+
+_CACHE_LOCK = threading.Lock()
+_URL_CACHE = {}
+_USER_FEED_CACHE = {}
+URL_CACHE_TTL = 300
+USER_FEED_TTL = 90
+
+
+def get_cached_url(url):
+    now = time.time()
+    with _CACHE_LOCK:
+        entry = _URL_CACHE.get(url)
+        if entry and (now - entry["ts"]) < URL_CACHE_TTL:
+            return entry["data"]
+    return None
+
+
+def set_cached_url(url, data):
+    with _CACHE_LOCK:
+        if len(_URL_CACHE) > 200:
+            _URL_CACHE.clear()
+        _URL_CACHE[url] = {"ts": time.time(), "data": data}
+
+
+def invalidate_user_cache(username):
+    with _CACHE_LOCK:
+        keys_to_del = [k for k in _USER_FEED_CACHE if k.startswith(f"{username}:")]
+        for k in keys_to_del:
+            del _USER_FEED_CACHE[k]
 
 
 def get_db():
@@ -182,12 +213,22 @@ def extract_platform_from_url(url):
     return "other"
 
 
+def fetch_federation_cached(url):
+    cached = get_cached_url(url)
+    if cached is not None:
+        return cached
+    data = fetch_single_federation(url)
+    if data:
+        set_cached_url(url, data)
+    return data
+
+
 def fetch_by_url(url, current_user=""):
     parsed = urlparse(url)
     path = parsed.path.rstrip("/")
     if path == "/feed":
         return get_linka_native_posts(current_user=current_user, limit=30)
-    return fetch_single_federation(url)
+    return fetch_federation_cached(url)
 
 
 def filter_posts_list(result, filters=None, fallback_platform=""):
@@ -210,158 +251,13 @@ def filter_posts_list(result, filters=None, fallback_platform=""):
         item = dict(post)
         if not item.get("platform") and fallback_platform:
             item["platform"] = fallback_platform
+        if item.get("id") is None:
+            orig_id = item.get("unique_id") or item.get("uri") or item.get("cid")
+            if orig_id is not None:
+                item["id"] = orig_id
         filtered.append(item)
 
     return filtered
-
-
-def get_explore_candidate_pool(exclude_urls=None, exclude_platforms=None, filters=None, max_sources=3):
-    exclude_urls = exclude_urls or set()
-    exclude_platforms = {p.lower() for p in (exclude_platforms or set())}
-
-    conn = get_db()
-    cur = conn.cursor()
-    try:
-        cur.execute("SELECT url FROM federation_index WHERE url IS NOT NULL AND url != ''")
-        rows = cur.fetchall()
-    finally:
-        cur.close()
-        conn.close()
-
-    by_platform = {}
-    for r in rows:
-        u = r.get("url")
-        if not u or u in exclude_urls or u.rstrip("/").endswith("/feed"):
-            continue
-        plat = extract_platform_from_url(u)
-        if plat in exclude_platforms:
-            continue
-        by_platform.setdefault(plat, []).append(u)
-
-    if not by_platform:
-        return []
-
-    platforms = list(by_platform.keys())
-    random.shuffle(platforms)
-    selected = [(plat, random.choice(by_platform[plat])) for plat in platforms[:max_sources]]
-
-    pool = []
-    with ThreadPoolExecutor(max_workers=len(selected)) as executor:
-        future_map = {
-            executor.submit(fetch_single_federation, u): plat
-            for plat, u in selected
-        }
-        for future in as_completed(future_map):
-            plat = future_map[future]
-            try:
-                res = future.result()
-                posts = filter_posts_list(res, filters, fallback_platform=plat)
-                random.shuffle(posts)
-                pool.extend(posts[:5])
-            except Exception as e:
-                print(f"DEBUG - Erro ao buscar pool explore ({plat}): {e}")
-
-    random.shuffle(pool)
-    return pool
-
-
-def pop_next_different_platform(pool, last_platform):
-    if not pool:
-        return None
-    for idx, item in enumerate(pool):
-        if item.get("platform", "").lower() != (last_platform or "").lower():
-            return pool.pop(idx)
-    return pool.pop(0)
-
-
-def fill_temporal_gaps(
-    base_posts,
-    external_pool,
-    hours_per_post=12.0,
-    max_posts_per_gap=2,
-    max_total_external=8
-):
-    if not external_pool or max_total_external <= 0:
-        return list(base_posts)
-
-    available_pool = list(external_pool)
-    injected_total = 0
-    now = datetime.now()
-
-    if not base_posts:
-        picked = []
-        last_plat = ""
-        while available_pool and len(picked) < min(5, max_total_external):
-            item = pop_next_different_platform(available_pool, last_plat)
-            if not item:
-                break
-            last_plat = item.get("platform", "")
-            picked.append(item)
-        return picked
-
-    sorted_base = sorted(
-        base_posts,
-        key=lambda x: parse_datetime_flexible(x.get("datetime")),
-        reverse=True
-    )
-
-    result = []
-    last_platform = ""
-
-    first_dt = parse_datetime_flexible(sorted_base[0].get("datetime"))
-    if first_dt != datetime.min and available_pool and injected_total < max_total_external:
-        top_gap_hours = (now - first_dt).total_seconds() / 3600.0
-        top_fill = min(
-            int(top_gap_hours / hours_per_post),
-            max_posts_per_gap,
-            max_total_external - injected_total
-        )
-        for step in range(top_fill):
-            if not available_pool:
-                break
-            filler = pop_next_different_platform(available_pool, last_platform)
-            if not filler:
-                break
-            last_platform = filler.get("platform", "")
-            injected_total += 1
-            fake_dt = now - timedelta(hours=(step + 1) * (top_gap_hours / (top_fill + 1)))
-            filler["datetime"] = fake_dt.strftime("%Y-%m-%d %H:%M:%S")
-            filler["relative_datetime"] = get_relative_time(fake_dt)
-            result.append(filler)
-
-    for i in range(len(sorted_base)):
-        current_post = sorted_base[i]
-        result.append(current_post)
-        last_platform = current_post.get("platform", last_platform)
-
-        if i + 1 < len(sorted_base) and available_pool and injected_total < max_total_external:
-            dt_newer = parse_datetime_flexible(current_post.get("datetime"))
-            dt_older = parse_datetime_flexible(sorted_base[i + 1].get("datetime"))
-
-            if dt_newer != datetime.min and dt_older != datetime.min and dt_newer > dt_older:
-                gap_hours = (dt_newer - dt_older).total_seconds() / 3600.0
-                fill_count = min(
-                    int(gap_hours / hours_per_post),
-                    max_posts_per_gap,
-                    max_total_external - injected_total
-                )
-
-                if fill_count > 0:
-                    step_hours = gap_hours / (fill_count + 1)
-                    for step in range(1, fill_count + 1):
-                        if not available_pool:
-                            break
-                        filler = pop_next_different_platform(available_pool, last_platform)
-                        if not filler:
-                            break
-                        last_platform = filler.get("platform", "")
-                        injected_total += 1
-                        interpolated_dt = dt_newer - timedelta(hours=step * step_hours)
-                        filler["datetime"] = interpolated_dt.strftime("%Y-%m-%d %H:%M:%S")
-                        filler["relative_datetime"] = get_relative_time(interpolated_dt)
-                        result.append(filler)
-
-    return result
 
 
 def sort_strict_no_repeat_platform(all_posts):
@@ -444,6 +340,7 @@ def new_slot():
         """, (username, feed_url, feed_name, slot_to_save))
 
         conn.commit()
+        invalidate_user_cache(username)
         return jsonify({"status": "ok", "slot": slot_to_save}), 200
 
     except Exception as e:
@@ -457,14 +354,21 @@ def new_slot():
             conn.close()
 
 
-@feeds_slots_bp.route("/slot-feed", methods=["POST"])
+@feeds_slots_bp.route("/slot-feed", methods=["POST", "GET"])
 def slot_feed():
     data = request.get_json(silent=True) or {}
-    username = data.get("username")
+    username = data.get("username") or request.args.get("username") or getattr(g, "username", None)
     filters = data.get("filters")
 
     if not username or username != g.username:
         return jsonify({"status": "unauthorized"}), 403
+
+    cache_key = f"{username}:{json.dumps(filters, sort_keys=True)}"
+    now = time.time()
+    with _CACHE_LOCK:
+        cached_feed = _USER_FEED_CACHE.get(cache_key)
+        if cached_feed and (now - cached_feed["ts"]) < USER_FEED_TTL:
+            return jsonify(cached_feed["data"]), 200
 
     conn = get_db()
     cur = conn.cursor()
@@ -478,9 +382,11 @@ def slot_feed():
         cur.close()
         conn.close()
 
-    base_posts = filter_posts_list(get_linka_native_posts(current_user=username, limit=30), filters, fallback_platform="linka")
-    occupied_urls = {row["feed_url"] for row in saved_slots}
-    occupied_platforms = {extract_platform_from_url(row["feed_url"]) for row in saved_slots}
+    combined_posts = filter_posts_list(
+        get_linka_native_posts(current_user=username, limit=30),
+        filters,
+        fallback_platform="linka"
+    )
 
     if saved_slots:
         with ThreadPoolExecutor(max_workers=4) as executor:
@@ -488,38 +394,22 @@ def slot_feed():
                 executor.submit(fetch_by_url, row["feed_url"], username): extract_platform_from_url(row["feed_url"])
                 for row in saved_slots
             }
-            for future in as_completed(future_map):
+            for future in as_completed(future_map, timeout=8):
                 plat = future_map[future]
                 try:
                     res = future.result()
-                    base_posts.extend(filter_posts_list(res, filters, fallback_platform=plat))
+                    combined_posts.extend(filter_posts_list(res, filters, fallback_platform=plat))
                 except Exception as e:
                     print(f"DEBUG - Erro na thread do slot: {e}")
-
-    has_empty_slots = len(saved_slots) < 4
-    if has_empty_slots:
-        max_external = max(2, min(8, len(base_posts)))
-        explore_pool = get_explore_candidate_pool(
-            exclude_urls=occupied_urls,
-            exclude_platforms=occupied_platforms,
-            filters=filters,
-            max_sources=3
-        )
-        combined_posts = fill_temporal_gaps(
-            base_posts,
-            explore_pool,
-            hours_per_post=12.0,
-            max_posts_per_gap=2,
-            max_total_external=max_external
-        )
-    else:
-        combined_posts = base_posts
 
     if not combined_posts:
         return jsonify([]), 200
 
     final_feed = sort_strict_no_repeat_platform(combined_posts)
-    for index, post in enumerate(final_feed, start=1):
-        post["id"] = index
+
+    with _CACHE_LOCK:
+        if len(_USER_FEED_CACHE) > 200:
+            _USER_FEED_CACHE.clear()
+        _USER_FEED_CACHE[cache_key] = {"ts": time.time(), "data": final_feed}
 
     return jsonify(final_feed), 200
