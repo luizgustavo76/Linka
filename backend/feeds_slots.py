@@ -4,8 +4,12 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Blueprint, request, jsonify, g
-from post import fetch_single_federation, sort_and_interleave_posts
-from .mastodon_federation import get_posts
+from post import fetch_single_federation, sort_and_ 
+from .mastodon_federation import get_posts as mastodon_posts
+from .reddit_federation import posts as reddit_post
+from .threads_federation import app as threads_post
+from .twitter_federation import posts as twitter_posts
+from .bluesky_federation import bluesky_bridge as bluesky_posts
 import random
 base_dir = os.path.dirname(os.path.abspath(__file__))
 feeds_slots_bp = Blueprint("feeds_slots", __name__)
@@ -42,13 +46,35 @@ create_db()
 def sort_explore_post():
     platforms = ["mastodon", "bluesky", "reddit", "threads", "twitter"]
     selected = random.choice(platforms)
+    
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("SELECT url FROM federation_index ILIKE %s",(selected))
+    cur.execute(
+        "SELECT url FROM federation_index WHERE url ILIKE %s",
+        (f"%{selected}%",)
+    )
     result = cur.fetchall()
-    for urls in result:
-        if selected == "mastodon":
-            pass
+    cur.close()
+    conn.close()
+
+    if not result:
+        return []
+
+    raw_url = random.choice(result)["url"]
+    theme = raw_url.strip().rstrip("/").split("/")[-1] if "/" in raw_url else raw_url
+
+    if selected == "mastodon":
+        return mastodon_posts.fetch_mastodon_post(tag=theme, limit=1)
+    if selected == "reddit":
+        return reddit_post.fetch_reddit_posts(subreddit=theme, limit=1)
+    if selected == "bluesky":
+        return bluesky_posts.fetch_bluesky_posts(theme, limit=1)
+    if selected == "threads":
+        return threads_post.fetch_threads_search_fast(query=theme, limit=1)
+    if selected == "twitter":
+        return twitter_posts.fetch_twitter_search_fast(query=theme, limit=1)
+
+    return []
 @feeds_slots_bp.route("/new-slot", methods=["POST"])
 def new_slot():
     data = request.get_json(silent=True) or {}
