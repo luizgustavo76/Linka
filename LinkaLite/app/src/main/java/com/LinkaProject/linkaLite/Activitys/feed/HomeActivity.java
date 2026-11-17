@@ -845,7 +845,7 @@ public class HomeActivity extends ActivityGroup {
                 }
                 new FetchFeedTask("timeline", baseUrl + "/view-external-posts?page=" + targetPage + "&limit=20", "POST", body, targetPage).execute();
             } else if ("Linka".equalsIgnoreCase(actualFeed.trim())) {
-                new FetchFeedTask("timeline", baseUrl + "/feed?page=" + targetPage + "&limit=20", "GET", null, targetPage).execute();
+                new FetchFeedTask("timeline", baseUrl + "/slot-feed", "GET", null, targetPage).execute();
             } else if ("Friends".equalsIgnoreCase(actualFeed.trim())) {
                 try {
                     JSONObject jsonFriends = new JSONObject();
@@ -890,9 +890,44 @@ public class HomeActivity extends ActivityGroup {
             this.pageRequested = pageRequested;
         }
 
+        private JSONObject buildSlotFeedPayload() {
+            JSONObject payload = new JSONObject();
+            try {
+                if (jsonBody != null) {
+                    payload = new JSONObject(jsonBody.toString());
+                }
+
+                if (!payload.has("username") || payload.optString("username", "").trim().length() == 0) {
+                    config cfg = new config();
+                    String rawCfg = cfg.loadCfgAsJson(HomeActivity.this, "config.cfg");
+                    if (rawCfg != null && rawCfg.length() > 0) {
+                        JSONObject jsonCfg = new JSONObject(rawCfg);
+                        if (jsonCfg.has("FAST_LOGIN")) {
+                            String savedUser = jsonCfg.getJSONObject("FAST_LOGIN").optString("username", "");
+                            if (savedUser.length() > 0) {
+                                payload.put("username", savedUser);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return payload;
+        }
+
         @Override
         protected String doInBackground(Void... params) {
-            return requestHTTP(url, method, jsonBody);
+            String targetUrl = url;
+            String targetMethod = method;
+            JSONObject bodyToSend = jsonBody;
+
+            if (targetUrl != null && targetUrl.endsWith("/slot-feed")) {
+                targetMethod = "POST";
+                bodyToSend = buildSlotFeedPayload();
+            }
+
+            return request.requestHTTP(targetUrl, targetMethod, bodyToSend, HomeActivity.this);
         }
 
         @Override
@@ -913,7 +948,9 @@ public class HomeActivity extends ActivityGroup {
                 if (trimmed.startsWith("[")) {
                     JSONArray jsonArray = new JSONArray(trimmed);
 
-                    if (jsonArray.length() < 20) {
+                    if (url != null && url.endsWith("/slot-feed")) {
+                        hasMoreTimeline = false;
+                    } else if (jsonArray.length() < 20) {
                         hasMoreTimeline = false;
                     }
 
@@ -928,8 +965,13 @@ public class HomeActivity extends ActivityGroup {
 
                 } else if (trimmed.startsWith("{")) {
                     JSONObject errObj = new JSONObject(trimmed);
-                    String msg = errObj.optString("error", errObj.optString("status", "Error loading feed"));
-                    Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
+                    String status = errObj.optString("status", "");
+                    if ("unauthorized".equals(status)) {
+                        Toast.makeText(HomeActivity.this, "Session expired. Please refresh.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        String msg = errObj.optString("error", status.length() > 0 ? status : "Error loading feed");
+                        Toast.makeText(HomeActivity.this, msg, Toast.LENGTH_SHORT).show();
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
