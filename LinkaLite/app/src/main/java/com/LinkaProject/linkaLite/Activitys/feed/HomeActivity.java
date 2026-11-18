@@ -41,6 +41,7 @@ import android.text.TextPaint;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.ArrayList;
@@ -144,6 +145,7 @@ public class HomeActivity extends ActivityGroup {
     private Spinner spinnerFeeds;
     private View topHeaderContainer;
     private String username = "";
+    private String tokenSession = "";
     private boolean isHeaderVisible = true;
     private boolean isHeaderAnimating = false;
     private int lastFirstVisibleItem = 0;
@@ -160,6 +162,7 @@ public class HomeActivity extends ActivityGroup {
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(HomeActivity.this, "config.cfg"));
             JSONObject fastLogin = jsonCfg.getJSONObject("FAST_LOGIN");
             username = fastLogin.optString("username", "");
+            tokenSession = fastLogin.optString("token_session", "");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -852,7 +855,11 @@ public class HomeActivity extends ActivityGroup {
             String currentFeedClean = actualFeed.trim();
 
             if ("Linka".equalsIgnoreCase(currentFeedClean)) {
-                new FetchFeedTask("timeline", baseUrl + "/feed?page=" + targetPage + "&limit=20", "GET", null, targetPage).execute();
+                String feedUrl = baseUrl + "/feed?page=" + targetPage + "&limit=20";
+                if (username != null && username.length() > 0) {
+                    feedUrl += "&username=" + username;
+                }
+                new FetchFeedTask("timeline", feedUrl, "GET", null, targetPage).execute();
             } else if ("Timeline".equalsIgnoreCase(currentFeedClean)) {
                 JSONObject body = new JSONObject();
                 try {
@@ -955,6 +962,85 @@ public class HomeActivity extends ActivityGroup {
         }
     }
 
+    private class VotePollTask extends AsyncTask<Void, Void, String> {
+        private JSONObject postObj;
+        private JSONObject pollObj;
+        private int pollId;
+        private int optionId;
+
+        public VotePollTask(JSONObject postObj, JSONObject pollObj, int pollId, int optionId) {
+            this.postObj = postObj;
+            this.pollObj = pollObj;
+            this.pollId = pollId;
+            this.optionId = optionId;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            try {
+                String baseUrl = (url != null && url.length() > 0) ? url : "http://linkaProject.pythonanywhere.com";
+                if (baseUrl.endsWith("/")) {
+                    baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+                }
+
+                JSONObject payload = new JSONObject();
+                payload.put("username", username);
+                payload.put("token_session", tokenSession);
+                payload.put("poll_id", pollId);
+                payload.put("option_id", optionId);
+
+                return requestHTTP(baseUrl + "/vote-poll", "POST", payload);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            if (result != null && result.trim().length() > 0) {
+                try {
+                    JSONObject resp = new JSONObject(result);
+                    if (resp.has("poll")) {
+                        postObj.put("poll", resp.getJSONObject("poll"));
+                        if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
+                        return;
+                    }
+                    String status = resp.optString("status", "");
+                    if (status.contains("error") || status.contains("forbidden")) {
+                        Toast.makeText(HomeActivity.this, resp.optString("message", status), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                } catch (Exception ignored) {}
+
+                try {
+                    int previousOptionId = pollObj.optInt("user_voted_option_id", -1);
+                    if (previousOptionId != optionId) {
+                        JSONArray options = pollObj.optJSONArray("options");
+                        if (options != null) {
+                            for (int i = 0; i < options.length(); i++) {
+                                JSONObject opt = options.getJSONObject(i);
+                                int id = opt.optInt("id", -1);
+                                int votes = opt.optInt("votes", 0);
+                                if (id == previousOptionId && votes > 0) {
+                                    opt.put("votes", votes - 1);
+                                } else if (id == optionId) {
+                                    opt.put("votes", votes + 1);
+                                }
+                            }
+                        }
+                        pollObj.put("user_voted_option_id", optionId);
+                        if (adapterTimeline != null) adapterTimeline.notifyDataSetChanged();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Toast.makeText(HomeActivity.this, "Erro ao votar na enquete", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     static class ViewHolder {
         ImageView avatarPost;
         FrameLayout containerMedia;
@@ -966,6 +1052,7 @@ public class HomeActivity extends ActivityGroup {
         Button btnNextImage;
         TextView tvUsername;
         TextView tvText;
+        LinearLayout containerPollCard;
         TextView tvDate;
         ImageButton btnComments;
         TextView txtCommentCount;
@@ -1007,6 +1094,143 @@ public class HomeActivity extends ActivityGroup {
             return position;
         }
 
+        private LinearLayout ensurePollContainer(View convertView, TextView tvText) {
+            View existing = convertView.findViewWithTag("dynamic_poll_container");
+            if (existing instanceof LinearLayout) {
+                return (LinearLayout) existing;
+            }
+            if (tvText != null && tvText.getParent() instanceof ViewGroup) {
+                ViewGroup parent = (ViewGroup) tvText.getParent();
+                int idx = parent.indexOfChild(tvText);
+                LinearLayout pollLayout = new LinearLayout(context);
+                pollLayout.setTag("dynamic_poll_container");
+                pollLayout.setOrientation(LinearLayout.VERTICAL);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.FILL_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                lp.setMargins(0, 8, 0, 8);
+                pollLayout.setLayoutParams(lp);
+                pollLayout.setVisibility(View.GONE);
+                parent.addView(pollLayout, idx + 1);
+                return pollLayout;
+            }
+            return null;
+        }
+
+        private void renderPoll(LinearLayout container, final JSONObject post, final JSONObject pollObj) {
+            if (container == null) return;
+            container.removeAllViews();
+
+            if (pollObj == null || pollObj.length() == 0) {
+                container.setVisibility(View.GONE);
+                return;
+            }
+
+            JSONArray options = pollObj.optJSONArray("options");
+            if (options == null || options.length() == 0) {
+                container.setVisibility(View.GONE);
+                return;
+            }
+
+            container.setVisibility(View.VISIBLE);
+            container.setBackgroundColor(Color.parseColor("#14888888"));
+            container.setPadding(12, 10, 12, 10);
+
+            final int pollId = pollObj.optInt("poll_id", -1);
+            final int votedOptionId = pollObj.optInt("user_voted_option_id", -1);
+            boolean hasVoted = votedOptionId > 0;
+
+            int totalVotes = 0;
+            for (int i = 0; i < options.length(); i++) {
+                JSONObject opt = options.optJSONObject(i);
+                if (opt != null) {
+                    totalVotes += opt.optInt("votes", 0);
+                }
+            }
+
+            for (int i = 0; i < options.length(); i++) {
+                JSONObject opt = options.optJSONObject(i);
+                if (opt == null) continue;
+
+                final int optionId = opt.optInt("id", -1);
+                String optionText = opt.optString("text", "");
+                int votes = opt.optInt("votes", 0);
+                int percent = (totalVotes > 0) ? Math.round((votes * 100.0f) / totalVotes) : 0;
+                boolean isSelectedOption = (optionId == votedOptionId);
+
+                LinearLayout row = new LinearLayout(context);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setPadding(12, 10, 12, 10);
+                LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.FILL_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                rowParams.setMargins(0, 0, 0, 6);
+                row.setLayoutParams(rowParams);
+
+                if (isSelectedOption) {
+                    row.setBackgroundColor(Color.parseColor("#330066CC"));
+                } else {
+                    row.setBackgroundColor(Color.parseColor("#22888888"));
+                }
+
+                View radioDot = new View(context);
+                LinearLayout.LayoutParams dotParams = new LinearLayout.LayoutParams(16, 16);
+                dotParams.setMargins(0, 4, 10, 0);
+                radioDot.setLayoutParams(dotParams);
+                radioDot.setBackgroundResource(isSelectedOption ? R.drawable.circle_selected : R.drawable.circle_normal);
+                row.addView(radioDot);
+
+                TextView txtOpt = new TextView(context);
+                LinearLayout.LayoutParams txtParams = new LinearLayout.LayoutParams(
+                        0,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        1.0f
+                );
+                txtOpt.setLayoutParams(txtParams);
+                txtOpt.setTextSize(13);
+                txtOpt.setTextColor(Color.parseColor("#222222"));
+                if (isSelectedOption) {
+                    txtOpt.setTypeface(null, Typeface.BOLD);
+                    txtOpt.setText("✓ " + optionText);
+                } else {
+                    txtOpt.setText(optionText);
+                }
+                row.addView(txtOpt);
+
+                if (hasVoted || totalVotes > 0) {
+                    TextView txtPct = new TextView(context);
+                    txtPct.setTextSize(12);
+                    txtPct.setTextColor(Color.parseColor("#555555"));
+                    txtPct.setText(percent + "% (" + votes + ")");
+                    row.addView(txtPct);
+                }
+
+                row.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (isGuest) {
+                            Toast.makeText(HomeActivity.this, "Login required to vote", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (pollId != -1 && optionId != -1) {
+                            new VotePollTask(post, pollObj, pollId, optionId).execute();
+                        }
+                    }
+                });
+
+                container.addView(row);
+            }
+
+            TextView txtFooter = new TextView(context);
+            txtFooter.setTextSize(11);
+            txtFooter.setTextColor(Color.parseColor("#666666"));
+            txtFooter.setPadding(2, 2, 2, 0);
+            txtFooter.setText(totalVotes == 1 ? "1 vote" : totalVotes + " votes");
+            container.addView(txtFooter);
+        }
+
         @Override
         public View getView(final int position, View convertView, ViewGroup parent) {
             final ViewHolder holder;
@@ -1026,6 +1250,7 @@ public class HomeActivity extends ActivityGroup {
                 holder.btnNextImage = (Button) convertView.findViewById(R.id.btnNextImage);
                 holder.tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
                 holder.tvText = (TextView) convertView.findViewById(R.id.postText);
+                holder.containerPollCard = ensurePollContainer(convertView, holder.tvText);
                 holder.tvDate = (TextView) convertView.findViewById(R.id.postDate);
                 holder.btnComments = (ImageButton) convertView.findViewById(R.id.btnComments);
                 holder.txtCommentCount = (TextView) convertView.findViewById(R.id.txtCommentCount);
@@ -1060,6 +1285,7 @@ public class HomeActivity extends ActivityGroup {
                         intent.putExtra("repostPostId", id);
                         intent.putExtra("repostUser", postUsername);
                         intent.putExtra("repostText", textPost);
+                        intent.putExtra("repostDatetime", datetime);
 
                         JSONArray jsonArray = post.optJSONArray("media_list");
                         if (jsonArray != null && jsonArray.length() > 0) {
@@ -1316,6 +1542,9 @@ public class HomeActivity extends ActivityGroup {
                     holder.tvText.setVisibility(View.VISIBLE);
                     highlightMentions(context, holder.tvText, cleanText);
                 }
+
+                JSONObject pollObj = post.optJSONObject("poll");
+                renderPoll(holder.containerPollCard, post, pollObj);
 
             } catch (Exception e) {
                 Log.e("LINKA_DEBUG", "[POST VIEW ERR] Erro ao renderizar card: " + e.getMessage());
