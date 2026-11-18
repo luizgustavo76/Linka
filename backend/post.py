@@ -856,11 +856,11 @@ def new_post():
                         duration_hours = int(poll_data.get("duration_hours", 24))
                         cur.execute(
                             """
-                            INSERT INTO poll (post_id, title, expires_at)
-                            VALUES (%s, %s, NOW() + (%s || ' hours')::interval)
+                            INSERT INTO poll (post_id, title, username, expires_at)
+                            VALUES (%s, %s, %s, NOW() + (%s || ' hours')::interval)
                             RETURNING id
                             """,
-                            (str(post_id), poll_title, duration_hours)
+                            (str(post_id), poll_title, username, duration_hours)
                         )
                         poll_id = cur.fetchone()["id"]
 
