@@ -58,5 +58,12 @@ android-build/
 *.keystore
 *.out
 
-/.idea/
-/*.iml
+# IDE metadata and Gradle caches
+.idea/
+.vscode/
+.settings/
+.project
+.classpath
+.directory
+*.iml
+.gradle/

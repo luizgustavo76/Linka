@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "\"files.associations\": ": "{     \"*.ts\": \"xml\" }"
-    },
-    "java.configuration.updateBuildConfiguration": "interactive",
-    "C_Cpp.errorSquiggles": "disabled"
-}

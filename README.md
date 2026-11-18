@@ -65,10 +65,9 @@ Linka is under active development. Current focus areas include:
 
 ---
 
-## Repository Links & Documentation
+## Repository
 
 - **Repository:** https://github.com/luizgustavo76/Linka
-- **Documentation:** https://luizgustavo76.github.io/Linka/documentation/docs.html
 
 ---
 
