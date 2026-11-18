@@ -19,11 +19,13 @@ The project is built with extreme compatibility and efficiency in mind, enabling
 ## Ecosystem
 
 ### Linka Backend
+Source directory: [.old/backend](.old/backend).
 The core server handling federation, routing, external network bridges, and persistent data storage.
 - **Stack:** Python, Flask, PostgreSQL, Redis
 
 ### LinkaLite (Android Client)
 The primary client implementation for mobile devices.
+- **Project directory:** [apps/linka-lite](apps/linka-lite)
 - **Target:** Android 2.0+ (Java 1.5 compliant)
 - **Design:** Ultra-lightweight native components, optimized HTTP request cycle, low memory footprint, no heavy modern framework overhead.
 
@@ -50,6 +52,7 @@ The primary client implementation for mobile devices.
    SECRET_KEY=your_secret_key
 
 4. Run the server:
+   cd .old/backend
    python main.py
 
 ---

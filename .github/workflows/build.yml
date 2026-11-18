@@ -29,16 +29,16 @@ jobs:
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-5" "platforms;android-9" "build-tools;25.0.3"
 
       - name: Dar permissão de execução ao Gradlew
-        working-directory: ./LinkaLite
+        working-directory: ./apps/linka-lite
         run: chmod +x gradlew
         continue-on-error: true
 
       - name: Compilar APK com Gradle
-        working-directory: ./LinkaLite
+        working-directory: ./apps/linka-lite
         run: ./gradlew assembleDebug -Dorg.gradle.java.home=$JAVA_HOME
 
       - name: Guardar o APK como Artifact
         uses: actions/upload-artifact@v4
         with:
           name: LinkaLite-debug-apk
-          path: LinkaLite/app/build/outputs/apk/debug/*.apk
+          path: apps/linka-lite/app/build/outputs/apk/debug/*.apk
