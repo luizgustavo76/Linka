@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Blueprint, request, jsonify, g
 from dotenv import load_dotenv
 import notificationsModule
+import traceback
 import linkosModule
 import mentions_module
 
