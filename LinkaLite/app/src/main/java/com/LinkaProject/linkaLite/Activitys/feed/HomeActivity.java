@@ -1,5 +1,6 @@
 package com.LinkaProject.linkaLite;
-
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.app.ActivityGroup;
 import android.content.Context;
 import android.content.Intent;
@@ -1062,6 +1063,8 @@ public class HomeActivity extends ActivityGroup {
         Button btnPrivateBookmarks;
         ImageButton btnCloseBookmarks;
         ImageButton btnReply;
+        Button btnPostOptions;
+        Spinner optionsSpinner;
     }
 
     private class PostAdapter extends BaseAdapter {
@@ -1260,10 +1263,33 @@ public class HomeActivity extends ActivityGroup {
                 holder.btnPrivateBookmarks = (Button) convertView.findViewById(R.id.btnPrivateBookmarks);
                 holder.btnCloseBookmarks = (ImageButton) convertView.findViewById(R.id.btnCloseBookmarks);
                 holder.btnReply = (ImageButton) convertView.findViewById(R.id.btnReply);
+                holder.btnPostOptions = (Button) convertView.findViewById(R.id.btnPostOptions);
+                holder.optionsSpinner = (Spinner) convertView.findViewById(R.id.optionsSpinner);
                 convertView.setTag(holder);
             } else {
                 holder = (ViewHolder) convertView.getTag();
             }
+            holder.btnPostOptions.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    final String[] optionsPost = new String[]{"Edit Post", "Delete Post", "View Profile"};
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(HomeActivity.this);
+                    builder.setItems(optionsPost, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (which == 0) {
+                                // Edit Post
+                            } else if (which == 1) {
+                                // Delete Post
+                            } else if (which == 2) {
+                                // View Profile
+                            }
+                        }
+                    });
+                    builder.show();
+                }
+            });
 
             try {
                 final JSONObject post = list.get(position);

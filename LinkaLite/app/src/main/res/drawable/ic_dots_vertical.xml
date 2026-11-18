@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Ponto superior -->
+    <item android:top="9.5dip" android:bottom="19.5dip" android:left="12.5dip" android:right="12.5dip">
+        <shape android:shape="oval">
+            <solid android:color="#666666" />
+        </shape>
+    </item>
+    <!-- Ponto do meio -->
+    <item android:top="14.5dip" android:bottom="14.5dip" android:left="12.5dip" android:right="12.5dip">
+        <shape android:shape="oval">
+            <solid android:color="#666666" />
+        </shape>
+    </item>
+    <!-- Ponto inferior -->
+    <item android:top="19.5dip" android:bottom="9.5dip" android:left="12.5dip" android:right="12.5dip">
+        <shape android:shape="oval">
+            <solid android:color="#666666" />
+        </shape>
+    </item>
+</layer-list>
