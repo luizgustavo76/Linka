@@ -1,3 +1,6 @@
+# Cargo build output
+/target/
+
 # Qt / CMake / Build folders
 cross-plataform/build/
 cross-plataform/json/
@@ -54,3 +57,6 @@ android-build/
 *.exe
 *.keystore
 *.out
+
+/.idea/
+/*.iml
