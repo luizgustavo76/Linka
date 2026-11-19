@@ -29,6 +29,7 @@ ciborium = { workspace = true }
 # database
 sqlx = { workspace = true }
 redis = { workspace = true }
+deadpool = { workspace = true }
 object_store = { workspace = true }
 
 # types

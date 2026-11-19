@@ -33,6 +33,34 @@ The primary client implementation for mobile devices.
 
 ## Technical Setup
 
+### Rust server development
+
+From the repository root, copy the development settings and start the services.
+
+```sh
+cp .env.example .env
+docker compose up -d --wait
+cargo run -p linka-server
+```
+
+Compose pulls the SeaweedFS image and runs it in single-node mode. The S3
+endpoint defaults to `http://127.0.0.1:8333`, and SeaweedFS creates the bucket
+named by `AWS_BUCKET` at startup. If you already have a local `.env`, update its
+S3 settings to match `.env.example` and keep your other local settings.
+
+The server loads `.env` through dotenvy at startup. The template provides
+`DATABASE_URL`, `REDIS_URL`, and the `AWS_*` settings used by the S3-compatible
+`object_store` client. Use `docker compose down` to stop the services and keep
+their data in named volumes.
+
+For other S3-compatible servers, set `AWS_ENDPOINT` to the service URL and
+supply its existing bucket, credentials, and signing region. Use
+`AWS_ALLOW_HTTP=false` for HTTPS endpoints and enable
+`AWS_VIRTUAL_HOSTED_STYLE_REQUEST` if your provider uses bucket subdomains. In that mode, include the bucket name
+in the custom endpoint hostname. Temporary credentials can include `AWS_SESSION_TOKEN`.
+Startup checks bucket access with a one-item list request, so the credentials need permission to
+list the bucket. `S3_STARTUP_TIMEOUT_SECS` bounds that check.
+
 ### Prerequisites
 - Python 3.x
 - PostgreSQL instance

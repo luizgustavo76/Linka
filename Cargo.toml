@@ -30,7 +30,8 @@ ciborium = { version = "0.2.2" }
 
 # database
 sqlx = { version = "0.9.1", features = ["runtime-tokio", "tls-rustls-ring", "postgres", "uuid", "chrono", "json"] }
-redis = { version = "1.8.2" }
+redis = { version = "1.8.2", features = ["connection-manager", "tokio-comp"] }
+deadpool = { version = "0.13.1", default-features = false, features = ["managed", "rt_tokio_1"] }
 object_store = { version = "0.14.2", features = ["aws"] }
 
 # types
