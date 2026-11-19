@@ -1,5 +1,6 @@
 package com.LinkaProject.linkaLite;
-
+import android.view.View;
+import android.view.ViewGroup;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -41,6 +42,8 @@ public class comments_activity extends BaseActivity {
     private TextView postDate;
     private TextView postText;
     private TextView txtCommentCount;
+    private ImageView imgPost;
+    private View containerMedia;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,14 +79,27 @@ public class comments_activity extends BaseActivity {
 
         setContentView(R.layout.comments_activity);
 
-        // Inicializa o Post Original no topo
-        setupPostHeader(intent);
-
         lvComments = (ListView) findViewById(R.id.lvComments);
         commentEdt = (EditText) findViewById(R.id.commentEdt);
         layoutComment = (LinearLayout) findViewById(R.id.layoutComment);
         layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
         btnSend = (Button) findViewById(R.id.btnSend);
+
+        View fixedHeader = findViewById(R.id.postHeader);
+        if (fixedHeader != null && lvComments != null) {
+            android.view.ViewGroup parent = (android.view.ViewGroup) fixedHeader.getParent();
+            if (parent != null) {
+                parent.removeView(fixedHeader);
+            }
+            fixedHeader.setLayoutParams(new android.widget.AbsListView.LayoutParams(
+                android.widget.AbsListView.LayoutParams.FILL_PARENT,
+                android.widget.AbsListView.LayoutParams.WRAP_CONTENT
+            ));
+            postHeader = fixedHeader;
+            lvComments.addHeaderView(postHeader, null, false);
+        }
+
+        setupPostHeader(intent);
 
         boolean isGuest = intent != null && intent.getBooleanExtra("isGuest", false);
 
@@ -148,7 +164,6 @@ public class comments_activity extends BaseActivity {
     }
 
     private void setupPostHeader(Intent intent) {
-        postHeader = findViewById(R.id.postHeader);
         if (postHeader == null) return;
 
         postUsername = (TextView) postHeader.findViewById(R.id.postUsername);
@@ -157,11 +172,13 @@ public class comments_activity extends BaseActivity {
         postText = (TextView) postHeader.findViewById(R.id.postText);
         txtCommentCount = (TextView) postHeader.findViewById(R.id.txtCommentCount);
         postAvatar = (ImageView) postHeader.findViewById(R.id.postAvatar);
+        containerMedia = postHeader.findViewById(R.id.containerMedia);
+        imgPost = (ImageView) postHeader.findViewById(R.id.imgPost);
         ImageButton btnComments = (ImageButton) postHeader.findViewById(R.id.btnComments);
         Button btnPostOptions = (Button) postHeader.findViewById(R.id.btnPostOptions);
         if (btnComments != null) btnComments.setEnabled(false);
         if (btnPostOptions != null) btnPostOptions.setVisibility(View.GONE);
-
+        String urlImage = "";
         if (intent != null) {
             String author = intent.getStringExtra("post_author");
             String date = intent.getStringExtra("post_date");
@@ -169,8 +186,27 @@ public class comments_activity extends BaseActivity {
             String community = intent.getStringExtra("post_community");
             int commentCount = intent.getIntExtra("comment_count", 0);
             String avatarUrl = intent.getStringExtra("avatar_url");
+            if (content != null) {
+                int idx = content.indexOf("[IMAGE]");
+                if (idx != -1) {
+                    urlImage = content.substring(idx + "[IMAGE]".length()).trim();
+                    content = content.substring(0, idx).trim();
+                }
+            }
+            if (!urlImage.equals("") && imgPost != null) {
+                if (containerMedia != null) {
+                    int maxPx = (int) (180 * getResources().getDisplayMetrics().density);
+                    ViewGroup.LayoutParams lp = containerMedia.getLayoutParams();
+                    lp.height = maxPx;
+                    containerMedia.setLayoutParams(lp);
+                    containerMedia.setVisibility(View.VISIBLE);
+                }
+                imgPost.setVisibility(View.VISIBLE);
+                ImageLoader imageLoader = new ImageLoader();
+                imageLoader.LoadImageUrl(urlImage, imgPost);
+            }
             if (avatarUrl == null) avatarUrl = "";
-            if (!avatarUrl.equals("")){
+            if (!avatarUrl.equals("")) {
                 ImageLoader imageLoader = new ImageLoader();
                 imageLoader.LoadImageUrl(avatarUrl, postAvatar);
             }
@@ -297,7 +333,6 @@ public class comments_activity extends BaseActivity {
     public void popularLista(String jsonResult) {
         List<Comment> comments = parseCommentsResponse(jsonResult);
 
-        // Atualiza o contador de comentários no cabeçalho do post
         if (txtCommentCount != null) {
             txtCommentCount.setText(String.valueOf(comments.size()));
         }
