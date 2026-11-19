@@ -1279,7 +1279,14 @@ public class HomeActivity extends ActivityGroup {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             if (which == 0) {
-                                // Edit Post
+                                Intent intent = new Intent(HomeActivity.this, newPost.class);
+                                intent.putExtra("isEdited", true);
+                                final JSONObject post = list.get(position);
+                                final String textPost = post.optString("text_post", post.optString("text", ""));
+                                final int id = post.optInt("id", -1);
+                                intent.putExtra("postId", id);
+                                intent.putExtra("textPost", textPost);
+                                startActivity(intent);
                             } else if (which == 1) {
                                 // Delete Post
                             } else if (which == 2) {

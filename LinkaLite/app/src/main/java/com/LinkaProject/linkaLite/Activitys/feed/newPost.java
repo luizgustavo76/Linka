@@ -43,7 +43,7 @@ public class newPost extends BaseActivity {
     private CheckBox btnReddit;
     private CheckBox btnMastodon;
     private CheckBox btnBluesky;
-
+    private String postId = "";
     private RelativeLayout containerMediaPreview;
     private ImageButton btnRemoveMedia;
     private GifImageView imgMediaPreview;
@@ -54,7 +54,7 @@ public class newPost extends BaseActivity {
     private ImageButton btnRemoveRepost;
     private ImageView avatarRepost;
     private ImageView imgMedia;
-
+    private boolean isEdited;
     private String uploadedMediaUrl = "";
     private String uploadedMediaType = "";
     private int repostPostId = -1;
@@ -199,9 +199,10 @@ public class newPost extends BaseActivity {
         repostUser = getIntent().getStringExtra("repostUser");
         repostText = getIntent().getStringExtra("repostText");
         repostDatetime = getIntent().getStringExtra("repostDatetime");
-        boolean isEdited = getIntent().getBooleanExtra("isEdited");
-        String postId = getIntent().getStringExtra("postId");
-        String textPost = getIntent().getStringExtra("textPost")
+        isEdited = getIntent().getBooleanExtra("isEdited", false);
+        int idInt = getIntent().getIntExtra("postId", -1);
+        postId = (idInt != -1) ? String.valueOf(idInt) : getIntent().getStringExtra("postId");
+        String textPost = getIntent().getStringExtra("textPost");
         String repostAvatarUrl = getIntent().getStringExtra("repostAvatarUrl");
         repostMediaUrl = getIntent().getStringExtra("repostMediaUrl");
         String repostMediaHeightStr = getIntent().getStringExtra("repostMediaHeight");
@@ -217,7 +218,9 @@ public class newPost extends BaseActivity {
                 repostMediaWidth = Integer.parseInt(repostMediaWidthStr);
             }
         } catch (Exception ignored) {}
-
+        if (isEdited && textPost != null && !textPost.equals("")) {
+            editPostContent.setText(textPost);
+        }
         if (repostPostId != -1 && containerRepostPreview != null) {
             containerRepostPreview.setVisibility(View.VISIBLE);
             if (txtRepostOriginalUser != null) txtRepostOriginalUser.setText(repostUser);
@@ -561,8 +564,12 @@ public class newPost extends BaseActivity {
                     if (pollPayload != null) {
                         jsonResponse.put("poll", pollPayload);
                     }
-
-                    mainResult = request.requestHTTP(baseUrl + "/new", "post", jsonResponse, newPost.this);
+                    if (isEdited){
+                        jsonResponse.put("post_id", postId);
+                        mainResult = request.requestHTTP(baseUrl + "/edit-post", "post", jsonResponse, newPost.this);                        
+                    }else{
+                        mainResult = request.requestHTTP(baseUrl + "/new", "post", jsonResponse, newPost.this);
+                    }
                 }
 
                 dispatchExternalNetwork(btnMastodon, "MASTODON", baseUrl, finalContent, jsonExt, cfg);
