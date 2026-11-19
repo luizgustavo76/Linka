@@ -57,7 +57,6 @@ public class newPost extends BaseActivity {
 
     private String uploadedMediaUrl = "";
     private String uploadedMediaType = "";
-
     private int repostPostId = -1;
     private String repostUser = "";
     private String repostText = "";
@@ -200,6 +199,9 @@ public class newPost extends BaseActivity {
         repostUser = getIntent().getStringExtra("repostUser");
         repostText = getIntent().getStringExtra("repostText");
         repostDatetime = getIntent().getStringExtra("repostDatetime");
+        boolean isEdited = getIntent().getBooleanExtra("isEdited");
+        String postId = getIntent().getStringExtra("postId");
+        String textPost = getIntent().getStringExtra("textPost")
         String repostAvatarUrl = getIntent().getStringExtra("repostAvatarUrl");
         repostMediaUrl = getIntent().getStringExtra("repostMediaUrl");
         String repostMediaHeightStr = getIntent().getStringExtra("repostMediaHeight");
