@@ -15,7 +15,8 @@
 
         <activity 
             android:name=".LoginActivity" 
-            android:label="Linka">
+            android:label="Linka"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -35,7 +36,23 @@
         <activity android:name=".HomeActivity" android:label="Feed" />
         <activity android:name=".MainEditTimeline" android:label="Edit timeline" />
         <activity android:name=".EditTimeline" android:label="Add new sources" />
-        <activity android:name=".newPost" android:label="New post" />
+        
+        <activity 
+            android:name=".newPost" 
+            android:label="New post"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".comments_activity" />
         <activity android:name=".chatActivity" android:label="Chat" />
         <activity android:name=".ChatGlobalActivity" android:label="Global Chat" />

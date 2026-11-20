@@ -3,6 +3,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.app.ActivityGroup;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -1272,11 +1273,17 @@ public class HomeActivity extends ActivityGroup {
             holder.btnPostOptions.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    final String[] optionsPost = new String[]{"Edit Post", "Delete Post", "View Profile"};
+                    final JSONObject post = list.get(position);
+                    final String postUsername = post.optString("username", post.optString("user", "entity404"));
+                    final String[] optionsPost;
+                    if (postUsername.equals(username)){
+                        optionsPost = new String[]{"Edit Post", "Delete Post", "View Profile", "Share"};
+                    }else{
+                        optionsPost = new String[]{"View Profile", "Share"};
+                    }
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(HomeActivity.this);
                     builder.setItems(optionsPost, new DialogInterface.OnClickListener() {
-                        final JSONObject post = list.get(position);
                         final String textPost = post.optString("text_post", post.optString("text", ""));
                         final int id = post.optInt("id", -1);
                         @Override
@@ -1488,12 +1495,16 @@ public class HomeActivity extends ActivityGroup {
                 holder.txtCommentCount.setText(commentsCount);
                 holder.tvUsername.setText(postUsername.startsWith("@") ? postUsername : "@" + postUsername);
                 holder.tvDate.setText(relative_datetime.length() > 0 ? relative_datetime : datetime);
+                Bitmap defaultAvatar = AvatarGenerator.generateAvatar(postUsername, 128);
+                holder.avatarPost.setImageBitmap(defaultAvatar);
 
                 if ("timeline".equals(actualTab)) {
-                    String avatarUrl = post.optString("avatar_url", "");
-                    if (avatarUrl != null && avatarUrl.trim().length() > 0) {
+                    String avatarUrl = post.optString("avatar_url", "").trim();
+                    if (!avatarUrl.isEmpty() && !"null".equalsIgnoreCase(avatarUrl)) {
                         holder.avatarPost.setTag(avatarUrl);
                         imageLoader.LoadImageUrl(avatarUrl, holder.avatarPost);
+                    } else {
+                        holder.avatarPost.setTag(null);
                     }
                 } else {
                     holder.avatarPost.setTag("avatar_" + postUsername);
