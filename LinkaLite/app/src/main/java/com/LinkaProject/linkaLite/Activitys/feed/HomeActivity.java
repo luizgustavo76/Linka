@@ -1276,19 +1276,32 @@ public class HomeActivity extends ActivityGroup {
 
                     AlertDialog.Builder builder = new AlertDialog.Builder(HomeActivity.this);
                     builder.setItems(optionsPost, new DialogInterface.OnClickListener() {
+                        final JSONObject post = list.get(position);
+                        final String textPost = post.optString("text_post", post.optString("text", ""));
+                        final int id = post.optInt("id", -1);
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             if (which == 0) {
                                 Intent intent = new Intent(HomeActivity.this, newPost.class);
                                 intent.putExtra("isEdited", true);
-                                final JSONObject post = list.get(position);
-                                final String textPost = post.optString("text_post", post.optString("text", ""));
-                                final int id = post.optInt("id", -1);
                                 intent.putExtra("postId", id);
                                 intent.putExtra("textPost", textPost);
                                 startActivity(intent);
                             } else if (which == 1) {
-                                // Delete Post
+                                try {
+                                    JSONObject jsonDelete = new JSONObject();
+                                    jsonDelete.put("post_id", id);
+                                    jsonDelete.put("username", username);
+                                    request.requestHTTP(url + "/delete-post", "post", jsonDelete, HomeActivity.this);
+
+                                    if (position >= 0 && position < list.size()) {
+                                        list.remove(position);
+                                        notifyDataSetChanged();
+                                        Toast.makeText(HomeActivity.this, "Post removed", Toast.LENGTH_SHORT).show();
+                                    }
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
                             } else if (which == 2) {
                                 // View Profile
                             }
