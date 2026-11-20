@@ -3,33 +3,148 @@ package com.LinkaProject.linkaLite;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import android.widget.ImageView;    
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class LoginActivity extends BaseActivity {
     private static final String TAG = "LinkaLogin";
-    
+    private static final int SLIDE_INTERVAL_MS = 5000;
+    private static final int FADE_DURATION_MS = 1200;
+
     private EditText edtUsername;
     private EditText edtPassword;
     private Button btnServer;
     private Button btnLogin;
     private TextView txtGoToSignup;
     private TextView txtGuest;
+
     private ImageView bannerImageView;
-    private String serverUrl = "http://patient-hall-2915.luizsgustavo76.workers.dev/"; 
+    private ImageView bannerBackImageView;
+    private List<Integer> bannerCycle = new ArrayList<Integer>();
+    private int currentBannerIndex = 0;
+    private int currentDrawableRes = 0;
+
+    private Bitmap currentBitmap = null;
+    private Bitmap preloadedNextBitmap = null;
+    private volatile boolean isDecoding = false;
+    private volatile boolean isSlideRunning = false;
+
+    private Handler slideHandler = new Handler();
+
+    private String serverUrl = "http://patient-hall-2915.luizsgustavo76.workers.dev/";
     private LoginTask currentLoginTask;
+
+    private final Runnable slideRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (!isFinishing() && isSlideRunning) {
+                advanceSlide();
+                slideHandler.postDelayed(this, SLIDE_INTERVAL_MS);
+            }
+        }
+    };
+
+    private Bitmap decodeBannerBitmap(int resId) {
+        try {
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inPreferredConfig = Bitmap.Config.RGB_565;
+            opts.inSampleSize = 2;
+            return BitmapFactory.decodeResource(getResources(), resId, opts);
+        } catch (OutOfMemoryError oom) {
+            Log.e(TAG, "Out of memory decoding banner", oom);
+            return null;
+        }
+    }
+
+    private void refillCycle() {
+        int lastShown = currentDrawableRes;
+        bannerCycle.clear();
+        bannerCycle.add(R.drawable.linka_login);
+        bannerCycle.add(R.drawable.linka_login_2);
+        bannerCycle.add(R.drawable.linka_login_3);
+        bannerCycle.add(R.drawable.linka_login_4);
+        bannerCycle.add(R.drawable.linka_login_5);
+        Collections.shuffle(bannerCycle);
+
+        if (lastShown != 0 && bannerCycle.get(0) == lastShown && bannerCycle.size() > 1) {
+            Collections.swap(bannerCycle, 0, 1);
+        }
+        currentBannerIndex = 0;
+    }
+
+    private void preloadNextInBackground() {
+        if (isDecoding || isFinishing()) return;
+
+        if (currentBannerIndex >= bannerCycle.size()) {
+            refillCycle();
+        }
+
+        final int nextResId = bannerCycle.get(currentBannerIndex);
+        currentBannerIndex++;
+        currentDrawableRes = nextResId;
+        isDecoding = true;
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final Bitmap decoded = decodeBannerBitmap(nextResId);
+                if (isFinishing()) {
+                    if (decoded != null) decoded.recycle();
+                    return;
+                }
+                preloadedNextBitmap = decoded;
+                isDecoding = false;
+            }
+        }).start();
+    }
+
+    private void advanceSlide() {
+        if (bannerImageView == null || bannerBackImageView == null) return;
+
+        if (isDecoding || preloadedNextBitmap == null) {
+            if (!isDecoding) preloadNextInBackground();
+            return;
+        }
+
+        if (currentBitmap != null) {
+            bannerBackImageView.setImageBitmap(currentBitmap);
+        }
+
+        currentBitmap = preloadedNextBitmap;
+        preloadedNextBitmap = null;
+
+        bannerImageView.setImageBitmap(currentBitmap);
+
+        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
+        fadeIn.setDuration(FADE_DURATION_MS);
+        bannerImageView.startAnimation(fadeIn);
+
+        preloadNextInBackground();
+    }
 
     private void executeLogin(String username, String password) {
         if (currentLoginTask != null && currentLoginTask.getStatus() == AsyncTask.Status.RUNNING) {
-            Log.d(TAG, "Cancelando LoginTask anterior em execução.");
+            Log.d(TAG, "Canceling previous running LoginTask.");
             currentLoginTask.cancel(true);
         }
         currentLoginTask = new LoginTask();
@@ -40,17 +155,21 @@ public class LoginActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        bannerImageView = (ImageView) findViewById(R.id.imgBanner);
-        int[] loginBanners = {
-            R.drawable.linka_login,
-            R.drawable.linka_login_2,
-            R.drawable.linka_login_3,
-            R.drawable.linka_login_4,
-            R.drawable.linka_login_5
-        };
 
-        int sorteado = loginBanners[new java.util.Random().nextInt(loginBanners.length)];
-        bannerImageView.setImageResource(sorteado);
+        bannerBackImageView = (ImageView) findViewById(R.id.imgBannerBack);
+        bannerImageView = (ImageView) findViewById(R.id.imgBanner);
+
+        refillCycle();
+        currentDrawableRes = bannerCycle.get(0);
+        currentBannerIndex = 1;
+        currentBitmap = decodeBannerBitmap(currentDrawableRes);
+        if (currentBitmap != null) {
+            bannerImageView.setImageBitmap(currentBitmap);
+            bannerBackImageView.setImageBitmap(currentBitmap);
+        }
+
+        preloadNextInBackground();
+
         btnServer = (Button) findViewById(R.id.btnServer);
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
@@ -58,22 +177,40 @@ public class LoginActivity extends BaseActivity {
         btnLogin = (Button) findViewById(R.id.btnLogin);
         txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
 
-        txtGuest.setOnClickListener(new View.OnClickListener(){
+        TextWatcher typingPauseWatcher = new TextWatcher() {
             @Override
-            public void onClick(View v){
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                slideHandler.removeCallbacks(slideRunnable);
+                if (isSlideRunning) {
+                    slideHandler.postDelayed(slideRunnable, SLIDE_INTERVAL_MS);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        };
+
+        edtUsername.addTextChangedListener(typingPauseWatcher);
+        edtPassword.addTextChangedListener(typingPauseWatcher);
+
+        txtGuest.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                 intent.putExtra("isGuest", true);
                 startActivity(intent);
             }
         });
 
-        // Carrega configurações iniciais em thread de background
         new Thread(new Runnable() {
             @Override
             public void run() {
                 config cfg = new config();
                 if (!config.configFileExists(LoginActivity.this, "config.cfg")) {
-                    Log.d(TAG, "[CONFIG] config.cfg não existe. Criando arquivo padrão...");
+                    Log.d(TAG, "[CONFIG] config.cfg does not exist. Creating default file...");
                     cfg.createDefaultConfig(LoginActivity.this, "config.cfg");
                 }
 
@@ -82,8 +219,8 @@ public class LoginActivity extends BaseActivity {
 
                 try {
                     String jsonString = cfg.loadCfgAsJson(LoginActivity.this, "config.cfg");
-                    Log.d(TAG, "[CONFIG] Conteúdo atual do config.cfg: " + jsonString);
-                    
+                    Log.d(TAG, "[CONFIG] Current content of config.cfg: " + jsonString);
+
                     JSONObject jsonCfg = new JSONObject(jsonString);
                     JSONObject server = jsonCfg.optJSONObject("SERVER");
                     if (server != null) {
@@ -91,7 +228,7 @@ public class LoginActivity extends BaseActivity {
                         if (cfgUrl.length() > 0) {
                             serverUrl = cfgUrl;
                         }
-                        Log.d(TAG, "[CONFIG] URL ativa do servidor: " + serverUrl);
+                        Log.d(TAG, "[CONFIG] Active server URL: " + serverUrl);
                     }
                     JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
                     if (fastLogin != null) {
@@ -99,7 +236,7 @@ public class LoginActivity extends BaseActivity {
                         fastPassword = fastLogin.optString("password", "");
                     }
                 } catch (JSONException e) {
-                    Log.e(TAG, "[CONFIG ERRO] Erro ao processar JSON da configuração:", e);
+                    Log.e(TAG, "[CONFIG ERROR] Error processing configuration JSON:", e);
                 }
 
                 final String finalUser = fastUsername;
@@ -109,7 +246,7 @@ public class LoginActivity extends BaseActivity {
                     @Override
                     public void run() {
                         if (!isFinishing() && finalUser.length() > 0 && finalPass.length() > 0) {
-                            Log.d(TAG, "[FAST LOGIN] Executando auto-login para usuário: " + finalUser);
+                            Log.d(TAG, "[FAST LOGIN] Executing auto-login for user: " + finalUser);
                             executeLogin(finalUser, finalPass);
                         }
                     }
@@ -148,8 +285,25 @@ public class LoginActivity extends BaseActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        isSlideRunning = true;
+        slideHandler.removeCallbacks(slideRunnable);
+        slideHandler.postDelayed(slideRunnable, SLIDE_INTERVAL_MS);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isSlideRunning = false;
+        slideHandler.removeCallbacks(slideRunnable);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        isSlideRunning = false;
+        slideHandler.removeCallbacks(slideRunnable);
         if (currentLoginTask != null) {
             currentLoginTask.cancel(true);
             currentLoginTask.dismissDialogSafely();
@@ -184,9 +338,9 @@ public class LoginActivity extends BaseActivity {
                 while (baseUrl.endsWith("/")) {
                     baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                 }
-                
+
                 String targetUrl = baseUrl + "/login";
-                Log.d(TAG, "[HTTP] Enviando POST para: " + targetUrl);
+                Log.d(TAG, "[HTTP] Sending POST to: " + targetUrl);
 
                 JSONObject jsonParam = new JSONObject();
                 jsonParam.put("username", attemptedUsername);
@@ -194,7 +348,7 @@ public class LoginActivity extends BaseActivity {
 
                 return request.requestHTTP(targetUrl, "POST", jsonParam, 0, LoginActivity.this);
             } catch (Exception e) {
-                Log.e(TAG, "[HTTP EXCEÇÃO] Erro ao preparar requisição de login: ", e);
+                Log.e(TAG, "[HTTP EXCEPTION] Error preparing login request: ", e);
                 return null;
             }
         }
@@ -204,43 +358,41 @@ public class LoginActivity extends BaseActivity {
             dismissDialogSafely();
             if (isCancelled() || LoginActivity.this.isFinishing()) return;
 
-            Log.d(TAG, "[POST EXECUTE] Resultado recebido: " + result);
+            Log.d(TAG, "[POST EXECUTE] Result received: " + result);
 
             if (result != null && result.length() > 0) {
                 try {
                     JSONObject responseJson = new JSONObject(result);
                     String status = responseJson.optString("status", "");
 
-                    if (status.equalsIgnoreCase("login is sucessful") || 
-                        status.equalsIgnoreCase("login is successful") || 
+                    if (status.equalsIgnoreCase("login is sucessful") ||
+                        status.equalsIgnoreCase("login is successful") ||
                         status.equalsIgnoreCase("success")) {
-                        
-                        // 1. Solicita o token DIRETO com credenciais em memória (Evita reler config.cfg desatualizado)
-                        Log.d(TAG, "[TOKEN] Solicitando token de sessão...");
+
+                        Log.d(TAG, "[TOKEN] Requesting session token...");
                         String newToken = tokenManager.newSession(LoginActivity.this, attemptedUsername, attemptedPassword, serverUrl);
 
-                        // 2. Salva as credenciais e o token obtido no config.cfg em background/persistência
                         config cfg = new config();
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "username", attemptedUsername);
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "password", attemptedPassword);
                         if (newToken.length() > 0) {
                             cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
                         }
-                
+
                         Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
                         startActivity(intent);
                         finish();
                     } else {
-                        Log.w(TAG, "[LOGIN RECUSADO] Status incorreto: " + status);
+                        Log.w(TAG, "[LOGIN DENIED] Incorrect status: " + status);
                         Toast.makeText(LoginActivity.this, "Username or password incorrect!", Toast.LENGTH_LONG).show();
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "[JSON ERRO] Exceção ao ler JSON retornado: ", e);
+                    Log.e(TAG, "[JSON ERROR] Exception reading returned JSON: ", e);
                     Toast.makeText(LoginActivity.this, "Error processing data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Log.e(TAG, "[CONEXAO FALHOU] Resposta vazia ou nula retornada pela rede.");
+                Log.e(TAG, "[CONNECTION FAILED] Empty or null response returned from network.");
                 Toast.makeText(LoginActivity.this, "Connection with server failed", Toast.LENGTH_LONG).show();
             }
         }
@@ -256,7 +408,7 @@ public class LoginActivity extends BaseActivity {
                     progressDialog.dismiss();
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Erro ao ocultar dialog", e);
+                Log.e(TAG, "Error dismissing dialog", e);
             }
         }
     }

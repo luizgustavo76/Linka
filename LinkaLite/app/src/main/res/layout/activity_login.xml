@@ -54,18 +54,24 @@
             android:textStyle="bold" />
     </RelativeLayout>
 
-    <!-- 3. Área principal com a foto alinhada à esquerda -->
+    <!-- 3. Área principal preenchendo toda a altura sem faixa preta -->
     <FrameLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
 
+        <!-- Camada traseira para o crossfade suave -->
+        <ImageView
+            android:id="@+id/imgBannerBack"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:scaleType="fitXY" />
+
+        <!-- Camada frontal do slideshow -->
         <ImageView
             android:id="@+id/imgBanner"
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:layout_gravity="left"
-            android:adjustViewBounds="true"
-            android:scaleType="fitStart"/>
+            android:scaleType="fitXY" />
 
         <ScrollView
             android:layout_width="fill_parent"
@@ -82,11 +88,11 @@
                 android:paddingTop="180dip"
                 android:paddingBottom="16dip">
 
-                <!-- Card único semi-transparente agrupando todo o login -->
+                <!-- Card mais transparente (#A6FFFFFF = ~65% opacidade) -->
                 <LinearLayout
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:background="#D9FFFFFF"
+                    android:background="#A6FFFFFF"
                     android:orientation="vertical"
                     android:padding="12dip">
 
@@ -183,7 +189,7 @@
                         android:gravity="center_vertical"
                         android:paddingLeft="2dip"
                         android:text="Explore as guest"
-                        android:textColor="#333333"
+                        android:textColor="#222222"
                         android:textSize="14sp" />
 
                 </LinearLayout>
