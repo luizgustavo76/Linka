@@ -60,12 +60,12 @@
         android:layout_height="fill_parent">
 
         <ImageView
+            android:id="@+id/imgBanner"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             android:layout_gravity="left"
             android:adjustViewBounds="true"
-            android:scaleType="fitStart"
-            android:src="@drawable/linka_login" />
+            android:scaleType="fitStart"/>
 
         <ScrollView
             android:layout_width="fill_parent"

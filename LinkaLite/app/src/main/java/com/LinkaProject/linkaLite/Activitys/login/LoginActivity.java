@@ -13,7 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import android.widget.ImageView;    
 public class LoginActivity extends BaseActivity {
     private static final String TAG = "LinkaLogin";
     
@@ -23,7 +23,7 @@ public class LoginActivity extends BaseActivity {
     private Button btnLogin;
     private TextView txtGoToSignup;
     private TextView txtGuest;
-    
+    private ImageView bannerImageView;
     private String serverUrl = "http://patient-hall-2915.luizsgustavo76.workers.dev/"; 
     private LoginTask currentLoginTask;
 
@@ -40,7 +40,17 @@ public class LoginActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        bannerImageView = (ImageView) findViewById(R.id.imgBanner);
+        int[] loginBanners = {
+            R.drawable.linka_login,
+            R.drawable.linka_login_2,
+            R.drawable.linka_login_3,
+            R.drawable.linka_login_4,
+            R.drawable.linka_login_5
+        };
 
+        int sorteado = loginBanners[new java.util.Random().nextInt(loginBanners.length)];
+        bannerImageView.setImageResource(sorteado);
         btnServer = (Button) findViewById(R.id.btnServer);
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
