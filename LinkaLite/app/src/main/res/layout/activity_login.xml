@@ -1,74 +1,194 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    android:background="#282c37" xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:background="#121212"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <!-- 1. Barra preta principal igual à HomeActivity -->
+    <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dip">
+        android:layout_height="46dip"
+        android:background="#121212"
+        android:paddingLeft="12dip"
+        android:paddingRight="12dip">
+
         <ImageView
             android:id="@+id/imgLogo"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="16dip"
-            android:layout_marginBottom="16dip"
-            android:src="@drawable/linka_app_login_banner"
+            android:layout_height="30dip"
+            android:layout_centerInParent="true"
+            android:adjustViewBounds="true"
             android:scaleType="fitCenter"
-            android:adjustViewBounds="true" />
-        <EditText
-            android:id="@+id/edtUsername"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="Username"
-            android:singleLine="true" />
+            android:src="@drawable/linka_app_login_banner" />
+    </RelativeLayout>
 
-        <EditText
-            android:id="@+id/edtPassword"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="Password"
-            android:password="true"
-            android:singleLine="true"
-            android:layout_marginTop="10dip" />
+    <!-- 2. Sub-barra cinza escura igual à barra "Timeline | Chat ▶" -->
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="30dip"
+        android:background="#2B2B2B"
+        android:paddingLeft="12dip"
+        android:paddingRight="10dip">
 
-        <Button
-            android:id="@+id/btnLogin"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Enter"
-            android:layout_marginTop="20dip" />
         <TextView
-            android:id="@+id/txtGuest"
-            android:layout_width="fill_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Explore as guest"
-            android:gravity="center"
-            android:layout_marginTop="20dip"
-            android:padding="10dip"
-            android:focusable="true"
-            android:clickable="true" 
-        android:textColor="#FFFFFF" />
-        <TextView
-            android:id="@+id/txtGoToSignup"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Dont have a account? register!"
-            android:gravity="center"
-            android:layout_marginTop="20dip"
-            android:padding="10dip"
-            android:focusable="true"
-            android:clickable="true" 
-        android:textColor="#FFFFFF" />
+            android:layout_centerVertical="true"
+            android:text="Login"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
         <Button
             android:id="@+id/btnServer"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_alignParentRight="true"
+            android:background="@android:color/transparent"
+            android:paddingLeft="8dip"
+            android:paddingRight="4dip"
+            android:text="Server ▶"
+            android:textColor="#CCCCCC"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <!-- 3. Área principal com a foto alinhada à esquerda -->
+    <FrameLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="left"
+            android:adjustViewBounds="true"
+            android:scaleType="fitStart"
+            android:src="@drawable/linka_login" />
+
+        <ScrollView
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="Change server"
-            android:layout_marginTop="20dip" />
-            
-    </LinearLayout>
-</ScrollView>
+            android:layout_height="fill_parent"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="bottom"
+                android:orientation="vertical"
+                android:paddingLeft="14dip"
+                android:paddingRight="14dip"
+                android:paddingTop="180dip"
+                android:paddingBottom="16dip">
+
+                <!-- Card único semi-transparente agrupando todo o login -->
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#D9FFFFFF"
+                    android:orientation="vertical"
+                    android:padding="12dip">
+
+                    <!-- Campos de texto sólidos dentro do card -->
+                    <LinearLayout
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:background="#FFFFFF"
+                        android:orientation="vertical">
+
+                        <View
+                            android:layout_width="fill_parent"
+                            android:layout_height="1dip"
+                            android:background="#CCCCCC" />
+
+                        <EditText
+                            android:id="@+id/edtUsername"
+                            android:layout_width="fill_parent"
+                            android:layout_height="44dip"
+                            android:background="@android:color/transparent"
+                            android:hint="Username"
+                            android:inputType="textNoSuggestions|textVisiblePassword"
+                            android:paddingLeft="12dip"
+                            android:paddingRight="12dip"
+                            android:singleLine="true"
+                            android:textColor="#111111"
+                            android:textColorHint="#888888"
+                            android:textSize="15sp" />
+
+                        <View
+                            android:layout_width="fill_parent"
+                            android:layout_height="1dip"
+                            android:layout_marginLeft="12dip"
+                            android:background="#E0E0E0" />
+
+                        <EditText
+                            android:id="@+id/edtPassword"
+                            android:layout_width="fill_parent"
+                            android:layout_height="44dip"
+                            android:background="@android:color/transparent"
+                            android:hint="Password"
+                            android:inputType="textPassword"
+                            android:paddingLeft="12dip"
+                            android:paddingRight="12dip"
+                            android:singleLine="true"
+                            android:textColor="#111111"
+                            android:textColorHint="#888888"
+                            android:textSize="15sp" />
+
+                        <View
+                            android:layout_width="fill_parent"
+                            android:layout_height="1dip"
+                            android:background="#CCCCCC" />
+                    </LinearLayout>
+
+                    <!-- Botão principal ciano sólido -->
+                    <Button
+                        android:id="@+id/btnLogin"
+                        android:layout_width="fill_parent"
+                        android:layout_height="44dip"
+                        android:layout_marginTop="10dip"
+                        android:background="#29B6F6"
+                        android:text="Enter"
+                        android:textColor="#FFFFFF"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <!-- Links secundários integrados na base do card -->
+                    <TextView
+                        android:id="@+id/txtGoToSignup"
+                        android:layout_width="fill_parent"
+                        android:layout_height="38dip"
+                        android:layout_marginTop="8dip"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="2dip"
+                        android:text="Don't have an account? Register!"
+                        android:textColor="#1976D2"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <View
+                        android:layout_width="fill_parent"
+                        android:layout_height="1dip"
+                        android:background="#33000000" />
+
+                    <TextView
+                        android:id="@+id/txtGuest"
+                        android:layout_width="fill_parent"
+                        android:layout_height="38dip"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_vertical"
+                        android:paddingLeft="2dip"
+                        android:text="Explore as guest"
+                        android:textColor="#333333"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+</LinearLayout>
