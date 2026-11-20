@@ -2,40 +2,57 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#ffffff"
+    android:background="#E5E8EC"
     android:orientation="vertical">
 
-    <!-- Barra de Botões do Topo -->
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#d2d2d2"
+        android:background="#DDE1E6"
         android:orientation="horizontal"
-        android:padding="6dip">
+        android:paddingLeft="8dip"
+        android:paddingRight="8dip"
+        android:paddingTop="6dip"
+        android:paddingBottom="6dip">
 
         <Button
             android:id="@+id/btnNewChat"
             android:layout_width="0dip"
-            android:layout_height="wrap_content"
+            android:layout_height="38dip"
             android:layout_weight="1"
-            android:layout_margin="6dip"
-            android:text="+" />
+            android:layout_marginRight="5dip"
+            android:background="@drawable/bg_btn_outline_light"
+            android:text="+ New Chat"
+            android:textColor="#222222"
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/btnGlobalChat"
             android:layout_width="0dip"
-            android:layout_height="wrap_content"
+            android:layout_height="38dip"
             android:layout_weight="1"
-            android:layout_margin="6dip"
-            android:text="Global" />
+            android:layout_marginLeft="5dip"
+            android:background="@drawable/bg_btn_cyan"
+            android:text="Global Room"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold" />
     </LinearLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dip"
+        android:background="#CFD5DC" />
 
     <ListView
         android:id="@+id/lvFriends"
         android:layout_width="fill_parent"
         android:layout_height="0dip"
         android:layout_weight="1"
-        android:divider="#fefefe"
+        android:background="#FFFFFF"
+        android:cacheColorHint="#FFFFFF"
+        android:divider="#E5E8EC"
         android:dividerHeight="1dip" />
 
 </LinearLayout>
