@@ -1,6 +1,6 @@
 package com.LinkaProject.linkaLite;
 
-import android.app.ProgressDialog;
+import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -64,10 +64,12 @@ public class LoginActivity extends BaseActivity {
 
     private static class LoginResult {
         final boolean success;
+        final String title;
         final String message;
 
-        LoginResult(boolean success, String message) {
+        LoginResult(boolean success, String title, String message) {
             this.success = success;
+            this.title = title;
             this.message = message;
         }
     }
@@ -284,7 +286,7 @@ public class LoginActivity extends BaseActivity {
                 String username = edtUsername.getText().toString().trim();
                 String password = edtPassword.getText().toString().trim();
                 if (username.length() == 0 || password.length() == 0) {
-                    Toast.makeText(LoginActivity.this, "Fill all fields", Toast.LENGTH_SHORT).show();
+                    LinkaDialog.showAlert(LoginActivity.this, "Missing Fields", "Please fill in your username and password.");
                 } else {
                     executeLogin(username, password);
                 }
@@ -326,16 +328,12 @@ public class LoginActivity extends BaseActivity {
     }
 
     private class LoginTask extends AsyncTask<String, Void, LoginResult> {
-        private ProgressDialog progressDialog;
+        private Dialog progressDialog;
 
         @Override
         protected void onPreExecute() {
             if (!LoginActivity.this.isFinishing()) {
-                progressDialog = new ProgressDialog(LoginActivity.this);
-                progressDialog.setTitle("Wait");
-                progressDialog.setMessage("Connecting to server...");
-                progressDialog.setCancelable(false);
-                progressDialog.show();
+                progressDialog = LinkaDialog.showLoading(LoginActivity.this, "Connecting to server...");
             }
         }
 
@@ -361,7 +359,7 @@ public class LoginActivity extends BaseActivity {
 
                 String result = request.requestHTTP(baseUrl + "/login", "POST", jsonParam, 0, LoginActivity.this);
                 if (result == null || result.length() == 0) {
-                    return new LoginResult(false, "Connection with server failed");
+                    return new LoginResult(false, "Connection Error", "Could not connect to the server. Check your internet connection.");
                 }
 
                 JSONObject responseJson = new JSONObject(result);
@@ -380,13 +378,13 @@ public class LoginActivity extends BaseActivity {
                         cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
                     }
 
-                    return new LoginResult(true, "Login successful!");
+                    return new LoginResult(true, "", "Login successful!");
                 } else {
-                    return new LoginResult(false, "Username or password incorrect!");
+                    return new LoginResult(false, "Incorrect Login", "The username or password you entered is incorrect. Please try again.");
                 }
             } catch (Exception e) {
                 Log.e(TAG, "[LOGIN EXCEPTION] Error during login: ", e);
-                return new LoginResult(false, "Error processing data: " + e.getMessage());
+                return new LoginResult(false, "Error", "Error processing data: " + e.getMessage());
             }
         }
 
@@ -400,7 +398,7 @@ public class LoginActivity extends BaseActivity {
                 startActivity(new Intent(LoginActivity.this, HomeActivity.class));
                 finish();
             } else {
-                Toast.makeText(LoginActivity.this, loginResult.message, Toast.LENGTH_LONG).show();
+                LinkaDialog.showAlert(LoginActivity.this, loginResult.title, loginResult.message);
             }
         }
 

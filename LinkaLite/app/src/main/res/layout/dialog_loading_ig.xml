@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_ig"
+    android:gravity="center_vertical"
+    android:minWidth="220dip"
+    android:orientation="horizontal"
+    android:paddingBottom="18dip"
+    android:paddingLeft="20dip"
+    android:paddingRight="22dip"
+    android:paddingTop="18dip">
+
+    <ProgressBar
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="26dip"
+        android:layout_height="26dip"
+        android:indeterminate="true" />
+
+    <TextView
+        android:id="@+id/txtLoadingMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="14dip"
+        android:text="Connecting to server..."
+        android:textColor="#262626"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+</LinearLayout>
