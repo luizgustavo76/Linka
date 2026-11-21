@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import secrets
 from datetime import datetime, timedelta
 import psycopg2
@@ -9,7 +10,11 @@ from flask import Flask, Blueprint, request, jsonify, g, Response
 from flask_cors import CORS
 import dotenv
 import markdown
+
 base_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, base_dir)
+os.chdir(base_dir)
+
 env_path = os.path.join(base_dir, "backend.env")
 if os.path.exists(env_path):
     dotenv.load_dotenv(env_path)
@@ -46,9 +51,9 @@ if root_flags["bookmarks"]:
     from bookmarks import bookmarks_bp
 if root_flags["poll"]:
     from poll import poll_bp
+
 tos_content = ""
 if root_flags.get("automoderator"):
-    import sys
     import threading
     import time
     from pathlib import Path
@@ -101,10 +106,10 @@ from chat_group import chat_group_bp
 
 app = Flask(__name__)
 
-# Conexão remota centralizada no PostgreSQL (Neon.tech)
 def get_db():
     conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
+
 def init_tables():
     conn = get_db()
     cur = conn.cursor()
@@ -116,7 +121,6 @@ def init_tables():
             expire_date TEXT
         );
     """)
-    # CRIA ÍNDICE DE PERFORMANCE NA COLUNA TOKEN
     cur.execute("""
         CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token);
     """)
@@ -130,14 +134,18 @@ def init_tables():
     conn.commit()
     cur.close()
     conn.close()
-# Garante que as tabelas essenciais de tokens/bans existam no Postgres
-init_tables()
+
+try:
+    init_tables()
+except Exception as e:
+    print(f"[DB Init Warning] {e}")
 
 def verificar_hash(senha, hash_salvo):
     return check_password_hash(hash_salvo, senha)
 
 def gerar_token():
     return secrets.token_hex(16)
+
 @app.route("/privacy")
 def privacy():
     privacy_path = os.path.join(base_dir, "privacy.md")
@@ -175,6 +183,7 @@ def privacy():
 </html>"""
 
     return Response(html_page, mimetype="text/html; charset=utf-8")
+
 @app.route("/tos")
 def tos_route():
     html = f"""
@@ -254,7 +263,6 @@ public_routes = [
 
 @app.before_request
 def valide():
-    # Rotas ignoradas totalmente pelo middleware
     if request.path in ["/receiveToken", "/sendToken", "/upload-image", "/view-post", "/lite-render", "/tos"]:
         return None
 
@@ -273,10 +281,8 @@ def valide():
             g.username = result["username"] if result else None
         else:
             g.username = None
-        # Rota pública SEMPRE passa, tendo token válido, inválido ou sem token!
         return None
 
-    # SE A ROTA É PRIVADA:
     if not token:
         return jsonify({"status": "the token is empty"}), 403
         
@@ -292,7 +298,6 @@ def valide():
         
     g.username = result["username"]
     
-    # Validações de Ban e Expiração...
     cur.execute("SELECT * FROM banned WHERE username = %s", (g.username,))
     result_user_banned = cur.fetchone()
     conn.close()
@@ -310,6 +315,7 @@ def valide():
             return jsonify({"status": "the token has been expired"}), 403
 
     return None
+
 @app.route("/valide-session", methods=["POST"])
 def valideManual():
     public_paths = ["/login", "/register", "/new-session", "/create-profile", "/tos"]
