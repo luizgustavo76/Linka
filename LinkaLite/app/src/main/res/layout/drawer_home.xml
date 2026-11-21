@@ -70,141 +70,6 @@
             android:paddingBottom="8dp">
 
             <LinearLayout
-                android:id="@+id/btnDrawerFeed"
-                android:layout_width="fill_parent"
-                android:layout_height="48dp"
-                android:background="@android:color/transparent"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/icon_feed" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:text="Feed"
-                    android:textColor="#000000"
-                    android:textSize="15sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btnCommunities"
-                android:layout_width="fill_parent"
-                android:layout_height="48dp"
-                android:background="@android:color/transparent"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/icon_community" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:text="Communities"
-                    android:textColor="#000000"
-                    android:textSize="15sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btnDrawerChat"
-                android:layout_width="fill_parent"
-                android:layout_height="48dp"
-                android:background="@android:color/transparent"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/icon_chats" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:text="Chat"
-                    android:textColor="#000000"
-                    android:textSize="15sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btnDrawerInbox"
-                android:layout_width="fill_parent"
-                android:layout_height="48dp"
-                android:background="@android:color/transparent"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/icon_inbox_drawer" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:text="Inbox"
-                    android:textColor="#000000"
-                    android:textSize="15sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btnDrawerProfile"
-                android:layout_width="fill_parent"
-                android:layout_height="48dp"
-                android:background="@android:color/transparent"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/icon_profile_drawer" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="16dp"
-                    android:text="Account"
-                    android:textColor="#020202"
-                    android:textSize="15sp" />
-            </LinearLayout>
-
-            <LinearLayout
                 android:id="@+id/btnDrawerFavorites"
                 android:layout_width="fill_parent"
                 android:layout_height="48dp"
@@ -227,6 +92,33 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="16dp"
                     android:text="Bookmarks"
+                    android:textColor="#000000"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnDrawerEditTimeline"
+                android:layout_width="fill_parent"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/icon_feed" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="16dp"
+                    android:text="Custom Feeds"
                     android:textColor="#000000"
                     android:textSize="15sp" />
             </LinearLayout>

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -49,7 +50,9 @@ public class LoginActivity extends BaseActivity {
 
     private final Handler slideHandler = new Handler();
 
-    private volatile String serverUrl = "https://patient-hall-2915.luizsgustavo76.workers.dev";
+    private volatile String serverUrl = (Build.VERSION.SDK_INT >= 19)
+            ? "https://patient-hall-2915.luizsgustavo76.workers.dev"
+            : "http://patient-hall-2915.luizsgustavo76.workers.dev";
     private LoginTask currentLoginTask;
 
     private final Runnable slideRunnable = new Runnable() {
@@ -157,7 +160,11 @@ public class LoginActivity extends BaseActivity {
             currentLoginTask.cancel(true);
         }
         currentLoginTask = new LoginTask();
-        currentLoginTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, username, password);
+        if (Build.VERSION.SDK_INT >= 11) {
+            currentLoginTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, username, password);
+        } else {
+            currentLoginTask.execute(username, password);
+        }
     }
 
     @Override
@@ -346,7 +353,11 @@ public class LoginActivity extends BaseActivity {
 
             try {
                 String baseUrl = serverUrl.trim();
-                if (baseUrl.startsWith("http://")) {
+                if (Build.VERSION.SDK_INT < 19) {
+                    if (baseUrl.startsWith("https://")) {
+                        baseUrl = "http://" + baseUrl.substring(8);
+                    }
+                } else if (baseUrl.startsWith("http://")) {
                     baseUrl = "https://" + baseUrl.substring(7);
                 }
                 while (baseUrl.endsWith("/")) {

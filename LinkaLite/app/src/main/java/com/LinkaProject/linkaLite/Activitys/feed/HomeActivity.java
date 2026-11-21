@@ -48,7 +48,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,6 +63,30 @@ import java.util.concurrent.TimeUnit;
 public class HomeActivity extends ActivityGroup {
 
     private static final Pattern MENTION_PATTERN = Pattern.compile("@([a-zA-Z0-9_]+(@[a-zA-Z0-9_.-]+)?)");
+
+    // Cache LRU nativo em Java puro (LinkedHashMap com ordem de acesso)
+    private static final int MAX_AVATAR_CACHE_ENTRIES = 60;
+    private static final Map<String, Bitmap> nativeAvatarCache = Collections.synchronizedMap(
+            new LinkedHashMap<String, Bitmap>(MAX_AVATAR_CACHE_ENTRIES, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Bitmap> eldest) {
+                    return size() > MAX_AVATAR_CACHE_ENTRIES;
+                }
+            }
+    );
+
+    private static Bitmap getCachedAvatar(String usernameKey) {
+        if (usernameKey == null) return null;
+        Bitmap bmp = nativeAvatarCache.get(usernameKey);
+        if (bmp != null && !bmp.isRecycled()) {
+            return bmp;
+        }
+        Bitmap generated = AvatarGenerator.generateAvatar(usernameKey, 128);
+        if (generated != null) {
+            nativeAvatarCache.put(usernameKey, generated);
+        }
+        return generated;
+    }
 
     private static ProportionalVideoView currentPlayingVideo = null;
     private static ImageButton currentPlayButton = null;
@@ -120,10 +147,9 @@ public class HomeActivity extends ActivityGroup {
         startActivity(intent);
     }
 
-    private ImageButton btnHamburger, newPost, btnInbox, btnProfile;
+    private ImageButton btnHamburger, btnTopChat, navHome, navCommunities, btnNotifications, btnProfile, fabNewPost;
     private Button btnClose, btnLogin;
     private HorizontalScrollView scrollViewPages;
-    private TextView tabPrev, tabCurrent, tabNext;
     private int screenWidth;
     private int currentPage = 0;
     private String[] pageTitles = new String[]{"Timeline", "Chat"};
@@ -138,7 +164,6 @@ public class HomeActivity extends ActivityGroup {
     private ScheduledExecutorService scheduler, schedulerNotifications, schedulerFeedPolling;
     private DrawerLayout drawerLayout;
     private ImageView logo;
-    private ImageButton fabNewPost;
     private int feedPageTimeline = 1;
     private boolean isLoading = false;
     private String actualFeed = "Linka";
@@ -169,7 +194,7 @@ public class HomeActivity extends ActivityGroup {
             e.printStackTrace();
         }
 
-        List<String> redesList = new ArrayList<String>(Arrays.asList("Linka >", "Timeline", "Communities >", "Friends >", "+ New Feed"));
+        List<String> redesList = new ArrayList<String>(Arrays.asList("Linka >", "Timeline", "Friends >", "+ New Feed"));
         DatabaseHelper dbHelper = new DatabaseHelper(this);
         SQLiteDatabase db = null;
         Cursor cursor = null;
@@ -207,12 +232,6 @@ public class HomeActivity extends ActivityGroup {
                 String selectItem = parent.getItemAtPosition(position).toString();
                 String newFeed = selectItem.replace(">", "").trim();
 
-                if ("Communities".equalsIgnoreCase(newFeed)) {
-                    spinnerFeeds.setSelection(lastValidSpinnerPos);
-                    startActivity(new Intent(HomeActivity.this, CommunityIndex.class));
-                    return;
-                }
-
                 if ("+ New Feed".equalsIgnoreCase(newFeed)) {
                     spinnerFeeds.setSelection(lastValidSpinnerPos);
                     startActivity(new Intent(HomeActivity.this, MainEditTimeline.class));
@@ -220,6 +239,10 @@ public class HomeActivity extends ActivityGroup {
                 }
 
                 lastValidSpinnerPos = position;
+
+                if (currentPage != 0) {
+                    scrollToPage(0);
+                }
 
                 if (!newFeed.equalsIgnoreCase(actualFeed)) {
                     stopActiveVideo();
@@ -238,14 +261,6 @@ public class HomeActivity extends ActivityGroup {
 
         topHeaderContainer = findViewById(R.id.topHeaderContainer);
 
-        fabNewPost = (ImageButton) findViewById(R.id.fabNewPost);
-        fabNewPost.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Intent intent = new Intent(HomeActivity.this, newPost.class);
-                startActivity(intent);
-            }
-        });
-
         Display display = getWindowManager().getDefaultDisplay();
         screenWidth = display.getWidth();
         logo = (ImageView) findViewById(R.id.logo);
@@ -258,6 +273,11 @@ public class HomeActivity extends ActivityGroup {
             logo.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if (currentPage != 0) {
+                        scrollToPage(0);
+                    } else if (listViewTimeline != null) {
+                        listViewTimeline.setSelection(0);
+                    }
                     refreshFeed();
                     UIAnimationHelper.rotateWithWeight((ImageView) v);
                 }
@@ -266,10 +286,6 @@ public class HomeActivity extends ActivityGroup {
         }
 
         scrollViewPages = (HorizontalScrollView) findViewById(R.id.scrollViewPages);
-        tabPrev = (TextView) findViewById(R.id.tabPrev);
-        tabCurrent = (TextView) findViewById(R.id.tabCurrent);
-        tabNext = (TextView) findViewById(R.id.tabNext);
-
         setPageWidth(R.id.pageTimeline);
         setPageWidth(R.id.pageChat);
 
@@ -285,26 +301,6 @@ public class HomeActivity extends ActivityGroup {
                 }
             });
         }
-
-        tabPrev.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (currentPage > 0) {
-                    currentPage--;
-                    scrollToPage(currentPage);
-                }
-            }
-        });
-
-        tabNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (currentPage < pageTitles.length - 1) {
-                    currentPage++;
-                    scrollToPage(currentPage);
-                }
-            }
-        });
 
         if (scrollViewPages != null) {
             scrollViewPages.setOnTouchListener(new View.OnTouchListener() {
@@ -346,14 +342,6 @@ public class HomeActivity extends ActivityGroup {
             });
         }
 
-        updateTabHeader();
-
-        newPost = (ImageButton) findViewById(R.id.newPost);
-        btnInbox = (ImageButton) findViewById(R.id.btnInbox);
-        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
-        btnClose = (Button) findViewById(R.id.btnClose);
-        btnLogin = (Button) findViewById(R.id.btnLogin);
-
         LinearLayout layoutGuest = (LinearLayout) findViewById(R.id.layoutGuest);
         Intent intent = getIntent();
         isGuest = intent.getBooleanExtra("isGuest", false);
@@ -361,23 +349,74 @@ public class HomeActivity extends ActivityGroup {
             layoutGuest.setVisibility(View.VISIBLE);
         }
 
-        if (newPost != null) {
-            newPost.setOnClickListener(new View.OnClickListener() {
+        // TOP BAR CHAT (DIRECT)
+        btnTopChat = (ImageButton) findViewById(R.id.btnTopChat);
+        if (btnTopChat != null) {
+            btnTopChat.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Intent intent = new Intent(HomeActivity.this, newPost.class);
-                    intent.putExtra("isGuest", isGuest);
-                    startActivity(intent);
+                    if (currentPage == 0) {
+                        scrollToPage(1);
+                    } else {
+                        scrollToPage(0);
+                    }
                 }
             });
         }
 
-        if (btnInbox != null) {
-            btnInbox.setOnClickListener(new View.OnClickListener() {
+        // BOTTOM BAR (5 BOTÕES)
+        navHome = (ImageButton) findViewById(R.id.navHome);
+        navCommunities = (ImageButton) findViewById(R.id.navCommunities);
+        fabNewPost = (ImageButton) findViewById(R.id.fabNewPost);
+        btnNotifications = (ImageButton) findViewById(R.id.btnNotifications);
+        btnProfile = (ImageButton) findViewById(R.id.btnProfile);
+        btnClose = (Button) findViewById(R.id.btnClose);
+        btnLogin = (Button) findViewById(R.id.btnLogin);
+
+        if (navHome != null) {
+            navHome.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    currentPage = 1;
-                    scrollToPage(currentPage);
+                    if (currentPage != 0) {
+                        scrollToPage(0);
+                    } else if (listViewTimeline != null) {
+                        if (listViewTimeline.getFirstVisiblePosition() > 0) {
+                            listViewTimeline.setSelection(0);
+                        } else {
+                            refreshFeed();
+                        }
+                    }
+                }
+            });
+        }
+
+        if (navCommunities != null) {
+            navCommunities.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    stopActiveVideo();
+                    startActivity(new Intent(HomeActivity.this, CommunityIndex.class));
+                }
+            });
+        }
+
+        if (fabNewPost != null) {
+            fabNewPost.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent postIntent = new Intent(HomeActivity.this, newPost.class);
+                    postIntent.putExtra("isGuest", isGuest);
+                    startActivity(postIntent);
+                }
+            });
+        }
+
+        if (btnNotifications != null) {
+            btnNotifications.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    stopActiveVideo();
+                    startActivity(new Intent(HomeActivity.this, InboxActivity.class));
                 }
             });
         }
@@ -386,6 +425,7 @@ public class HomeActivity extends ActivityGroup {
             btnProfile.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    stopActiveVideo();
                     startActivity(new Intent(HomeActivity.this, profile.class));
                 }
             });
@@ -417,8 +457,11 @@ public class HomeActivity extends ActivityGroup {
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                if (!isLoading && (view == listViewTimeline && hasMoreTimeline)
-                    && totalItemCount > 0 && (firstVisibleItem + visibleItemCount >= totalItemCount - 2)) {
+                int footerCount = listViewTimeline.getFooterViewsCount();
+                int dataCount = totalItemCount - footerCount;
+
+                if (!isLoading && hasMoreTimeline && dataCount > 0
+                        && (firstVisibleItem + visibleItemCount >= totalItemCount - 1)) {
                     feedPageTimeline++;
                     loadFeedForTab("Timeline", false, feedPageTimeline);
                 }
@@ -470,7 +513,17 @@ public class HomeActivity extends ActivityGroup {
             listViewTimeline.setAdapter(adapterTimeline);
         }
 
+        updateNavSelection();
         startBackgroundSchedulers();
+    }
+
+    private void updateNavSelection() {
+        if (navHome != null) {
+            navHome.setBackgroundColor(currentPage == 0 ? Color.parseColor("#2A2A2A") : Color.TRANSPARENT);
+        }
+        if (btnTopChat != null) {
+            btnTopChat.setBackgroundColor(currentPage == 1 ? Color.parseColor("#2A2A2A") : Color.TRANSPARENT);
+        }
     }
 
     private void startBackgroundSchedulers() {
@@ -592,12 +645,8 @@ public class HomeActivity extends ActivityGroup {
         TextView txtDisplayName = (TextView) findViewById(R.id.txtDisplayName);
         TextView txtUsername = (TextView) findViewById(R.id.txtUsername);
 
-        View btnDrawerFeed = findViewById(R.id.btnDrawerFeed);
-        View btnCommunities = findViewById(R.id.btnCommunities);
-        View btnDrawerChat = findViewById(R.id.btnDrawerChat);
-        View btnDrawerInbox = findViewById(R.id.btnDrawerInbox);
-        View btnDrawerProfile = findViewById(R.id.btnDrawerProfile);
         View btnDrawerFavorites = findViewById(R.id.btnDrawerFavorites);
+        View btnDrawerEditTimeline = findViewById(R.id.btnDrawerEditTimeline);
         View btnDrawerOptions = findViewById(R.id.btnDrawerOptions);
         View btnDrawerLogout = findViewById(R.id.btnDrawerLogout);
         String currentUsername = "user";
@@ -606,7 +655,18 @@ public class HomeActivity extends ActivityGroup {
             btnDrawerOptions.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    if (drawerLayout != null) drawerLayout.closeDrawers();
                     startActivity(new Intent(HomeActivity.this, optionActivity.class));
+                }
+            });
+        }
+
+        if (btnDrawerEditTimeline != null) {
+            btnDrawerEditTimeline.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (drawerLayout != null) drawerLayout.closeDrawers();
+                    startActivity(new Intent(HomeActivity.this, MainEditTimeline.class));
                 }
             });
         }
@@ -640,56 +700,6 @@ public class HomeActivity extends ActivityGroup {
                     Intent intent = new Intent(HomeActivity.this, ViewProfile.class);
                     intent.putExtra("usernameProfile", finalUsername);
                     startActivity(intent);
-                }
-            });
-        }
-
-        if (btnDrawerFeed != null) {
-            btnDrawerFeed.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (drawerLayout != null) drawerLayout.closeDrawers();
-                    scrollToPage(0);
-                }
-            });
-        }
-
-        if (btnCommunities != null) {
-            btnCommunities.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(HomeActivity.this, CommunityIndex.class);
-                    startActivity(intent);
-                }
-            });
-        }
-
-        if (btnDrawerChat != null) {
-            btnDrawerChat.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (drawerLayout != null) drawerLayout.closeDrawers();
-                    scrollToPage(1);
-                }
-            });
-        }
-
-        if (btnDrawerInbox != null) {
-            btnDrawerInbox.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (drawerLayout != null) drawerLayout.closeDrawers();
-                    startActivity(new Intent(HomeActivity.this, InboxActivity.class));
-                }
-            });
-        }
-
-        if (btnDrawerProfile != null) {
-            btnDrawerProfile.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (drawerLayout != null) drawerLayout.closeDrawers();
-                    startActivity(new Intent(HomeActivity.this, profile.class));
                 }
             });
         }
@@ -734,6 +744,8 @@ public class HomeActivity extends ActivityGroup {
             stopActiveVideo();
         }
         currentPage = page;
+        showHeaderBar();
+        updateNavSelection();
 
         if (scrollViewPages != null) {
             scrollViewPages.post(new Runnable() {
@@ -743,31 +755,13 @@ public class HomeActivity extends ActivityGroup {
                 }
             });
         }
-        updateTabHeader();
         loadFeedForTab(pageTitles[page], false, 1);
-    }
-
-    private void updateTabHeader() {
-        tabCurrent.setText(pageTitles[currentPage]);
-
-        if (currentPage > 0) {
-            tabPrev.setText("◀ " + pageTitles[currentPage - 1]);
-            tabPrev.setVisibility(View.VISIBLE);
-        } else {
-            tabPrev.setVisibility(View.INVISIBLE);
-        }
-
-        if (currentPage < pageTitles.length - 1) {
-            tabNext.setText(pageTitles[currentPage + 1] + " ▶");
-            tabNext.setVisibility(View.VISIBLE);
-        } else {
-            tabNext.setVisibility(View.INVISIBLE);
-        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        updateNavSelection();
         startBackgroundSchedulers();
         loadFeedForTab(pageTitles[currentPage], false, 1);
     }
@@ -792,7 +786,7 @@ public class HomeActivity extends ActivityGroup {
 
     private void checkNewPosts() {
         String tabName = pageTitles[currentPage];
-        if ("Timeline".equals(tabName)) {
+        if ("Timeline".equals(tabName) && listViewTimeline != null && listViewTimeline.getFirstVisiblePosition() == 0) {
             loadFeedForTab("Timeline", true, 1);
         }
     }
@@ -940,12 +934,14 @@ public class HomeActivity extends ActivityGroup {
                 if (trimmed.startsWith("[")) {
                     JSONArray jsonArray = new JSONArray(trimmed);
 
-                    if (jsonArray.length() < 20) {
+                    if (jsonArray.length() == 0) {
                         hasMoreTimeline = false;
+                        return;
                     }
 
                     if (pageRequested == 1) {
                         targetList.clear();
+                        hasMoreTimeline = true;
                     }
 
                     for (int i = 0; i < jsonArray.length(); i++) {
@@ -1288,13 +1284,14 @@ public class HomeActivity extends ActivityGroup {
                         final int id = post.optInt("id", -1);
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            if (which == 0) {
+                            String chosen = optionsPost[which];
+                            if ("Edit Post".equals(chosen)) {
                                 Intent intent = new Intent(HomeActivity.this, newPost.class);
                                 intent.putExtra("isEdited", true);
                                 intent.putExtra("postId", id);
                                 intent.putExtra("textPost", textPost);
                                 startActivity(intent);
-                            } else if (which == 1) {
+                            } else if ("Delete Post".equals(chosen)) {
                                 try {
                                     JSONObject jsonDelete = new JSONObject();
                                     jsonDelete.put("post_id", id);
@@ -1309,8 +1306,16 @@ public class HomeActivity extends ActivityGroup {
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
-                            } else if (which == 2) {
-                                // View Profile
+                            } else if ("View Profile".equals(chosen)) {
+                                Intent intent = new Intent(HomeActivity.this, ViewProfile.class);
+                                intent.putExtra("usernameProfile", postUsername);
+                                startActivity(intent);
+                            } else if ("Share".equals(chosen)) {
+                                Intent sendIntent = new Intent();
+                                sendIntent.setAction(Intent.ACTION_SEND);
+                                sendIntent.putExtra(Intent.EXTRA_TEXT, "@" + postUsername + ": " + textPost);
+                                sendIntent.setType("text/plain");
+                                startActivity(Intent.createChooser(sendIntent, "Share post"));
                             }
                         }
                     });
@@ -1495,7 +1500,7 @@ public class HomeActivity extends ActivityGroup {
                 holder.txtCommentCount.setText(commentsCount);
                 holder.tvUsername.setText(postUsername.startsWith("@") ? postUsername : "@" + postUsername);
                 holder.tvDate.setText(relative_datetime.length() > 0 ? relative_datetime : datetime);
-                Bitmap defaultAvatar = AvatarGenerator.generateAvatar(postUsername, 128);
+                Bitmap defaultAvatar = getCachedAvatar(postUsername);
                 holder.avatarPost.setImageBitmap(defaultAvatar);
 
                 if ("timeline".equals(actualTab)) {

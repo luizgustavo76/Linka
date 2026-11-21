@@ -5,12 +5,24 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
-import android.util.LruCache;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class AvatarGenerator {
 
-    // Cache em memória para evitar recriar bitmaps durante o scroll do feed
-    private static final LruCache<String, Bitmap> CACHE = new LruCache<String, Bitmap>(64);
+    private static final int MAX_CACHE_ENTRIES = 64;
+
+    // Cache LRU nativo em Java puro para evitar recriar bitmaps no Android 2.3+
+    private static final Map<String, Bitmap> CACHE = Collections.synchronizedMap(
+            new LinkedHashMap<String, Bitmap>(MAX_CACHE_ENTRIES, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Bitmap> eldest) {
+                    return size() > MAX_CACHE_ENTRIES;
+                }
+            }
+    );
 
     // Paleta curada com bom contraste para texto branco (estilo Discord/Telegram)
     private static final int[] PALETTE = new int[]{

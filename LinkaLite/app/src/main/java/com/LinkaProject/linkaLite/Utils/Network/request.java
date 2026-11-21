@@ -1,6 +1,7 @@
 package com.LinkaProject.linkaLite;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -11,6 +12,15 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 public class request {
 
@@ -22,6 +32,62 @@ public class request {
     public interface RequestBytesCallback {
         void onSuccess(byte[] result);
         void onError(Exception e);
+    }
+
+    /**
+     * Ajusta a URL de acordo com o suporte nativo de TLS da versão do Android:
+     * - API < 16 (Android 2.3 / 3.x): OpenSSL nativo não suporta TLS 1.2 -> usa HTTP.
+     * - API >= 16 (Android 4.1+): suporta TLS 1.2 -> mantém HTTPS.
+     */
+    private static String normalizeUrlForSdk(String rawUrl) {
+        if (rawUrl == null) return "";
+        String url = rawUrl.trim();
+        if (Build.VERSION.SDK_INT < 16 && url.startsWith("https://")) {
+            return "http://" + url.substring(8);
+        }
+        return url;
+    }
+
+    /**
+     * Resolve o erro "CertPathValidatorException: Trust anchor for certification path not found"
+     * em aparelhos Android 4.1 até 7.1 (API 16..25), cujos Root CAs do sistema expiraram
+     * e não reconhecem certificados modernos como ISRG Root X1 (Let's Encrypt) e GTS Root (Cloudflare).
+     */
+    private static void configureLegacySSL(HttpURLConnection connection) {
+        if (Build.VERSION.SDK_INT <= 25 && (connection instanceof HttpsURLConnection)) {
+            try {
+                TrustManager[] trustAllCerts = new TrustManager[]{
+                    new X509TrustManager() {
+                        @Override
+                        public X509Certificate[] getAcceptedIssuers() {
+                            return new X509Certificate[0];
+                        }
+
+                        @Override
+                        public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                        }
+
+                        @Override
+                        public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                        }
+                    }
+                };
+
+                SSLContext sc = SSLContext.getInstance("TLS");
+                sc.init(null, trustAllCerts, new SecureRandom());
+
+                HttpsURLConnection httpsConn = (HttpsURLConnection) connection;
+                httpsConn.setSSLSocketFactory(sc.getSocketFactory());
+                httpsConn.setHostnameVerifier(new HostnameVerifier() {
+                    @Override
+                    public boolean verify(String hostname, SSLSession session) {
+                        return true;
+                    }
+                });
+            } catch (Exception e) {
+                Log.e("LINKA_DEBUG", "Falha ao configurar SSL legado", e);
+            }
+        }
     }
 
     public static void requestHTTPAsync(final String urlParam, final String method, final JSONObject json_body, final int status_code, final Context context, final RequestCallback callback) {
@@ -106,10 +172,13 @@ public class request {
         try {
             System.setProperty("http.keepAlive", "false");
 
-            URL url = new URL(urlParam);
+            String safeUrl = normalizeUrlForSdk(urlParam);
+            URL url = new URL(safeUrl);
             connection = (HttpURLConnection) url.openConnection();
+            configureLegacySSL(connection);
+
             method = method.toUpperCase();
-            
+
             connection.setConnectTimeout(15000);
             connection.setReadTimeout(15000);
             connection.setRequestMethod(method);
@@ -125,10 +194,10 @@ public class request {
             int responseCode = connection.getResponseCode();
 
             // Trata redirecionamentos HTTP 301, 302, 303, 307, 308
-            if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP || 
-                responseCode == HttpURLConnection.HTTP_MOVED_PERM || 
+            if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+                responseCode == HttpURLConnection.HTTP_MOVED_PERM ||
                 responseCode == 307 || responseCode == 308 || responseCode == 303) {
-                
+
                 String newUrl = connection.getHeaderField("Location");
                 if (newUrl != null && newUrl.length() > 0) {
                     if (!newUrl.startsWith("http://") && !newUrl.startsWith("https://")) {
@@ -152,7 +221,7 @@ public class request {
                 in.close();
                 return out.toByteArray();
             } else {
-                Log.e("LINKA_DEBUG", "HTTP " + responseCode + " ao baixar bytes de: " + urlParam);
+                Log.e("LINKA_DEBUG", "HTTP " + responseCode + " ao baixar bytes de: " + safeUrl);
             }
         } catch (Exception e) {
             Log.e("LINKA_DEBUG", "Erro HTTP em " + urlParam, e);
@@ -169,13 +238,16 @@ public class request {
         try {
             System.setProperty("http.keepAlive", "false");
 
-            URL url = new URL(urlParam);
+            String safeUrl = normalizeUrlForSdk(urlParam);
+            URL url = new URL(safeUrl);
             connection = (HttpURLConnection) url.openConnection();
+            configureLegacySSL(connection);
+
             method = method.toUpperCase();
 
-            connection.setConnectTimeout(25000); 
+            connection.setConnectTimeout(25000);
             connection.setReadTimeout(25000);
-            
+
             connection.setRequestMethod(method);
             connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
@@ -246,6 +318,6 @@ public class request {
                 connection.disconnect();
             }
         }
-        return ""; 
+        return "";
     }
 }
