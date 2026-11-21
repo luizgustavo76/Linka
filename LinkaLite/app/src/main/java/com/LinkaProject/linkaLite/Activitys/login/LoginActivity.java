@@ -1,6 +1,5 @@
 package com.LinkaProject.linkaLite;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -19,7 +18,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -40,18 +38,18 @@ public class LoginActivity extends BaseActivity {
 
     private ImageView bannerImageView;
     private ImageView bannerBackImageView;
-    private List<Integer> bannerCycle = new ArrayList<Integer>();
+    private final List<Integer> bannerCycle = new ArrayList<Integer>();
     private int currentBannerIndex = 0;
     private int currentDrawableRes = 0;
 
     private Bitmap currentBitmap = null;
-    private Bitmap preloadedNextBitmap = null;
+    private volatile Bitmap preloadedNextBitmap = null;
     private volatile boolean isDecoding = false;
     private volatile boolean isSlideRunning = false;
 
-    private Handler slideHandler = new Handler();
+    private final Handler slideHandler = new Handler();
 
-    private String serverUrl = "http://patient-hall-2915.luizsgustavo76.workers.dev/";
+    private volatile String serverUrl = "https://patient-hall-2915.luizsgustavo76.workers.dev";
     private LoginTask currentLoginTask;
 
     private final Runnable slideRunnable = new Runnable() {
@@ -63,6 +61,16 @@ public class LoginActivity extends BaseActivity {
             }
         }
     };
+
+    private static class LoginResult {
+        final boolean success;
+        final String message;
+
+        LoginResult(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+    }
 
     private Bitmap decodeBannerBitmap(int resId) {
         try {
@@ -144,11 +152,10 @@ public class LoginActivity extends BaseActivity {
 
     private void executeLogin(String username, String password) {
         if (currentLoginTask != null && currentLoginTask.getStatus() == AsyncTask.Status.RUNNING) {
-            Log.d(TAG, "Canceling previous running LoginTask.");
             currentLoginTask.cancel(true);
         }
         currentLoginTask = new LoginTask();
-        currentLoginTask.execute(username, password);
+        currentLoginTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, username, password);
     }
 
     @Override
@@ -158,24 +165,39 @@ public class LoginActivity extends BaseActivity {
 
         bannerBackImageView = (ImageView) findViewById(R.id.imgBannerBack);
         bannerImageView = (ImageView) findViewById(R.id.imgBanner);
-
-        refillCycle();
-        currentDrawableRes = bannerCycle.get(0);
-        currentBannerIndex = 1;
-        currentBitmap = decodeBannerBitmap(currentDrawableRes);
-        if (currentBitmap != null) {
-            bannerImageView.setImageBitmap(currentBitmap);
-            bannerBackImageView.setImageBitmap(currentBitmap);
-        }
-
-        preloadNextInBackground();
-
         btnServer = (Button) findViewById(R.id.btnServer);
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
         txtGuest = (TextView) findViewById(R.id.txtGuest);
         btnLogin = (Button) findViewById(R.id.btnLogin);
         txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
+
+        refillCycle();
+        final int firstResId = bannerCycle.get(0);
+        currentDrawableRes = firstResId;
+        currentBannerIndex = 1;
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final Bitmap firstBmp = decodeBannerBitmap(firstResId);
+                if (isFinishing()) {
+                    if (firstBmp != null) firstBmp.recycle();
+                    return;
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (!isFinishing() && firstBmp != null) {
+                            currentBitmap = firstBmp;
+                            bannerImageView.setImageBitmap(currentBitmap);
+                            bannerBackImageView.setImageBitmap(currentBitmap);
+                            preloadNextInBackground();
+                        }
+                    }
+                });
+            }
+        }).start();
 
         TextWatcher typingPauseWatcher = new TextWatcher() {
             @Override
@@ -210,7 +232,6 @@ public class LoginActivity extends BaseActivity {
             public void run() {
                 config cfg = new config();
                 if (!config.configFileExists(LoginActivity.this, "config.cfg")) {
-                    Log.d(TAG, "[CONFIG] config.cfg does not exist. Creating default file...");
                     cfg.createDefaultConfig(LoginActivity.this, "config.cfg");
                 }
 
@@ -219,8 +240,6 @@ public class LoginActivity extends BaseActivity {
 
                 try {
                     String jsonString = cfg.loadCfgAsJson(LoginActivity.this, "config.cfg");
-                    Log.d(TAG, "[CONFIG] Current content of config.cfg: " + jsonString);
-
                     JSONObject jsonCfg = new JSONObject(jsonString);
                     JSONObject server = jsonCfg.optJSONObject("SERVER");
                     if (server != null) {
@@ -228,14 +247,13 @@ public class LoginActivity extends BaseActivity {
                         if (cfgUrl.length() > 0) {
                             serverUrl = cfgUrl;
                         }
-                        Log.d(TAG, "[CONFIG] Active server URL: " + serverUrl);
                     }
                     JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
                     if (fastLogin != null) {
                         fastUsername = fastLogin.optString("username", "");
                         fastPassword = fastLogin.optString("password", "");
                     }
-                } catch (JSONException e) {
+                } catch (Exception e) {
                     Log.e(TAG, "[CONFIG ERROR] Error processing configuration JSON:", e);
                 }
 
@@ -246,7 +264,6 @@ public class LoginActivity extends BaseActivity {
                     @Override
                     public void run() {
                         if (!isFinishing() && finalUser.length() > 0 && finalPass.length() > 0) {
-                            Log.d(TAG, "[FAST LOGIN] Executing auto-login for user: " + finalUser);
                             executeLogin(finalUser, finalPass);
                         }
                     }
@@ -257,8 +274,7 @@ public class LoginActivity extends BaseActivity {
         btnServer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(LoginActivity.this, ChangeServer.class);
-                startActivity(intent);
+                startActivity(new Intent(LoginActivity.this, ChangeServer.class));
             }
         });
 
@@ -278,8 +294,7 @@ public class LoginActivity extends BaseActivity {
         txtGoToSignup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
-                startActivity(intent);
+                startActivity(new Intent(LoginActivity.this, SignupActivity.class));
             }
         });
     }
@@ -310,10 +325,8 @@ public class LoginActivity extends BaseActivity {
         }
     }
 
-    private class LoginTask extends AsyncTask<String, Void, String> {
+    private class LoginTask extends AsyncTask<String, Void, LoginResult> {
         private ProgressDialog progressDialog;
-        private String attemptedUsername;
-        private String attemptedPassword;
 
         @Override
         protected void onPreExecute() {
@@ -327,73 +340,67 @@ public class LoginActivity extends BaseActivity {
         }
 
         @Override
-        protected String doInBackground(String... params) {
+        protected LoginResult doInBackground(String... params) {
             if (isCancelled()) return null;
 
-            attemptedUsername = params[0];
-            attemptedPassword = params[1];
+            String attemptedUsername = params[0];
+            String attemptedPassword = params[1];
 
             try {
                 String baseUrl = serverUrl.trim();
+                if (baseUrl.startsWith("http://")) {
+                    baseUrl = "https://" + baseUrl.substring(7);
+                }
                 while (baseUrl.endsWith("/")) {
                     baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
                 }
-
-                String targetUrl = baseUrl + "/login";
-                Log.d(TAG, "[HTTP] Sending POST to: " + targetUrl);
 
                 JSONObject jsonParam = new JSONObject();
                 jsonParam.put("username", attemptedUsername);
                 jsonParam.put("password", attemptedPassword);
 
-                return request.requestHTTP(targetUrl, "POST", jsonParam, 0, LoginActivity.this);
+                String result = request.requestHTTP(baseUrl + "/login", "POST", jsonParam, 0, LoginActivity.this);
+                if (result == null || result.length() == 0) {
+                    return new LoginResult(false, "Connection with server failed");
+                }
+
+                JSONObject responseJson = new JSONObject(result);
+                String status = responseJson.optString("status", "");
+
+                if (status.equalsIgnoreCase("login is sucessful") ||
+                    status.equalsIgnoreCase("login is successful") ||
+                    status.equalsIgnoreCase("success")) {
+
+                    String newToken = tokenManager.newSession(LoginActivity.this, attemptedUsername, attemptedPassword, baseUrl);
+
+                    config cfg = new config();
+                    cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "username", attemptedUsername);
+                    cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "password", attemptedPassword);
+                    if (newToken != null && newToken.length() > 0) {
+                        cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
+                    }
+
+                    return new LoginResult(true, "Login successful!");
+                } else {
+                    return new LoginResult(false, "Username or password incorrect!");
+                }
             } catch (Exception e) {
-                Log.e(TAG, "[HTTP EXCEPTION] Error preparing login request: ", e);
-                return null;
+                Log.e(TAG, "[LOGIN EXCEPTION] Error during login: ", e);
+                return new LoginResult(false, "Error processing data: " + e.getMessage());
             }
         }
 
         @Override
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(LoginResult loginResult) {
             dismissDialogSafely();
-            if (isCancelled() || LoginActivity.this.isFinishing()) return;
+            if (isCancelled() || LoginActivity.this.isFinishing() || loginResult == null) return;
 
-            Log.d(TAG, "[POST EXECUTE] Result received: " + result);
-
-            if (result != null && result.length() > 0) {
-                try {
-                    JSONObject responseJson = new JSONObject(result);
-                    String status = responseJson.optString("status", "");
-
-                    if (status.equalsIgnoreCase("login is sucessful") ||
-                        status.equalsIgnoreCase("login is successful") ||
-                        status.equalsIgnoreCase("success")) {
-
-                        Log.d(TAG, "[TOKEN] Requesting session token...");
-                        String newToken = tokenManager.newSession(LoginActivity.this, attemptedUsername, attemptedPassword, serverUrl);
-
-                        config cfg = new config();
-                        cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "username", attemptedUsername);
-                        cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "password", attemptedPassword);
-                        if (newToken.length() > 0) {
-                            cfg.updateCfg(LoginActivity.this, "config.cfg", "FAST_LOGIN", "token_session", newToken);
-                        }
-
-                        Toast.makeText(LoginActivity.this, "Login successful!", Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-                        startActivity(intent);
-                        finish();
-                    } else {
-                        Log.w(TAG, "[LOGIN DENIED] Incorrect status: " + status);
-                        Toast.makeText(LoginActivity.this, "Username or password incorrect!", Toast.LENGTH_LONG).show();
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "[JSON ERROR] Exception reading returned JSON: ", e);
-                    Toast.makeText(LoginActivity.this, "Error processing data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                }
+            if (loginResult.success) {
+                Toast.makeText(LoginActivity.this, loginResult.message, Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+                finish();
             } else {
-                Log.e(TAG, "[CONNECTION FAILED] Empty or null response returned from network.");
-                Toast.makeText(LoginActivity.this, "Connection with server failed", Toast.LENGTH_LONG).show();
+                Toast.makeText(LoginActivity.this, loginResult.message, Toast.LENGTH_LONG).show();
             }
         }
 
