@@ -5,20 +5,16 @@
     android:orientation="vertical"
     android:background="#ffffff">
 
-    <!-- Post original incluído no topo -->
     <include
         android:id="@+id/postHeader"
         layout="@layout/item_post"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content" />
 
-    <!-- Divisor visual entre o post e os comentários -->
     <View
         android:layout_width="fill_parent"
         android:layout_height="1dip"
         android:background="#DDDDDD" />
-
-    <!-- Lista de comentários -->
     <ListView
         android:id="@+id/lvComments"
         android:layout_width="fill_parent"
@@ -26,8 +22,6 @@
         android:layout_weight="1"
         android:divider="#EEEEEE"
         android:dividerHeight="1dip" />
-
-    <!-- Barra de comentário (Logado) -->
     <LinearLayout
         android:id="@+id/layoutComment"
         android:layout_width="fill_parent"

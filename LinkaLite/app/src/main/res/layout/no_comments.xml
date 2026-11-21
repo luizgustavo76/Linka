@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:paddingTop="24dip"
+    android:paddingBottom="24dip"
+    android:paddingLeft="24dip"
+    android:paddingRight="24dip"
+    android:background="#ffffff">
+
+    <ImageView
+        android:id="@+id/imgLina"
+        android:src="@drawable/lina"
+        android:layout_width="wrap_content"
+        android:layout_height="220dip"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:layout_marginBottom="12dip" />
+
+    <TextView
+        android:text="No comments yet? Be the first to comment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="14sp"
+        android:textColor="#333333" />
+
+</LinearLayout>
