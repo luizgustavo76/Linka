@@ -331,3 +331,66 @@ def new_comment():
             conn.close()
 
     return jsonify({"status": "forbidden"}), 403
+@community_bp.route("/view-comments", methods=["GET", "POST"])
+def view_comments():
+    data = request.get_json(silent=True) or {}
+    post_id = data.get("post_id") or request.args.get("post_id")
+
+    if not post_id:
+        return jsonify({"status": "missing post_id"}), 400
+
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT 
+                c.id,
+                c.post_id,
+                c.username,
+                c.media_attachments,
+                c.text_comment,
+                c.comments_level,
+                c.parent_comment,
+                COALESCE(p."ProfilePicture", '') AS avatar_url
+            FROM community_post_comments c
+            LEFT JOIN profile p ON p.username = c.username
+            WHERE c.post_id = %s
+            ORDER BY c.id ASC
+            """,
+            (post_id,)
+        )
+        rows = cur.fetchall()
+
+        comments = []
+        for row in rows:
+            media_raw = row.get("media_attachments")
+            if isinstance(media_raw, str):
+                try:
+                    media_list = json.loads(media_raw) if media_raw.strip() else []
+                except Exception:
+                    media_list = []
+            elif isinstance(media_raw, list):
+                media_list = media_raw
+            else:
+                media_list = []
+
+            comments.append({
+                "id": row["id"],
+                "post_id": row["post_id"],
+                "username": row["username"],
+                "text_comment": row["text_comment"],
+                "text": row["text_comment"],
+                "comments_level": row.get("comments_level", 0),
+                "parent_comment": row.get("parent_comment"),
+                "media_attachments": media_list,
+                "media_list": media_list,
+                "avatar_url": row.get("avatar_url", "")
+            })
+
+        return jsonify(comments), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
