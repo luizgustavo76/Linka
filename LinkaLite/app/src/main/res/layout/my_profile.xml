@@ -2,38 +2,42 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#FFFFFF">
+    android:background="#F2F4F7">
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- 1. TOP BAR GRAFITE LIMPA (PADRÃO LINKA) -->
         <RelativeLayout
             android:id="@+id/header_bar"
             android:layout_width="fill_parent"
-            android:layout_height="45dp"
-            android:background="#DCDCDC"
+            android:layout_height="46dp"
+            android:background="#14181C"
             android:paddingLeft="8dp"
             android:paddingRight="8dp">
 
             <TextView
                 android:id="@+id/backButton"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
                 android:gravity="center"
                 android:text="&lt;"
-                android:textColor="#4F4F4F"
-                android:textSize="20sp" />
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <ImageView
                 android:id="@+id/imgHeaderLogo"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="6dp"
+                android:layout_marginLeft="4dp"
                 android:layout_toRightOf="@id/backButton"
+                android:scaleType="fitCenter"
                 android:src="@drawable/icon" />
 
             <TextView
@@ -41,98 +45,101 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginLeft="10dp"
+                android:layout_marginLeft="8dp"
                 android:layout_toRightOf="@id/imgHeaderLogo"
+                android:singleLine="true"
                 android:text="My Account"
-                android:textColor="#333333"
-                android:textSize="17sp" />
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
+            <!-- Mantido oculto apenas para não quebrar findViewById no Java -->
             <TextView
                 android:id="@+id/btnHeaderAction"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"
-                android:padding="8dp"
-                android:text="&#8285;"
-                android:textColor="#4F4F4F"
-                android:textSize="20sp" />
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
 
             <View
                 android:layout_width="fill_parent"
                 android:layout_height="1dp"
                 android:layout_alignParentBottom="true"
-                android:background="#B5B5B5" />
+                android:background="#0A0C0E" />
         </RelativeLayout>
 
+        <!-- 2. CAPA + AVATAR -->
         <RelativeLayout
             android:layout_width="fill_parent"
-            android:layout_height="140dp">
+            android:layout_height="126dp"
+            android:background="#FFFFFF">
 
             <View
                 android:id="@+id/headerColor"
                 android:layout_width="fill_parent"
-                android:layout_height="100dp"
-                android:background="@drawable/profile_header_gradient" />
+                android:layout_height="88dp"
+                android:background="#1E242B" />
 
+            <!-- Segundo botão de 3 pontos removido da visão -->
             <TextView
                 android:id="@+id/btnOptions"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentRight="true"
-                android:padding="12dp"
-                android:text="&#8285;"
-                android:textColor="#FFFFFF"
-                android:textSize="22sp" />
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/imgProfilePicture"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
+                android:layout_width="76dp"
+                android:layout_height="76dp"
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true"
-                android:background="@drawable/circle_white_bg"
-                android:padding="3dp"
+                android:padding="2dp"
                 android:scaleType="centerCrop" />
         </RelativeLayout>
 
+        <!-- 3. DADOS DO USUÁRIO E AÇÕES -->
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:background="#FFFFFF"
             android:gravity="center_horizontal"
             android:orientation="vertical"
             android:paddingLeft="16dp"
             android:paddingTop="8dp"
-            android:paddingRight="16dp">
+            android:paddingRight="16dp"
+            android:paddingBottom="14dp">
 
             <TextView
                 android:id="@+id/txtUsername"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:singleLine="true"
                 android:text="Username"
-                android:textColor="#222222"
-                android:textSize="20sp" />
+                android:textColor="#14181C"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/txtBio"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="4dp"
                 android:gravity="center"
+                android:lineSpacingExtra="2dp"
                 android:maxLines="5"
                 android:text="Bio"
-                android:textColor="#444444"
-                android:textSize="14sp" />
+                android:textColor="#555E68"
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/btnReadMore"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingTop="4dp"
-                android:paddingBottom="8dp"
+                android:paddingBottom="4dp"
                 android:text="Read More..."
-                android:textColor="#A2A2A2"
+                android:textColor="#00ACC1"
                 android:textSize="12sp"
+                android:textStyle="bold"
                 android:visibility="gone" />
 
             <LinearLayout
@@ -144,34 +151,44 @@
                 <Button
                     android:id="@+id/btnEdit"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="34dp"
                     android:layout_weight="1"
-                    android:text="Edit Profile" />
+                    android:background="#00BCD4"
+                    android:text="Edit Profile"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
 
                 <Button
                     android:id="@+id/btnExit"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="34dp"
                     android:layout_marginLeft="8dp"
                     android:layout_weight="1"
-                    android:text="Log Out" />
+                    android:background="#E4E7EC"
+                    android:text="Log Out"
+                    android:textColor="#2C333A"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Divisória limpa antes dos posts -->
         <View
             android:layout_width="fill_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="12dp"
-            android:background="#DDDDDD" />
+            android:layout_marginBottom="10dp"
+            android:background="#DDE1E6" />
 
+        <!-- 4. POSTS DO USUÁRIO -->
         <LinearLayout
             android:id="@+id/postsContainer"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp" />
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="16dp" />
 
     </LinearLayout>
 </ScrollView>
