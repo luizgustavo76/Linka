@@ -30,16 +30,6 @@
     {% endif %}
 
     <style>
-        :root {
-            --bg: #0f1115;
-            --card: #181b22;
-            --border: #262b36;
-            --text: #f1f3f5;
-            --muted: #9aa4b2;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-        }
-
         * {
             box-sizing: border-box;
             margin: 0;
@@ -48,273 +38,460 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
+            background-color: #F2F4F7;
+            color: #26221E;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 24px 16px;
+            padding-top: 58px;
+            padding-bottom: 76px;
         }
 
-        .topbar {
-            width: 100%;
-            max-width: 580px;
+        /* TOP BAR (#14181C igual ao topBarContainer) */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 46px;
+            background-color: #14181C;
+            border-bottom: 1px solid #0A0C0E;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            padding: 0 14px;
+            z-index: 100;
         }
 
-        .brand {
-            font-size: 1.35rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            color: var(--text);
-            text-decoration: none;
-        }
-
-        .brand span {
-            color: var(--accent);
-        }
-
-        .card {
-            width: 100%;
-            max-width: 580px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-        }
-
-        .author-row {
+        .top-brand {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 14px;
+            gap: 8px;
+            color: #FFFFFF;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 16px;
+            letter-spacing: -0.3px;
         }
 
-        .avatar {
-            width: 46px;
-            height: 46px;
-            border-radius: 10px;
+        .top-brand-badge {
+            width: 24px;
+            height: 24px;
+            background-color: #00BCD4;
+            color: #14181C;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+        }
+
+        .btn-copy-top {
+            background: #222830;
+            color: #E5E7EB;
+            border: 1px solid #2E353F;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-copy-top:hover {
+            background: #2C343F;
+        }
+
+        /* CONTAINER DA TIMELINE */
+        .timeline-wrapper {
+            width: 100%;
+            max-width: 540px;
+            margin: 0 auto;
+            padding: 0 10px;
+        }
+
+        /* CARD DO POST (bg_post_card) */
+        .post-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E2DDD3;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(28, 25, 23, 0.06);
+        }
+
+        /* CABEÇALHO DO AUTOR */
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px 8px 12px;
+            gap: 10px;
+        }
+
+        .post-avatar {
+            width: 38px;
+            height: 38px;
+            background-color: #DDD7CC;
+            border: 1px solid #D2CBC0;
+            border-radius: 4px;
             object-fit: cover;
-            background: var(--accent);
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 1.2rem;
-            color: #fff;
+            font-size: 15px;
+            color: #1C1917;
             flex-shrink: 0;
         }
 
-        .author-info {
+        .post-author-meta {
             display: flex;
             flex-direction: column;
+            min-width: 0;
         }
 
-        .username {
+        .post-username-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .post-username {
+            font-size: 13px;
             font-weight: 700;
-            font-size: 1rem;
-            color: var(--text);
+            color: #1C1917;
         }
 
-        .timestamp {
-            font-size: 0.82rem;
-            color: var(--muted);
-            margin-top: 2px;
+        .post-platform {
+            font-size: 12px;
+            font-weight: 700;
+            color: #2B5B84;
         }
 
+        .post-date {
+            font-size: 10.5px;
+            color: #8A8277;
+            margin-top: 1px;
+        }
+
+        /* TEXTO DO POST */
         .post-text {
-            font-size: 1.05rem;
-            line-height: 1.55;
+            padding: 2px 12px 10px 12px;
+            font-size: 14px;
+            line-height: 1.45;
+            color: #26221E;
             white-space: pre-wrap;
             word-break: break-word;
-            margin-bottom: 14px;
         }
 
-        .media-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 16px;
+        .post-text a {
+            color: #2B5B84;
+            text-decoration: none;
         }
 
-        .media-grid img,
-        .media-grid video {
-            width: 100%;
-            max-height: 520px;
-            object-fit: contain;
-            border-radius: 12px;
-            background: #0b0d10;
-            border: 1px solid var(--border);
+        .post-text a:hover {
+            text-decoration: underline;
         }
 
-        .repost-box {
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 14px;
-            background: rgba(255, 255, 255, 0.02);
+        /* REPOST (#F7F5F0) */
+        .repost-container {
+            margin: 0 12px 10px 12px;
+            padding: 10px;
+            background-color: #F7F5F0;
+            border: 1px solid #E8E3DA;
+            border-radius: 6px;
         }
 
-        .repost-user {
-            font-size: 0.85rem;
+        .repost-username {
+            font-size: 12px;
             font-weight: 700;
-            color: var(--muted);
-            margin-bottom: 6px;
+            color: #1C1917;
+            margin-bottom: 4px;
         }
 
         .repost-text {
-            font-size: 0.95rem;
-            line-height: 1.45;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #3D3833;
             white-space: pre-wrap;
         }
 
-        .stats {
+        /* MOLDURA DE MÍDIA (#1C1917 igual ao containerMedia) */
+        .media-container {
+            margin: 0 10px 10px 10px;
+            background-color: #1C1917;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .media-container img,
+        .media-container video {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            display: block;
+            background-color: #1C1917;
+        }
+
+        .video-fallback-link {
+            display: block;
+            padding: 14px;
+            text-align: center;
+            color: #00BCD4;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        /* DIVISOR E RODAPÉ DO CARD (#E8E3DA e #F7F5F0) */
+        .card-divider {
+            height: 1px;
+            background-color: #E8E3DA;
+            width: 100%;
+        }
+
+        .post-footer {
+            background-color: #F7F5F0;
+            padding: 7px 12px;
             display: flex;
             align-items: center;
-            gap: 20px;
-            padding-top: 14px;
-            border-top: 1px solid var(--border);
-            color: var(--muted);
-            font-size: 0.9rem;
+            justify-content: flex-end;
+            gap: 16px;
+            color: #666057;
+            font-size: 11px;
+            font-weight: 700;
         }
 
-        .actions {
-            width: 100%;
-            max-width: 580px;
+        .stat-item {
             display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* BOTTOM BAR FIXA (Igual à bottomBarContainer / layoutGuest) */
+        .bottom-cta-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #14181C;
+            border-top: 1px solid #232930;
+            padding: 8px 12px;
+            z-index: 100;
+        }
+
+        .bottom-cta-inner {
+            max-width: 540px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             gap: 10px;
-            margin-top: 16px;
         }
 
-        .btn {
-            flex: 1;
-            padding: 12px 16px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            text-align: center;
+        .cta-info {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .cta-title {
+            color: #FFFFFF;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cta-subtitle {
+            color: #9CA3AF;
+            font-size: 10.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cta-buttons {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .btn-download {
+            background-color: #262C33;
+            color: #FFFFFF;
+            border: 1px solid #374151;
+            border-radius: 4px;
+            padding: 7px 11px;
+            font-size: 11.5px;
+            font-weight: 700;
             text-decoration: none;
-            transition: background 0.15s ease;
         }
 
-        .btn-primary {
-            background: var(--accent);
-            color: #fff;
+        .btn-download:hover {
+            background-color: #323942;
         }
 
-        .btn-primary:hover {
-            background: var(--accent-hover);
+        .btn-open-app {
+            background-color: #00BCD4;
+            color: #FFFFFF;
+            border-radius: 4px;
+            padding: 7px 12px;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-decoration: none;
         }
 
-        .btn-secondary {
-            background: var(--card);
-            color: var(--text);
-            border: 1px solid var(--border);
+        .btn-open-app:hover {
+            background-color: #00ACC1;
         }
 
-        .btn-secondary:hover {
-            background: #222630;
-        }
-
-        .not-found {
+        .not-found-box {
+            background: #FFFFFF;
+            border: 1px solid #E2DDD3;
+            border-radius: 8px;
+            padding: 32px 16px;
             text-align: center;
-            padding: 40px 20px;
         }
 
-        .not-found h2 {
-            margin-bottom: 8px;
+        .not-found-box h2 {
+            font-size: 16px;
+            color: #1C1917;
+            margin-bottom: 6px;
         }
 
-        .not-found p {
-            color: var(--muted);
+        .not-found-box p {
+            font-size: 13px;
+            color: #8A8277;
         }
     </style>
 </head>
 <body>
 
-    <header class="topbar">
-        <a href="/" class="brand">Linka<span>.</span></a>
+    <!-- TOP BAR (#14181C) -->
+    <header class="top-bar">
+        <a href="/" class="top-brand">
+            <span class="top-brand-badge">L</span>
+            <span>Linka</span>
+        </a>
+        {% if post %}
+            <button class="btn-copy-top" id="copyBtn" onclick="copyLink()">Copy link</button>
+        {% endif %}
     </header>
 
-    {% if post %}
-        <main class="card">
-            <div class="author-row">
-                {% if post.avatar_url %}
-                    <img class="avatar" src="{{ post.avatar_url }}" alt="{{ post.username }}"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="avatar" style="display:none;">{{ post.username[0]|upper }}</div>
-                {% else %}
-                    <div class="avatar">{{ post.username[0]|upper }}</div>
+    <!-- POST PREVIEW -->
+    <main class="timeline-wrapper">
+        {% if post %}
+            <article class="post-card">
+                <!-- Autor -->
+                <div class="post-header">
+                    {% if post.avatar_url %}
+                        <img class="post-avatar" src="{{ post.avatar_url }}" alt="{{ post.username }}"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="post-avatar" style="display:none;">{{ post.username[0]|upper }}</div>
+                    {% else %}
+                        <div class="post-avatar">{{ post.username[0]|upper }}</div>
+                    {% endif %}
+
+                    <div class="post-author-meta">
+                        <div class="post-username-row">
+                            <span class="post-username">{{ post.username }}</span>
+                            <span class="post-platform">&gt; Linka</span>
+                        </div>
+                        <span class="post-date" title="{{ post.datetime }}">{{ post.relative_datetime }}</span>
+                    </div>
+                </div>
+
+                <!-- Texto -->
+                {% if post.text_post %}
+                    <div class="post-text">{{ post.text_post }}</div>
                 {% endif %}
 
-                <div class="author-info">
-                    <span class="username">@{{ post.username }}</span>
-                    <span class="timestamp" title="{{ post.datetime }}">{{ post.relative_datetime }}</span>
-                </div>
-            </div>
-
-            {% if post.text_post %}
-                <div class="post-text">{{ post.text_post }}</div>
-            {% endif %}
-
-            {% if post.media_list %}
-                <div class="media-grid">
-                    {% for item in post.media_list %}
-                        {% if item.media_type == 'video' %}
-                            <video controls playsinline preload="metadata" poster="{{ item.thumbnail }}">
-                                <source src="{{ item.media_url }}" type="video/mp4">
-                            </video>
-                        {% else %}
-                            <img src="{{ item.media_url }}" alt="Post media" loading="lazy">
+                <!-- Repost -->
+                {% if post.repost_username %}
+                    <div class="repost-container">
+                        <div class="repost-username">{{ post.repost_username }}</div>
+                        {% if post.repost_text %}
+                            <div class="repost-text">{{ post.repost_text }}</div>
                         {% endif %}
-                    {% endfor %}
-                </div>
-            {% endif %}
+                    </div>
+                {% endif %}
 
-            {% if post.repost_username %}
-                <div class="repost-box">
-                    <div class="repost-user">Reposted from @{{ post.repost_username }}</div>
-                    {% if post.repost_text %}
-                        <div class="repost-text">{{ post.repost_text }}</div>
-                    {% endif %}
-                </div>
-            {% endif %}
+                <!-- Mídia -->
+                {% if post.media_list %}
+                    <div class="media-container">
+                        {% for item in post.media_list %}
+                            {% if item.media_type == 'video' %}
+                                <video controls playsinline preload="metadata"
+                                       {% if item.thumbnail %}poster="{{ item.thumbnail }}"{% endif %}
+                                       src="{{ item.media_url }}">
+                                </video>
+                            {% else %}
+                                <img src="{{ item.media_url }}" alt="Post media" loading="lazy">
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
-            <div class="stats">
-                <span>★ {{ post.star_count }} {{ 'star' if post.star_count == 1 else 'stars' }}</span>
-                <span>💬 {{ post.comment_count }} {{ 'comment' if post.comment_count == 1 else 'comments' }}</span>
+                <!-- Rodapé de métricas -->
+                <div class="card-divider"></div>
+                <div class="post-footer">
+                    <span class="stat-item">★ {{ post.star_count }}</span>
+                    <span class="stat-item">💬 {{ post.comment_count }}</span>
+                </div>
+            </article>
+        {% else %}
+            <div class="not-found-box">
+                <h2>Post not found</h2>
+                <p>This post may have been deleted or the link is invalid.</p>
             </div>
-        </main>
+        {% endif %}
+    </main>
 
-        <div class="actions">
-            <button class="btn btn-secondary" id="copyBtn" onclick="copyLink()">Copy link</button>
-            <a class="btn btn-primary" href="linka://post/{{ post.id }}">Open in App</a>
+    <!-- BOTTOM BAR FIXA (Download App / Open in App) -->
+    <footer class="bottom-cta-bar">
+        <div class="bottom-cta-inner">
+            <div class="cta-info">
+                <span class="cta-title">Linka Lite</span>
+                <span class="cta-subtitle">Join the conversation on Android</span>
+            </div>
+            <div class="cta-buttons">
+                <a class="btn-download" href="/download">Download App</a>
+                {% if post %}
+                    <a class="btn-open-app" href="linka://post/{{ post.id }}">Open in App</a>
+                {% endif %}
+            </div>
         </div>
-    {% else %}
-        <main class="card not-found">
-            <h2>Post not found</h2>
-            <p>This post may have been deleted or the link is invalid.</p>
-        </main>
-    {% endif %}
+    </footer>
 
     <script>
         function copyLink() {
-            const url = window.location.href;
             const btn = document.getElementById("copyBtn");
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(url).then(() => {
-                    btn.textContent = "Link copied!";
+            if (navigator.clipboard && btn) {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    btn.textContent = "Copied!";
                     setTimeout(() => btn.textContent = "Copy link", 2000);
                 });
             }
         }
+
+        // Fallback caso o vídeo seja de um formato/URL não suportado nativamente pelo browser
+        document.querySelectorAll("video").forEach(video => {
+            video.addEventListener("error", () => {
+                const url = video.getAttribute("src");
+                if (url) {
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.target = "_blank";
+                    link.className = "video-fallback-link";
+                    link.textContent = "▶ Open video directly";
+                    video.replaceWith(link);
+                }
+            });
+        });
     </script>
 </body>
 </html>
