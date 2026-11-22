@@ -25,10 +25,12 @@
 
             <ImageView
                 android:id="@+id/postAvatar"
-                android:layout_width="36dip"
-                android:layout_height="36dip"
+                android:layout_width="38dip"
+                android:layout_height="38dip"
                 android:layout_alignParentLeft="true"
                 android:layout_centerVertical="true"
+                android:background="#DDD7CC"
+                android:padding="1dip"
                 android:scaleType="centerCrop"
                 android:src="@android:drawable/ic_menu_myplaces" />
 
@@ -48,14 +50,14 @@
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="6dip"
                 android:layout_marginRight="4dip"
-                android:background="#E1F5FE"
+                android:background="#EAE6DF"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
                 android:paddingTop="3dip"
                 android:paddingBottom="3dip"
                 android:singleLine="true"
                 android:text="+ Slot"
-                android:textColor="#0288D1"
+                android:textColor="#2B5B84"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:clickable="true"
@@ -84,7 +86,7 @@
                         android:singleLine="true"
                         android:textStyle="bold"
                         android:textSize="13sp"
-                        android:textColor="#111111" />
+                        android:textColor="#1C1917" />
 
                     <TextView
                         android:id="@+id/txtPlatform"
@@ -94,7 +96,7 @@
                         android:textStyle="bold"
                         android:textSize="12sp"
                         android:text=" &gt; Platform"
-                        android:textColor="#0288D1"
+                        android:textColor="#2B5B84"
                         android:visibility="gone" />
 
                     <TextView
@@ -107,7 +109,7 @@
                         android:textStyle="bold"
                         android:textSize="12sp"
                         android:text=" &gt; Community"
-                        android:textColor="#0288D1"
+                        android:textColor="#2B5B84"
                         android:visibility="gone" />
                 </LinearLayout>
 
@@ -117,7 +119,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dip"
                     android:textSize="10sp"
-                    android:textColor="#888888" />
+                    android:textColor="#8A8277" />
             </LinearLayout>
 
             <Spinner
@@ -135,10 +137,10 @@
             android:paddingRight="12dip"
             android:paddingTop="2dip"
             android:autoLink="web"
-            android:textColorLink="#0288D1"
+            android:textColorLink="#2B5B84"
             android:paddingBottom="10dip"
             android:textSize="14sp"
-            android:textColor="#222222"
+            android:textColor="#26221E"
             android:lineSpacingExtra="2dip" />
 
         <LinearLayout
@@ -149,7 +151,7 @@
             android:layout_marginRight="12dip"
             android:layout_marginBottom="10dip"
             android:orientation="vertical"
-            android:background="#F4F6F8"
+            android:background="#F7F5F0"
             android:padding="10dip"
             android:visibility="gone">
 
@@ -186,7 +188,7 @@
                             android:singleLine="true"
                             android:textStyle="bold"
                             android:textSize="12sp"
-                            android:textColor="#222222" />
+                            android:textColor="#1C1917" />
 
                         <TextView
                             android:id="@+id/repostCommunity"
@@ -195,7 +197,7 @@
                             android:singleLine="true"
                             android:textStyle="bold"
                             android:textSize="12sp"
-                            android:textColor="#0288D1"
+                            android:textColor="#2B5B84"
                             android:visibility="gone" />
                     </LinearLayout>
 
@@ -204,7 +206,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textSize="9sp"
-                        android:textColor="#888888" />
+                        android:textColor="#8A8277" />
                 </LinearLayout>
             </RelativeLayout>
 
@@ -214,9 +216,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dip"
                 android:autoLink="web"
-                android:textColorLink="#0288D1"
+                android:textColorLink="#2B5B84"
                 android:textSize="13sp"
-                android:textColor="#444444"
+                android:textColor="#3D3833"
                 android:lineSpacingExtra="1dip" />
 
             <com.LinkaProject.linkaLite.GifImageView
@@ -229,11 +231,15 @@
                 android:visibility="gone" />
         </LinearLayout>
 
+        <!-- Moldura de Foto Estilo Revelação Instantânea -->
         <FrameLayout
             android:id="@+id/containerMedia"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:background="#F1F3F5"
+            android:layout_marginLeft="10dip"
+            android:layout_marginRight="10dip"
+            android:layout_marginBottom="10dip"
+            android:background="#1C1917"
             android:visibility="gone">
 
             <com.LinkaProject.linkaLite.GifImageView
@@ -243,7 +249,7 @@
                 android:layout_gravity="center"
                 android:adjustViewBounds="true"
                 android:scaleType="fitCenter"
-                android:background="#F1F3F5" />
+                android:background="#1C1917" />
 
             <com.LinkaProject.linkaLite.ProportionalVideoView
                 android:id="@+id/videoPost"
@@ -268,7 +274,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="top|right"
                 android:layout_margin="8dip"
-                android:background="#80000000"
+                android:background="#99000000"
                 android:paddingLeft="6dip"
                 android:paddingRight="6dip"
                 android:paddingTop="2dip"
@@ -284,7 +290,7 @@
                 android:layout_height="32dip"
                 android:layout_gravity="center_vertical|left"
                 android:layout_marginLeft="6dip"
-                android:background="#60000000"
+                android:background="#70000000"
                 android:text="◀"
                 android:textColor="#FFFFFF"
                 android:textSize="10sp"
@@ -296,7 +302,7 @@
                 android:layout_height="32dip"
                 android:layout_gravity="center_vertical|right"
                 android:layout_marginRight="6dip"
-                android:background="#60000000"
+                android:background="#70000000"
                 android:text="▶"
                 android:textColor="#FFFFFF"
                 android:textSize="10sp"
@@ -306,12 +312,12 @@
         <View
             android:layout_width="fill_parent"
             android:layout_height="1dip"
-            android:background="#EAECEF" />
+            android:background="#E8E3DA" />
 
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:background="#FAFAFB"
+            android:background="#F7F5F0"
             android:gravity="right|center_vertical"
             android:orientation="horizontal"
             android:paddingLeft="12dip"
@@ -326,7 +332,7 @@
                 android:layout_marginRight="8dip"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:background="#ECEFF2"
+                android:background="#EAE6DF"
                 android:paddingLeft="8dip"
                 android:paddingRight="6dip"
                 android:visibility="gone">
@@ -337,7 +343,7 @@
                     android:layout_height="fill_parent"
                     android:background="@android:color/transparent"
                     android:text="Public"
-                    android:textColor="#0288D1"
+                    android:textColor="#2B5B84"
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:paddingLeft="4dip"
@@ -347,7 +353,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="|"
-                    android:textColor="#CCCCCC"
+                    android:textColor="#C8C2B8"
                     android:textSize="10sp" />
 
                 <Button
@@ -356,7 +362,7 @@
                     android:layout_height="fill_parent"
                     android:background="@android:color/transparent"
                     android:text="Private"
-                    android:textColor="#666666"
+                    android:textColor="#666057"
                     android:textSize="11sp"
                     android:paddingLeft="4dip"
                     android:paddingRight="4dip" />
@@ -385,7 +391,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="4dip"
                 android:layout_marginRight="18dip"
-                android:textColor="#777777"
+                android:textColor="#666057"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:text="0" />

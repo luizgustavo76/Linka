@@ -8,7 +8,7 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:background="#E5E8EC">
+        android:background="#F2F4F7">
 
         <!-- CONTEÚDO PRINCIPAL (TIMELINE / CHAT) -->
         <HorizontalScrollView
@@ -32,8 +32,8 @@
                         android:id="@+id/listViewTimeline"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
-                        android:background="#E5E8EC"
-                        android:cacheColorHint="#E5E8EC"
+                        android:background="#F2F4F7"
+                        android:cacheColorHint="#F2F4F7"
                         android:scrollingCache="true"
                         android:clipToPadding="false"
                         android:paddingTop="54dip"
@@ -46,13 +46,13 @@
                     android:id="@+id/pageChat"
                     android:layout_width="wrap_content"
                     android:layout_height="fill_parent"
-                    android:paddingTop="49dip">
+                    android:paddingTop="48dip">
                     <ListView
                         android:id="@+id/listViewChat"
                         android:layout_width="fill_parent"
                         android:layout_height="fill_parent"
-                        android:background="#E5E8EC"
-                        android:cacheColorHint="#E5E8EC"
+                        android:background="#F2F4F7"
+                        android:cacheColorHint="#F2F4F7"
                         android:scrollingCache="false"
                         android:divider="@null"
                         android:dividerHeight="0dip" />
@@ -61,7 +61,7 @@
             </LinearLayout>
         </HorizontalScrollView>
 
-        <!-- TOP BAR ÚNICA E RETRÁTIL (ESTILO IG 2013) -->
+        <!-- TOP BAR LIMPA -->
         <LinearLayout
             android:id="@+id/topHeaderContainer"
             android:layout_width="fill_parent"
@@ -72,8 +72,8 @@
             <RelativeLayout
                 android:id="@+id/topBarContainer"
                 android:layout_width="fill_parent"
-                android:layout_height="48dip"
-                android:background="@drawable/bg_header_gradient"
+                android:layout_height="46dip"
+                android:background="#14181C"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip">
 
@@ -100,17 +100,16 @@
 
                 <ImageView
                     android:id="@+id/logo"
-                    android:layout_width="30dip"
-                    android:layout_height="30dip"
+                    android:layout_width="28dip"
+                    android:layout_height="28dip"
                     android:layout_centerInParent="true"
                     android:scaleType="fitCenter"
                     android:src="@drawable/linka_icon_bar" />
 
-                <!-- BOTÃO DE CHAT / DIRECT NO CANTO SUPERIOR DIREITO -->
                 <ImageButton
                     android:id="@+id/btnTopChat"
-                    android:layout_width="40dip"
-                    android:layout_height="40dip"
+                    android:layout_width="38dip"
+                    android:layout_height="38dip"
                     android:layout_alignParentRight="true"
                     android:layout_centerVertical="true"
                     android:padding="7dip"
@@ -122,10 +121,10 @@
             <View
                 android:layout_width="fill_parent"
                 android:layout_height="1dip"
-                android:background="#111111" />
+                android:background="#0A0C0E" />
         </LinearLayout>
 
-        <!-- BARRA DE AVISO GUEST (ACIMA DA BOTTOM BAR) -->
+        <!-- BARRA DE AVISO GUEST -->
         <LinearLayout 
             android:id="@+id/layoutGuest"
             android:layout_width="fill_parent"
@@ -133,7 +132,7 @@
             android:layout_above="@+id/bottomBarContainer"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:background="#222222"
+            android:background="#14181C"
             android:padding="6dip"
             android:visibility="gone">
 
@@ -150,10 +149,10 @@
             <Button 
                 android:id="@+id/btnLogin"
                 android:layout_width="wrap_content"
-                android:layout_height="32dip"
+                android:layout_height="30dip"
                 android:paddingLeft="10dip"
                 android:paddingRight="10dip"
-                android:background="#29B6F6"
+                android:background="#00BCD4"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
                 android:text="Login"
@@ -163,28 +162,28 @@
 
             <Button 
                 android:id="@+id/btnClose"
-                android:layout_width="wrap_content"
-                android:layout_height="32dip"
-                android:paddingLeft="8dip"
-                android:paddingRight="8dip"
+                android:layout_width="28dip"
+                android:layout_height="30dip"
+                android:background="#262C33"
+                android:textColor="#CCCCCC"
                 android:text="X"
                 android:textSize="11sp"
                 android:layout_marginLeft="2dip" />
         </LinearLayout>
 
-        <!-- BOTTOM NAVIGATION BAR ESTILO INSTAGRAM 2013/2014 -->
+        <!-- BOTTOM BAR UNIFORME E LIMPA -->
         <LinearLayout
             android:id="@+id/bottomBarContainer"
             android:layout_width="fill_parent"
-            android:layout_height="48dip"
+            android:layout_height="46dip"
             android:layout_alignParentBottom="true"
-            android:background="#1E1E1E"
+            android:background="#14181C"
             android:orientation="vertical">
 
             <View
                 android:layout_width="fill_parent"
                 android:layout_height="1dip"
-                android:background="#0F0F0F" />
+                android:background="#232930" />
 
             <LinearLayout
                 android:layout_width="fill_parent"
@@ -198,7 +197,7 @@
                     android:layout_width="0dip"
                     android:layout_height="fill_parent"
                     android:layout_weight="1"
-                    android:background="#2A2A2A"
+                    android:background="@android:color/transparent"
                     android:padding="11dip"
                     android:scaleType="fitCenter"
                     android:src="@drawable/icon_feed" />
@@ -214,14 +213,14 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/icon_community" />
 
-                <!-- 3. NOVO POST (BOTÃO CENTRAL AZUL CLÁSSICO DO IG) -->
+                <!-- 3. NOVO POST (INTEGRADO NA BARRA, SEM GRADIENTE) -->
                 <ImageButton
                     android:id="@+id/fabNewPost"
                     android:layout_width="0dip"
                     android:layout_height="fill_parent"
-                    android:layout_weight="1.15"
-                    android:background="#1C5380"
-                    android:padding="10dip"
+                    android:layout_weight="1"
+                    android:background="#222830"
+                    android:padding="11dip"
                     android:scaleType="fitCenter"
                     android:src="@drawable/icon_post" />
 
