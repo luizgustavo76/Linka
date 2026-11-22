@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    {% if post %}
+        <title>@{{ post.username }} on Linka</title>
+        <meta name="description" content="{{ post.text_post[:160] if post.text_post else 'Check out this post on Linka' }}">
+
+        <!-- Open Graph (WhatsApp, Discord, Telegram, Facebook) -->
+        <meta property="og:site_name" content="Linka">
+        <meta property="og:type" content="article">
+        <meta property="og:url" content="{{ post.share_url }}">
+        <meta property="og:title" content="@{{ post.username }} on Linka">
+        <meta property="og:description" content="{{ post.text_post[:200] if post.text_post else 'Check out this post on Linka!' }}">
+        {% if post.og_image %}
+            <meta property="og:image" content="{{ post.og_image }}">
+        {% endif %}
+
+        <!-- Twitter / X Card -->
+        <meta name="twitter:card" content="{{ 'summary_large_image' if post.media_list else 'summary' }}">
+        <meta name="twitter:title" content="@{{ post.username }} on Linka">
+        <meta name="twitter:description" content="{{ post.text_post[:200] if post.text_post else 'Check out this post on Linka!' }}">
+        {% if post.og_image %}
+            <meta name="twitter:image" content="{{ post.og_image }}">
+        {% endif %}
+    {% else %}
+        <title>Post not found • Linka</title>
+    {% endif %}
+
+    <style>
+        :root {
+            --bg: #0f1115;
+            --card: #181b22;
+            --border: #262b36;
+            --text: #f1f3f5;
+            --muted: #9aa4b2;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 16px;
+        }
+
+        .topbar {
+            width: 100%;
+            max-width: 580px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .brand {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .brand span {
+            color: var(--accent);
+        }
+
+        .card {
+            width: 100%;
+            max-width: 580px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .author-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .author-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .username {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .timestamp {
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        .post-text {
+            font-size: 1.05rem;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 14px;
+        }
+
+        .media-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .media-grid img,
+        .media-grid video {
+            width: 100%;
+            max-height: 520px;
+            object-fit: contain;
+            border-radius: 12px;
+            background: #0b0d10;
+            border: 1px solid var(--border);
+        }
+
+        .repost-box {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 14px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .repost-user {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .repost-text {
+            font-size: 0.95rem;
+            line-height: 1.45;
+            white-space: pre-wrap;
+        }
+
+        .stats {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .actions {
+            width: 100%;
+            max-width: 580px;
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            transition: background 0.15s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #222630;
+        }
+
+        .not-found {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .not-found h2 {
+            margin-bottom: 8px;
+        }
+
+        .not-found p {
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+
+    <header class="topbar">
+        <a href="/" class="brand">Linka<span>.</span></a>
+    </header>
+
+    {% if post %}
+        <main class="card">
+            <div class="author-row">
+                {% if post.avatar_url %}
+                    <img class="avatar" src="{{ post.avatar_url }}" alt="{{ post.username }}"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="avatar" style="display:none;">{{ post.username[0]|upper }}</div>
+                {% else %}
+                    <div class="avatar">{{ post.username[0]|upper }}</div>
+                {% endif %}
+
+                <div class="author-info">
+                    <span class="username">@{{ post.username }}</span>
+                    <span class="timestamp" title="{{ post.datetime }}">{{ post.relative_datetime }}</span>
+                </div>
+            </div>
+
+            {% if post.text_post %}
+                <div class="post-text">{{ post.text_post }}</div>
+            {% endif %}
+
+            {% if post.media_list %}
+                <div class="media-grid">
+                    {% for item in post.media_list %}
+                        {% if item.media_type == 'video' %}
+                            <video controls playsinline preload="metadata" poster="{{ item.thumbnail }}">
+                                <source src="{{ item.media_url }}" type="video/mp4">
+                            </video>
+                        {% else %}
+                            <img src="{{ item.media_url }}" alt="Post media" loading="lazy">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if post.repost_username %}
+                <div class="repost-box">
+                    <div class="repost-user">Reposted from @{{ post.repost_username }}</div>
+                    {% if post.repost_text %}
+                        <div class="repost-text">{{ post.repost_text }}</div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="stats">
+                <span>★ {{ post.star_count }} {{ 'star' if post.star_count == 1 else 'stars' }}</span>
+                <span>💬 {{ post.comment_count }} {{ 'comment' if post.comment_count == 1 else 'comments' }}</span>
+            </div>
+        </main>
+
+        <div class="actions">
+            <button class="btn btn-secondary" id="copyBtn" onclick="copyLink()">Copy link</button>
+            <a class="btn btn-primary" href="linka://post/{{ post.id }}">Open in App</a>
+        </div>
+    {% else %}
+        <main class="card not-found">
+            <h2>Post not found</h2>
+            <p>This post may have been deleted or the link is invalid.</p>
+        </main>
+    {% endif %}
+
+    <script>
+        function copyLink() {
+            const url = window.location.href;
+            const btn = document.getElementById("copyBtn");
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => {
+                    btn.textContent = "Link copied!";
+                    setTimeout(() => btn.textContent = "Copy link", 2000);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

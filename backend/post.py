@@ -9,7 +9,7 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, render_template
 from dotenv import load_dotenv
 import notificationsModule
 import traceback
@@ -372,7 +372,90 @@ def view_post():
     finally:
         cur.close()
         conn.close()
+@post_bp.route("/post/<int:post_id>", methods=["GET"])
+def share_post_page(post_id):
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            SELECT 
+                p.id, 
+                p.username, 
+                p.text_post, 
+                p.datetime, 
+                p.media,
+                p.media_type,
+                p.thumbnail,
+                p.repost_username,
+                p.repost_text,
+                p.repost_media_url,
+                m."ProfilePicture" AS avatar_url,
+                (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) AS star_count,
+                (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count
+            FROM posts p
+            LEFT JOIN profile m ON p.username = m.username
+            WHERE p.id = %s
+        """, (post_id,))
+        post = cur.fetchone()
 
+        if not post:
+            return render_template("shared_post.html", post=None), 404
+
+        cur.execute("""
+            SELECT media_url, media_type, thumbnail
+            FROM post_media
+            WHERE post_id = %s
+            ORDER BY id ASC
+        """, (post_id,))
+        media_rows = cur.fetchall()
+
+        text_content = post["text_post"] or ""
+        match = re.search(r'\[IMAGE\]\s*(.*)', text_content)
+        clean_text = re.sub(r'\[IMAGE\]\s*.*', '', text_content).strip()
+
+        main_media_url = match.group(1).strip() if match else (post["media"] or "")
+        main_media_type = "image" if match else (post["media_type"] or "image")
+
+        media_list = []
+        if media_rows:
+            for row in media_rows:
+                media_list.append({
+                    "media_url": row["media_url"],
+                    "media_type": row["media_type"] or "image",
+                    "thumbnail": row["thumbnail"] or ""
+                })
+        elif main_media_url:
+            media_list = parse_media_list(main_media_url, main_media_type, "", "")
+
+        # Imagem de capa para o preview do WhatsApp / Discord (Open Graph)
+        og_image = ""
+        if media_list:
+            first = media_list[0]
+            og_image = first.get("thumbnail") or first.get("media_url") or ""
+        if not og_image:
+            og_image = post["avatar_url"] or ""
+
+        post_data = {
+            "id": post["id"],
+            "username": post["username"],
+            "avatar_url": post["avatar_url"] or "",
+            "text_post": clean_text,
+            "datetime": str(post["datetime"]) if post["datetime"] else "",
+            "relative_datetime": get_relative_time(post["datetime"]),
+            "star_count": post["star_count"] or 0,
+            "comment_count": post["comment_count"] or 0,
+            "media_list": media_list,
+            "og_image": og_image,
+            "share_url": request.url,
+            "repost_username": post["repost_username"],
+            "repost_text": post["repost_text"],
+            "repost_media_url": post["repost_media_url"]
+        }
+
+        return render_template("shared_post.html", post=post_data), 200
+    finally:
+        cur.close()
+        conn.close()
 
 @post_bp.route("/comments", methods=["POST"])
 def new_comment():
