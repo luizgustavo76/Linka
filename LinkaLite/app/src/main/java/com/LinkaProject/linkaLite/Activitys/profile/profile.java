@@ -1,28 +1,23 @@
 package com.LinkaProject.linkaLite;
 
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Handler;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.ToggleButton;
-import android.widget.CompoundButton;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class profile extends BaseActivity {
     private ImageView imgProfilePicture;
@@ -39,6 +34,17 @@ public class profile extends BaseActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.my_profile);
+
+        TextView backButton = (TextView) findViewById(R.id.backButton);
+        if (backButton != null) {
+            backButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    finish();
+                }
+            });
+        }
+
         try {
             config cfg = new config();
             JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(profile.this, "config.cfg"));
@@ -66,7 +72,8 @@ public class profile extends BaseActivity {
         txtUsername.setText(usernameProfile);
         txtBio.setText(biography);
         btnEdit = (Button) findViewById(R.id.btnEdit);
-        TextView btnReadMore = findViewById(R.id.btnReadMore);
+        final TextView btnReadMore = (TextView) findViewById(R.id.btnReadMore);
+
         txtBio.post(new Runnable() {
             @Override
             public void run() {
@@ -78,6 +85,7 @@ public class profile extends BaseActivity {
                 }
             }
         });
+
         btnReadMore.setOnClickListener(new View.OnClickListener() {
             boolean isExpanded = false;
             @Override
@@ -93,6 +101,7 @@ public class profile extends BaseActivity {
                 }
             }
         });
+
         ImageLoader imageLoader = new ImageLoader();
         imageLoader.viewProfilePicture(profile.this, usernameProfile, imgProfilePicture);
 
@@ -110,9 +119,9 @@ public class profile extends BaseActivity {
             }
         });
 
-        btnExit.setOnClickListener(new View.OnClickListener(){
+        btnExit.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
+            public void onClick(View v) {
                 config cfg = new config();
                 cfg.updateCfg(profile.this, "config.cfg", "FAST_LOGIN", "username", "");
                 cfg.updateCfg(profile.this, "config.cfg", "FAST_LOGIN", "password", "");
@@ -121,9 +130,9 @@ public class profile extends BaseActivity {
             }
         });
 
-        imgProfilePicture.setOnClickListener(new View.OnClickListener(){
+        imgProfilePicture.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
+            public void onClick(View v) {
                 Intent intent = new Intent(profile.this, ViewPicture.class);
                 intent.putExtra("type", "profile picture");
                 intent.putExtra("username", usernameProfile);
@@ -131,9 +140,9 @@ public class profile extends BaseActivity {
             }
         });
 
-        btnEdit.setOnClickListener(new View.OnClickListener(){
+        btnEdit.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v){
+            public void onClick(View v) {
                 Intent intent = new Intent(profile.this, EditAccount.class);
                 startActivity(intent);
             }
@@ -177,39 +186,81 @@ public class profile extends BaseActivity {
             JSONArray postsArray = new JSONArray(responseStr);
 
             postsContainer.removeAllViews();
+            LayoutInflater inflater = LayoutInflater.from(profile.this);
+            ImageLoader imageLoader = new ImageLoader();
+
+            Pattern imgPattern = Pattern.compile("\\[IMAGE\\]\\s*(\\S+)", Pattern.CASE_INSENSITIVE);
 
             for (int i = 0; i < postsArray.length(); i++) {
                 JSONObject post = postsArray.getJSONObject(i);
-                String textPost = post.optString("text_post", "");
+                final String postId = post.optString("id", post.optString("post_id", ""));
+                String rawText = post.optString("text_post", "");
                 String datetime = post.optString("datetime", "");
+                String commentsCount = post.optString("comments_count", post.optString("comments", "0"));
 
-                LinearLayout postCard = new LinearLayout(profile.this);
-                postCard.setOrientation(LinearLayout.VERTICAL);
+                View itemView = inflater.inflate(R.layout.item_post, postsContainer, false);
 
-                LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                );
-                cardParams.setMargins(0, 0, 0, 24);
-                postCard.setLayoutParams(cardParams);
-                postCard.setPadding(24, 24, 24, 24);
-                postCard.setBackgroundColor(0xFFF5F5F5);
+                ImageView postAvatar = (ImageView) itemView.findViewById(R.id.postAvatar);
+                TextView postUsername = (TextView) itemView.findViewById(R.id.postUsername);
+                TextView postDate = (TextView) itemView.findViewById(R.id.postDate);
+                TextView postText = (TextView) itemView.findViewById(R.id.postText);
+                Button btnPostOptions = (Button) itemView.findViewById(R.id.btnPostOptions);
+                FrameLayout containerMedia = (FrameLayout) itemView.findViewById(R.id.containerMedia);
+                GifImageView imgPost = (GifImageView) itemView.findViewById(R.id.imgPost);
+                TextView txtCommentCount = (TextView) itemView.findViewById(R.id.txtCommentCount);
+                ImageButton btnComments = (ImageButton) itemView.findViewById(R.id.btnComments);
 
-                TextView txtDate = new TextView(profile.this);
-                txtDate.setText(datetime);
-                txtDate.setTextColor(0xFF666666);
-                txtDate.setTextSize(12);
+                postUsername.setText(usernameProfile);
+                postDate.setText(datetime);
+                txtCommentCount.setText(commentsCount);
+                btnPostOptions.setVisibility(View.GONE);
 
-                TextView txtContent = new TextView(profile.this);
-                txtContent.setText(textPost);
-                txtContent.setTextColor(0xFF000000);
-                txtContent.setTextSize(14);
-                txtContent.setPadding(0, 8, 0, 0);
+                imageLoader.viewProfilePicture(profile.this, usernameProfile, postAvatar);
 
-                postCard.addView(txtDate);
-                postCard.addView(txtContent);
+                String imageUrl = null;
+                Matcher matcher = imgPattern.matcher(rawText);
+                if (matcher.find()) {
+                    imageUrl = matcher.group(1).trim();
+                }
 
-                postsContainer.addView(postCard);
+                String cleanText = rawText.replaceAll("(?i)\\[IMAGE\\]\\s*\\S+", "").trim();
+                if (cleanText.length() > 0) {
+                    postText.setText(cleanText);
+                    postText.setVisibility(View.VISIBLE);
+                } else {
+                    postText.setVisibility(View.GONE);
+                }
+
+                if (imageUrl != null && imageUrl.length() > 0) {
+                    containerMedia.setVisibility(View.VISIBLE);
+                    imgPost.setVisibility(View.VISIBLE);
+                    imageLoader.LoadImageUrl(imageUrl, imgPost);
+
+                    final String finalImageUrl = imageUrl;
+                    imgPost.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(profile.this, ViewPicture.class);
+                            intent.putExtra("url", finalImageUrl);
+                            startActivity(intent);
+                        }
+                    });
+                } else {
+                    containerMedia.setVisibility(View.GONE);
+                }
+
+                if (postId.length() > 0 && btnComments != null) {
+                    btnComments.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(profile.this, comments_activity.class);
+                            intent.putExtra("post_id", postId);
+                            startActivity(intent);
+                        }
+                    });
+                }
+
+                postsContainer.addView(itemView);
             }
         } catch (Exception e) {
             e.printStackTrace();
