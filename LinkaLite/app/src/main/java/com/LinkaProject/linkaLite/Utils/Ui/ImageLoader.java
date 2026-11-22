@@ -295,6 +295,24 @@ public class ImageLoader {
         });
     }
 
+    private void applyFallbackAvatar(final Context appContext, final String username, final String tagKey, final ImageView targetImageView) {
+        DisplayMetrics metrics = appContext.getResources().getDisplayMetrics();
+        int avatarPx = Math.round(64 * metrics.density);
+        final Bitmap fallback = AvatarGenerator.generateAvatar(username, avatarPx);
+
+        if (fallback != null) {
+            memoryCache.put(tagKey, new SoftReference<Bitmap>(fallback));
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (tagKey.equals(targetImageView.getTag())) {
+                        targetImageView.setImageBitmap(fallback);
+                    }
+                }
+            });
+        }
+    }
+
     public void viewProfilePicture(final Context context, final String username, final ImageView targetImageView) {
         if (targetImageView == null || username == null || username.trim().length() == 0) {
             return;
@@ -314,8 +332,16 @@ public class ImageLoader {
             }
         }
 
-        targetImageView.setImageResource(android.R.color.transparent);
         final Context appContext = context.getApplicationContext();
+        DisplayMetrics metrics = appContext.getResources().getDisplayMetrics();
+        final int avatarPx = Math.round(64 * metrics.density);
+
+        Bitmap initialPlaceholder = AvatarGenerator.generateAvatar(username, avatarPx);
+        if (initialPlaceholder != null) {
+            targetImageView.setImageBitmap(initialPlaceholder);
+        } else {
+            targetImageView.setImageResource(android.R.color.transparent);
+        }
 
         executor.submit(new Runnable() {
             @Override
@@ -345,9 +371,6 @@ public class ImageLoader {
                     }
 
                     if (avatarUrl != null && avatarUrl.length() > 0 && !avatarUrl.equals("null")) {
-                        DisplayMetrics metrics = appContext.getResources().getDisplayMetrics();
-                        int avatarPx = Math.round(64 * metrics.density);
-
                         String fetchUrl = cleanAndPrepareUrl(avatarUrl, avatarPx, avatarPx, 80);
 
                         byte[] rawBytes = readFromDiskCache(appContext, fetchUrl);
@@ -372,11 +395,16 @@ public class ImageLoader {
                                         }
                                     }
                                 });
+                                return;
                             }
                         }
                     }
+
+                    applyFallbackAvatar(appContext, username, tagKey, targetImageView);
+
                 } catch (Exception e) {
                     Log.e(TAG, "Excecao no viewProfilePicture", e);
+                    applyFallbackAvatar(appContext, username, tagKey, targetImageView);
                 }
             }
         });
