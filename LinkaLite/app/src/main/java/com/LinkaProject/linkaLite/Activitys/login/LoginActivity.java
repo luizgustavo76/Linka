@@ -7,28 +7,33 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.ScaleAnimation;
+import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONObject;
+import com.LinkaProject.linkaLite.BaseActivity;
+import com.LinkaProject.linkaLite.ChangeServer;
+import com.LinkaProject.linkaLite.HomeActivity;
+import com.LinkaProject.linkaLite.LinkaDialog;
+import com.LinkaProject.linkaLite.R;
+import com.LinkaProject.linkaLite.SignupActivity;
+import com.LinkaProject.linkaLite.config;
+import com.LinkaProject.linkaLite.request;
+import com.LinkaProject.linkaLite.tokenManager;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.json.JSONObject;
 
 public class LoginActivity extends BaseActivity {
     private static final String TAG = "LinkaLogin";
-    private static final int SLIDE_INTERVAL_MS = 5000;
-    private static final int FADE_DURATION_MS = 1200;
 
     private EditText edtUsername;
     private EditText edtPassword;
@@ -36,34 +41,14 @@ public class LoginActivity extends BaseActivity {
     private Button btnLogin;
     private TextView txtGoToSignup;
     private TextView txtGuest;
+    private ImageView bgImageView;
 
-    private ImageView bannerImageView;
-    private ImageView bannerBackImageView;
-    private final List<Integer> bannerCycle = new ArrayList<Integer>();
-    private int currentBannerIndex = 0;
-    private int currentDrawableRes = 0;
-
-    private Bitmap currentBitmap = null;
-    private volatile Bitmap preloadedNextBitmap = null;
-    private volatile boolean isDecoding = false;
-    private volatile boolean isSlideRunning = false;
-
-    private final Handler slideHandler = new Handler();
+    private Bitmap bgBitmap = null;
 
     private volatile String serverUrl = (Build.VERSION.SDK_INT >= 19)
             ? "https://patient-hall-2915.luizsgustavo76.workers.dev"
             : "http://patient-hall-2915.luizsgustavo76.workers.dev";
     private LoginTask currentLoginTask;
-
-    private final Runnable slideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (!isFinishing() && isSlideRunning) {
-                advanceSlide();
-                slideHandler.postDelayed(this, SLIDE_INTERVAL_MS);
-            }
-        }
-    };
 
     private static class LoginResult {
         final boolean success;
@@ -77,82 +62,19 @@ public class LoginActivity extends BaseActivity {
         }
     }
 
-    private Bitmap decodeBannerBitmap(int resId) {
+    private Bitmap decodeSingleBackground(int resId) {
         try {
             BitmapFactory.Options opts = new BitmapFactory.Options();
             opts.inPreferredConfig = Bitmap.Config.RGB_565;
-            opts.inSampleSize = 2;
+            // No Galaxy Y (telas pequenas), reduz pela metade para economizar RAM
+            if (getResources().getDisplayMetrics().widthPixels <= 320) {
+                opts.inSampleSize = 2;
+            }
             return BitmapFactory.decodeResource(getResources(), resId, opts);
         } catch (OutOfMemoryError oom) {
-            Log.e(TAG, "Out of memory decoding banner", oom);
+            Log.e(TAG, "Out of memory decoding bg_login", oom);
             return null;
         }
-    }
-
-    private void refillCycle() {
-        int lastShown = currentDrawableRes;
-        bannerCycle.clear();
-        bannerCycle.add(R.drawable.linka_login);
-        bannerCycle.add(R.drawable.linka_login_2);
-        bannerCycle.add(R.drawable.linka_login_3);
-        bannerCycle.add(R.drawable.linka_login_4);
-        bannerCycle.add(R.drawable.linka_login_5);
-        Collections.shuffle(bannerCycle);
-
-        if (lastShown != 0 && bannerCycle.get(0) == lastShown && bannerCycle.size() > 1) {
-            Collections.swap(bannerCycle, 0, 1);
-        }
-        currentBannerIndex = 0;
-    }
-
-    private void preloadNextInBackground() {
-        if (isDecoding || isFinishing()) return;
-
-        if (currentBannerIndex >= bannerCycle.size()) {
-            refillCycle();
-        }
-
-        final int nextResId = bannerCycle.get(currentBannerIndex);
-        currentBannerIndex++;
-        currentDrawableRes = nextResId;
-        isDecoding = true;
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final Bitmap decoded = decodeBannerBitmap(nextResId);
-                if (isFinishing()) {
-                    if (decoded != null) decoded.recycle();
-                    return;
-                }
-                preloadedNextBitmap = decoded;
-                isDecoding = false;
-            }
-        }).start();
-    }
-
-    private void advanceSlide() {
-        if (bannerImageView == null || bannerBackImageView == null) return;
-
-        if (isDecoding || preloadedNextBitmap == null) {
-            if (!isDecoding) preloadNextInBackground();
-            return;
-        }
-
-        if (currentBitmap != null) {
-            bannerBackImageView.setImageBitmap(currentBitmap);
-        }
-
-        currentBitmap = preloadedNextBitmap;
-        preloadedNextBitmap = null;
-
-        bannerImageView.setImageBitmap(currentBitmap);
-
-        AlphaAnimation fadeIn = new AlphaAnimation(0.0f, 1.0f);
-        fadeIn.setDuration(FADE_DURATION_MS);
-        bannerImageView.startAnimation(fadeIn);
-
-        preloadNextInBackground();
     }
 
     private void executeLogin(String username, String password) {
@@ -172,8 +94,7 @@ public class LoginActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        bannerBackImageView = (ImageView) findViewById(R.id.imgBannerBack);
-        bannerImageView = (ImageView) findViewById(R.id.imgBanner);
+        bgImageView = (ImageView) findViewById(R.id.img_bg_polaroid);
         btnServer = (Button) findViewById(R.id.btnServer);
         edtUsername = (EditText) findViewById(R.id.edtUsername);
         edtPassword = (EditText) findViewById(R.id.edtPassword);
@@ -181,51 +102,42 @@ public class LoginActivity extends BaseActivity {
         btnLogin = (Button) findViewById(R.id.btnLogin);
         txtGoToSignup = (TextView) findViewById(R.id.txtGoToSignup);
 
-        refillCycle();
-        final int firstResId = bannerCycle.get(0);
-        currentDrawableRes = firstResId;
-        currentBannerIndex = 1;
+        // Decodifica apenas o R.drawable.bg_login do drawable-nodpi
+        bgBitmap = decodeSingleBackground(R.drawable.bg_login);
+        if (bgBitmap != null && bgImageView != null) {
+            bgImageView.setImageBitmap(bgBitmap);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final Bitmap firstBmp = decodeBannerBitmap(firstResId);
-                if (isFinishing()) {
-                    if (firstBmp != null) firstBmp.recycle();
-                    return;
-                }
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!isFinishing() && firstBmp != null) {
-                            currentBitmap = firstBmp;
-                            bannerImageView.setImageBitmap(currentBitmap);
-                            bannerBackImageView.setImageBitmap(currentBitmap);
-                            preloadNextInBackground();
-                        }
-                    }
-                });
-            }
-        }).start();
+            // Efeito Ken Burns suave
+            ScaleAnimation kenBurns = new ScaleAnimation(
+                    1.0f, 1.07f, 1.0f, 1.07f,
+                    Animation.RELATIVE_TO_SELF, 0.5f,
+                    Animation.RELATIVE_TO_SELF, 0.5f);
+            kenBurns.setDuration(14000);
+            kenBurns.setRepeatCount(Animation.INFINITE);
+            kenBurns.setRepeatMode(Animation.REVERSE);
+            bgImageView.startAnimation(kenBurns);
+        }
 
-        TextWatcher typingPauseWatcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        // Animação de entrada em cascata
+        View boxTitle = findViewById(R.id.box_title);
+        View cardLogin = findViewById(R.id.card_login);
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                slideHandler.removeCallbacks(slideRunnable);
-                if (isSlideRunning) {
-                    slideHandler.postDelayed(slideRunnable, SLIDE_INTERVAL_MS);
-                }
-            }
+        if (boxTitle != null) {
+            AnimationSet titleAnim = new AnimationSet(true);
+            titleAnim.addAnimation(new AlphaAnimation(0.0f, 1.0f));
+            titleAnim.addAnimation(new TranslateAnimation(0, 0, -25, 0));
+            titleAnim.setDuration(450);
+            boxTitle.startAnimation(titleAnim);
+        }
 
-            @Override
-            public void afterTextChanged(Editable s) {}
-        };
-
-        edtUsername.addTextChangedListener(typingPauseWatcher);
-        edtPassword.addTextChangedListener(typingPauseWatcher);
+        if (cardLogin != null) {
+            AnimationSet cardAnim = new AnimationSet(true);
+            cardAnim.addAnimation(new AlphaAnimation(0.0f, 1.0f));
+            cardAnim.addAnimation(new TranslateAnimation(0, 0, 35, 0));
+            cardAnim.setDuration(500);
+            cardAnim.setStartOffset(150);
+            cardLogin.startAnimation(cardAnim);
+        }
 
         txtGuest.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -309,28 +221,19 @@ public class LoginActivity extends BaseActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        isSlideRunning = true;
-        slideHandler.removeCallbacks(slideRunnable);
-        slideHandler.postDelayed(slideRunnable, SLIDE_INTERVAL_MS);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        isSlideRunning = false;
-        slideHandler.removeCallbacks(slideRunnable);
-    }
-
-    @Override
     protected void onDestroy() {
         super.onDestroy();
-        isSlideRunning = false;
-        slideHandler.removeCallbacks(slideRunnable);
         if (currentLoginTask != null) {
             currentLoginTask.cancel(true);
             currentLoginTask.dismissDialogSafely();
+        }
+        if (bgImageView != null) {
+            bgImageView.clearAnimation();
+            bgImageView.setImageDrawable(null);
+        }
+        if (bgBitmap != null && !bgBitmap.isRecycled()) {
+            bgBitmap.recycle();
+            bgBitmap = null;
         }
     }
 
@@ -407,6 +310,7 @@ public class LoginActivity extends BaseActivity {
             if (loginResult.success) {
                 Toast.makeText(LoginActivity.this, loginResult.message, Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+                overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                 finish();
             } else {
                 LinkaDialog.showAlert(LoginActivity.this, loginResult.title, loginResult.message);
