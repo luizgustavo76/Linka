@@ -1,82 +1,171 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="#ffffff"
-    android:orientation="vertical">
+    android:background="#F2F4F7">
 
-    <!-- Barra Superior / Header estilo Retro -->
+    <!-- TOP BAR LIMPA IGUAL À HOME -->
     <LinearLayout
+        android:id="@+id/topHeaderContainer"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="#d2d2d2"
-        android:orientation="horizontal"
-        android:padding="6dip">
+        android:layout_alignParentTop="true"
+        android:orientation="vertical">
 
-        <TextView
+        <RelativeLayout
+            android:id="@+id/topBarContainer"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="6dip"
-            android:gravity="center"
-            android:text="Solicitações / Inbox"
-            android:textColor="#000000"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:layout_height="46dip"
+            android:background="#14181C"
+            android:paddingLeft="12dip"
+            android:paddingRight="8dip">
+
+            <TextView
+                android:id="@+id/tvInboxTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:text="Inbox"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvInboxCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/tvInboxTitle"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="8dip"
+                android:background="#262C33"
+                android:paddingLeft="7dip"
+                android:paddingRight="7dip"
+                android:paddingTop="2dip"
+                android:paddingBottom="2dip"
+                android:text="0"
+                android:textColor="#00BCD4"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="28dip"
+                android:layout_height="28dip"
+                android:layout_centerInParent="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/linka_icon_bar" />
+
+            <ImageButton
+                android:id="@+id/btnTopChat"
+                android:layout_width="38dip"
+                android:layout_height="38dip"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:padding="7dip"
+                android:background="@android:color/transparent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_chats" />
+        </RelativeLayout>
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dip"
+            android:background="#0A0C0E" />
     </LinearLayout>
 
-    <!-- Lista de Solicitações -->
+    <!-- LISTA DE CARDS (INBOX + NOTIFICATIONS) -->
     <ListView
         android:id="@+id/lvInbox"
         android:layout_width="fill_parent"
-        android:layout_height="0dip"
-        android:layout_weight="1"
-        android:divider="#e0e0e0"
-        android:dividerHeight="1dip" />
+        android:layout_height="fill_parent"
+        android:layout_below="@+id/topHeaderContainer"
+        android:layout_above="@+id/bottomBarContainer"
+        android:background="#F2F4F7"
+        android:cacheColorHint="#F2F4F7"
+        android:clipToPadding="false"
+        android:padding="8dip"
+        android:divider="#F2F4F7"
+        android:dividerHeight="8dip"
+        android:scrollbarStyle="outsideOverlay" />
 
-    <!-- Barra de Navegação Inferior -->
+    <!-- BOTTOM BAR UNIFORME COM OS MESMOS ÍCONES DA HOME -->
     <LinearLayout
+        android:id="@+id/bottomBarContainer"
         android:layout_width="fill_parent"
-        android:layout_height="48dip"
-        android:background="#d2d2d2"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_height="46dip"
+        android:layout_alignParentBottom="true"
+        android:background="#14181C"
+        android:orientation="vertical">
 
-        <ImageButton
-            android:id="@+id/btnHome"
-            android:layout_width="0dip"
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dip"
+            android:background="#232930" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
             android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:scaleType="centerInside"
-            android:src="@drawable/home" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-        <ImageButton
-            android:id="@+id/btnChat"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:scaleType="centerInside"
-            android:src="@drawable/chat" />
+            <!-- 1. FEED / HOME -->
+            <ImageButton
+                android:id="@+id/navHome"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:padding="11dip"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_feed" />
 
-        <ImageButton
-            android:id="@+id/btnOptions"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:scaleType="centerInside"
-            android:src="@drawable/options" />
+            <!-- 2. COMMUNITIES -->
+            <ImageButton
+                android:id="@+id/navCommunities"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:padding="11dip"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_community" />
 
-        <ImageButton
-            android:id="@+id/btnProfile"
-            android:layout_width="0dip"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:scaleType="centerInside"
-            android:src="@drawable/account" />
+            <!-- 3. NOVO POST -->
+            <ImageButton
+                android:id="@+id/fabNewPost"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:padding="11dip"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_post" />
 
+            <!-- 4. INBOX / NOTIFICAÇÕES (DESTACADO COMO ABA ATIVA) -->
+            <ImageButton
+                android:id="@+id/btnNotifications"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:background="#222830"
+                android:padding="11dip"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_inbox" />
+
+            <!-- 5. PERFIL / ACCOUNT -->
+            <ImageButton
+                android:id="@+id/btnProfile"
+                android:layout_width="0dip"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:padding="11dip"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon_profile" />
+
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+
+</RelativeLayout>

@@ -1,72 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout 
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:background="#ffffff"
-    android:gravity="center_vertical"
     android:orientation="horizontal"
     android:padding="10dip">
 
-    <!-- Avatar igual ao da lista do Chat -->
+    <!-- Foto de Perfil -->
     <ImageView
         android:id="@+id/imgAvatar"
-        android:layout_width="28dip"
-        android:layout_height="28dip"
+        android:layout_width="42dip"
+        android:layout_height="42dip"
+        android:layout_marginRight="10dip"
+        android:background="#e0e0e0"
         android:scaleType="centerCrop" />
 
-    <!-- Nome + Mensagem/Status -->
+    <!-- Conteúdo à direita do avatar -->
     <LinearLayout
         android:layout_width="0dip"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="8dip"
         android:layout_weight="1"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/username"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="\@username"
-            android:textColor="#000000"
-            android:textSize="13sp"
-            android:textStyle="bold" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/username"
+                android:layout_width="0dip"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@usuario"
+                android:textColor="#212121"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtBadgeType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#eeeeee"
+                android:paddingLeft="6dip"
+                android:paddingRight="6dip"
+                android:paddingTop="1dip"
+                android:paddingBottom="1dip"
+                android:text="REQUEST"
+                android:textColor="#666666"
+                android:textSize="10sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/message"
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Pedido de amizade"
-            android:textColor="#666666"
-            android:textSize="11sp" />
+            android:layout_marginTop="3dip"
+            android:text="Mensagem"
+            android:textColor="#444444"
+            android:textSize="13sp" />
+
+        <!-- Botões de Ação (Inbox: Aceitar/Recusar | Notification: Marcar como lida) -->
+        <LinearLayout
+            android:id="@+id/layoutActions"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dip"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnAccept"
+                android:layout_width="0dip"
+                android:layout_height="34dip"
+                android:layout_marginRight="6dip"
+                android:layout_weight="1"
+                android:background="#212121"
+                android:text="Accept"
+                android:textColor="#ffffff"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnDenied"
+                android:layout_width="0dip"
+                android:layout_height="34dip"
+                android:layout_weight="1"
+                android:background="#e0e0e0"
+                android:text="Denied"
+                android:textColor="#212121"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/btnAccept"
-            android:layout_width="wrap_content"
-            android:layout_height="32dip"
-            android:layout_marginRight="4dip"
-            android:paddingLeft="8dip"
-            android:paddingRight="8dip"
-            android:text="Aceitar"
-            android:textColor="#000000"
-            android:textSize="11sp" />
-
-        <Button
-            android:id="@+id/btnDenied"
-            android:layout_width="wrap_content"
-            android:layout_height="32dip"
-            android:paddingLeft="8dip"
-            android:paddingRight="8dip"
-            android:text="Recusar"
-            android:textColor="#000000"
-            android:textSize="11sp" />
-
-    </LinearLayout>
-
 </LinearLayout>
