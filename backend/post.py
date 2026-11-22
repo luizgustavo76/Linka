@@ -15,6 +15,7 @@ import notificationsModule
 import traceback
 import linkosModule
 import mentions_module
+from embed_extractor import extract_embed_from_text
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 json_path = os.path.join(base_dir, "backend.json")
@@ -321,6 +322,19 @@ def parse_media_list(media_raw, media_type_raw, width_raw, height_raw):
     return media_items
 
 
+def build_post_embed(text_content, has_media):
+    if has_media or not text_content:
+        return None
+    clean_text = re.sub(r'\[IMAGE\]\s*.*', '', text_content).strip()
+    if not clean_text or "http" not in clean_text:
+        return None
+    try:
+        return extract_embed_from_text(clean_text, r if root_flags.get("redis") else None)
+    except Exception as e:
+        print(f"[EMBED EXTRACT ERROR]: {e}")
+        return None
+
+
 @post_bp.route("/view-profile-posts", methods=["POST"])
 def view_profile_posts():
     data = request.get_json(silent=True) or {}
@@ -372,6 +386,8 @@ def view_post():
     finally:
         cur.close()
         conn.close()
+
+
 @post_bp.route("/post/<int:post_id>", methods=["GET"])
 def share_post_page(post_id):
     conn = get_db()
@@ -427,7 +443,6 @@ def share_post_page(post_id):
         elif main_media_url:
             media_list = parse_media_list(main_media_url, main_media_type, "", "")
 
-        # Imagem de capa para o preview do WhatsApp / Discord (Open Graph)
         og_image = ""
         if media_list:
             first = media_list[0]
@@ -456,6 +471,7 @@ def share_post_page(post_id):
     finally:
         cur.close()
         conn.close()
+
 
 @post_bp.route("/comments", methods=["POST"])
 def new_comment():
@@ -809,6 +825,10 @@ def view_external_posts():
     for index, post in enumerate(aggregated_posts, start=1):
         if isinstance(post, dict):
             post["id"] = index
+            if not post.get("embed") and not post.get("media_list"):
+                embed_obj = build_post_embed(post.get("text_post", ""), False)
+                if embed_obj:
+                    post["embed"] = embed_obj
             formated_feed.append(post)
 
     return jsonify(formated_feed), 200
@@ -1016,6 +1036,8 @@ def new_post():
     except Exception as e:
         print("ERROR /new:", traceback.format_exc())
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @post_bp.route("/trending-feed", methods=["GET"])
 def trending_feed():
     posts_id = []
@@ -1052,7 +1074,6 @@ def trending_feed():
 
 @post_bp.route("/feed", methods=["GET"])
 def feed():
-    # Pega o usuário logado (se vier pelo middleware g.username ou query param)
     current_user = getattr(g, "username", None) or request.args.get("username", "")
 
     has_page_param = 'page' in request.args
@@ -1177,6 +1198,9 @@ def feed():
             else:
                 media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
 
+            has_media = len(media_list) > 0 and bool(media_list[0].get("media_url"))
+            embed_obj = build_post_embed(text_content, has_media)
+
             dt_val = str(post["datetime"]) if post["datetime"] else ""
 
             lista_posts.append({
@@ -1188,6 +1212,7 @@ def feed():
                 "relative_datetime": get_relative_time(post["datetime"]),
                 "comment_count": post["comment_count"],
                 "poll": post["poll"],
+                "embed": embed_obj,
                 "media": {
                     "media_url": media_url or "",
                     "media_type": media_type or "image",
@@ -1213,6 +1238,8 @@ def feed():
     finally:
         cur.close()
         conn.close()
+
+
 @post_bp.route("/star", methods=["POST"])
 def star():
     data = request.get_json(silent=True) or {}
@@ -1349,6 +1376,9 @@ def new_feed():
             else:
                 media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
 
+            has_media = len(media_list) > 0 and bool(media_list[0].get("media_url"))
+            embed_obj = build_post_embed(text_content, has_media)
+
             dt_val = str(post["datetime"]) if post["datetime"] else ""
 
             lista_posts.append({
@@ -1358,6 +1388,7 @@ def new_feed():
                 "datetime": dt_val,
                 "relative_datetime": get_relative_time(post["datetime"]),
                 "comment_count": post["comment_count"],
+                "embed": embed_obj,
                 "media": {
                     "media_url": media_url or "",
                     "media_type": media_type or "image",
@@ -1374,6 +1405,7 @@ def new_feed():
     finally:
         cur.close()
         conn.close()
+
 
 @post_bp.route("/friends-feed", methods=["POST"])
 def friends_feed():
@@ -1457,6 +1489,9 @@ def friends_feed():
                 else:
                     media_list = parse_media_list(media_url, media_type, main_width, main_heigth)
 
+                has_media = len(media_list) > 0 and bool(media_list[0].get("media_url"))
+                embed_obj = build_post_embed(text_content, has_media)
+
                 dt_val = str(post["datetime"]) if post["datetime"] else ""
 
                 lista_posts.append({
@@ -1466,6 +1501,7 @@ def friends_feed():
                     "datetime": dt_val,
                     "relative_datetime": get_relative_time(post["datetime"]),
                     "comment_count": post["comment_count"],
+                    "embed": embed_obj,
                     "media": {
                         "media_url": media_url or "",
                         "media_type": media_type or "image",
@@ -1484,6 +1520,7 @@ def friends_feed():
             conn.close()
 
     return jsonify({"error": "Unauthorized or invalid user"}), 401
+
 
 @post_bp.route("/has-star", methods=["POST"])
 def has_star():

@@ -5,10 +5,12 @@ import android.app.ActivityGroup;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -1051,6 +1053,7 @@ public class HomeActivity extends ActivityGroup {
         TextView tvUsername;
         TextView tvText;
         LinearLayout containerPollCard;
+        LinearLayout containerEmbedCard;
         TextView tvDate;
         ImageButton btnComments;
         TextView txtCommentCount;
@@ -1116,6 +1119,115 @@ public class HomeActivity extends ActivityGroup {
                 return pollLayout;
             }
             return null;
+        }
+
+        private LinearLayout ensureEmbedContainer(View convertView, TextView tvText) {
+            View existing = convertView.findViewWithTag("dynamic_embed_container");
+            if (existing instanceof LinearLayout) {
+                return (LinearLayout) existing;
+            }
+            if (tvText != null && tvText.getParent() instanceof ViewGroup) {
+                ViewGroup parent = (ViewGroup) tvText.getParent();
+                int idx = parent.indexOfChild(tvText);
+                LinearLayout embedLayout = new LinearLayout(context);
+                embedLayout.setTag("dynamic_embed_container");
+                embedLayout.setOrientation(LinearLayout.VERTICAL);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.FILL_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                lp.setMargins(16, 6, 16, 10);
+                embedLayout.setLayoutParams(lp);
+                embedLayout.setVisibility(View.GONE);
+                parent.addView(embedLayout, idx + 1);
+                return embedLayout;
+            }
+            return null;
+        }
+
+        private void renderEmbedCard(LinearLayout container, JSONObject embedObj) {
+            if (container == null) return;
+            container.removeAllViews();
+
+            if (embedObj == null || embedObj.length() == 0) {
+                container.setVisibility(View.GONE);
+                return;
+            }
+
+            final String targetUrl = embedObj.optString("url", "");
+            if (targetUrl.length() == 0) {
+                container.setVisibility(View.GONE);
+                return;
+            }
+
+            String platform = embedObj.optString("platform", "Link");
+            String title = embedObj.optString("title", "");
+            String description = embedObj.optString("description", "");
+            String author = embedObj.optString("author", "");
+            String thumbUrl = embedObj.optString("thumbnail", "");
+
+            container.setVisibility(View.VISIBLE);
+            container.setBackgroundColor(Color.parseColor("#F7F5F0"));
+            container.setPadding(10, 10, 10, 10);
+
+            if (thumbUrl.length() > 0 && !"null".equalsIgnoreCase(thumbUrl)) {
+                ImageView thumbView = new ImageView(context);
+                LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.FILL_PARENT,
+                        (screenWidth * 9) / 20
+                );
+                imgParams.setMargins(0, 0, 0, 8);
+                thumbView.setLayoutParams(imgParams);
+                thumbView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                thumbView.setBackgroundColor(Color.parseColor("#1C1917"));
+                container.addView(thumbView);
+                imageLoader.LoadImageUrl(thumbUrl, thumbView);
+            }
+
+            TextView tvMeta = new TextView(context);
+            tvMeta.setTextSize(11);
+            tvMeta.setTypeface(null, Typeface.BOLD);
+            tvMeta.setTextColor(Color.parseColor("#2B5B84"));
+            String metaText = platform.toUpperCase();
+            if (author.length() > 0) {
+                metaText += " • " + author;
+            }
+            tvMeta.setText(metaText);
+            container.addView(tvMeta);
+
+            if (title.length() > 0) {
+                TextView tvTitle = new TextView(context);
+                tvTitle.setTextSize(13);
+                tvTitle.setTypeface(null, Typeface.BOLD);
+                tvTitle.setTextColor(Color.parseColor("#1C1917"));
+                tvTitle.setMaxLines(2);
+                tvTitle.setEllipsize(TextUtils.TruncateAt.END);
+                tvTitle.setPadding(0, 2, 0, 2);
+                tvTitle.setText(title);
+                container.addView(tvTitle);
+            }
+
+            if (description.length() > 0) {
+                TextView tvDesc = new TextView(context);
+                tvDesc.setTextSize(12);
+                tvDesc.setTextColor(Color.parseColor("#57534E"));
+                tvDesc.setMaxLines(3);
+                tvDesc.setEllipsize(TextUtils.TruncateAt.END);
+                tvDesc.setText(description);
+                container.addView(tvDesc);
+            }
+
+            container.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl));
+                        context.startActivity(browserIntent);
+                    } catch (Exception e) {
+                        Toast.makeText(context, "Unable to open link", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
         }
 
         private void renderPoll(LinearLayout container, final JSONObject post, final JSONObject pollObj) {
@@ -1251,6 +1363,7 @@ public class HomeActivity extends ActivityGroup {
                 holder.tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
                 holder.tvText = (TextView) convertView.findViewById(R.id.postText);
                 holder.containerPollCard = ensurePollContainer(convertView, holder.tvText);
+                holder.containerEmbedCard = ensureEmbedContainer(convertView, holder.tvText);
                 holder.tvDate = (TextView) convertView.findViewById(R.id.postDate);
                 holder.btnComments = (ImageButton) convertView.findViewById(R.id.btnComments);
                 holder.txtCommentCount = (TextView) convertView.findViewById(R.id.txtCommentCount);
@@ -1266,15 +1379,16 @@ public class HomeActivity extends ActivityGroup {
             } else {
                 holder = (ViewHolder) convertView.getTag();
             }
+
             holder.btnPostOptions.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     final JSONObject post = list.get(position);
                     final String postUsername = post.optString("username", post.optString("user", "entity404"));
                     final String[] optionsPost;
-                    if (postUsername.equals(username)){
+                    if (postUsername.equals(username)) {
                         optionsPost = new String[]{"Edit Post", "Delete Post", "View Profile", "Share"};
-                    }else{
+                    } else {
                         optionsPost = new String[]{"View Profile", "Share"};
                     }
 
@@ -1311,9 +1425,17 @@ public class HomeActivity extends ActivityGroup {
                                 intent.putExtra("usernameProfile", postUsername);
                                 startActivity(intent);
                             } else if ("Share".equals(chosen)) {
+                                String baseShareUrl = (url != null && url.length() > 0) ? url : "http://linkaProject.pythonanywhere.com";
+                                if (baseShareUrl.endsWith("/")) {
+                                    baseShareUrl = baseShareUrl.substring(0, baseShareUrl.length() - 1);
+                                }
+                                String shareText = (id > 0)
+                                        ? "@" + postUsername + ": " + textPost + "\n" + baseShareUrl + "/post/" + id
+                                        : "@" + postUsername + ": " + textPost;
+
                                 Intent sendIntent = new Intent();
                                 sendIntent.setAction(Intent.ACTION_SEND);
-                                sendIntent.putExtra(Intent.EXTRA_TEXT, "@" + postUsername + ": " + textPost);
+                                sendIntent.putExtra(Intent.EXTRA_TEXT, shareText);
                                 sendIntent.setType("text/plain");
                                 startActivity(Intent.createChooser(sendIntent, "Share post"));
                             }
@@ -1607,6 +1729,9 @@ public class HomeActivity extends ActivityGroup {
 
                 JSONObject pollObj = post.optJSONObject("poll");
                 renderPoll(holder.containerPollCard, post, pollObj);
+
+                JSONObject embedObj = post.optJSONObject("embed");
+                renderEmbedCard(holder.containerEmbedCard, embedObj);
 
             } catch (Exception e) {
                 Log.e("LINKA_DEBUG", "[POST VIEW ERR] Erro ao renderizar card: " + e.getMessage());

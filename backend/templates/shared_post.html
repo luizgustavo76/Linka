@@ -8,7 +8,7 @@
         <title>@{{ post.username }} on Linka</title>
         <meta name="description" content="{{ post.text_post[:160] if post.text_post else 'Check out this post on Linka' }}">
 
-        <!-- Open Graph (WhatsApp, Discord, Telegram, Facebook) -->
+        <!-- Open Graph -->
         <meta property="og:site_name" content="Linka">
         <meta property="og:type" content="article">
         <meta property="og:url" content="{{ post.share_url }}">
@@ -38,105 +38,114 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #F2F4F7;
-            color: #26221E;
+            background-color: #EAE7E1;
+            color: #1C1917;
             min-height: 100vh;
-            padding-top: 58px;
-            padding-bottom: 76px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* TOP BAR (#14181C igual ao topBarContainer) */
+        /* COLUNA CENTRAL (Estilo feed web moderno) */
+        .page-shell {
+            width: 100%;
+            max-width: 600px;
+            min-height: 100vh;
+            background-color: #FAF8F5;
+            border-left: 1px solid #DFDAD0;
+            border-right: 1px solid #DFDAD0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 0 40px rgba(28, 25, 23, 0.06);
+        }
+
+        /* TOP BAR */
         .top-bar {
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
-            height: 46px;
+            height: 54px;
             background-color: #14181C;
-            border-bottom: 1px solid #0A0C0E;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 14px;
-            z-index: 100;
+            padding: 0 18px;
+            z-index: 50;
         }
 
         .top-brand {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             color: #FFFFFF;
             text-decoration: none;
             font-weight: 800;
-            font-size: 16px;
+            font-size: 17px;
             letter-spacing: -0.3px;
         }
 
         .top-brand-badge {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             background-color: #00BCD4;
             color: #14181C;
-            border-radius: 5px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 900;
-            font-size: 14px;
+            font-size: 15px;
         }
 
         .btn-copy-top {
-            background: #222830;
-            color: #E5E7EB;
-            border: 1px solid #2E353F;
-            border-radius: 6px;
-            padding: 5px 10px;
-            font-size: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #F3F4F6;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12.5px;
             font-weight: 600;
             cursor: pointer;
+            transition: background 0.15s ease;
         }
 
         .btn-copy-top:hover {
-            background: #2C343F;
+            background: rgba(255, 255, 255, 0.16);
         }
 
-        /* CONTAINER DA TIMELINE */
-        .timeline-wrapper {
-            width: 100%;
-            max-width: 540px;
-            margin: 0 auto;
-            padding: 0 10px;
+        /* ÁREA DO POST */
+        .content-area {
+            flex: 1;
+            padding: 20px 18px;
         }
 
-        /* CARD DO POST (bg_post_card) */
         .post-card {
             background-color: #FFFFFF;
-            border: 1px solid #E2DDD3;
-            border-radius: 8px;
+            border: 1px solid #E4DFD5;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 1px 3px rgba(28, 25, 23, 0.06);
+            box-shadow: 0 2px 8px rgba(28, 25, 23, 0.04);
         }
 
-        /* CABEÇALHO DO AUTOR */
         .post-header {
             display: flex;
             align-items: center;
-            padding: 10px 12px 8px 12px;
-            gap: 10px;
+            padding: 16px 16px 12px 16px;
+            gap: 12px;
         }
 
         .post-avatar {
-            width: 38px;
-            height: 38px;
+            width: 44px;
+            height: 44px;
             background-color: #DDD7CC;
-            border: 1px solid #D2CBC0;
-            border-radius: 4px;
+            border: 1px solid #CFC8BC;
+            border-radius: 8px;
             object-fit: cover;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 15px;
+            font-size: 17px;
             color: #1C1917;
             flex-shrink: 0;
         }
@@ -150,75 +159,64 @@
         .post-username-row {
             display: flex;
             align-items: center;
-            gap: 4px;
-            flex-wrap: wrap;
+            gap: 5px;
         }
 
         .post-username {
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 700;
             color: #1C1917;
         }
 
         .post-platform {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 700;
             color: #2B5B84;
         }
 
         .post-date {
-            font-size: 10.5px;
+            font-size: 12px;
             color: #8A8277;
-            margin-top: 1px;
+            margin-top: 2px;
         }
 
-        /* TEXTO DO POST */
         .post-text {
-            padding: 2px 12px 10px 12px;
-            font-size: 14px;
-            line-height: 1.45;
+            padding: 2px 16px 16px 16px;
+            font-size: 16px;
+            line-height: 1.55;
             color: #26221E;
             white-space: pre-wrap;
             word-break: break-word;
         }
 
-        .post-text a {
-            color: #2B5B84;
-            text-decoration: none;
-        }
-
-        .post-text a:hover {
-            text-decoration: underline;
-        }
-
-        /* REPOST (#F7F5F0) */
+        /* REPOST */
         .repost-container {
-            margin: 0 12px 10px 12px;
-            padding: 10px;
+            margin: 0 16px 16px 16px;
+            padding: 12px 14px;
             background-color: #F7F5F0;
-            border: 1px solid #E8E3DA;
-            border-radius: 6px;
+            border: 1px solid #E6E0D5;
+            border-radius: 8px;
         }
 
         .repost-username {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 700;
             color: #1C1917;
             margin-bottom: 4px;
         }
 
         .repost-text {
-            font-size: 13px;
-            line-height: 1.4;
+            font-size: 14px;
+            line-height: 1.45;
             color: #3D3833;
             white-space: pre-wrap;
         }
 
-        /* MOLDURA DE MÍDIA (#1C1917 igual ao containerMedia) */
+        /* MÍDIA */
         .media-container {
-            margin: 0 10px 10px 10px;
-            background-color: #1C1917;
-            border-radius: 4px;
+            margin: 0 16px 16px 16px;
+            background-color: #14181C;
+            border-radius: 8px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -228,66 +226,65 @@
         .media-container img,
         .media-container video {
             width: 100%;
-            max-height: 500px;
+            max-height: 540px;
             object-fit: contain;
             display: block;
-            background-color: #1C1917;
+            background-color: #14181C;
         }
 
         .video-fallback-link {
             display: block;
-            padding: 14px;
+            padding: 16px;
             text-align: center;
             color: #00BCD4;
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: 600;
             text-decoration: none;
         }
 
-        /* DIVISOR E RODAPÉ DO CARD (#E8E3DA e #F7F5F0) */
-        .card-divider {
-            height: 1px;
-            background-color: #E8E3DA;
-            width: 100%;
-        }
-
+        /* RODAPÉ DO CARD */
         .post-footer {
             background-color: #F7F5F0;
-            padding: 7px 12px;
+            border-top: 1px solid #E8E3DA;
+            padding: 10px 16px;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 16px;
+            justify-content: space-between;
             color: #666057;
-            font-size: 11px;
-            font-weight: 700;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .stats-group {
+            display: flex;
+            align-items: center;
+            gap: 18px;
         }
 
         .stat-item {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
         }
 
-        /* BOTTOM BAR FIXA (Igual à bottomBarContainer / layoutGuest) */
-        .bottom-cta-bar {
-            position: fixed;
+        /* RODAPÉ DE DOWNLOAD / ABRIR NO APP (Alinhado à coluna) */
+        .bottom-cta-wrapper {
+            position: sticky;
             bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #14181C;
-            border-top: 1px solid #232930;
-            padding: 8px 12px;
-            z-index: 100;
+            padding: 12px 18px 16px 18px;
+            background: linear-gradient(to top, #FAF8F5 80%, rgba(250, 248, 245, 0));
         }
 
-        .bottom-cta-inner {
-            max-width: 540px;
-            margin: 0 auto;
+        .bottom-cta-card {
+            background-color: #14181C;
+            border: 1px solid #262C33;
+            border-radius: 12px;
+            padding: 12px 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
+            gap: 12px;
+            box-shadow: 0 8px 24px rgba(20, 24, 28, 0.22);
         }
 
         .cta-info {
@@ -298,174 +295,182 @@
 
         .cta-title {
             color: #FFFFFF;
-            font-size: 12px;
+            font-size: 13.5px;
             font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .cta-subtitle {
             color: #9CA3AF;
-            font-size: 10.5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 12px;
+            margin-top: 1px;
         }
 
         .cta-buttons {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             flex-shrink: 0;
         }
 
         .btn-download {
-            background-color: #262C33;
-            color: #FFFFFF;
-            border: 1px solid #374151;
-            border-radius: 4px;
-            padding: 7px 11px;
-            font-size: 11.5px;
+            background-color: #232931;
+            color: #F3F4F6;
+            border: 1px solid #353E4A;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12.5px;
             font-weight: 700;
             text-decoration: none;
+            transition: background 0.15s ease;
         }
 
         .btn-download:hover {
-            background-color: #323942;
+            background-color: #2E3640;
         }
 
         .btn-open-app {
             background-color: #00BCD4;
-            color: #FFFFFF;
-            border-radius: 4px;
-            padding: 7px 12px;
-            font-size: 11.5px;
-            font-weight: 700;
+            color: #14181C;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 12.5px;
+            font-weight: 800;
             text-decoration: none;
+            transition: background 0.15s ease;
         }
 
         .btn-open-app:hover {
-            background-color: #00ACC1;
+            background-color: #26C6DA;
         }
 
         .not-found-box {
             background: #FFFFFF;
-            border: 1px solid #E2DDD3;
-            border-radius: 8px;
-            padding: 32px 16px;
+            border: 1px solid #E4DFD5;
+            border-radius: 12px;
+            padding: 40px 20px;
             text-align: center;
         }
 
         .not-found-box h2 {
-            font-size: 16px;
+            font-size: 17px;
             color: #1C1917;
             margin-bottom: 6px;
         }
 
         .not-found-box p {
-            font-size: 13px;
+            font-size: 14px;
             color: #8A8277;
+        }
+
+        @media (max-width: 480px) {
+            .page-shell {
+                border-left: none;
+                border-right: none;
+            }
+            .cta-subtitle {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- TOP BAR (#14181C) -->
-    <header class="top-bar">
-        <a href="/" class="top-brand">
-            <span class="top-brand-badge">L</span>
-            <span>Linka</span>
-        </a>
-        {% if post %}
-            <button class="btn-copy-top" id="copyBtn" onclick="copyLink()">Copy link</button>
-        {% endif %}
-    </header>
-
-    <!-- POST PREVIEW -->
-    <main class="timeline-wrapper">
-        {% if post %}
-            <article class="post-card">
-                <!-- Autor -->
-                <div class="post-header">
-                    {% if post.avatar_url %}
-                        <img class="post-avatar" src="{{ post.avatar_url }}" alt="{{ post.username }}"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="post-avatar" style="display:none;">{{ post.username[0]|upper }}</div>
-                    {% else %}
-                        <div class="post-avatar">{{ post.username[0]|upper }}</div>
-                    {% endif %}
-
-                    <div class="post-author-meta">
-                        <div class="post-username-row">
-                            <span class="post-username">{{ post.username }}</span>
-                            <span class="post-platform">&gt; Linka</span>
-                        </div>
-                        <span class="post-date" title="{{ post.datetime }}">{{ post.relative_datetime }}</span>
-                    </div>
-                </div>
-
-                <!-- Texto -->
-                {% if post.text_post %}
-                    <div class="post-text">{{ post.text_post }}</div>
-                {% endif %}
-
-                <!-- Repost -->
-                {% if post.repost_username %}
-                    <div class="repost-container">
-                        <div class="repost-username">{{ post.repost_username }}</div>
-                        {% if post.repost_text %}
-                            <div class="repost-text">{{ post.repost_text }}</div>
-                        {% endif %}
-                    </div>
-                {% endif %}
-
-                <!-- Mídia -->
-                {% if post.media_list %}
-                    <div class="media-container">
-                        {% for item in post.media_list %}
-                            {% if item.media_type == 'video' %}
-                                <video controls playsinline preload="metadata"
-                                       {% if item.thumbnail %}poster="{{ item.thumbnail }}"{% endif %}
-                                       src="{{ item.media_url }}">
-                                </video>
-                            {% else %}
-                                <img src="{{ item.media_url }}" alt="Post media" loading="lazy">
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                {% endif %}
-
-                <!-- Rodapé de métricas -->
-                <div class="card-divider"></div>
-                <div class="post-footer">
-                    <span class="stat-item">★ {{ post.star_count }}</span>
-                    <span class="stat-item">💬 {{ post.comment_count }}</span>
-                </div>
-            </article>
-        {% else %}
-            <div class="not-found-box">
-                <h2>Post not found</h2>
-                <p>This post may have been deleted or the link is invalid.</p>
-            </div>
-        {% endif %}
-    </main>
-
-    <!-- BOTTOM BAR FIXA (Download App / Open in App) -->
-    <footer class="bottom-cta-bar">
-        <div class="bottom-cta-inner">
-            <div class="cta-info">
-                <span class="cta-title">Linka Lite</span>
-                <span class="cta-subtitle">Join the conversation on Android</span>
-            </div>
-            <div class="cta-buttons">
-                <a class="btn-download" href="/download">Download App</a>
+    <div class="page-shell">
+        <div>
+            <!-- TOP BAR -->
+            <header class="top-bar">
+                <a href="/" class="top-brand">
+                    <span class="top-brand-badge">L</span>
+                    <span>Linka</span>
+                </a>
                 {% if post %}
-                    <a class="btn-open-app" href="linka://post/{{ post.id }}">Open in App</a>
+                    <button class="btn-copy-top" id="copyBtn" onclick="copyLink()">Copy link</button>
                 {% endif %}
-            </div>
+            </header>
+
+            <!-- POST -->
+            <main class="content-area">
+                {% if post %}
+                    <article class="post-card">
+                        <div class="post-header">
+                            {% if post.avatar_url %}
+                                <img class="post-avatar" src="{{ post.avatar_url }}" alt="{{ post.username }}"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="post-avatar" style="display:none;">{{ post.username[0]|upper }}</div>
+                            {% else %}
+                                <div class="post-avatar">{{ post.username[0]|upper }}</div>
+                            {% endif %}
+
+                            <div class="post-author-meta">
+                                <div class="post-username-row">
+                                    <span class="post-username">{{ post.username }}</span>
+                                    <span class="post-platform">&gt; Linka</span>
+                                </div>
+                                <span class="post-date" title="{{ post.datetime }}">{{ post.relative_datetime }}</span>
+                            </div>
+                        </div>
+
+                        {% if post.text_post %}
+                            <div class="post-text">{{ post.text_post }}</div>
+                        {% endif %}
+
+                        {% if post.repost_username %}
+                            <div class="repost-container">
+                                <div class="repost-username">{{ post.repost_username }}</div>
+                                {% if post.repost_text %}
+                                    <div class="repost-text">{{ post.repost_text }}</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
+                        {% if post.media_list %}
+                            <div class="media-container">
+                                {% for item in post.media_list %}
+                                    {% if item.media_type == 'video' %}
+                                        <video controls playsinline preload="metadata"
+                                               {% if item.thumbnail %}poster="{{ item.thumbnail }}"{% endif %}
+                                               src="{{ item.media_url }}">
+                                        </video>
+                                    {% else %}
+                                        <img src="{{ item.media_url }}" alt="Post media" loading="lazy">
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="post-footer">
+                            <div class="stats-group">
+                                <span class="stat-item">★ {{ post.star_count }} {{ 'star' if post.star_count == 1 else 'stars' }}</span>
+                                <span class="stat-item">💬 {{ post.comment_count }} {{ 'comment' if post.comment_count == 1 else 'comments' }}</span>
+                            </div>
+                            <span>#{{ post.id }}</span>
+                        </div>
+                    </article>
+                {% else %}
+                    <div class="not-found-box">
+                        <h2>Post not found</h2>
+                        <p>This post may have been deleted or the link is invalid.</p>
+                    </div>
+                {% endif %}
+            </main>
         </div>
-    </footer>
+
+        <!-- BOTTOM BAR -->
+        <footer class="bottom-cta-wrapper">
+            <div class="bottom-cta-card">
+                <div class="cta-info">
+                    <span class="cta-title">Linka Lite</span>
+                    <span class="cta-subtitle">Get the Android app to reply &amp; follow</span>
+                </div>
+                <div class="cta-buttons">
+                    <a class="btn-download" href="/download">Download App</a>
+                    {% if post %}
+                        <a class="btn-open-app" href="linka://post/{{ post.id }}">Open in App</a>
+                    {% endif %}
+                </div>
+            </div>
+        </footer>
+    </div>
 
     <script>
         function copyLink() {
@@ -478,7 +483,6 @@
             }
         }
 
-        // Fallback caso o vídeo seja de um formato/URL não suportado nativamente pelo browser
         document.querySelectorAll("video").forEach(video => {
             video.addEventListener("error", () => {
                 const url = video.getAttribute("src");
