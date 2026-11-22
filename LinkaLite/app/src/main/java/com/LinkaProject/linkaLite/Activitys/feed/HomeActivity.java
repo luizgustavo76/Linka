@@ -1425,19 +1425,23 @@ public class HomeActivity extends ActivityGroup {
                                 intent.putExtra("usernameProfile", postUsername);
                                 startActivity(intent);
                             } else if ("Share".equals(chosen)) {
-                                String baseShareUrl = (url != null && url.length() > 0) ? url : "http://linkaProject.pythonanywhere.com";
+                                String baseShareUrl = (url != null && url.length() > 0) ? url.trim() : "http://linkaProject.pythonanywhere.com";
                                 if (baseShareUrl.endsWith("/")) {
                                     baseShareUrl = baseShareUrl.substring(0, baseShareUrl.length() - 1);
                                 }
-                                String shareText = (id > 0)
-                                        ? "@" + postUsername + ": " + textPost + "\n" + baseShareUrl + "/post/" + id
-                                        : "@" + postUsername + ": " + textPost;
+                                if (baseShareUrl.endsWith("/api")) {
+                                    baseShareUrl = baseShareUrl.substring(0, baseShareUrl.length() - 4);
+                                }
 
-                                Intent sendIntent = new Intent();
-                                sendIntent.setAction(Intent.ACTION_SEND);
-                                sendIntent.putExtra(Intent.EXTRA_TEXT, shareText);
-                                sendIntent.setType("text/plain");
-                                startActivity(Intent.createChooser(sendIntent, "Share post"));
+                                if (id > 0) {
+                                    String shareUrl = baseShareUrl + "/post/" + id;
+                                    Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                                    sendIntent.putExtra(Intent.EXTRA_TEXT, shareUrl);
+                                    sendIntent.setType("text/plain");
+                                    startActivity(Intent.createChooser(sendIntent, "Share post"));
+                                } else {
+                                    Toast.makeText(HomeActivity.this, "Cannot share this post", Toast.LENGTH_SHORT).show();
+                                }
                             }
                         }
                     });
