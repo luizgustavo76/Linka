@@ -193,9 +193,28 @@ def create_db():
                 heigth TEXT,
                 thumbnail TEXT,
                 text_post TEXT,
-                datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                repost_id INTEGER,
+                repost_username TEXT,
+                repost_text TEXT,
+                repost_datetime TEXT,
+                repost_media_url TEXT,
+                repost_media_width TEXT,
+                repost_media_height TEXT
             )
         """)
+        repost_columns = [
+            ("repost_id", "INTEGER"),
+            ("repost_username", "TEXT"),
+            ("repost_text", "TEXT"),
+            ("repost_datetime", "TEXT"),
+            ("repost_media_url", "TEXT"),
+            ("repost_media_width", "TEXT"),
+            ("repost_media_height", "TEXT")
+        ]
+        for col_name, col_type in repost_columns:
+            cur.execute(f"ALTER TABLE posts ADD COLUMN IF NOT EXISTS {col_name} {col_type}")
+
         cur.execute("""
             CREATE TABLE IF NOT EXISTS post_media(
                 id SERIAL PRIMARY KEY,
@@ -335,6 +354,24 @@ def build_post_embed(text_content, has_media):
         return None
 
 
+def build_repost_payload(row):
+    repost_id = row.get("repost_id")
+    if not repost_id:
+        return None
+    repost_dt = row.get("repost_datetime") or ""
+    return {
+        "original_id": repost_id,
+        "username": row.get("repost_username") or "",
+        "avatar_url": row.get("repost_avatar_url") or "",
+        "text_post": row.get("repost_text") or "",
+        "datetime": str(repost_dt) if repost_dt else "",
+        "relative_datetime": get_relative_time(repost_dt),
+        "media_url": row.get("repost_media_url") or "",
+        "width": row.get("repost_media_width") or "",
+        "heigth": row.get("repost_media_height") or ""
+    }
+
+
 @post_bp.route("/view-profile-posts", methods=["POST"])
 def view_profile_posts():
     data = request.get_json(silent=True) or {}
@@ -346,18 +383,34 @@ def view_profile_posts():
     conn = get_db()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT id, username, text_post, datetime FROM posts WHERE username = %s ORDER BY datetime DESC", (username,))
+        cur.execute("""
+            SELECT p.id, p.username, p.text_post, p.datetime,
+                   p.repost_id, p.repost_username, p.repost_text, p.repost_datetime,
+                   p.repost_media_url, p.repost_media_width, p.repost_media_height,
+                   rm."ProfilePicture" AS repost_avatar_url
+            FROM posts p
+            LEFT JOIN profile rm ON p.repost_username = rm.username
+            WHERE p.username = %s
+            ORDER BY p.datetime DESC
+        """, (username,))
         result = cur.fetchall()
 
         posts = []
         for single_posts in result:
             dt_val = str(single_posts["datetime"]) if single_posts["datetime"] else ""
+            repost_obj = build_repost_payload(single_posts)
             posts.append({
                 "id": single_posts["id"],
                 "username": single_posts["username"],
                 "text_post": single_posts["text_post"],
                 "datetime": dt_val,
-                "relative_datetime": get_relative_time(single_posts["datetime"])
+                "relative_datetime": get_relative_time(single_posts["datetime"]),
+                "repost": repost_obj,
+                "repost_id": single_posts.get("repost_id"),
+                "repost_username": single_posts.get("repost_username") or "",
+                "repost_text": single_posts.get("repost_text") or "",
+                "repost_media_url": single_posts.get("repost_media_url") or "",
+                "repost_avatar_url": single_posts.get("repost_avatar_url") or ""
             })
         return jsonify(posts), 200
     finally:
@@ -372,7 +425,12 @@ def view_post():
     conn = get_db()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT * FROM posts WHERE id = %s", (post_id,))
+        cur.execute("""
+            SELECT p.*, rm."ProfilePicture" AS repost_avatar_url
+            FROM posts p
+            LEFT JOIN profile rm ON p.repost_username = rm.username
+            WHERE p.id = %s
+        """, (post_id,))
         posts = cur.fetchall()
         
         result = []
@@ -380,6 +438,7 @@ def view_post():
             res = dict(row)
             if res.get("datetime"):
                 res["datetime"] = str(res["datetime"])
+            res["repost"] = build_repost_payload(res)
             result.append(res)
             
         return jsonify(result), 200
@@ -608,16 +667,31 @@ def get_internal_feed_posts():
     conn = get_db()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT id, username, text_post, datetime FROM posts ORDER BY id DESC")
+        cur.execute("""
+            SELECT p.id, p.username, p.text_post, p.datetime,
+                   p.repost_id, p.repost_username, p.repost_text, p.repost_datetime,
+                   p.repost_media_url, p.repost_media_width, p.repost_media_height,
+                   rm."ProfilePicture" AS repost_avatar_url
+            FROM posts p
+            LEFT JOIN profile rm ON p.repost_username = rm.username
+            ORDER BY p.id DESC
+        """)
         posts = cur.fetchall()
 
         lista_posts = []
         for post in posts:
+            repost_obj = build_repost_payload(post)
             lista_posts.append({
                 "id": post["id"],
                 "username": post["username"],
                 "text_post": post["text_post"],
-                "datetime": str(post["datetime"]) if post["datetime"] else ""
+                "datetime": str(post["datetime"]) if post["datetime"] else "",
+                "repost": repost_obj,
+                "repost_id": post.get("repost_id"),
+                "repost_username": post.get("repost_username") or "",
+                "repost_text": post.get("repost_text") or "",
+                "repost_media_url": post.get("repost_media_url") or "",
+                "repost_avatar_url": post.get("repost_avatar_url") or ""
             })
         return lista_posts
     finally:
@@ -1056,15 +1130,27 @@ def trending_feed():
             posts_id.append(row["post_id"])
             
         for i in posts_id:
-            cur.execute("SELECT * FROM posts WHERE id = %s", (i,))
+            cur.execute("""
+                SELECT p.*, rm."ProfilePicture" AS repost_avatar_url
+                FROM posts p
+                LEFT JOIN profile rm ON p.repost_username = rm.username
+                WHERE p.id = %s
+            """, (i,))
             result = cur.fetchall()
             for row in result:
+                repost_obj = build_repost_payload(row)
                 posts.append({
                     "id": row["id"],
                     "username": row["username"],
                     "text_post": row["text_post"],
                     "datetime": str(row["datetime"]) if row["datetime"] else "",
-                    "relative_datetime": get_relative_time(row["datetime"])
+                    "relative_datetime": get_relative_time(row["datetime"]),
+                    "repost": repost_obj,
+                    "repost_id": row.get("repost_id"),
+                    "repost_username": row.get("repost_username") or "",
+                    "repost_text": row.get("repost_text") or "",
+                    "repost_media_url": row.get("repost_media_url") or "",
+                    "repost_avatar_url": row.get("repost_avatar_url") or ""
                 })
         return jsonify(posts), 200
     finally:
@@ -1115,6 +1201,14 @@ def feed():
                 p.width,
                 p.heigth,
                 p.thumbnail,
+                p.repost_id,
+                p.repost_username,
+                p.repost_text,
+                p.repost_datetime,
+                p.repost_media_url,
+                p.repost_media_width,
+                p.repost_media_height,
+                rm."ProfilePicture" AS repost_avatar_url,
                 m."ProfilePicture" AS avatar_url,
                 COUNT(c.id) AS comment_count,
                 CASE 
@@ -1142,13 +1236,16 @@ def feed():
                 END AS poll
             FROM posts p
             LEFT JOIN profile m ON p.username = m.username
+            LEFT JOIN profile rm ON p.repost_username = rm.username
             LEFT JOIN comments c ON c.post_id = p.id
             LEFT JOIN poll ON poll.post_id = p.id::text
             LEFT JOIN poll_votes pv ON pv.poll_id = poll.id AND pv.username = %s
             GROUP BY 
-                p.id, p.username, p.text_post, m."ProfilePicture", 
+                p.id, p.username, p.text_post, m."ProfilePicture", rm."ProfilePicture",
                 p.thumbnail, p.datetime, p.media, p.media_type, 
-                p.width, p.heigth, poll.id, pv.option_id
+                p.width, p.heigth, p.repost_id, p.repost_username, p.repost_text,
+                p.repost_datetime, p.repost_media_url, p.repost_media_width,
+                p.repost_media_height, poll.id, pv.option_id
             ORDER BY p.id DESC
             {sql_pagination}
         """
@@ -1200,6 +1297,7 @@ def feed():
 
             has_media = len(media_list) > 0 and bool(media_list[0].get("media_url"))
             embed_obj = build_post_embed(text_content, has_media)
+            repost_obj = build_repost_payload(post)
 
             dt_val = str(post["datetime"]) if post["datetime"] else ""
 
@@ -1213,6 +1311,15 @@ def feed():
                 "comment_count": post["comment_count"],
                 "poll": post["poll"],
                 "embed": embed_obj,
+                "repost": repost_obj,
+                "repost_id": post.get("repost_id"),
+                "repost_username": post.get("repost_username") or "",
+                "repost_text": post.get("repost_text") or "",
+                "repost_datetime": post.get("repost_datetime") or "",
+                "repost_media_url": post.get("repost_media_url") or "",
+                "repost_media_width": post.get("repost_media_width") or "",
+                "repost_media_height": post.get("repost_media_height") or "",
+                "repost_avatar_url": post.get("repost_avatar_url") or "",
                 "media": {
                     "media_url": media_url or "",
                     "media_type": media_type or "image",
@@ -1338,11 +1445,22 @@ def new_feed():
                 p.media_type,
                 p.width,
                 p.heigth,
+                p.repost_id,
+                p.repost_username,
+                p.repost_text,
+                p.repost_datetime,
+                p.repost_media_url,
+                p.repost_media_width,
+                p.repost_media_height,
+                rm."ProfilePicture" AS repost_avatar_url,
                 COUNT(c.id) AS comment_count
             FROM posts p
+            LEFT JOIN profile rm ON p.repost_username = rm.username
             LEFT JOIN comments c ON c.post_id = p.id
             WHERE p.id > %s
-            GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth
+            GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth,
+                     p.repost_id, p.repost_username, p.repost_text, p.repost_datetime,
+                     p.repost_media_url, p.repost_media_width, p.repost_media_height, rm."ProfilePicture"
             ORDER BY p.id ASC
         """, (last_id,))
 
@@ -1378,6 +1496,7 @@ def new_feed():
 
             has_media = len(media_list) > 0 and bool(media_list[0].get("media_url"))
             embed_obj = build_post_embed(text_content, has_media)
+            repost_obj = build_repost_payload(post)
 
             dt_val = str(post["datetime"]) if post["datetime"] else ""
 
@@ -1389,6 +1508,15 @@ def new_feed():
                 "relative_datetime": get_relative_time(post["datetime"]),
                 "comment_count": post["comment_count"],
                 "embed": embed_obj,
+                "repost": repost_obj,
+                "repost_id": post.get("repost_id"),
+                "repost_username": post.get("repost_username") or "",
+                "repost_text": post.get("repost_text") or "",
+                "repost_datetime": post.get("repost_datetime") or "",
+                "repost_media_url": post.get("repost_media_url") or "",
+                "repost_media_width": post.get("repost_media_width") or "",
+                "repost_media_height": post.get("repost_media_height") or "",
+                "repost_avatar_url": post.get("repost_avatar_url") or "",
                 "media": {
                     "media_url": media_url or "",
                     "media_type": media_type or "image",
@@ -1450,11 +1578,22 @@ def friends_feed():
                     p.media_type,
                     p.width,
                     p.heigth,
+                    p.repost_id,
+                    p.repost_username,
+                    p.repost_text,
+                    p.repost_datetime,
+                    p.repost_media_url,
+                    p.repost_media_width,
+                    p.repost_media_height,
+                    rm."ProfilePicture" AS repost_avatar_url,
                     COUNT(DISTINCT c.id) AS comment_count 
                 FROM posts p
+                LEFT JOIN profile rm ON p.repost_username = rm.username
                 LEFT JOIN comments c ON c.post_id = p.id
                 LEFT JOIN friends f ON (f.receiver = p.username OR f.remittee = p.username)
-                GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth
+                GROUP BY p.id, p.username, p.text_post, p.datetime, p.media, p.media_type, p.width, p.heigth,
+                         p.repost_id, p.repost_username, p.repost_text, p.repost_datetime,
+                         p.repost_media_url, p.repost_media_width, p.repost_media_height, rm."ProfilePicture"
                 ORDER BY p.id DESC
                 {sql_pagination}
             """
@@ -1491,6 +1630,7 @@ def friends_feed():
 
                 has_media = len(media_list) > 0 and bool(media_list[0].get("media_url"))
                 embed_obj = build_post_embed(text_content, has_media)
+                repost_obj = build_repost_payload(post)
 
                 dt_val = str(post["datetime"]) if post["datetime"] else ""
 
@@ -1502,6 +1642,15 @@ def friends_feed():
                     "relative_datetime": get_relative_time(post["datetime"]),
                     "comment_count": post["comment_count"],
                     "embed": embed_obj,
+                    "repost": repost_obj,
+                    "repost_id": post.get("repost_id"),
+                    "repost_username": post.get("repost_username") or "",
+                    "repost_text": post.get("repost_text") or "",
+                    "repost_datetime": post.get("repost_datetime") or "",
+                    "repost_media_url": post.get("repost_media_url") or "",
+                    "repost_media_width": post.get("repost_media_width") or "",
+                    "repost_media_height": post.get("repost_media_height") or "",
+                    "repost_avatar_url": post.get("repost_avatar_url") or "",
                     "media": {
                         "media_url": media_url or "",
                         "media_type": media_type or "image",
