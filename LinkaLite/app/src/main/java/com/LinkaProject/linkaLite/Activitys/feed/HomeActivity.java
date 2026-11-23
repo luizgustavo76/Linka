@@ -1054,6 +1054,7 @@ public class HomeActivity extends ActivityGroup {
         TextView tvText;
         LinearLayout containerPollCard;
         LinearLayout containerEmbedCard;
+        LinearLayout containerRepostCard;
         TextView tvDate;
         ImageButton btnComments;
         TextView txtCommentCount;
@@ -1097,6 +1098,42 @@ public class HomeActivity extends ActivityGroup {
             return position;
         }
 
+        private void openPostComments(JSONObject post) {
+            if (post == null) return;
+            String postUsername = post.optString("username", post.optString("user", "entity404"));
+            String textPost = post.optString("text_post", post.optString("text", ""));
+            String origin_server = post.optString("origin_server", "");
+            String datetime = post.optString("datetime", post.optString("date", ""));
+            String commentsCount = post.optString("comments_count", post.optString("comment_count", "0"));
+            String postUniqueId = post.optString("unique_id", "");
+            int id = post.optInt("id", -1);
+            String originalUrl = post.optString("original_url", "");
+            boolean isExternal = origin_server.length() > 0 && !origin_server.equalsIgnoreCase("linka");
+
+            Intent intent = new Intent(HomeActivity.this, comments_activity.class);
+            if ("Linka".equalsIgnoreCase(actualFeed.trim())) {
+                intent.putExtra("isExternal", false);
+            } else {
+                intent.putExtra("isExternal", isExternal);
+                if (isExternal) {
+                    intent.putExtra("externalUrl", origin_server);
+                    intent.putExtra("uniqueId", postUniqueId);
+                    intent.putExtra("originalUrl", originalUrl);
+                }
+            }
+            intent.putExtra("post_author", postUsername);
+            intent.putExtra("post_date", datetime);
+            intent.putExtra("post_text", textPost);
+            intent.putExtra("post_community", "");
+            intent.putExtra("avatar_url", post.optString("avatar_url", ""));
+            JSONArray mediaArr = post.optJSONArray("media_list");
+            intent.putExtra("media_list", mediaArr != null ? mediaArr.toString() : "[]");
+            intent.putExtra("comment_count", commentsCount);
+            intent.putExtra("isGuest", isGuest);
+            intent.putExtra("post_id", String.valueOf(id));
+            startActivity(intent);
+        }
+
         private LinearLayout ensurePollContainer(View convertView, TextView tvText) {
             View existing = convertView.findViewWithTag("dynamic_poll_container");
             if (existing instanceof LinearLayout) {
@@ -1112,7 +1149,7 @@ public class HomeActivity extends ActivityGroup {
                         ViewGroup.LayoutParams.FILL_PARENT,
                         ViewGroup.LayoutParams.WRAP_CONTENT
                 );
-                lp.setMargins(0, 8, 0, 8);
+                lp.setMargins(12, 8, 12, 8);
                 pollLayout.setLayoutParams(lp);
                 pollLayout.setVisibility(View.GONE);
                 parent.addView(pollLayout, idx + 1);
@@ -1143,6 +1180,164 @@ public class HomeActivity extends ActivityGroup {
                 return embedLayout;
             }
             return null;
+        }
+
+        private LinearLayout ensureRepostContainer(View convertView, TextView tvText) {
+            View existing = convertView.findViewWithTag("dynamic_repost_container");
+            if (existing instanceof LinearLayout) {
+                return (LinearLayout) existing;
+            }
+            if (tvText != null && tvText.getParent() instanceof ViewGroup) {
+                ViewGroup parent = (ViewGroup) tvText.getParent();
+                int idx = parent.indexOfChild(tvText);
+                LinearLayout repostLayout = new LinearLayout(context);
+                repostLayout.setTag("dynamic_repost_container");
+                repostLayout.setOrientation(LinearLayout.VERTICAL);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.FILL_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                lp.setMargins(16, 8, 16, 10);
+                repostLayout.setLayoutParams(lp);
+                repostLayout.setVisibility(View.GONE);
+                parent.addView(repostLayout, idx + 1);
+                return repostLayout;
+            }
+            return null;
+        }
+
+        private void renderRepostCard(LinearLayout container, final JSONObject post) {
+            if (container == null) return;
+            container.removeAllViews();
+
+            JSONObject repostObj = post.optJSONObject("repost");
+            int repostId = (repostObj != null) ? repostObj.optInt("original_id", -1) : post.optInt("repost_id", -1);
+            final String repostUser = (repostObj != null) ? repostObj.optString("username", "") : post.optString("repost_username", "");
+            String repostText = (repostObj != null) ? repostObj.optString("text_post", "") : post.optString("repost_text", "");
+            String repostDate = (repostObj != null) ? repostObj.optString("relative_datetime", repostObj.optString("datetime", "")) : post.optString("repost_datetime", "");
+            String repostAvatar = (repostObj != null) ? repostObj.optString("avatar_url", "") : post.optString("repost_avatar_url", "");
+            final String repostMedia = (repostObj != null) ? repostObj.optString("media_url", "") : post.optString("repost_media_url", "");
+            String repostWStr = (repostObj != null) ? repostObj.optString("width", "") : post.optString("repost_media_width", "");
+            String repostHStr = (repostObj != null) ? repostObj.optString("heigth", repostObj.optString("height", "")) : post.optString("repost_media_height", "");
+
+            if ((repostId <= 0 && repostUser.length() == 0 && repostText.length() == 0 && repostMedia.length() == 0)) {
+                container.setVisibility(View.GONE);
+                return;
+            }
+
+            container.setVisibility(View.VISIBLE);
+            container.setBackgroundResource(R.drawable.bg_card_classic);
+            container.setPadding(14, 12, 14, 12);
+
+            // Clicar no card de repost abre os comentários do post
+            container.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    openPostComments(post);
+                }
+            });
+
+            // Linha superior: Avatar + @username + data
+            LinearLayout headerRow = new LinearLayout(context);
+            headerRow.setOrientation(LinearLayout.HORIZONTAL);
+            headerRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+            ImageView avatarView = new ImageView(context);
+            LinearLayout.LayoutParams avParams = new LinearLayout.LayoutParams(32, 32);
+            avParams.setMargins(0, 0, 10, 0);
+            avatarView.setLayoutParams(avParams);
+            avatarView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            Bitmap defaultAv = getCachedAvatar(repostUser.length() > 0 ? repostUser : "user");
+            avatarView.setImageBitmap(defaultAv);
+            if (repostAvatar.length() > 0 && !"null".equalsIgnoreCase(repostAvatar)) {
+                avatarView.setTag(repostAvatar);
+                imageLoader.LoadImageUrl(repostAvatar, avatarView);
+            }
+            headerRow.addView(avatarView);
+
+            TextView tvUser = new TextView(context);
+            LinearLayout.LayoutParams userParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+            tvUser.setLayoutParams(userParams);
+            tvUser.setTextSize(13);
+            tvUser.setTypeface(null, Typeface.BOLD);
+            tvUser.setTextColor(Color.parseColor("#222222"));
+            tvUser.setText(repostUser.startsWith("@") ? repostUser : "@" + repostUser);
+            headerRow.addView(tvUser);
+
+            if (repostDate.length() > 0) {
+                TextView tvDt = new TextView(context);
+                tvDt.setTextSize(11);
+                tvDt.setTextColor(Color.parseColor("#777777"));
+                tvDt.setText(repostDate);
+                headerRow.addView(tvDt);
+            }
+
+            container.addView(headerRow);
+
+            // Texto do post repostado
+            String cleanRepostText = repostText;
+            int tagIdx = cleanRepostText.indexOf("[IMAGE]");
+            if (tagIdx != -1) {
+                cleanRepostText = cleanRepostText.substring(0, tagIdx).trim();
+            }
+            if (cleanRepostText.length() > 0) {
+                TextView tvBody = new TextView(context);
+                tvBody.setTextSize(13);
+                tvBody.setTextColor(Color.parseColor("#333333"));
+                tvBody.setPadding(0, 8, 0, 4);
+                highlightMentions(context, tvBody, cleanRepostText);
+                container.addView(tvBody);
+            }
+
+            // Mídia do post repostado (proporcional e sem cortar)
+            if (repostMedia.length() > 0 && !"null".equalsIgnoreCase(repostMedia)) {
+                int parsedW = 0;
+                int parsedH = 0;
+                try {
+                    if (repostWStr.length() > 0 && repostHStr.length() > 0 && !"null".equals(repostWStr) && !"null".equals(repostHStr)) {
+                        parsedW = Integer.parseInt(repostWStr);
+                        parsedH = Integer.parseInt(repostHStr);
+                    }
+                } catch (Exception ignored) {}
+
+                int innerWidth = Math.max(200, screenWidth - 60);
+                int imgHeight = (parsedW > 0 && parsedH > 0)
+                        ? Math.min((innerWidth * parsedH) / parsedW, (int) (innerWidth * 1.15f))
+                        : (innerWidth * 9) / 16;
+
+                ImageView mediaView = new ImageView(context);
+                LinearLayout.LayoutParams mParams = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.FILL_PARENT,
+                        imgHeight
+                );
+                mParams.setMargins(0, 8, 0, 2);
+                mediaView.setLayoutParams(mParams);
+                mediaView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                mediaView.setBackgroundColor(Color.parseColor("#141414"));
+                container.addView(mediaView);
+                imageLoader.LoadImageUrl(repostMedia, mediaView);
+
+                mediaView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(HomeActivity.this, ViewPicture.class);
+                        intent.putExtra("type", "Image");
+                        intent.putExtra("url", repostMedia);
+                        startActivity(intent);
+                    }
+                });
+            }
+
+            if (repostUser.length() > 0) {
+                tvUser.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(HomeActivity.this, ViewProfile.class);
+                        intent.putExtra("usernameProfile", repostUser);
+                        startActivity(intent);
+                    }
+                });
+            }
         }
 
         private void renderEmbedCard(LinearLayout container, JSONObject embedObj) {
@@ -1364,6 +1559,7 @@ public class HomeActivity extends ActivityGroup {
                 holder.tvText = (TextView) convertView.findViewById(R.id.postText);
                 holder.containerPollCard = ensurePollContainer(convertView, holder.tvText);
                 holder.containerEmbedCard = ensureEmbedContainer(convertView, holder.tvText);
+                holder.containerRepostCard = ensureRepostContainer(convertView, holder.tvText);
                 holder.tvDate = (TextView) convertView.findViewById(R.id.postDate);
                 holder.btnComments = (ImageButton) convertView.findViewById(R.id.btnComments);
                 holder.txtCommentCount = (TextView) convertView.findViewById(R.id.txtCommentCount);
@@ -1463,6 +1659,21 @@ public class HomeActivity extends ActivityGroup {
 
                 final boolean isExternal = origin_server.length() > 0 && !origin_server.equalsIgnoreCase("linka");
 
+                // Clicar no post inteiro ou no texto abre os comentários
+                convertView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openPostComments(post);
+                    }
+                });
+
+                holder.tvText.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openPostComments(post);
+                    }
+                });
+
                 holder.btnReply.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         Intent intent = new Intent(HomeActivity.this, newPost.class);
@@ -1470,6 +1681,7 @@ public class HomeActivity extends ActivityGroup {
                         intent.putExtra("repostUser", postUsername);
                         intent.putExtra("repostText", textPost);
                         intent.putExtra("repostDatetime", datetime);
+                        intent.putExtra("repostAvatarUrl", post.optString("avatar_url", ""));
 
                         JSONArray jsonArray = post.optJSONArray("media_list");
                         if (jsonArray != null && jsonArray.length() > 0) {
@@ -1597,29 +1809,7 @@ public class HomeActivity extends ActivityGroup {
                 holder.btnComments.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Intent intent = new Intent(HomeActivity.this, comments_activity.class);
-
-                        if ("Linka".equalsIgnoreCase(actualFeed.trim())) {
-                            intent.putExtra("isExternal", false);
-                        } else {
-                            intent.putExtra("isExternal", isExternal);
-                            if (isExternal) {
-                                intent.putExtra("externalUrl", origin_server);
-                                intent.putExtra("uniqueId", postUniqueId);
-                                intent.putExtra("originalUrl", originalUrl);
-                            }
-                        }
-                        intent.putExtra("post_author", postUsername);
-                        intent.putExtra("post_date", datetime);
-                        intent.putExtra("post_text", textPost);
-                        intent.putExtra("post_community", "");
-                        intent.putExtra("avatar_url", post.optString("avatar_url", ""));
-                        JSONArray mediaArr = post.optJSONArray("media_list");
-                        intent.putExtra("media_list", mediaArr != null ? mediaArr.toString() : "[]");
-                        intent.putExtra("comment_count", commentsCount);
-                        intent.putExtra("isGuest", isGuest);
-                        intent.putExtra("post_id", String.valueOf(id));
-                        startActivity(intent);
+                        openPostComments(post);
                     }
                 });
 
@@ -1736,6 +1926,8 @@ public class HomeActivity extends ActivityGroup {
 
                 JSONObject embedObj = post.optJSONObject("embed");
                 renderEmbedCard(holder.containerEmbedCard, embedObj);
+
+                renderRepostCard(holder.containerRepostCard, post);
 
             } catch (Exception e) {
                 Log.e("LINKA_DEBUG", "[POST VIEW ERR] Erro ao renderizar card: " + e.getMessage());

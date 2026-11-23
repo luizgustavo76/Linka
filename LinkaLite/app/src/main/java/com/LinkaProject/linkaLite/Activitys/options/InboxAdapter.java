@@ -102,9 +102,9 @@ public class InboxAdapter extends BaseAdapter {
             holder.txtMessage.setText(isNullMsg ? "sent a friend request" : msg);
             holder.layoutActions.setVisibility(View.VISIBLE);
             holder.btnAccept.setVisibility(View.VISIBLE);
-            holder.btnAccept.setText("Aceitar");
+            holder.btnAccept.setText("Accept");
             holder.btnDenied.setVisibility(View.VISIBLE);
-            holder.btnDenied.setText("Recusar");
+            holder.btnDenied.setText("Denied");
 
             holder.btnAccept.setOnClickListener(new View.OnClickListener() {
                 @Override

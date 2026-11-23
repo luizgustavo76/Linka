@@ -77,7 +77,7 @@
                 android:layout_height="34dip"
                 android:layout_marginRight="6dip"
                 android:layout_weight="1"
-                android:background="#212121"
+                android:background="@drawable/bg_btn_classic_blue"
                 android:text="Accept"
                 android:textColor="#ffffff"
                 android:textSize="12sp"
