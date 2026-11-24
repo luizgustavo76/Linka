@@ -171,6 +171,36 @@
                 android:layout_marginLeft="2dip" />
         </LinearLayout>
 
+        <!-- BALÃO FLUTUANTE DE NOTIFICAÇÃO (ESTILO INSTAGRAM CLÁSSICO) -->
+        <LinearLayout
+            android:id="@+id/bubbleNotifContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/bottomBarContainer"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="52dip"
+            android:layout_marginBottom="4dip"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/imgBubbleIcon"
+                android:layout_width="16dip"
+                android:layout_height="16dip"
+                android:layout_marginRight="6dip"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:id="@+id/txtBubbleCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
         <!-- BOTTOM BAR UNIFORME E LIMPA -->
         <LinearLayout
             android:id="@+id/bottomBarContainer"

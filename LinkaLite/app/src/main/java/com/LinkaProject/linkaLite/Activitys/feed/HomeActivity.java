@@ -4,6 +4,14 @@ import android.content.DialogInterface;
 import android.app.ActivityGroup;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -23,13 +31,16 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.ScaleAnimation;
 import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -179,6 +190,8 @@ public class HomeActivity extends ActivityGroup {
     private boolean isHeaderAnimating = false;
     private int lastFirstVisibleItem = 0;
     private int lastTop = 0;
+    private int lastShownNotifCount = 0;
+    private int lastShownDmCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -418,6 +431,8 @@ public class HomeActivity extends ActivityGroup {
                 @Override
                 public void onClick(View v) {
                     stopActiveVideo();
+                    LinearLayout bubble = (LinearLayout) findViewById(R.id.bubbleNotifContainer);
+                    if (bubble != null) bubble.setVisibility(View.GONE);
                     startActivity(new Intent(HomeActivity.this, InboxActivity.class));
                 }
             });
@@ -519,6 +534,239 @@ public class HomeActivity extends ActivityGroup {
         startBackgroundSchedulers();
     }
 
+    // =========================================================================
+    // BALÃO DE NOTIFICAÇÃO ESTILO INSTAGRAM CLÁSSICO (100% NATIVO SEM PNG)
+    // =========================================================================
+
+    private static class BubbleBackgroundDrawable extends Drawable {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final boolean pointUp;
+
+        public BubbleBackgroundDrawable(boolean pointUp) {
+            this.pointUp = pointUp;
+            paint.setColor(Color.parseColor("#FF4B4B"));
+            paint.setStyle(Paint.Style.FILL);
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            Rect b = getBounds();
+            float w = b.width();
+            float h = b.height();
+            float arrowH = 10f;
+            float arrowHalfW = 9f;
+            float radius = 12f;
+            float cx = w / 2f;
+
+            Path path = new Path();
+            if (pointUp) {
+                RectF body = new RectF(0, arrowH, w, h);
+                path.addRoundRect(body, radius, radius, Path.Direction.CW);
+                path.moveTo(cx - arrowHalfW, arrowH + 1f);
+                path.lineTo(cx, 0f);
+                path.lineTo(cx + arrowHalfW, arrowH + 1f);
+                path.close();
+            } else {
+                RectF body = new RectF(0, 0, w, h - arrowH);
+                path.addRoundRect(body, radius, radius, Path.Direction.CW);
+                path.moveTo(cx - arrowHalfW, h - arrowH - 1f);
+                path.lineTo(cx, h);
+                path.lineTo(cx + arrowHalfW, h - arrowH - 1f);
+                path.close();
+            }
+            canvas.drawPath(path, paint);
+        }
+
+        @Override public void setAlpha(int alpha) { paint.setAlpha(alpha); }
+        @Override public void setColorFilter(ColorFilter cf) { paint.setColorFilter(cf); }
+        @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
+    }
+
+    private static class WhiteBadgeIconDrawable extends Drawable {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final boolean isMessage;
+
+        public WhiteBadgeIconDrawable(boolean isMessage) {
+            this.isMessage = isMessage;
+            paint.setColor(Color.WHITE);
+            paint.setStyle(Paint.Style.FILL);
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            Rect b = getBounds();
+            float w = b.width();
+            float h = b.height();
+
+            if (isMessage) {
+                // Desenha envelope branco limpo
+                float left = w * 0.08f;
+                float right = w * 0.92f;
+                float top = h * 0.20f;
+                float bottom = h * 0.80f;
+
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setStrokeWidth(Math.max(2f, w * 0.11f));
+                canvas.drawRoundRect(new RectF(left, top, right, bottom), 2f, 2f, paint);
+
+                Path flap = new Path();
+                flap.moveTo(left, top + 1f);
+                flap.lineTo(w * 0.50f, h * 0.54f);
+                flap.lineTo(right, top + 1f);
+                canvas.drawPath(flap, paint);
+            } else {
+                // Desenha bonequinho branco igual ao da imagem
+                paint.setStyle(Paint.Style.FILL);
+                float headRadius = w * 0.21f;
+                canvas.drawCircle(w * 0.50f, h * 0.30f, headRadius, paint);
+
+                RectF shoulders = new RectF(w * 0.16f, h * 0.56f, w * 0.84f, h * 0.94f);
+                Path body = new Path();
+                body.addRoundRect(shoulders, new float[]{w * 0.30f, h * 0.26f, w * 0.30f, h * 0.26f, 3f, 3f, 3f, 3f}, Path.Direction.CW);
+                canvas.drawPath(body, paint);
+            }
+        }
+
+        @Override public void setAlpha(int alpha) { paint.setAlpha(alpha); }
+        @Override public void setColorFilter(ColorFilter cf) { paint.setColorFilter(cf); }
+        @Override public int getOpacity() { return PixelFormat.TRANSLUCENT; }
+    }
+
+    public void showNotificationBubble(int count, final boolean isDirectMessage) {
+        final LinearLayout bubble = (LinearLayout) findViewById(R.id.bubbleNotifContainer);
+        TextView txtCount = (TextView) findViewById(R.id.txtBubbleCount);
+        ImageView imgIcon = (ImageView) findViewById(R.id.imgBubbleIcon);
+
+        if (bubble == null || txtCount == null || count <= 0) return;
+
+        txtCount.setText(String.valueOf(count));
+
+        if (imgIcon != null) {
+            imgIcon.setImageDrawable(new WhiteBadgeIconDrawable(isDirectMessage));
+        }
+
+        // Posiciona no topo (apontando pra cima no botão de DM) ou embaixo (apontando pra baixo no Inbox)
+        RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) bubble.getLayoutParams();
+        if (isDirectMessage) {
+            lp.addRule(RelativeLayout.ABOVE, 0);
+            lp.addRule(RelativeLayout.BELOW, R.id.topHeaderContainer);
+            lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+            lp.setMargins(0, 2, 10, 0);
+            bubble.setBackgroundDrawable(new BubbleBackgroundDrawable(true));
+            bubble.setPadding(16, 18, 16, 10);
+        } else {
+            int btnWidth = screenWidth / 5;
+            int rightOffset = Math.max(12, btnWidth + (btnWidth / 2) - 34);
+            lp.addRule(RelativeLayout.BELOW, 0);
+            lp.addRule(RelativeLayout.ABOVE, R.id.bottomBarContainer);
+            lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+            lp.setMargins(0, 0, rightOffset, 4);
+            bubble.setBackgroundDrawable(new BubbleBackgroundDrawable(false));
+            bubble.setPadding(16, 10, 16, 18);
+        }
+        bubble.setLayoutParams(lp);
+        bubble.setVisibility(View.VISIBLE);
+        bubble.bringToFront();
+
+        ScaleAnimation popIn = new ScaleAnimation(
+                0.4f, 1.0f, 0.4f, 1.0f,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF, isDirectMessage ? 0.0f : 1.0f
+        );
+        popIn.setDuration(220);
+        bubble.startAnimation(popIn);
+
+        bubble.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bubble.setVisibility(View.GONE);
+                if (isDirectMessage) {
+                    scrollToPage(1);
+                } else {
+                    startActivity(new Intent(HomeActivity.this, InboxActivity.class));
+                }
+            }
+        });
+
+        bubble.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (bubble.getVisibility() == View.VISIBLE) {
+                    AlphaAnimation fadeOut = new AlphaAnimation(1.0f, 0.0f);
+                    fadeOut.setDuration(300);
+                    fadeOut.setAnimationListener(new Animation.AnimationListener() {
+                        @Override public void onAnimationStart(Animation animation) {}
+                        @Override public void onAnimationRepeat(Animation animation) {}
+                        @Override
+                        public void onAnimationEnd(Animation animation) {
+                            bubble.setVisibility(View.GONE);
+                        }
+                    });
+                    bubble.startAnimation(fadeOut);
+                }
+            }
+        }, 5500);
+    }
+
+    private void checkUnreadBadges() {
+        if (isGuest || username == null || username.length() == 0) return;
+        try {
+            String baseUrl = (url != null && url.length() > 0) ? url : "http://linkaProject.pythonanywhere.com";
+            if (baseUrl.endsWith("/")) baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+
+            JSONObject payload = new JSONObject();
+            payload.put("username", username);
+            payload.put("token_session", tokenSession);
+
+            // Checa notificações do Inbox
+            String resNotif = requestHTTP(baseUrl + "/notifications", "POST", payload);
+            int unreadNotifs = 0;
+            if (resNotif != null && resNotif.trim().startsWith("[")) {
+                JSONArray arr = new JSONArray(resNotif.trim());
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject item = arr.optJSONObject(i);
+                    if (item != null && !item.optBoolean("read", false) && !item.optBoolean("is_read", false)) {
+                        unreadNotifs++;
+                    }
+                }
+            } else if (resNotif != null && resNotif.trim().startsWith("{")) {
+                JSONObject obj = new JSONObject(resNotif.trim());
+                unreadNotifs = obj.optInt("unread_count", obj.optInt("count", 0));
+            }
+
+            // Checa mensagens não lidas de DM
+            String resDm = requestHTTP(baseUrl + "/unread-messages", "POST", payload);
+            int unreadDms = 0;
+            if (resDm != null && resDm.trim().startsWith("{")) {
+                JSONObject dmObj = new JSONObject(resDm.trim());
+                unreadDms = dmObj.optInt("unread_count", dmObj.optInt("count", 0));
+            } else if (resDm != null && resDm.trim().startsWith("[")) {
+                JSONArray dmArr = new JSONArray(resDm.trim());
+                unreadDms = dmArr.length();
+            }
+
+            final int finalNotifs = unreadNotifs;
+            final int finalDms = unreadDms;
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (finalDms > 0 && finalDms != lastShownDmCount) {
+                        lastShownDmCount = finalDms;
+                        showNotificationBubble(finalDms, true);
+                    } else if (finalNotifs > 0 && finalNotifs != lastShownNotifCount) {
+                        lastShownNotifCount = finalNotifs;
+                        showNotificationBubble(finalNotifs, false);
+                    }
+                    if (finalDms == 0) lastShownDmCount = 0;
+                    if (finalNotifs == 0) lastShownNotifCount = 0;
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void updateNavSelection() {
         if (navHome != null) {
             navHome.setBackgroundColor(currentPage == 0 ? Color.parseColor("#2A2A2A") : Color.TRANSPARENT);
@@ -535,8 +783,9 @@ public class HomeActivity extends ActivityGroup {
                 @Override
                 public void run() {
                     notificationManager.createNotification(HomeActivity.this);
+                    checkUnreadBadges();
                 }
-            }, 0, 60, TimeUnit.SECONDS);
+            }, 2, 60, TimeUnit.SECONDS);
         }
 
         if (scheduler == null || scheduler.isShutdown()) {
@@ -744,6 +993,10 @@ public class HomeActivity extends ActivityGroup {
         if (page < 0 || page >= pageTitles.length) return;
         if (page != 0) {
             stopActiveVideo();
+        }
+        if (page == 1) {
+            LinearLayout bubble = (LinearLayout) findViewById(R.id.bubbleNotifContainer);
+            if (bubble != null) bubble.setVisibility(View.GONE);
         }
         currentPage = page;
         showHeaderBar();
@@ -1229,7 +1482,6 @@ public class HomeActivity extends ActivityGroup {
             container.setBackgroundResource(R.drawable.bg_card_classic);
             container.setPadding(14, 12, 14, 12);
 
-            // Clicar no card de repost abre os comentários do post
             container.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -1237,7 +1489,6 @@ public class HomeActivity extends ActivityGroup {
                 }
             });
 
-            // Linha superior: Avatar + @username + data
             LinearLayout headerRow = new LinearLayout(context);
             headerRow.setOrientation(LinearLayout.HORIZONTAL);
             headerRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
@@ -1274,7 +1525,6 @@ public class HomeActivity extends ActivityGroup {
 
             container.addView(headerRow);
 
-            // Texto do post repostado
             String cleanRepostText = repostText;
             int tagIdx = cleanRepostText.indexOf("[IMAGE]");
             if (tagIdx != -1) {
@@ -1289,7 +1539,6 @@ public class HomeActivity extends ActivityGroup {
                 container.addView(tvBody);
             }
 
-            // Mídia do post repostado (proporcional e sem cortar)
             if (repostMedia.length() > 0 && !"null".equalsIgnoreCase(repostMedia)) {
                 int parsedW = 0;
                 int parsedH = 0;
@@ -1659,7 +1908,6 @@ public class HomeActivity extends ActivityGroup {
 
                 final boolean isExternal = origin_server.length() > 0 && !origin_server.equalsIgnoreCase("linka");
 
-                // Clicar no post inteiro ou no texto abre os comentários
                 convertView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
