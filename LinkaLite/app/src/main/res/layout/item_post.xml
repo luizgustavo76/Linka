@@ -87,7 +87,15 @@
                         android:textStyle="bold"
                         android:textSize="13sp"
                         android:textColor="#1C1917" />
-
+                    <Button
+                        android:id="@+id/btnFollow"
+                        android:layout_width="30dip"
+                        android:layout_height="20dip"
+                        android:text="Follow"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#ffff"
+                        android:background="@drawable/bg_btn_classic_blue"/>
                     <TextView
                         android:id="@+id/txtPlatform"
                         android:layout_width="wrap_content"

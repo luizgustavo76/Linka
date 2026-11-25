@@ -56,7 +56,10 @@ def create_db():
             datetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    
+    cur.execute("""CREATE TABLE IF NOT EXISTS followers (
+                username TEXT,
+                follow_username TEXT,
+                date DATE)""")
     conn.commit()
     cur.close()
     conn.close()
@@ -74,7 +77,23 @@ def create_notification(text, notif_type, receiver, from_user):
     finally:
         cur.close()
         conn.close()
-
+@friends_bp.route("/follow",methods=["POST"])
+def follow():
+    data = request.get_json()
+    username = data.get_json()
+    if username == g.username:
+        follow_username = data.get("follow_username")
+        if not follow_username:
+            return jsonify({"status":"follow receiver not be null"}),400
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("""INSERT INTO followers (username, follow_username) VALUES(%s, %s)""",(username, follow_username))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"status":"the user has followed"}),200
+    else:
+        return jsonify({"status":"forbidden"}),403
 @friends_bp.route("/set-nickname", methods=["POST"])
 def set_nickname():
     data = request.get_json(silent=True) or {}
