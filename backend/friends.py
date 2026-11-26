@@ -80,18 +80,30 @@ def create_notification(text, notif_type, receiver, from_user):
 @friends_bp.route("/follow",methods=["POST"])
 def follow():
     data = request.get_json()
-    username = data.get_json()
+    username = data.get("username")
     if username == g.username:
         follow_username = data.get("follow_username")
         if not follow_username:
             return jsonify({"status":"follow receiver not be null"}),400
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("""INSERT INTO followers (username, follow_username) VALUES(%s, %s)""",(username, follow_username))
-        conn.commit()
-        cur.close()
-        conn.close()
-        return jsonify({"status":"the user has followed"}),200
+        cur.execute("SELECT username FROM followers WHERE username = %s AND follow_username = %s",(username, follow_username))
+        result = cur.fetchone()
+        try:
+            if result:
+                cur.execute("DELETE FROM followers WHERE username = %s AND follow_username = %s",(username, follow_username))
+                conn.commit()
+                return jsonify({"status":"unfollow with sucess"}),200
+            else:
+                cur.execute("""INSERT INTO followers (username, follow_username) VALUES(%s, %s)""",(username, follow_username))
+                conn.commit()
+                return jsonify({"status":"the user has followed"}),200
+        except Exception as e:
+            return jsonify({"status":f"error {e}"}),500
+        finally:
+            cur.close()
+            conn.close()
+
     else:
         return jsonify({"status":"forbidden"}),403
 @friends_bp.route("/set-nickname", methods=["POST"])
