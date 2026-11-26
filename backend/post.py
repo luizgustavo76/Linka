@@ -1240,12 +1240,18 @@ def feed():
             LEFT JOIN comments c ON c.post_id = p.id
             LEFT JOIN poll ON poll.post_id = p.id::text
             LEFT JOIN poll_votes pv ON pv.poll_id = poll.id AND pv.username = %s
+            EXISTS (
+                SELECT 1 
+                FROM followers fl 
+                WHERE fl.username = %s AND fl.follow_username = p.username
+            ) AS is_following
+            LEFT JOIN
             GROUP BY 
                 p.id, p.username, p.text_post, m."ProfilePicture", rm."ProfilePicture",
                 p.thumbnail, p.datetime, p.media, p.media_type, 
                 p.width, p.heigth, p.repost_id, p.repost_username, p.repost_text,
                 p.repost_datetime, p.repost_media_url, p.repost_media_width,
-                p.repost_media_height, poll.id, pv.option_id
+                p.repost_media_height, poll.id, pv.option_id, is_following
             ORDER BY p.id DESC
             {sql_pagination}
         """
@@ -1286,7 +1292,7 @@ def feed():
             avatar_url = post["avatar_url"] or ""
             media_url = match.group(1).strip() if match else post["media"]
             media_type = "image" if match else post["media_type"]
-
+            is_following = post.get("is_following")
             main_width = post["width"] or ""
             main_heigth = post["heigth"] or ""
             main_thumbnail = post["thumbnail"] or ""
@@ -1320,6 +1326,7 @@ def feed():
                 "repost_media_width": post.get("repost_media_width") or "",
                 "repost_media_height": post.get("repost_media_height") or "",
                 "repost_avatar_url": post.get("repost_avatar_url") or "",
+                "is_following":is_following,
                 "media": {
                     "media_url": media_url or "",
                     "media_type": media_type or "image",
