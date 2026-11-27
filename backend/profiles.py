@@ -222,35 +222,72 @@ def view(username):
     cur = conn.cursor()
     try:
         cur.execute(
-            'SELECT username, bio, dm_header_color, profile_banner_color, "ProfilePicture" FROM profile WHERE LOWER(username) = LOWER(%s)',
+            '''
+            SELECT 
+                username, bio, dm_header_color, profile_banner_color, "ProfilePicture" 
+            FROM profile 
+            WHERE LOWER(username) = LOWER(%s)
+            ''',
             (username,)
         )
         response = cur.fetchone()
 
+        if not response:
+            return jsonify({"status": "profile not found"}), 404
+
+        target_username = response["username"]
         is_friend = False
+        is_following = False
         user_g = getattr(g, "username", None)
 
         if user_g:
             cur.execute("""
                 SELECT 1 FROM friends 
-                WHERE (remittee = %s AND receiver = %s) 
-                   OR (remittee = %s AND receiver = %s)
-            """, (username, user_g, user_g, username))
+                WHERE (LOWER(remittee) = LOWER(%s) AND LOWER(receiver) = LOWER(%s)) 
+                   OR (LOWER(remittee) = LOWER(%s) AND LOWER(receiver) = LOWER(%s))
+            """, (target_username, user_g, user_g, target_username))
             
             if cur.fetchone():
                 is_friend = True
 
-        if response:
-            row = {
-                "username": response["username"],
-                "bio": response["bio"],
-                "profile_banner_color": response["profile_banner_color"] if response["profile_banner_color"] else "#99D6FF",
-                "profile_picture": response["ProfilePicture"],
-                "is_friend": is_friend
-            }
-            return jsonify(row), 200
+            # Verifica se o usuário logado já segue este perfil
+            cur.execute("""
+                SELECT 1 FROM followers
+                WHERE LOWER(username) = LOWER(%s) AND LOWER(follow_username) = LOWER(%s)
+            """, (user_g, target_username))
+            if cur.fetchone():
+                is_following = True
 
-        return jsonify({"status": "profile not found"}), 404
+        # Quem segue este perfil (Seguidores)
+        cur.execute("""
+            SELECT username FROM followers 
+            WHERE LOWER(follow_username) = LOWER(%s)
+            ORDER BY date DESC
+        """, (target_username,))
+        followers_list = [r["username"] for r in cur.fetchall()]
+
+        # Quem este perfil segue (Seguindo)
+        cur.execute("""
+            SELECT follow_username FROM followers 
+            WHERE LOWER(username) = LOWER(%s)
+            ORDER BY date DESC
+        """, (target_username,))
+        following_list = [r["follow_username"] for r in cur.fetchall()]
+
+        row = {
+            "username": target_username,
+            "bio": response["bio"],
+            "profile_banner_color": response["profile_banner_color"] if response["profile_banner_color"] else "#99D6FF",
+            "profile_picture": response["ProfilePicture"],
+            "is_friend": is_friend,
+            "is_following": is_following,
+            "followers_count": len(followers_list),
+            "following_count": len(following_list),
+            "followers": followers_list,
+            "following": following_list
+        }
+        return jsonify(row), 200
+
     finally:
         cur.close()
         conn.close()
