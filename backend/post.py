@@ -1173,11 +1173,11 @@ def feed():
         offset = (page - 1) * limit
         cache_key = f"feed:home:{current_user}:page_{page}_limit_{limit}"
         sql_pagination = " LIMIT %s OFFSET %s"
-        query_params = (current_user, limit, offset)
+        query_params = (current_user, current_user, limit, offset)
     else:
         cache_key = f"feed:home:{current_user}:all"
         sql_pagination = ""
-        query_params = (current_user,)
+        query_params = (current_user, current_user)
 
     if root_flags.get("redis") and r:
         try:
@@ -1211,6 +1211,11 @@ def feed():
                 rm."ProfilePicture" AS repost_avatar_url,
                 m."ProfilePicture" AS avatar_url,
                 COUNT(c.id) AS comment_count,
+                EXISTS (
+                    SELECT 1 
+                    FROM followers fl 
+                    WHERE fl.username = %s AND fl.follow_username = p.username
+                ) AS is_following,
                 CASE 
                     WHEN poll.id IS NULL THEN NULL
                     ELSE json_build_object(
@@ -1240,18 +1245,12 @@ def feed():
             LEFT JOIN comments c ON c.post_id = p.id
             LEFT JOIN poll ON poll.post_id = p.id::text
             LEFT JOIN poll_votes pv ON pv.poll_id = poll.id AND pv.username = %s
-            EXISTS (
-                SELECT 1 
-                FROM followers fl 
-                WHERE fl.username = %s AND fl.follow_username = p.username
-            ) AS is_following
-            LEFT JOIN
             GROUP BY 
                 p.id, p.username, p.text_post, m."ProfilePicture", rm."ProfilePicture",
                 p.thumbnail, p.datetime, p.media, p.media_type, 
                 p.width, p.heigth, p.repost_id, p.repost_username, p.repost_text,
                 p.repost_datetime, p.repost_media_url, p.repost_media_width,
-                p.repost_media_height, poll.id, pv.option_id, is_following
+                p.repost_media_height, poll.id, pv.option_id
             ORDER BY p.id DESC
             {sql_pagination}
         """
@@ -1292,7 +1291,7 @@ def feed():
             avatar_url = post["avatar_url"] or ""
             media_url = match.group(1).strip() if match else post["media"]
             media_type = "image" if match else post["media_type"]
-            is_following = post.get("is_following")
+            is_following = bool(post.get("is_following"))
             main_width = post["width"] or ""
             main_heigth = post["heigth"] or ""
             main_thumbnail = post["thumbnail"] or ""
@@ -1326,7 +1325,7 @@ def feed():
                 "repost_media_width": post.get("repost_media_width") or "",
                 "repost_media_height": post.get("repost_media_height") or "",
                 "repost_avatar_url": post.get("repost_avatar_url") or "",
-                "is_following":is_following,
+                "is_following": is_following,
                 "media": {
                     "media_url": media_url or "",
                     "media_type": media_type or "image",
@@ -1352,8 +1351,6 @@ def feed():
     finally:
         cur.close()
         conn.close()
-
-
 @post_bp.route("/star", methods=["POST"])
 def star():
     data = request.get_json(silent=True) or {}

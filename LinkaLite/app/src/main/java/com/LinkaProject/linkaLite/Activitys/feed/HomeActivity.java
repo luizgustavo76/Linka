@@ -77,7 +77,6 @@ public class HomeActivity extends ActivityGroup {
 
     private static final Pattern MENTION_PATTERN = Pattern.compile("@([a-zA-Z0-9_]+(@[a-zA-Z0-9_.-]+)?)");
 
-    // Cache LRU nativo em Java puro (LinkedHashMap com ordem de acesso)
     private static final int MAX_AVATAR_CACHE_ENTRIES = 60;
     private static final Map<String, Bitmap> nativeAvatarCache = Collections.synchronizedMap(
             new LinkedHashMap<String, Bitmap>(MAX_AVATAR_CACHE_ENTRIES, 0.75f, true) {
@@ -364,7 +363,6 @@ public class HomeActivity extends ActivityGroup {
             layoutGuest.setVisibility(View.VISIBLE);
         }
 
-        // TOP BAR CHAT (DIRECT)
         btnTopChat = (ImageButton) findViewById(R.id.btnTopChat);
         if (btnTopChat != null) {
             btnTopChat.setOnClickListener(new View.OnClickListener() {
@@ -379,7 +377,6 @@ public class HomeActivity extends ActivityGroup {
             });
         }
 
-        // BOTTOM BAR (5 BOTÕES)
         navHome = (ImageButton) findViewById(R.id.navHome);
         navCommunities = (ImageButton) findViewById(R.id.navCommunities);
         fabNewPost = (ImageButton) findViewById(R.id.fabNewPost);
@@ -534,10 +531,6 @@ public class HomeActivity extends ActivityGroup {
         startBackgroundSchedulers();
     }
 
-    // =========================================================================
-    // BALÃO DE NOTIFICAÇÃO ESTILO INSTAGRAM CLÁSSICO (100% NATIVO SEM PNG)
-    // =========================================================================
-
     private static class BubbleBackgroundDrawable extends Drawable {
         private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final boolean pointUp;
@@ -599,7 +592,6 @@ public class HomeActivity extends ActivityGroup {
             float h = b.height();
 
             if (isMessage) {
-                // Desenha envelope branco limpo
                 float left = w * 0.08f;
                 float right = w * 0.92f;
                 float top = h * 0.20f;
@@ -615,7 +607,6 @@ public class HomeActivity extends ActivityGroup {
                 flap.lineTo(right, top + 1f);
                 canvas.drawPath(flap, paint);
             } else {
-                // Desenha bonequinho branco igual ao da imagem
                 paint.setStyle(Paint.Style.FILL);
                 float headRadius = w * 0.21f;
                 canvas.drawCircle(w * 0.50f, h * 0.30f, headRadius, paint);
@@ -645,7 +636,6 @@ public class HomeActivity extends ActivityGroup {
             imgIcon.setImageDrawable(new WhiteBadgeIconDrawable(isDirectMessage));
         }
 
-        // Posiciona no topo (apontando pra cima no botão de DM) ou embaixo (apontando pra baixo no Inbox)
         RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) bubble.getLayoutParams();
         if (isDirectMessage) {
             lp.addRule(RelativeLayout.ABOVE, 0);
@@ -718,7 +708,6 @@ public class HomeActivity extends ActivityGroup {
             payload.put("username", username);
             payload.put("token_session", tokenSession);
 
-            // Checa notificações do Inbox
             String resNotif = requestHTTP(baseUrl + "/notifications", "POST", payload);
             int unreadNotifs = 0;
             if (resNotif != null && resNotif.trim().startsWith("[")) {
@@ -734,7 +723,6 @@ public class HomeActivity extends ActivityGroup {
                 unreadNotifs = obj.optInt("unread_count", obj.optInt("count", 0));
             }
 
-            // Checa mensagens não lidas de DM
             String resDm = requestHTTP(baseUrl + "/unread-messages", "POST", payload);
             int unreadDms = 0;
             if (resDm != null && resDm.trim().startsWith("{")) {
@@ -1319,6 +1307,7 @@ public class HomeActivity extends ActivityGroup {
         ImageButton btnReply;
         Button btnPostOptions;
         Spinner optionsSpinner;
+        Button btnFollow;
     }
 
     private class PostAdapter extends BaseAdapter {
@@ -1386,7 +1375,7 @@ public class HomeActivity extends ActivityGroup {
             intent.putExtra("post_id", String.valueOf(id));
             startActivity(intent);
         }
-
+        
         private LinearLayout ensurePollContainer(View convertView, TextView tvText) {
             View existing = convertView.findViewWithTag("dynamic_poll_container");
             if (existing instanceof LinearLayout) {
@@ -1794,7 +1783,6 @@ public class HomeActivity extends ActivityGroup {
             if (convertView == null) {
                 LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater.inflate(R.layout.item_post, parent, false);
-
                 holder = new ViewHolder();
                 holder.avatarPost = (ImageView) convertView.findViewById(R.id.postAvatar);
                 holder.containerMedia = (FrameLayout) convertView.findViewById(R.id.containerMedia);
@@ -1820,6 +1808,7 @@ public class HomeActivity extends ActivityGroup {
                 holder.btnReply = (ImageButton) convertView.findViewById(R.id.btnReply);
                 holder.btnPostOptions = (Button) convertView.findViewById(R.id.btnPostOptions);
                 holder.optionsSpinner = (Spinner) convertView.findViewById(R.id.optionsSpinner);
+                holder.btnFollow = (Button) convertView.findViewById(R.id.btnFollow);
                 convertView.setTag(holder);
             } else {
                 holder = (ViewHolder) convertView.getTag();
@@ -1905,8 +1894,27 @@ public class HomeActivity extends ActivityGroup {
                 final String relative_datetime = post.optString("relative_datetime", "");
                 final int id = post.optInt("id", -1);
                 final String originalUrl = post.optString("original_url", "");
+                final boolean isFollowing = post.optBoolean("is_following", false);
 
                 final boolean isExternal = origin_server.length() > 0 && !origin_server.equalsIgnoreCase("linka");
+
+                if (holder.btnFollow != null) {
+                    if (isFollowing || isGuest || postUsername.equals(username)) {
+                        holder.btnFollow.setVisibility(View.GONE);
+                    } else {
+                        holder.btnFollow.setVisibility(View.VISIBLE);
+                        holder.btnFollow.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                new Follow().FollowUsername(HomeActivity.this, postUsername);
+                                try {
+                                    post.put("is_following", true);
+                                } catch (JSONException ignored) {}
+                                holder.btnFollow.setVisibility(View.GONE);
+                            }
+                        });
+                    }
+                }
 
                 convertView.setOnClickListener(new View.OnClickListener() {
                     @Override
