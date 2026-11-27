@@ -19,12 +19,33 @@ public class UploadTask {
     private static final String TAG = "Linka_UploadTask";
 
     public static String uploadProfilePicture(Context context, Uri imageUri, String requestUrl) {
-        return uploadProfilePicture(context, imageUri, requestUrl, null);
+        return uploadProfilePicture(context, imageUri, requestUrl, null, null);
     }
 
     public static String uploadProfilePicture(Context context, Uri imageUri, String requestUrl, String username) {
+        return uploadProfilePicture(context, imageUri, requestUrl, username, null);
+    }
+
+    public static String uploadProfilePicture(Context context, Uri imageUri, String requestUrl, String username, String tokenSession) {
         if (context == null || imageUri == null || requestUrl == null || requestUrl.trim().length() == 0) {
             return makeJsonError("UploadTask", "Parâmetros de entrada inválidos.");
+        }
+
+        // Se o token não foi passado por parâmetro, busca direto do config.cfg -> [FAST_LOGIN] -> token_session
+        if (tokenSession == null || tokenSession.trim().isEmpty()) {
+            try {
+                config cfg = new config();
+                JSONObject jsonCfg = new JSONObject(cfg.loadCfgAsJson(context, "config.cfg"));
+                JSONObject fastLogin = jsonCfg.optJSONObject("FAST_LOGIN");
+                if (fastLogin != null) {
+                    tokenSession = fastLogin.optString("token_session", "").trim();
+                    if (username == null || username.trim().isEmpty()) {
+                        username = fastLogin.optString("username", "").trim();
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Erro ao ler token_session do config.cfg", e);
+            }
         }
 
         String boundary = "*****" + System.currentTimeMillis() + "*****";
@@ -36,7 +57,7 @@ public class UploadTask {
         InputStream inputStream = null;
 
         try {
-            Log.d(TAG, "Iniciando upload para: " + requestUrl);
+            Log.d(TAG, "Iniciando upload para: " + requestUrl + " | user=" + username + " | hasToken=" + (tokenSession != null && !tokenSession.isEmpty()));
 
             URL url = new URL(requestUrl);
             conn = (HttpURLConnection) url.openConnection();
@@ -49,6 +70,13 @@ public class UploadTask {
             conn.setRequestProperty("Connection", "Keep-Alive");
             conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
 
+            // Envia o token no header Authorization (e X-Session-Token por garantia)
+            if (tokenSession != null && !tokenSession.isEmpty()) {
+                String authHeader = tokenSession.startsWith("Bearer ") ? tokenSession : "Bearer " + tokenSession;
+                conn.setRequestProperty("Authorization", authHeader);
+                conn.setRequestProperty("token_session", tokenSession);
+            }
+
             OutputStream outStream = conn.getOutputStream();
             if (outStream == null) {
                 return makeJsonError("UploadTask", "Não foi possível obter OutputStream HTTP.");
@@ -58,19 +86,26 @@ public class UploadTask {
             // 1. Campo 'username' no Multipart Form-Data
             if (username != null && username.length() > 0) {
                 String userPart = twoHyphens + boundary + lineEnd +
-                        "Content-Disposition: form-data; name=\"username\"" + lineEnd +
-                        "Content-Type: text/plain; charset=UTF-8" + lineEnd + lineEnd +
+                        "Content-Disposition: form-data; name=\"username\"" + lineEnd + lineEnd +
                         username + lineEnd;
                 dos.write(userPart.getBytes("UTF-8"));
             }
 
-            // 2. Cabeçalhos da Imagem
+            // 2. Campo 'token_session' no form também (caso o backend leia do form)
+            if (tokenSession != null && !tokenSession.isEmpty()) {
+                String tokenPart = twoHyphens + boundary + lineEnd +
+                        "Content-Disposition: form-data; name=\"token_session\"" + lineEnd + lineEnd +
+                        tokenSession + lineEnd;
+                dos.write(tokenPart.getBytes("UTF-8"));
+            }
+
+            // 3. Cabeçalhos da Imagem
             String fileHeader = twoHyphens + boundary + lineEnd +
                     "Content-Disposition: form-data; name=\"image\"; filename=\"profile.jpg\"" + lineEnd +
                     "Content-Type: image/jpeg" + lineEnd + lineEnd;
             dos.write(fileHeader.getBytes("UTF-8"));
 
-            // 3. Leitura e escrita dos bytes da imagem
+            // 4. Leitura e escrita dos bytes da imagem
             inputStream = context.getContentResolver().openInputStream(imageUri);
             if (inputStream == null) {
                 return makeJsonError("UploadTask", "Falha ao abrir InputStream da imagem.");
@@ -82,7 +117,7 @@ public class UploadTask {
                 dos.write(buffer, 0, bytesRead);
             }
 
-            // 4. Fechamento das boundaries do Multipart
+            // 5. Fechamento das boundaries do Multipart
             dos.write(lineEnd.getBytes("UTF-8"));
             String endBoundary = twoHyphens + boundary + twoHyphens + lineEnd;
             dos.write(endBoundary.getBytes("UTF-8"));
@@ -91,8 +126,8 @@ public class UploadTask {
             int status = conn.getResponseCode();
             Log.d(TAG, "HTTP Response Code: " + status);
 
-            InputStream responseStream = (status >= 200 && status < 300) 
-                    ? conn.getInputStream() 
+            InputStream responseStream = (status >= 200 && status < 300)
+                    ? conn.getInputStream()
                     : conn.getErrorStream();
 
             if (responseStream == null) {
@@ -107,6 +142,7 @@ public class UploadTask {
             }
             reader.close();
 
+            Log.d(TAG, "Resposta do servidor: " + response.toString());
             return response.toString();
 
         } catch (Exception e) {
