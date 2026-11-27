@@ -75,6 +75,12 @@ public class ViewProfile extends BaseActivity {
             followingCount = response.optInt("following_count", 0);
             if (response.has("followers")) {
                 followersArray = response.getJSONArray("followers");
+                for (int i = 0; i < followersArray.length(); i++) {
+                    if (followersArray.optString(i, "").equalsIgnoreCase(username)) {
+                        isFollowing = true;
+                        break;
+                    }
+                }
             }
             if (response.has("following")) {
                 followingArray = response.getJSONArray("following");
@@ -101,6 +107,9 @@ public class ViewProfile extends BaseActivity {
         updateCountersText();
 
         try {
+            if (bannerColor != null && !bannerColor.startsWith("#")) {
+                bannerColor = "#" + bannerColor;
+            }
             headerColor.setBackgroundColor(Color.parseColor(bannerColor));
         } catch (Exception e) {
             headerColor.setBackgroundColor(Color.parseColor("#99D6FF"));
@@ -128,6 +137,9 @@ public class ViewProfile extends BaseActivity {
         if (isFollowing) {
             btnFollowToggle.setBackgroundColor(Color.parseColor("#E4E7EC"));
             btnFollowToggle.setTextColor(Color.parseColor("#2C333A"));
+        } else {
+            btnFollowToggle.setBackgroundColor(Color.parseColor("#00BCD4"));
+            btnFollowToggle.setTextColor(Color.parseColor("#FFFFFF"));
         }
 
         btnToggleFriend.setChecked(isFriend);
@@ -165,7 +177,7 @@ public class ViewProfile extends BaseActivity {
                     JSONObject jsonFollow = new JSONObject();
                     jsonFollow.put("username", username);
                     jsonFollow.put("follow_username", usernameProfile);
-                    request.requestHTTP(url + "/toggle-follow", "post", jsonFollow, ViewProfile.this);
+                    request.requestHTTP(url + "/follow", "post", jsonFollow, ViewProfile.this);
 
                     if (isChecked) {
                         followersCount++;
