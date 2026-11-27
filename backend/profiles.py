@@ -15,7 +15,7 @@ B2_KEY_ID = os.getenv("B2_KEY_ID")
 B2_APPLICATION_KEY = os.getenv("B2_APPLICATION_KEY")
 B2_ENDPOINT = os.getenv("B2_ENDPOINT", "https://s3.us-east-005.backblazeb2.com")
 BUCKET_NAME = os.getenv("B2_BUCKET", "linka-media")
-MY_DOMINIO_PROXY = os.getenv("MY_DOMINIO_PROXY", "https://seu-app-linka.onrender.com")
+MY_DOMINIO_PROXY = os.getenv("MY_DOMINIO_PROXY", "").strip()
 
 s3_client = boto3.client(
     "s3",
@@ -27,7 +27,8 @@ s3_client = boto3.client(
 
 def get_optimized_url(filename):
     """Gera a URL final do wsrv.nl apontando para o proxy público do Flask"""
-    proxy_url = f"{MY_DOMINIO_PROXY.rstrip('/')}/midia/{filename}"
+    base_domain = MY_DOMINIO_PROXY or request.host_url.rstrip("/")
+    proxy_url = f"{base_domain.rstrip('/')}/midia/{filename}"
     return f"https://wsrv.nl/?url={proxy_url}"
 
 
@@ -150,6 +151,8 @@ def suggest_follow():
     finally:
         cur.close()
         conn.close()
+
+
 @profile_bp.route("/edit", methods=["POST"])
 def edit():
     data = request.get_json(silent=True) or {}
@@ -219,7 +222,7 @@ def view(username):
     cur = conn.cursor()
     try:
         cur.execute(
-            "SELECT username, bio, dm_header_color, profile_banner_color, \"ProfilePicture\" FROM profile WHERE username = %s",
+            'SELECT username, bio, dm_header_color, profile_banner_color, "ProfilePicture" FROM profile WHERE LOWER(username) = LOWER(%s)',
             (username,)
         )
         response = cur.fetchone()
@@ -281,23 +284,26 @@ def update_hex_banner():
 
 @profile_bp.route("/upload-profile", methods=["POST"])
 def upload_profile_pic():
-    # Tenta obter do middleware (g.username) ou direto do form multipart enviado pelo app
-    username = getattr(g, "username", None) or request.form.get("username")
-    
+    username = (getattr(g, "username", None) or request.form.get("username") or "").strip()
+    print(f"[UPLOAD-PROFILE] username={username} | files={list(request.files.keys())} | form={dict(request.form)}")
+
     if not username:
-        return jsonify({"status": "forbidden", "message": "Username is required"}), 403
+        return jsonify({"status": "error", "message": "Username is required"}), 403
 
     if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
+        return jsonify({"status": "error", "message": "No image field in request"}), 400
 
     file = request.files["image"]
-    if file.filename == "":
-        return jsonify({"error": "File with no name"}), 400
+    if not file or file.filename == "":
+        return jsonify({"status": "error", "message": "Empty filename"}), 400
 
     try:
         extension = os.path.splitext(file.filename)[1] or ".jpg"
         unique_file_name = f"profile_{uuid.uuid4().hex}{extension}"
         file_data = file.read()
+
+        if not file_data:
+            return jsonify({"status": "error", "message": "Empty file bytes"}), 400
 
         # 1. Upload direto para o Backblaze B2 via boto3
         s3_client.put_object(
@@ -307,13 +313,23 @@ def upload_profile_pic():
             ContentType=file.content_type or "image/jpeg"
         )
 
-        # 2. Gerar URL com duplo proxy (wsrv.nl -> Flask -> Backblaze B2)
+        # 2. Gerar URL com proxy
         public_url = get_optimized_url(unique_file_name)
 
         conn = get_db()
         cur = conn.cursor()
         try:
-            cur.execute('UPDATE profile SET "ProfilePicture" = %s WHERE username = %s', (public_url, username))
+            # Tenta atualizar ignorando diferença de maiúsculas/minúsculas
+            cur.execute(
+                'UPDATE profile SET "ProfilePicture" = %s WHERE LOWER(username) = LOWER(%s)',
+                (public_url, username)
+            )
+            # Se o perfil ainda não existir na tabela, cria agora
+            if cur.rowcount == 0:
+                cur.execute(
+                    'INSERT INTO profile (username, "ProfilePicture") VALUES (%s, %s)',
+                    (username, public_url)
+                )
             conn.commit()
         except Exception as e:
             conn.rollback()
@@ -322,12 +338,14 @@ def upload_profile_pic():
             cur.close()
             conn.close()
 
+        print(f"[UPLOAD-PROFILE] Sucesso para {username}: {public_url}")
         return jsonify({
             "status": "success",
             "image_url": public_url
         }), 200
 
     except Exception as e:
+        print(f"[UPLOAD-PROFILE ERRO]: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
@@ -342,7 +360,7 @@ def get_profile_pic():
     conn = get_db()
     cur = conn.cursor()
     try:
-        cur.execute('SELECT "ProfilePicture" FROM profile WHERE username = %s', (username,))
+        cur.execute('SELECT "ProfilePicture" FROM profile WHERE LOWER(username) = LOWER(%s)', (username,))
         result = cur.fetchone()
 
         if result and result["ProfilePicture"]:
