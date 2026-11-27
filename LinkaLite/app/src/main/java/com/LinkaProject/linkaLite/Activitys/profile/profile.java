@@ -1,7 +1,9 @@
 package com.LinkaProject.linkaLite;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -21,11 +23,19 @@ import java.util.regex.Pattern;
 
 public class profile extends BaseActivity {
     private ImageView imgProfilePicture;
+    private View headerColor;
     private String username = "";
     private String url = "";
     private String biography = "";
+    private String bannerColor = "#1E242B";
+    private int followersCount = 0;
+    private int followingCount = 0;
+    private JSONArray followersArray = new JSONArray();
+    private JSONArray followingArray = new JSONArray();
     private TextView txtUsername;
     private TextView txtBio;
+    private TextView txtFollowersCount;
+    private TextView txtFollowingCount;
     private LinearLayout postsContainer;
     private Button btnEdit;
     private Button btnExit;
@@ -60,17 +70,56 @@ public class profile extends BaseActivity {
             JSONObject jsonProfile = new JSONObject();
             JSONObject response = new JSONObject(request.requestHTTP(url + "/view_profile/" + usernameProfile, "get", jsonProfile, profile.this));
             biography = response.optString("bio", "");
+            bannerColor = response.optString("profile_banner_color", "#1E242B");
+            followersCount = response.optInt("followers_count", 0);
+            followingCount = response.optInt("following_count", 0);
+            if (response.has("followers")) {
+                followersArray = response.getJSONArray("followers");
+            }
+            if (response.has("following")) {
+                followingArray = response.getJSONArray("following");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        headerColor = findViewById(R.id.headerColor);
         imgProfilePicture = (ImageView) findViewById(R.id.imgProfilePicture);
         txtUsername = (TextView) findViewById(R.id.txtUsername);
         txtBio = (TextView) findViewById(R.id.txtBio);
+        txtFollowersCount = (TextView) findViewById(R.id.txtFollowersCount);
+        txtFollowingCount = (TextView) findViewById(R.id.txtFollowingCount);
         postsContainer = (LinearLayout) findViewById(R.id.postsContainer);
         btnExit = (Button) findViewById(R.id.btnExit);
+
         txtUsername.setText(usernameProfile);
         txtBio.setText(biography);
+        txtFollowersCount.setText(followersCount + " Followers");
+        txtFollowingCount.setText(followingCount + " Following");
+
+        try {
+            if (bannerColor != null && !bannerColor.startsWith("#")) {
+                bannerColor = "#" + bannerColor;
+            }
+            headerColor.setBackgroundColor(Color.parseColor(bannerColor));
+        } catch (Exception e) {
+            headerColor.setBackgroundColor(Color.parseColor("#1E242B"));
+        }
+
+        txtFollowersCount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showUsersDialog("Followers", followersArray);
+            }
+        });
+
+        txtFollowingCount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showUsersDialog("Following", followingArray);
+            }
+        });
+
         btnEdit = (Button) findViewById(R.id.btnEdit);
         final TextView btnReadMore = (TextView) findViewById(R.id.btnReadMore);
 
@@ -149,6 +198,22 @@ public class profile extends BaseActivity {
         });
 
         loadPosts(usernameProfile);
+    }
+
+    private void showUsersDialog(String title, JSONArray list) {
+        String[] items = new String[list.length()];
+        if (list.length() == 0) {
+            items = new String[]{"No users yet"};
+        } else {
+            for (int i = 0; i < list.length(); i++) {
+                items[i] = list.optString(i, "");
+            }
+        }
+        new AlertDialog.Builder(profile.this)
+                .setTitle(title)
+                .setItems(items, null)
+                .setPositiveButton("Close", null)
+                .show();
     }
 
     public static Bitmap getCircularBitmap(Bitmap bitmap) {

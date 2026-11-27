@@ -2,88 +2,207 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="@drawable/bg_material_card">
+    android:background="#F2F4F7">
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dip">
+        android:orientation="vertical">
 
+        <!-- 1. TOP BAR GRAFITE LIMPA (PADRÃO LINKA) -->
+        <RelativeLayout
+            android:id="@+id/header_bar"
+            android:layout_width="fill_parent"
+            android:layout_height="46dp"
+            android:background="#14181C"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
+
+            <TextView
+                android:id="@+id/backButton"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:gravity="center"
+                android:text="&lt;"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/imgHeaderLogo"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="4dp"
+                android:layout_toRightOf="@id/backButton"
+                android:scaleType="fitCenter"
+                android:src="@drawable/icon" />
+
+            <TextView
+                android:id="@+id/txtHeaderTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="8dp"
+                android:layout_toRightOf="@id/imgHeaderLogo"
+                android:singleLine="true"
+                android:text="Profile"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:layout_alignParentBottom="true"
+                android:background="#0A0C0E" />
+        </RelativeLayout>
+
+        <!-- 2. CAPA + AVATAR -->
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="126dp"
+            android:background="#FFFFFF">
+
+            <View
+                android:id="@+id/headerColor"
+                android:layout_width="fill_parent"
+                android:layout_height="88dp"
+                android:background="#99D6FF" />
+
+            <ImageView
+                android:id="@+id/imgProfilePicture"
+                android:layout_width="76dp"
+                android:layout_height="76dp"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:background="#FFFFFF"
+                android:padding="2dp"
+                android:scaleType="centerCrop" />
+        </RelativeLayout>
+
+        <!-- 3. DADOS DO USUÁRIO, CONTADORES E AÇÕES -->
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:background="#FFFFFF"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingLeft="16dp"
+            android:paddingTop="8dp"
+            android:paddingRight="16dp"
+            android:paddingBottom="14dp">
 
-            <!-- Foto de Perfil -->
-            <ImageView
-                android:id="@+id/imgProfilePicture"
-                android:layout_width="80dip"
-                android:layout_height="80dip"
-                android:background="@layout/bg_profile_border"
-                android:padding="2dip"
-                android:scaleType="centerCrop" />
-
-            <!-- Dados do Perfil (Username, Botão e Bio) -->
-            <LinearLayout
-                android:layout_width="0dip"
+            <TextView
+                android:id="@+id/txtUsername"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="16dip"
-                    android:gravity="center_vertical"
-                android:layout_weight="1"
-                android:orientation="vertical">
+                android:singleLine="true"
+                android:text="Username"
+                android:textColor="#14181C"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-                <!-- Linha com Username e Botão de Amizade -->
-                <LinearLayout
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+            <TextView
+                android:id="@+id/txtBio"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:lineSpacingExtra="2dp"
+                android:maxLines="5"
+                android:text="Bio"
+                android:textColor="#555E68"
+                android:textSize="13sp" />
 
-                    <TextView
-                        android:id="@+id/txtUsername"
-                        android:layout_width="0dip"
-                        android:layout_height="wrap_content"
-                        android:text="Username"
-                        android:layout_weight="1"
-                        android:textColor="#FFFFFF"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+            <!-- CONTADORES DE SEGUIDORES E SEGUINDO -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center"
+                android:orientation="horizontal">
 
-                    <ToggleButton
-                        android:id="@+id/btnFriendToggle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textOff="Add Friend"
-                        android:textOn="Remove Friend" />
-                </LinearLayout>
-
-                <!-- Bio logo abaixo do Username/Botão -->
                 <TextView
-                    android:id="@+id/txtBio"
-                    android:layout_width="fill_parent"
+                    android:id="@+id/txtFollowersCount"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dip"
-                    android:text="This is the user biography..."
-                    android:textColor="#FFFFFF"
-                    android:textSize="14sp" />
+                    android:text="0 Followers"
+                    android:textColor="#14181C"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:text="•"
+                    android:textColor="#9AA4B2"
+                    android:textSize="13sp" />
 
+                <TextView
+                    android:id="@+id/txtFollowingCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 Following"
+                    android:textColor="#14181C"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- BOTÕES DE AÇÃO (FOLLOW E FRIEND) -->
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <ToggleButton
+                    android:id="@+id/btnFollowToggle"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_weight="1"
+                    android:background="#00BCD4"
+                    android:textColor="#FFFFFF"
+                    android:textOff="Follow"
+                    android:textOn="Following"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <ToggleButton
+                    android:id="@+id/btnFriendToggle"
+                    android:layout_width="0dp"
+                    android:layout_height="34dp"
+                    android:layout_marginLeft="8dp"
+                    android:layout_weight="1"
+                    android:background="#E4E7EC"
+                    android:textColor="#2C333A"
+                    android:textOff="Add Friend"
+                    android:textOn="Remove Friend"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
 
-        <!-- Divisor/Espaçamento -->
+        <!-- Divisória limpa antes dos posts -->
         <View
             android:layout_width="fill_parent"
-            android:layout_height="1dip"
-            android:layout_marginTop="16dip"
-            android:layout_marginBottom="16dip"
-            android:background="#33FFFFFF" />
+            android:layout_height="1dp"
+            android:layout_marginBottom="10dp"
+            android:background="#DDE1E6" />
+
+        <!-- 4. POSTS DO USUÁRIO -->
         <LinearLayout
             android:id="@+id/postsContainer"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="16dp" />
 
     </LinearLayout>
 </ScrollView>
