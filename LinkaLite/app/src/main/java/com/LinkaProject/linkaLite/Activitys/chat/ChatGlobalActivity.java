@@ -1,4 +1,5 @@
 package com.LinkaProject.linkaLite;
+
 import com.LinkaProject.linkaLite.R;
 import android.app.Activity;
 import android.content.Intent;
@@ -32,6 +33,8 @@ public class ChatGlobalActivity extends Activity {
     private Runnable autoUpdateRunnable;
     private static final int UPDATE_INTERVAL = 2000;
     private Boolean isGuest;
+    private boolean isFirstLoad = true;
+    private boolean forceScrollNextFetch = false;
 
     private String getNormalizedBaseUrl() {
         if (url == null || url.trim().length() == 0) return "";
@@ -40,6 +43,16 @@ public class ChatGlobalActivity extends Activity {
             clean = clean.substring(0, clean.length() - 1);
         }
         return clean;
+    }
+
+    private boolean isNearBottom() {
+        if (scrollMessages == null || chatContainer == null) return true;
+        int childCount = chatContainer.getChildCount();
+        if (childCount == 0) return true;
+        View lastChild = chatContainer.getChildAt(childCount - 1);
+        if (lastChild == null) return true;
+        int diff = lastChild.getBottom() - (scrollMessages.getHeight() + scrollMessages.getScrollY());
+        return diff <= 120;
     }
 
     private void scrollToBottom() {
@@ -139,10 +152,12 @@ public class ChatGlobalActivity extends Activity {
 
         @Override
         protected void onPostExecute(String response) {
-            if (response == null || response.trim().length() == 0) return;
+            if (response == null || response.trim().length() == 0 || chatContainer == null) return;
             try {
-                chatContainer.removeAllViews();
                 JSONArray jsonArray = new JSONArray(response);
+                boolean shouldScroll = isFirstLoad || forceScrollNextFetch || isNearBottom();
+
+                chatContainer.removeAllViews();
                 for (int i = 0; i < jsonArray.length(); i++) {
                     JSONObject obj = jsonArray.getJSONObject(i);
                     String text = obj.getString("message");
@@ -153,7 +168,12 @@ public class ChatGlobalActivity extends Activity {
                     ChatBubbleView bubble = new ChatBubbleView(ChatGlobalActivity.this, displayText, isMe, sender);
                     chatContainer.addView(bubble);
                 }
-                scrollToBottom();
+
+                if (shouldScroll) {
+                    scrollToBottom();
+                    isFirstLoad = false;
+                    forceScrollNextFetch = false;
+                }
             } catch (JSONException e) {
                 Log.e(TAG, "JSON parsing error", e);
             }
@@ -183,6 +203,7 @@ public class ChatGlobalActivity extends Activity {
         @Override
         protected void onPostExecute(Boolean success) {
             if (success) {
+                forceScrollNextFetch = true;
                 new FetchMessagesTask().execute();
             } else {
                 Toast.makeText(ChatGlobalActivity.this, "Erro ao enviar mensagem", Toast.LENGTH_SHORT).show();

@@ -14,19 +14,36 @@
 
         <ImageButton
             android:id="@+id/btnHeaderImage"
-            android:layout_width="38dip"
-            android:layout_height="38dip"
-            android:layout_centerVertical="true"
+            android:layout_width="40dip"
+            android:layout_height="40dip"
             android:layout_alignParentLeft="true"
-            android:background="@android:color/transparent"
-            android:scaleType="centerInside"
-            android:src="@drawable/back" />
+            android:layout_centerVertical="true"
+            android:padding="8dip"
+            android:scaleType="fitCenter"
+            android:src="@android:drawable/ic_media_previous"
+            android:background="@android:color/transparent" />
+
+        <ImageView
+            android:id="@+id/imgProfilePicture"
+            android:layout_width="34dip"
+            android:layout_height="34dip"
+            android:layout_toRightOf="@id/btnHeaderImage"
+            android:layout_marginLeft="6dip"
+            android:layout_centerVertical="true"
+            android:background="#33FFFFFF"
+            android:padding="1dip"
+            android:scaleType="centerCrop" />
 
         <TextView
             android:id="@+id/txtHeaderTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
+            android:layout_toRightOf="@id/imgProfilePicture"
+            android:layout_marginLeft="10dip"
+            android:layout_marginRight="8dip"
+            android:layout_centerVertical="true"
+            android:singleLine="true"
+            android:ellipsize="end"
             android:text="GlobalChat"
             android:textColor="#FFFFFF"
             android:textSize="16sp"
@@ -41,9 +58,12 @@
         android:paddingRight="12dip">
 
         <TextView
+            android:id="@+id/txtHeaderStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
+            android:singleLine="true"
+            android:ellipsize="end"
             android:text="Federated Direct • Online"
             android:textColor="#8E8E8E"
             android:textSize="11sp" />
@@ -100,7 +120,9 @@
             android:paddingLeft="14dip"
             android:paddingRight="14dip"
             android:textColor="#262626"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="4" />
 
         <Button
             android:id="@+id/btnSend"
