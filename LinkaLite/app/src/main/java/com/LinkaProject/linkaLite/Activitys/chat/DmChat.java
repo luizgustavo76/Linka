@@ -184,14 +184,20 @@ public class DmChat extends BaseActivity {
                 boolean shouldScroll = isFirstLoad || forceScrollNextFetch || isNearBottom();
 
                 chatContainer.removeAllViews();
+                String previousSender = null;
+
                 for (int i = 0; i < messagesArray.length(); i++) {
                     JSONObject msgObj = messagesArray.getJSONObject(i);
                     String text = msgObj.optString("message", "");
                     String sender = msgObj.optString("sender", "");
                     boolean isMe = sender.equalsIgnoreCase(username);
+                    boolean isRepeated = (previousSender != null && previousSender.equals(sender));
+
                     String displayText = sender.length() == 0 ? text : sender + ": " + text;
-                    ChatBubbleView bubble = new ChatBubbleView(DmChat.this, displayText, isMe, sender);
+                    ChatBubbleView bubble = new ChatBubbleView(DmChat.this, displayText, isMe, sender, isRepeated);
                     chatContainer.addView(bubble);
+
+                    previousSender = sender;
                 }
 
                 if (shouldScroll) {

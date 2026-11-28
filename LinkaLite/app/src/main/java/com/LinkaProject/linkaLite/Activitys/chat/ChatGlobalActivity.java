@@ -28,6 +28,8 @@ public class ChatGlobalActivity extends Activity {
     private ScrollView scrollMessages;
     private LinearLayout chatContainer;
     private String username = "";
+    private ImageButton btnImage;
+    private ImageButton btnOptions;
     private String url = "";
     private Handler autoUpdateHandler = new Handler();
     private Runnable autoUpdateRunnable;
@@ -84,6 +86,7 @@ public class ChatGlobalActivity extends Activity {
         } catch (Exception e) {
             Log.e(TAG, "Error parsing config.cfg", e);
         }
+        btnImage = (ImageButton) findViewById(R.id.btnImage);
         btnHeaderImage = (ImageButton) findViewById(R.id.btnHeaderImage);
         txtHeaderTitle = (TextView) findViewById(R.id.txtHeaderTitle);
         btnSend = (Button) findViewById(R.id.btnSend);
@@ -163,9 +166,8 @@ public class ChatGlobalActivity extends Activity {
                     String text = obj.getString("message");
                     String sender = obj.getString("sender");
                     boolean isMe = sender.equalsIgnoreCase(username);
-                    String displayText = sender.length() == 0 ? text : sender + ": " + text;
 
-                    ChatBubbleView bubble = new ChatBubbleView(ChatGlobalActivity.this, displayText, isMe, sender);
+                    ChatBubbleView bubble = new ChatBubbleView(ChatGlobalActivity.this, text, isMe, sender);
                     chatContainer.addView(bubble);
                 }
 

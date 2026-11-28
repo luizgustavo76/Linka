@@ -16,11 +16,15 @@ public class ChatBubbleView extends LinearLayout {
     private LinearLayout bubbleContainer;
 
     public ChatBubbleView(Context context, String text, boolean isMe, String username) {
-        super(context);
-        init(context, text, isMe, username);
+        this(context, text, isMe, username, false);
     }
 
-    private void init(Context context, String text, boolean isMe, String username) {
+    public ChatBubbleView(Context context, String text, boolean isMe, String username, boolean isRepeated) {
+        super(context);
+        init(context, text, isMe, username, isRepeated);
+    }
+
+    private void init(Context context, String text, boolean isMe, String username, boolean isRepeated) {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         inflater.inflate(R.layout.chat_bubble_item, this, true);
 
@@ -33,17 +37,22 @@ public class ChatBubbleView extends LinearLayout {
         txtUsername.setText(safeUsername);
         txtMessage.setText(text);
 
-        // Garante que a ImageView está visível e define o avatar algorítmico inicial
-        imgProfile.setVisibility(View.VISIBLE);
-        Bitmap defaultAvatar = AvatarGenerator.generateAvatar(safeUsername, 128);
-        if (defaultAvatar != null) {
-            imgProfile.setImageBitmap(defaultAvatar);
-        }
+        if (isRepeated) {
+            txtUsername.setVisibility(View.GONE);
+            imgProfile.setVisibility(View.INVISIBLE);
+        } else {
+            txtUsername.setVisibility(View.VISIBLE);
+            imgProfile.setVisibility(View.VISIBLE);
 
-        // Carrega a foto de perfil real se houver username válido
-        if (!safeUsername.equals("?")) {
-            ImageLoader imageLoader = new ImageLoader();
-            imageLoader.viewProfilePicture(context, safeUsername, imgProfile);
+            Bitmap defaultAvatar = AvatarGenerator.generateAvatar(safeUsername, 128);
+            if (defaultAvatar != null) {
+                imgProfile.setImageBitmap(defaultAvatar);
+            }
+
+            if (!safeUsername.equals("?")) {
+                ImageLoader imageLoader = new ImageLoader();
+                imageLoader.viewProfilePicture(context, safeUsername, imgProfile);
+            }
         }
 
         if (isMe) {
