@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Barra 1 (topo) -->
+    <item
+        android:top="4dip"
+        android:left="3dip"
+        android:right="3dip">
+        <shape android:shape="rectangle">
+            <size android:height="2dip" />
+            <solid android:color="#666666" />
+            <corners android:radius="1dip" />
+        </shape>
+    </item>
+
+    <!-- Barra 2 (meio) -->
+    <item
+        android:top="11dip"
+        android:left="3dip"
+        android:right="3dip">
+        <shape android:shape="rectangle">
+            <size android:height="2dip" />
+            <solid android:color="#666666" />
+            <corners android:radius="1dip" />
+        </shape>
+    </item>
+
+    <!-- Barra 3 (baixo) -->
+    <item
+        android:top="18dip"
+        android:left="3dip"
+        android:right="3dip">
+        <shape android:shape="rectangle">
+            <size android:height="2dip" />
+            <solid android:color="#666666" />
+            <corners android:radius="1dip" />
+        </shape>
+    </item>
+
+</layer-list>
