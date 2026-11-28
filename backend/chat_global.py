@@ -70,7 +70,7 @@ def view_global_message():
                 SELECT sender, message, id
                 FROM chat_global
                 ORDER BY id DESC
-                LIMIT 20
+                LIMIT 100
             ) AS subquery
             ORDER BY id ASC
         """)
