@@ -87,15 +87,6 @@ public class HomeActivity extends ActivityGroup {
             }
     );
 
-    private static final Map<String, JSONObject> userStatusCache = Collections.synchronizedMap(
-            new LinkedHashMap<String, JSONObject>(120, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<String, JSONObject> eldest) {
-                    return size() > 120;
-                }
-            }
-    );
-
     private static Bitmap getCachedAvatar(String usernameKey) {
         if (usernameKey == null) return null;
         Bitmap bmp = nativeAvatarCache.get(usernameKey);
@@ -209,27 +200,6 @@ public class HomeActivity extends ActivityGroup {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
         }
         return baseUrl;
-    }
-
-    private void sendUserStatus(final String statusValue, final String actionValue) {
-        if (isGuest || username == null || username.replace("@", "").trim().length() == 0) return;
-        final String cleanUser = username.replace("@", "").trim();
-
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    JSONObject payload = new JSONObject();
-                    payload.put("username", cleanUser);
-                    payload.put("status", statusValue);
-                    payload.put("action", actionValue);
-                    requestHTTP(getNormalizedBaseUrl() + "/send-status", "POST", payload);
-                } catch (Exception e) {
-                    Log.e("LINKA_DEBUG", "[STATUS SEND ERR] " + e.getMessage());
-                }
-                return null;
-            }
-        }.execute();
     }
 
     @Override
@@ -998,7 +968,6 @@ public class HomeActivity extends ActivityGroup {
                 public void onClick(View v) {
                     if (drawerLayout != null) drawerLayout.closeDrawers();
                     stopActiveVideo();
-                    sendUserStatus("offline", "logout");
                     Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
@@ -1029,7 +998,6 @@ public class HomeActivity extends ActivityGroup {
         currentPage = page;
         showHeaderBar();
         updateNavSelection();
-        sendUserStatus("online", page == 1 ? "no chat" : "no feed (" + actualFeed + ")");
 
         if (scrollViewPages != null) {
             scrollViewPages.post(new Runnable() {
@@ -1047,7 +1015,6 @@ public class HomeActivity extends ActivityGroup {
         super.onResume();
         updateNavSelection();
         startBackgroundSchedulers();
-        sendUserStatus("online", currentPage == 1 ? "no chat" : "no feed (" + actualFeed + ")");
         loadFeedForTab(pageTitles[currentPage], false, 1);
     }
 
@@ -1056,7 +1023,6 @@ public class HomeActivity extends ActivityGroup {
         super.onPause();
         stopActiveVideo();
         stopBackgroundSchedulers();
-        sendUserStatus("offline", "em segundo plano");
     }
 
     private void loadActivityInFrame(String id, Intent intent, FrameLayout container) {
@@ -1332,7 +1298,6 @@ public class HomeActivity extends ActivityGroup {
         Button btnPrevImage;
         Button btnNextImage;
         TextView tvUsername;
-        TextView tvUserStatus;
         TextView tvText;
         LinearLayout containerPollCard;
         LinearLayout containerEmbedCard;
@@ -1379,93 +1344,6 @@ public class HomeActivity extends ActivityGroup {
         @Override
         public long getItemId(int position) {
             return position;
-        }
-
-        private TextView ensureStatusBadgeView(TextView tvUsername) {
-            if (tvUsername == null) return null;
-            Object existing = tvUsername.getTag(R.id.postUsername);
-            if (existing instanceof TextView) {
-                return (TextView) existing;
-            }
-            if (tvUsername.getParent() instanceof ViewGroup) {
-                ViewGroup parent = (ViewGroup) tvUsername.getParent();
-                int idx = parent.indexOfChild(tvUsername);
-                TextView badge = new TextView(tvUsername.getContext());
-                badge.setTextSize(11);
-                badge.setPadding(6, 0, 0, 0);
-                badge.setSingleLine(true);
-                badge.setVisibility(View.GONE);
-                parent.addView(badge, idx + 1);
-                tvUsername.setTag(R.id.postUsername, badge);
-                return badge;
-            }
-            return null;
-        }
-
-        private void applyStatusToBadge(TextView badge, JSONObject statusObj) {
-            if (badge == null) return;
-            if (statusObj == null) {
-                badge.setVisibility(View.GONE);
-                return;
-            }
-            String st = statusObj.optString("status", "").trim();
-            String act = statusObj.optString("action", "").trim();
-            if (st.isEmpty() && act.isEmpty()) {
-                badge.setVisibility(View.GONE);
-                return;
-            }
-            String label = st;
-            if (!act.isEmpty()) {
-                label = label.isEmpty() ? act : (label + " · " + act);
-            }
-            badge.setText("[" + label + "]");
-            badge.setTextColor("online".equalsIgnoreCase(st)
-                    ? Color.parseColor("#2E7D32")
-                    : Color.parseColor("#757575"));
-            badge.setVisibility(View.VISIBLE);
-        }
-
-        private void bindAuthorStatus(final TextView badge, final String rawUsername) {
-            if (badge == null) return;
-            if (rawUsername == null || rawUsername.trim().isEmpty()) {
-                badge.setVisibility(View.GONE);
-                return;
-            }
-            final String cleanUser = rawUsername.replace("@", "").trim();
-            badge.setTag(cleanUser);
-
-            JSONObject cached = userStatusCache.get(cleanUser);
-            if (cached != null) {
-                applyStatusToBadge(badge, cached);
-                return;
-            }
-
-            badge.setVisibility(View.GONE);
-            new AsyncTask<Void, Void, JSONObject>() {
-                @Override
-                protected JSONObject doInBackground(Void... params) {
-                    try {
-                        JSONObject body = new JSONObject();
-                        body.put("username_target", cleanUser);
-                        String resp = requestHTTP(getNormalizedBaseUrl() + "/view-status", "POST", body);
-                        if (resp != null && resp.trim().startsWith("{")) {
-                            JSONObject obj = new JSONObject(resp.trim());
-                            if (obj.has("status") && !"status not found".equalsIgnoreCase(obj.optString("status"))) {
-                                userStatusCache.put(cleanUser, obj);
-                                return obj;
-                            }
-                        }
-                    } catch (Exception ignored) {}
-                    return null;
-                }
-
-                @Override
-                protected void onPostExecute(JSONObject statusObj) {
-                    if (statusObj != null && cleanUser.equals(badge.getTag())) {
-                        applyStatusToBadge(badge, statusObj);
-                    }
-                }
-            }.execute();
         }
 
         private void openPostComments(JSONObject post) {
@@ -1921,7 +1799,6 @@ public class HomeActivity extends ActivityGroup {
                 holder.btnPrevImage = (Button) convertView.findViewById(R.id.btnPrevImage);
                 holder.btnNextImage = (Button) convertView.findViewById(R.id.btnNextImage);
                 holder.tvUsername = (TextView) convertView.findViewById(R.id.postUsername);
-                holder.tvUserStatus = ensureStatusBadgeView(holder.tvUsername);
                 holder.tvText = (TextView) convertView.findViewById(R.id.postText);
                 holder.containerPollCard = ensurePollContainer(convertView, holder.tvText);
                 holder.containerEmbedCard = ensureEmbedContainer(convertView, holder.tvText);
@@ -1941,9 +1818,6 @@ public class HomeActivity extends ActivityGroup {
                 convertView.setTag(holder);
             } else {
                 holder = (ViewHolder) convertView.getTag();
-                if (holder.tvUserStatus == null) {
-                    holder.tvUserStatus = ensureStatusBadgeView(holder.tvUsername);
-                }
             }
 
             holder.btnPostOptions.setOnClickListener(new View.OnClickListener() {
@@ -2200,7 +2074,6 @@ public class HomeActivity extends ActivityGroup {
 
                 holder.txtCommentCount.setText(commentsCount);
                 holder.tvUsername.setText(postUsername.startsWith("@") ? postUsername : "@" + postUsername);
-                bindAuthorStatus(holder.tvUserStatus, postUsername);
                 holder.tvDate.setText(relative_datetime.length() > 0 ? relative_datetime : datetime);
                 Bitmap defaultAvatar = getCachedAvatar(postUsername);
                 holder.avatarPost.setImageBitmap(defaultAvatar);

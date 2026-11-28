@@ -1,15 +1,13 @@
 package com.LinkaProject.linkaLite;
-import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -23,7 +21,6 @@ public class DmChat extends BaseActivity {
     private static final String TAG = "LINKA_DEBUG";
     private ImageButton btnHeaderImage;
     private TextView txtHeaderTitle;
-    private TextView txtTargetStatus;
     private Button btnSend;
     private EditText edtInputMessage;
     private LinearLayout chatContainer;
@@ -34,7 +31,7 @@ public class DmChat extends BaseActivity {
     private final Handler autoUpdateHandler = new Handler(Looper.getMainLooper());
     private Runnable autoUpdateRunnable;
     private static final int UPDATE_INTERVAL = 2000;
-
+    private ScrollView scrollMessages;
     private String getNormalizedBaseUrl() {
         if (url == null || url.trim().length() == 0) return "";
         String clean = url.trim();
@@ -43,29 +40,16 @@ public class DmChat extends BaseActivity {
         }
         return clean;
     }
-
-    private void pushMyStatus(final String statusValue, final String actionValue) {
-        String cleanMe = (username == null) ? "" : username.replace("@", "").trim();
-        String baseUrl = getNormalizedBaseUrl();
-        if (cleanMe.length() == 0 || baseUrl.length() == 0) return;
-
-        new AsyncTask<Void, Void, Void>() {
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    JSONObject payload = new JSONObject();
-                    payload.put("username", cleanMe);
-                    payload.put("status", statusValue);
-                    payload.put("action", actionValue);
-                    request.requestHTTP(baseUrl + "/send-status", "post", payload, DmChat.this);
-                } catch (Exception e) {
-                    Log.e(TAG, "[Status] Erro ao enviar status no DM", e);
+    private void scrollToBottom() {
+        if (scrollMessages != null) {
+            scrollMessages.post(new Runnable() {
+                @Override
+                public void run() {
+                    scrollMessages.fullScroll(View.FOCUS_DOWN);
                 }
-                return null;
-            }
-        }.execute();
+            });
+        }
     }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,19 +83,11 @@ public class DmChat extends BaseActivity {
         btnHeaderImage = (ImageButton) findViewById(R.id.btnHeaderImage);
         txtHeaderTitle = (TextView) findViewById(R.id.txtHeaderTitle);
         btnSend = (Button) findViewById(R.id.btnSend);
+        scrollMessages = (ScrollView) findViewById(R.id.scrollMessages);
         edtInputMessage = (EditText) findViewById(R.id.edtInputMessage);
         chatContainer = (LinearLayout) findViewById(R.id.layoutMessagesContainer);
         if (txtHeaderTitle != null) {
             txtHeaderTitle.setText(cleanOtherUser.length() == 0 ? "Chat" : cleanOtherUser);
-            if (txtHeaderTitle.getParent() instanceof ViewGroup) {
-                ViewGroup parent = (ViewGroup) txtHeaderTitle.getParent();
-                int idx = parent.indexOfChild(txtHeaderTitle);
-                txtTargetStatus = new TextView(this);
-                txtTargetStatus.setTextSize(12);
-                txtTargetStatus.setTextColor(Color.parseColor("#888888"));
-                txtTargetStatus.setVisibility(View.GONE);
-                parent.addView(txtTargetStatus, idx + 1);
-            }
         }
         if (btnSend != null) {
             btnSend.setOnClickListener(new View.OnClickListener() {
@@ -137,9 +113,6 @@ public class DmChat extends BaseActivity {
             @Override
             public void run() {
                 new FetchMessagesTask().execute();
-                if (cleanOtherUser.length() > 0) {
-                    new FetchTargetStatusTask(cleanOtherUser).execute();
-                }
                 autoUpdateHandler.postDelayed(this, UPDATE_INTERVAL);
             }
         };
@@ -148,11 +121,6 @@ public class DmChat extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (cleanOtherUser.length() > 0) {
-            pushMyStatus("online", "em dm com @" + cleanOtherUser);
-        } else {
-            pushMyStatus("online", "no dm");
-        }
         autoUpdateHandler.post(autoUpdateRunnable);
     }
 
@@ -160,51 +128,8 @@ public class DmChat extends BaseActivity {
     protected void onPause() {
         super.onPause();
         autoUpdateHandler.removeCallbacks(autoUpdateRunnable);
-        pushMyStatus("offline", "saiu do dm");
     }
-
-    private class FetchTargetStatusTask extends AsyncTask<Void, Void, JSONObject> {
-        private final String targetUser;
-
-        public FetchTargetStatusTask(String targetUser) {
-            this.targetUser = targetUser;
-        }
-
-        @Override
-        protected JSONObject doInBackground(Void... params) {
-            try {
-                String baseUrl = getNormalizedBaseUrl();
-                if (baseUrl.length() == 0 || targetUser.length() == 0) return null;
-                JSONObject body = new JSONObject();
-                body.put("username_target", targetUser);
-                String resp = request.requestHTTP(baseUrl + "/view-status", "post", body, DmChat.this);
-                if (resp != null && resp.trim().startsWith("{")) {
-                    return new JSONObject(resp.trim());
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "[Status] Erro ao consultar status de " + targetUser, e);
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(JSONObject obj) {
-            if (txtTargetStatus == null || obj == null) return;
-            String st = obj.optString("status", "").trim();
-            String act = obj.optString("action", "").trim();
-            if (st.isEmpty() && act.isEmpty()) {
-                txtTargetStatus.setVisibility(View.GONE);
-                return;
-            }
-            String label = act.isEmpty() ? st : (st + " · " + act);
-            txtTargetStatus.setText(label);
-            txtTargetStatus.setTextColor("online".equalsIgnoreCase(st)
-                    ? Color.parseColor("#2E7D32")
-                    : Color.parseColor("#757575"));
-            txtTargetStatus.setVisibility(View.VISIBLE);
-        }
-    }
-
+    
     private class FetchMessagesTask extends AsyncTask<Void, Void, String> {
         @Override
         protected String doInBackground(Void... params) {
@@ -226,6 +151,7 @@ public class DmChat extends BaseActivity {
 
         @Override
         protected void onPostExecute(String response) {
+            scrollToBottom();
             if (response == null || response.trim().length() == 0 || chatContainer == null) {
                 return;
             }
@@ -277,7 +203,6 @@ public class DmChat extends BaseActivity {
         @Override
         protected void onPostExecute(Boolean success) {
             if (success) {
-                pushMyStatus("online", "chatting with @" + cleanOtherUser);
                 new FetchMessagesTask().execute();
             } else {
                 Toast.makeText(DmChat.this, "Error in mesage sending", Toast.LENGTH_SHORT).show();
